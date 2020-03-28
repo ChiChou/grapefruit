@@ -4,12 +4,13 @@
   </div>
 </template>
 
-<style lang="stylus">
-body
-  min-width 768px
-  min-height 768px
-  margin 0
-  padding 0
+<style lang="scss">
+body {
+  min-width: 768px;
+  min-height: 768px;
+  margin: 0;
+  padding: 0;
+}
 
 #app {
   font-family: sans-serif;
