@@ -5,11 +5,14 @@
     "@types/koa-router": "^7.4.0",
     "@types/mocha": "^7.0.2",
     "@types/node": "^13.9.5",
+    "@typescript-eslint/eslint-plugin": "^2.25.0",
+    "@typescript-eslint/parser": "^2.25.0",
     "chai": "^4.2.0",
     "eslint": "^6.8.0",
     "eslint-plugin-import": "^2.20.1",
     "mocha": "^7.1.1",
     "nodemon": "^2.0.2",
+    "standard": "^14.3.3",
     "ts-node": "^8.8.1",
     "typescript": "^3.8.3"
   },
@@ -22,6 +25,8 @@
     "test": "test"
   },
   "dependencies": {
+    "@types/frida-gum": "^15.2.0",
+    "frida": "^12.8.19",
     "koa": "^2.11.0",
     "koa-bodyparser": "^4.3.0",
     "koa-json": "^2.0.2",
@@ -32,7 +37,8 @@
   "scripts": {
     "test": "mocha",
     "build": "tsc",
-    "dev": "nodemon"
+    "dev": "nodemon",
+    "lint": "eslint app.ts lib/**.ts"
   },
   "nodemonConfig": {
     "ignore": [
@@ -45,7 +51,7 @@
       "lib",
       "app.ts"
     ],
-    "exec": "node -r ts-node/register app.ts",
+    "exec": "npm run lint && node -r ts-node/register app.ts",
     "ext": "ts"
   },
   "repository": {
