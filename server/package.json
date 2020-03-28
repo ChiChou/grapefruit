@@ -1,0 +1,69 @@
+{
+  "devDependencies": {
+    "@types/chai": "^4.2.11",
+    "@types/koa": "^2.11.3",
+    "@types/koa-router": "^7.4.0",
+    "@types/mocha": "^7.0.2",
+    "@types/node": "^13.9.5",
+    "chai": "^4.2.0",
+    "eslint": "^6.8.0",
+    "eslint-plugin-import": "^2.20.1",
+    "mocha": "^7.1.1",
+    "nodemon": "^2.0.2",
+    "ts-node": "^8.8.1",
+    "typescript": "^3.8.3"
+  },
+  "name": "passionfruit-server",
+  "version": "0.7.0",
+  "description": "Runtime app instruments for iOS",
+  "main": "dist/app.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "dependencies": {
+    "koa": "^2.11.0",
+    "koa-bodyparser": "^4.3.0",
+    "koa-json": "^2.0.2",
+    "koa-logger": "^3.2.1",
+    "koa-router": "^8.0.8",
+    "koa-send": "^5.0.0"
+  },
+  "scripts": {
+    "test": "mocha",
+    "build": "tsc",
+    "dev": "nodemon"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "**/*.test.ts",
+      "**/*.spec.ts",
+      ".git",
+      "node_modules"
+    ],
+    "watch": [
+      "lib",
+      "app.ts"
+    ],
+    "exec": "node -r ts-node/register app.ts",
+    "ext": "ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/chichou/passionfruit.git"
+  },
+  "keywords": [
+    "iOS",
+    "mobile",
+    "security",
+    "instruments",
+    "reverse",
+    "engineering"
+  ],
+  "author": "CodeColorist",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/chichou/passionfruit/issues"
+  },
+  "homepage": "https://github.com/chichou/passionfruit#readme"
+}

@@ -5,7 +5,8 @@ const path = require('path')
 function *tasks() {
   const spec = {
     gui: ['run', 'serve'],
-    agent: ['run', 'watch']
+    agent: ['run', 'watch'],
+    server: ['run', 'dev']
   }
 
   for (let [name, args] of Object.entries(spec)) {
