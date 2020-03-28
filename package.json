@@ -4,7 +4,6 @@
   "description": "passionfruit",
   "main": "index.js",
   "dependencies": {},
-  "devDependencies": {},
   "scripts": {
     "postinstall": "node scripts/install.js",
     "start": "node scripts/dev.js"

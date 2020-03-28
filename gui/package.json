@@ -18,7 +18,6 @@
     "vuex": "^3.1.2"
   },
   "devDependencies": {
-    "@mdi/font": "^5.0.45",
     "@typescript-eslint/eslint-plugin": "^2.18.0",
     "@typescript-eslint/parser": "^2.18.0",
     "@vue/cli-plugin-eslint": "~4.2.0",

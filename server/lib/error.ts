@@ -1,7 +1,7 @@
 export class KnownError extends Error {}
 
 export class DeviceNotFoundError extends KnownError {
-  constructor(id) {
+  constructor(id: string) {
     super(`can not find device id: ${id}`)
   }
 }
@@ -13,13 +13,13 @@ export class DeviceNotReadyError extends KnownError {
 }
 
 export class ProcessNotFoundError extends KnownError {
-  constructor(target) {
+  constructor(target: string) {
     super(`${target} is not running`)
   }
 }
 
 export class AppNotFoundError extends KnownError {
-  constructor(target) {
+  constructor(target: string) {
     super(`${target} not found in Applications`)
   }
 }
@@ -33,9 +33,13 @@ export class InvalidDeviceError extends KnownError {
 }
 
 export class AppAttachError extends KnownError {
-  constructor(bundle) {
+  constructor(bundle: string) {
     super(`unable to spawn app ${bundle}`)
   }
 }
 
-export class CommandError extends KnownError {}
+export class EarlyInstrumentError extends KnownError {
+  constructor(bundle) {
+    super(`early instrument for ${bundle} failed`)
+  }
+}

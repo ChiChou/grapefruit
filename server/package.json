@@ -8,6 +8,7 @@
     "@typescript-eslint/eslint-plugin": "^2.25.0",
     "@typescript-eslint/parser": "^2.25.0",
     "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
     "eslint": "^6.8.0",
     "eslint-plugin-import": "^2.20.1",
     "mocha": "^7.1.1",
@@ -21,7 +22,7 @@
   "description": "Runtime app instruments for iOS",
   "main": "dist/app.js",
   "directories": {
-    "lib": "lib",
+    "bib": "lib",
     "test": "test"
   },
   "dependencies": {
@@ -32,10 +33,11 @@
     "koa-json": "^2.0.2",
     "koa-logger": "^3.2.1",
     "koa-router": "^8.0.8",
-    "koa-send": "^5.0.0"
+    "koa-send": "^5.0.0",
+    "socket.io": "^2.3.0"
   },
   "scripts": {
-    "test": "mocha",
+    "test": "mocha --expose-gc -r ts-node/register tests/**/*.ts",
     "build": "tsc",
     "dev": "nodemon",
     "lint": "eslint app.ts lib/**.ts"
