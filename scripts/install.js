@@ -4,5 +4,5 @@ const path = require('path')
 
 for (let child of ['gui', 'server', 'agent']) {
   const cwd = path.join(__dirname, '..', child)
-  cp.execSync('cnpm i', { cwd, stdio: 'inherit' })
+  cp.execSync('npm i', { cwd, stdio: 'inherit' })
 }

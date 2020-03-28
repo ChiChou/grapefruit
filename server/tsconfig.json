@@ -1,19 +1,24 @@
 {
-  "compilerOptions": {
-      "lib": ["es2017"],
-      "target": "es2017",
-      "module": "commonjs",
-      "declaration": true,
-      "outDir": "./dist",
-      "typeRoots": [
-          "node_modules/@types"
-      ],
-      "types": [
-          "node"
-      ],
-      "esModuleInterop": true
-  },
-  "include": [
-      "app.ts"
-  ]
+    "compilerOptions": {
+        "lib": [
+            "es2017"
+        ],
+        "target": "es2017",
+        "module": "commonjs",
+        "declaration": true,
+        "outDir": "./dist",
+        "typeRoots": [
+            "node_modules/@types"
+        ],
+        "types": [
+            "node",
+            "mocha"
+        ],
+        "esModuleInterop": true
+    },
+    "include": [
+        "app.ts",
+        "tests/**/*.js",
+        "lib/**/*.js"
+    ]
 }
