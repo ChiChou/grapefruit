@@ -1,0 +1,22 @@
+{
+  "name": "passionfruit",
+  "version": "0.7.0",
+  "description": "passionfruit",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {},
+  "scripts": {
+    "postinstall": "node scripts/install.js",
+    "start": "node scripts/dev.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChiChou/Grapefruit.git"
+  },
+  "author": "CodeColorist",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ChiChou/Grapefruit/issues"
+  },
+  "homepage": "https://github.com/ChiChou/Grapefruit#readme"
+}
