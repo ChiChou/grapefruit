@@ -15,7 +15,7 @@
   </div>
 </template>
 
-<style lang="stylus">
+<style lang="scss">
 .workspace {
   flex:1;
 }
