@@ -27,11 +27,11 @@ function find(name?: string): Module {
   return main
 }
 
-export function imp(name?: string) {
+export function imps(name?: string) {
   return uniqueAndDemangle<ModuleImportDetails>(find(name).enumerateImports())
 }
 
-export function exp(name: string) {
+export function exps(name: string) {
   const mod = name || Process.enumerateModules()[0].name
   return uniqueAndDemangle<ModuleExportDetails>(find(name).enumerateExports())
 }

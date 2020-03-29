@@ -1,4 +1,4 @@
-export default function info() {
+export function info() {
   const keys = ['name', 'systemVersion', 'buildVersion', 'systemName', 'model', 'localizedModel']
   const device = ObjC.classes.UIDevice.currentDevice()
   const result: {[key: string]: string } = {}
