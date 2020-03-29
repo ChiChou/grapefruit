@@ -5,9 +5,11 @@
   "private": true,
   "main": "src/index.ts",
   "scripts": {
-    "prepare": "npm run build",
+    "prepare": "npm run preprocessor && npm run build",
     "build": "frida-compile src/index.ts -o dist.js",
-    "watch": "npm run build -- -w"
+    "watch": "npm run build -- -w",
+    "cmod": "node scripts/cmodule.js",
+    "preprocessor": "node scripts/preprocessor.js"
   },
   "devDependencies": {
     "@types/frida-gum": "^15.0.0",

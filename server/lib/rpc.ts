@@ -20,7 +20,7 @@ export async function connect(session: Session): Promise<Script> {
 }
 
 export interface RPC {
-  [key: string]: any | Function;
+  [key: string]: any;
 }
 
 export function proxy(script: Script): RPC {
