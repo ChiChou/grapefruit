@@ -1,3 +1,5 @@
+.ccls-cache/
+
 # Logs
 logs
 *.log
