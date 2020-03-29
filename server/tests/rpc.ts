@@ -43,20 +43,21 @@ describe('RPC', () => {
       .and.to.has.keys(['tmp', 'home', 'json', 'id', 'bundle', 'binary', 'urls', 'minOS', 'name', 'semVer', 'version'])
     expect(await rpc.info.userDefaults()).to.be.an('object')
     expect(await rpc.symbol.modules()).to.be.an('array')
-    expect(await rpc.symbol.imports('MobileSafari')).to.be.an('array')
-    expect(await rpc.symbol.exports('WebKit')).to.be.an('array')
+    expect(await rpc.symbol.imps('MobileSafari')).to.be.an('array')
+    expect(await rpc.symbol.exps('WebKit')).to.be.an('array')
 
     const BOOKMARKS = '/var/mobile/Library/Safari/Bookmarks.db'
     expect(await rpc.sqlite.tables(BOOKMARKS)).to.be.an('array')
     expect(await rpc.sqlite.query(BOOKMARKS, 'select count(*) from bookmarks')).to.be.an('array').and.have.lengthOf(1)
     expect(await rpc.sqlite.data(BOOKMARKS, 'bookmarks')).to.be.an('object').and.have.keys(['header', 'data'])
 
+    await rpc.touchid.disable()
     expect(await rpc.keychain.list()).to.be.an('array')
 
     await rpc.syslog.stop()
   })
 
-  it('should support filesystem api', async() => {
+  it('should support filesystem api', async () => {
     const SAFARI_PREF = await rpc.fs.resolve('home', 'Library/Preferences/com.apple.mobilesafari.plist')
 
     expect(await rpc.fs.plist(SAFARI_PREF)).to.be.an('object')
@@ -77,7 +78,7 @@ describe('RPC', () => {
     expect(await rpc.fs.remove(f2)).to.be.true
 
     agent.message.connect((message, data) => {
-      const { payload } = message as any
+      const { payload } = message as unknown as { payload: { subject: string } }
       // expect(payload).to.include.key('subject')
       if (payload.subject === 'data')
         expect(data).to.be.instanceOf(Buffer)
@@ -94,7 +95,8 @@ describe('RPC', () => {
     expect(withFrameworks).to.be.an('array')
     expect(main.length).to.lte(withFrameworks.length)
 
-    const isTree = node => expect(node).to.be.an('object')
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+    const isTree = (node: object) => expect(node).to.be.an('object')
 
     // app scope
     isTree(await rpc.classdump.hierarchy('__app__'))
@@ -112,6 +114,7 @@ describe('RPC', () => {
   })
 
   it('should capture a screenshot', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { writeFile } = require('fs')
     const { tmpdir } = require('os')
     const { join } = require('path')
