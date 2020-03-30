@@ -61,10 +61,11 @@ function tmux() {
   for (let [args, cwd] of tasks()) {
     argv.push('-c', cwd, 'npm');
     argv.push(...args);
-    argv.push(';', 'split-window')
+    argv.push(';', 'split-window', '-h')
   }
   // last split-window
-  argv.push('yes')
+  argv.pop();
+  argv.pop();
   // C-a space
   argv.push('next-layout');
 
