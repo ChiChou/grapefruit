@@ -18,5 +18,8 @@
   "bugs": {
     "url": "https://github.com/ChiChou/Grapefruit/issues"
   },
-  "homepage": "https://github.com/ChiChou/Grapefruit#readme"
+  "homepage": "https://github.com/ChiChou/Grapefruit#readme",
+  "devDependencies": {
+    "cross-env": "^7.0.2"
+  }
 }

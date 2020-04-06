@@ -77,10 +77,12 @@ app
   }))
 
 if (process.env.NODE_ENV === 'development') {
-  // app.use(KoaJSON({
-  //   pretty: false,
-  //   param: 'pretty',
-  // }))
+  app
+    .use(KoaJSON({
+      pretty: false,
+      param: 'pretty',
+    }))
+    .use(new Router().get('/', (ctx) => ctx.body = 'Passionfruit Development Server').routes())
 } else {
   app.use(async (ctx, next) => {
     const opt = { root: path.join(__dirname, '..', 'gui', 'dist') }
@@ -88,7 +90,6 @@ if (process.env.NODE_ENV === 'development') {
       await send(ctx, ctx.path, opt)
     
     // else await send(ctx, '/index.html', opt)
-
     next()
   })
   app.use(logger())
