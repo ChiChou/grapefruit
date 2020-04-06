@@ -4,7 +4,9 @@ const { platform } = require('os');
 
 const isWin = platform() === 'win32'
 
-function *tasks() {
+const env = Object.assign({}, process.env, { NODE_ENV: 'development' })
+
+function* tasks() {
   const spec = {
     gui: ['run', 'serve'],
     agent: ['run', 'watch'],
@@ -20,7 +22,7 @@ function *tasks() {
 function tryRun(cmd) {
   try {
     return cp.execSync(cmd).toString().trim();
-  } catch(_) {
+  } catch (_) {
 
   }
 }
@@ -49,7 +51,7 @@ function run() {
   const children = []
   for (let [args, cwd] of tasks()) {
     const [bin, argv] = platformize('npm', args);
-    const p = cp.spawn(bin, argv, { stdio: 'inherit', cwd });
+    const p = cp.spawn(bin, argv, { stdio: 'inherit', cwd, env });
     p.on('disconnect', handler);
   }
 
@@ -69,7 +71,7 @@ function tmux() {
   // C-a space
   argv.push('next-layout');
 
-  cp.spawnSync('tmux', argv, { stdio: 'inherit' });
+  cp.spawnSync('tmux', argv, { stdio: 'inherit', env });
 }
 
 function wt() {
@@ -80,15 +82,14 @@ function wt() {
     argv.push(';', 'new-tab')
   }
   argv.push('cmd', '-c', 'echo OK')
-  cp.spawn('wt', argv)
+  cp.spawn('wt', argv, { env })
   process.exit() // detach
 }
-
 
 if (isWin && tryRun('where wt')) {
   wt()
 } else if (tryRun('which tmux')) {
-  tmux()  
+  tmux()
 } else {
   // crappy terminal
   run(tasks())
