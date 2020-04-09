@@ -11,6 +11,7 @@ import * as frida from 'frida'
 import * as serialize from './lib/serialize'
 import { wrap } from './lib/device'
 import { InvalidDeviceError, VersionMismatchError } from './lib/error'
+import { URL } from 'url'
 
 const app = new Koa()
 const router = new Router({ prefix: '/api' })
@@ -82,7 +83,13 @@ if (process.env.NODE_ENV === 'development') {
       pretty: false,
       param: 'pretty',
     }))
-    .use(new Router().get('/', (ctx) => ctx.body = 'Passionfruit Development Server').routes())
+    .use(new Router().get('/', (ctx) => {
+      const u = new URL(ctx.request.origin)
+      u.port = '8080'
+      ctx.redirect(u.toString())
+      ctx.body = 'Passionfruit Development Server'
+      ctx.status = 301
+    }).routes())
 } else {
   app.use(async (ctx, next) => {
     const opt = { root: path.join(__dirname, '..', 'gui', 'dist') }
