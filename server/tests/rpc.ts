@@ -102,8 +102,8 @@ describe('RPC', () => {
     isTree(await rpc.classdump.hierarchy('__app__'))
     // main module
     isTree(await rpc.classdump.hierarchy('__main__'))
-    // all classes (pretty slow)
-    isTree(await rpc.classdump.hierarchy('__global__'))
+    // // all classes (pretty slow)
+    // isTree(await rpc.classdump.hierarchy('__global__'))
     // single module
     isTree(await rpc.classdump.hierarchy('/System/Library/Frameworks/UIKit.framework/UIKit'))
     // selected modules
@@ -111,24 +111,6 @@ describe('RPC', () => {
       '/System/Library/Frameworks/UIKit.framework/UIKit',
       '/System/Library/Frameworks/CFNetwork.framework/CFNetwork'
     ]))
-  })
-
-  it('should capture a screenshot', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { writeFile } = require('fs')
-    const { tmpdir } = require('os')
-    const { join } = require('path')
-    const { promisify } = require('util')
-
-    const write = promisify(writeFile)
-    const filename = join(tmpdir(), `${Math.random().toString(36)}.png`)
-    const buf = await rpc.screenshot()
-
-    expect(buf).to.be.an.instanceOf(Buffer)
-    if (process.env.DEBUG_SAVE_SCREENSHOT) {
-      await write(filename, buf)
-      console.info(`\t[INFO] open ${filename} to see the picture`)
-    }
   })
 
   after(async () => {
