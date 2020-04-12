@@ -1,4 +1,5 @@
 import './ready'
+import './polyfill'
 
 import { interfaces, invoke, register } from './rpc'
 import modules from './modules/index'

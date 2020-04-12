@@ -8,13 +8,13 @@ export function register(func: Function, name?: string) {
   exported.set(key, func)
 }
 
-export function invoke(name: string, args: any[]) {
-  const { NSAutoreleasePool } = ObjC.classes
-  const pool = NSAutoreleasePool.alloc().init()
+export function invoke(name: string, args=[]) {
   const method = exported.get(name)
   if (!method)
     throw new Error(`method "${name}" not found`)
 
+  const { NSAutoreleasePool } = ObjC.classes
+  const pool = NSAutoreleasePool.alloc().init()
   try {
     return method(...args)
   } finally {
