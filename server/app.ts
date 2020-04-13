@@ -88,7 +88,7 @@ if (process.env.NODE_ENV === 'development') {
       u.port = '8080'
       ctx.redirect(u.toString())
       ctx.body = 'Passionfruit Development Server'
-      ctx.status = 301
+      ctx.status = 302
     }).routes())
 } else {
   app.use(async (ctx, next) => {
