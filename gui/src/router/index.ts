@@ -1,15 +1,15 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 
-import Welcome from '../views/Welcome.vue'
+import Workspace from '../views/Workspace.vue'
 
 Vue.use(VueRouter)
 
 const routes = [
   {
     path: '/',
-    name: 'Welcome',
-    component: Welcome
+    name: 'Workspace',
+    component: Workspace
   }
 ]
 

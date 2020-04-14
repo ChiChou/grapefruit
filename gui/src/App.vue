@@ -16,10 +16,7 @@ body {
   font-family: sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  height: 100vh;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
 }
 </style>
