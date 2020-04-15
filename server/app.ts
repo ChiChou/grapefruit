@@ -14,6 +14,12 @@ import { InvalidDeviceError, VersionMismatchError } from './lib/error'
 import { Lockdown } from './lib/lockdown'
 import { URL } from 'url'
 
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+Buffer.prototype.toJSON = function () {
+  return this.toString('base64')
+}
+
 const app = new Koa()
 const router = new Router({ prefix: '/api' })
 
@@ -56,6 +62,17 @@ router
     const dev = await tryGetDevice(id)
     const apps = await dev.enumerateApplications()
     ctx.body = apps.map(serialize.app)
+  })
+  .get('/device/:device/info', async (ctx) => {
+    const id = ctx.params.device
+    const dev = await tryGetDevice(id)
+    const client = new Lockdown(dev)
+    await client.connect()
+    client.send({
+      'Request': 'GetValue'
+    })
+    const response = await client.recv()
+    ctx.body = response.Value
   })
   .post('/url/start', async (ctx) => {
     const { device, bundle, url } = ctx.request.body
