@@ -32,7 +32,7 @@ describe('Lockdown', () => {
     await lockdown.connect()
     lockdown.send({
       'Request': 'GetValue'
-    });
+    })
 
     const response = await lockdown.recv()
     lockdown.close()
