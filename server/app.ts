@@ -11,12 +11,26 @@ import * as frida from 'frida'
 import * as serialize from './lib/serialize'
 import { wrap } from './lib/device'
 import { InvalidDeviceError, VersionMismatchError } from './lib/error'
+import { Lockdown } from './lib/lockdown'
 import { URL } from 'url'
 
 const app = new Koa()
 const router = new Router({ prefix: '/api' })
 
 const mgr = frida.getDeviceManager()
+
+function tryGetDevice(id: string): Promise<frida.Device> {
+  try {
+    return id === 'usb' ? frida.getUsbDevice() : frida.getDevice(id)
+  } catch (ex) {
+    if (ex.message.startsWith('Unable to connect to remote frida-server'))
+      throw new InvalidDeviceError(id)
+    if (ex.message.startsWith('Unable to communicate with remote frida-server'))
+      throw new VersionMismatchError(ex.message)
+    else
+      throw ex
+  }
+}
 
 router
   .get('/devices', async (ctx) => {
@@ -26,20 +40,22 @@ router
       list: devices.map(wrap).map(d => d.valueOf())
     }
   })
+  .get('/device/:device/screen', async (ctx) => {
+    const id = ctx.params.device
+    const dev = await tryGetDevice(id)
+    const shot = new Lockdown(dev, 'com.apple.mobile.screenshotr')
+    await shot.connect()
+    shot.send({ 'MessageType': 'ScreenShotRequest' })
+    const response = await shot.recv()
+    ctx.set('Content-Type', 'image/png')
+    ctx.body = response.ScreenShotData
+    shot.close()
+  })
   .get('/device/:device/apps', async (ctx) => {
     const id = ctx.params.device
-    try {
-      const dev = await frida.getDevice(id)
-      const apps = await dev.enumerateApplications()
-      ctx.body = apps.map(serialize.app)
-    } catch (ex) {
-      if (ex.message.startsWith('Unable to connect to remote frida-server'))
-        throw new InvalidDeviceError(id)
-      if (ex.message.startsWith('Unable to communicate with remote frida-server'))
-        throw new VersionMismatchError(ex.message)
-      else
-        throw ex
-    }
+    const dev = await tryGetDevice(id)
+    const apps = await dev.enumerateApplications()
+    ctx.body = apps.map(serialize.app)
   })
   .post('/url/start', async (ctx) => {
     const { device, bundle, url } = ctx.request.body
