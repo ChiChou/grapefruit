@@ -1,5 +1,5 @@
 import Vue from 'vue'
-
+import axios from 'axios'
 import pane from 'vue-splitpane'
 import Buefy from 'buefy'
 import 'buefy/dist/buefy.css'
@@ -15,6 +15,8 @@ import * as VueMenu from '@hscmap/vue-menu'
 import App from './App.vue'
 import router from './router'
 import store from './store'
+
+axios.defaults.baseURL = '/api'
 
 Vue.config.productionTip = false
 Vue.component('split-pane', pane)

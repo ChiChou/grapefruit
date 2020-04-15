@@ -10,6 +10,7 @@
   "dependencies": {
     "@hscmap/vue-menu": "^2.10.0",
     "@mdi/font": "^5.0.45",
+    "axios": "^0.19.2",
     "buefy": "^0.8.13",
     "chalk": "^4.0.0",
     "vue": "^2.6.11",
