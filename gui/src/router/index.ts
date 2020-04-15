@@ -19,7 +19,7 @@ const routes = [
       name: 'apps'
     }]
   }, {
-    path: '/workspace',
+    path: '/workspace/:device/:bundle',
     name: 'Workspace',
     component: Workspace
   }
