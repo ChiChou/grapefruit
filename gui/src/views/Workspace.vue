@@ -67,8 +67,8 @@ import MenuBar from './MenuBar.vue'
 
 @Component({
   components: {
-    MenuBar,
-  },
+    MenuBar
+  }
 })
 export default class Workspace extends Vue {}
 </script>
