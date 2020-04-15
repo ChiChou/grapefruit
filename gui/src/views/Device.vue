@@ -3,18 +3,20 @@
     <div class="apps" v-if="apps.length">
       <h1 class="sticky">
         {{ info.DeviceName }}
-        <a target="_blank" :href="`https://ipsw.me/download/${info.ProductType}/${info.BuildVersion}`" title="Download Firmware">
-          iOS {{ info.ProductVersion }} ({{ info.BuildVersion }})
-        </a>
+        <a
+          target="_blank"
+          :href="`https://ipsw.me/download/${info.ProductType}/${info.BuildVersion}`"
+          title="Download Firmware"
+        >iOS {{ info.ProductVersion }} ({{ info.BuildVersion }})</a>
       </h1>
 
       <ul>
         <li :key="app.identifier" v-for="app in apps">
-          <a href="#">
+          <router-link :to="{ name: 'Workspace', params: { device, bundle: app.identifier }}">
             <icon class="icon" :icon="app.largeIcon" :width="32" :height="32"></icon>
             <h2>{{ app.name }}</h2>
             <p>{{ app.identifier }}</p>
-          </a>
+          </router-link>
         </li>
       </ul>
     </div>
@@ -27,12 +29,7 @@
     <section v-if="device && lockdown" class="info-side">
       <div class="sticky info">
         <a :href="`/api/device/${device}/screen`" target="_blank">
-          <img
-            v-if="device"
-            :src="`/api/device/${device}/screen`"
-            width="320"
-            class="screenshot"
-          />
+          <img v-if="device" :src="`/api/device/${device}/screen`" width="320" class="screenshot" />
         </a>
 
         <p>Serial: {{ info.SerialNumber }}</p>
