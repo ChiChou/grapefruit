@@ -27,7 +27,23 @@
         <template slot="paneR">
           <split-pane split="horizontal" :default-percent="80" :min-percent="20">
             <template slot="paneL">
-              <div class="zone zone-editor">editor</div>
+              <div class="editor-container">
+                <golden-layout class="windows">
+                  <gl-row>
+                    <gl-component title="component1" show-popout-icon:="false">
+                      <h1>Component 1</h1>
+                    </gl-component>
+                    <gl-stack>
+                      <gl-component title="component2">
+                        <h1>Component 2</h1>
+                      </gl-component>
+                      <gl-component title="component3">
+                        <h1>Component 3</h1>
+                      </gl-component>
+                    </gl-stack>
+                  </gl-row>
+                </golden-layout>
+              </div>
             </template>
             <template slot="paneR">
               <div class="zone zone-terminal">terminal</div>
@@ -37,7 +53,9 @@
       </split-pane>
     </main>
     <footer class="status">
-      <div class="connecting"><b-icon icon="check-network" size="is-small"></b-icon>frida@12.8.20, iOS 13.3 - Messages</div>
+      <div class="connecting">
+        <b-icon icon="check-network" size="is-small"></b-icon>frida@12.8.20, iOS 13.3 - Messages
+      </div>
     </footer>
   </div>
 </template>
@@ -90,9 +108,16 @@ footer.status {
   &.zone-terminal {
     background: #151515;
   }
+}
 
-  &.zone-editor {
-    background: #2a2a2a;
+.editor-container {
+  background: #2a2a2a;
+  height: 100%;
+  width: 100%;
+
+  .windows {
+    height: 100%;
+    width: 100%;
   }
 }
 </style>
