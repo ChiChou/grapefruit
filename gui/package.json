@@ -8,6 +8,7 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@hscmap/vue-menu": "^2.10.0",
     "@mdi/font": "^5.0.45",
     "buefy": "^0.8.13",
     "chalk": "^4.0.0",
@@ -44,7 +45,6 @@
   },
   "prettier": {
     "semi": false,
-    "singleQuote": true,
-    "trailingComma": "es5"
+    "singleQuote": true
   }
 }

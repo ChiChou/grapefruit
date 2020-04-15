@@ -1,5 +1,6 @@
 <template>
   <div class="workspace">
+    <MenuBar />
     <main>
       <header class="action-bar">
         <nav>
@@ -28,9 +29,9 @@
           <split-pane split="horizontal" :default-percent="80" :min-percent="20">
             <template slot="paneL">
               <div class="editor-container">
-                <golden-layout class="windows">
+                <golden-layout class="windows" :showPopoutIcon="false" :showMaximiseIcon="false">
                   <gl-row>
-                    <gl-component title="component1" show-popout-icon:="false">
+                    <gl-component title="component1" closable="false">
                       <h1>Component 1</h1>
                     </gl-component>
                     <gl-stack>
@@ -59,6 +60,18 @@
     </footer>
   </div>
 </template>
+
+<script lang="ts">
+import { Component, Vue } from 'vue-property-decorator'
+import MenuBar from './MenuBar.vue'
+
+@Component({
+  components: {
+    MenuBar,
+  },
+})
+export default class Workspace extends Vue {}
+</script>
 
 <style lang="scss">
 .workspace {
