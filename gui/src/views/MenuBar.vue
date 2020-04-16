@@ -6,6 +6,11 @@
           <hsc-menu-item label="About" />
           <hsc-menu-separator />
           <hsc-menu-item label="GitHub" />
+          <hsc-menu-item label="Home">
+            <div slot="body" @mousedown.stop>
+              <a href="/">Home</a>
+            </div>
+          </hsc-menu-item>
         </hsc-menu-bar-item>
         <hsc-menu-bar-item label="File">
           <hsc-menu-item label="New" />
@@ -70,7 +75,20 @@ menu {
   margin: 0;
   background: #222;
 
+  .menubaritem {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
   .label {
+    font-weight: 100 !important;
+  }
+
+  .label:not(:last-child) {
+    margin-bottom: 4px !important;
+  }
+
+  .menuitem {
     font-weight: 100;
   }
 }
