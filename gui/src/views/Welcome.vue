@@ -18,7 +18,7 @@
 
         <ul class="menu-list device-list">
           <li v-for="dev in devices" :key="dev.id">
-            <router-link :to="{ name: 'apps', params: { device: dev.id } }">
+            <router-link :to="{ name: 'Apps', params: { device: dev.id } }">
               <!-- <icon :icon="dev.icon" :width="24" :height="24"></icon> -->
               <b-icon icon="cellphone" size="is-small" />
               {{ dev.name }}
