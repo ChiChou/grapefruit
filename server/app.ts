@@ -103,18 +103,25 @@ router
 
 app
   .use(bodyParser())
+  .use(async (ctx, next) => {
+    try {
+      await next()
+    } catch(e) {
+      if (process.env.NODE_ENV === 'development') {
+        ctx.status = 500
+        ctx.body = e.stack
+      } else {
+        ctx.throw(500, e)
+      }
+    }
+  })
   .use(router.routes())
   .use(router.allowedMethods())
-  .use(KoaJSON({
-    pretty: false,
-    param: 'pretty',
-  }))
 
 if (process.env.NODE_ENV === 'development') {
   app
     .use(KoaJSON({
-      pretty: false,
-      param: 'pretty',
+      pretty: true
     }))
     .use(new Router().get('/', (ctx) => {
       const u = new URL(ctx.request.origin)
