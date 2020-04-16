@@ -28,15 +28,15 @@
 
     <section v-if="device && lockdown" class="info-side">
       <div class="sticky info">
-        <a :href="`/api/device/${device}/screen`" target="_blank">
+        <a :href="`/api/device/${device}/screen`" target="_blank" class="screenshot">
           <img v-if="device" :src="`/api/device/${device}/screen`" width="320" class="screenshot" />
         </a>
 
         <p>Serial: {{ info.SerialNumber }}</p>
-        <p>BluetoothAddress: {{ info.BluetoothAddress }}</p>
-        <p>WiFiAddress: {{ info.WiFiAddress }}</p>
-        <p>Firmware: {{ info.FirmwareVersion }}</p>
-        <p>Baseband: {{ info.BasebandVersion }}</p>
+        <p>BluetoothAddress: <code>{{ info.BluetoothAddress }}</code></p>
+        <p>WiFiAddress: <code>{{ info.WiFiAddress }}</code></p>
+        <p>Firmware: <code>{{ info.FirmwareVersion }}</code></p>
+        <p>Baseband: <code>{{ info.BasebandVersion }}</code></p>
       </div>
       <!-- <pre>{{ info }}</pre> -->
     </section>
@@ -81,7 +81,7 @@ export default class Device extends Vue {
           this.info = data
           this.lockdown = true
         })
-        .catch(e => {
+        .catch(() => {
           this.info = {}
           this.lockdown = false
         }),
@@ -90,7 +90,7 @@ export default class Device extends Vue {
           this.apps = data
           this.valid = true
         })
-        .catch(e => {
+        .catch(() => {
           this.apps = []
           this.valid = false
         })
@@ -128,8 +128,7 @@ export default class Device extends Vue {
 .info p {
   font-size: 0.75rem;
   opacity: 0.75;
-  text-align: right;
-  margin-right: 20px;
+  margin-left: 20px;
 }
 
 .device-info {
@@ -152,8 +151,13 @@ export default class Device extends Vue {
     > div {
       top: 60px;
 
-      .screenshot {
-        border: 10px solid #000;
+      a.screenshot {
+        display: block;
+        margin-bottom: 20px;
+      }
+
+      img.screenshot {
+        border: 10px solid #000000ad;
         border-radius: 20px;
         margin-bottom: 20px;
       }
