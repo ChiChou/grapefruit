@@ -2,31 +2,16 @@
   <div class="workspace">
     <MenuBar />
     <main>
-      <header class="action-bar">
-        <nav>
-          <ul>
-            <li>
-              <b-icon size="is-medium" icon="hexagon-multiple"></b-icon>
-            </li>
-            <li>
-              <b-icon size="is-medium" icon="account"></b-icon>
-            </li>
-            <li>
-              <b-icon size="is-medium" icon="home"></b-icon>
-            </li>
-            <li>
-              <b-icon size="is-medium" icon="view-dashboard"></b-icon>
-            </li>
-          </ul>
-        </nav>
-      </header>
+      <SidePanel />
 
-      <split-pane :min-percent="10" :default-percent="15" split="vertical" class="main-pane">
+      <split-pane :min-percent="10" :default-percent="15" split="vertical" class="main-pane" @resize="resize">
         <template slot="paneL">
-          <div class="zone zone-treeview">treeview</div>
+          <div class="space space-sidebar">
+            <router-view class="classes">Place Holder</router-view>
+          </div>
         </template>
         <template slot="paneR">
-          <split-pane split="horizontal" :default-percent="80" :min-percent="20">
+          <split-pane split="horizontal" :default-percent="80" :min-percent="20" @resize="resize">
             <template slot="paneL">
               <div class="editor-container">
                 <golden-layout class="windows" :showPopoutIcon="false" :showMaximiseIcon="false">
@@ -47,7 +32,7 @@
               </div>
             </template>
             <template slot="paneR">
-              <div class="zone zone-terminal">terminal</div>
+              <div class="space space-terminal"><Console ref="console"/></div>
             </template>
           </split-pane>
         </template>
@@ -63,14 +48,42 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
+import debounce from 'debounce'
+import colors from 'ansi-colors'
+
 import MenuBar from './MenuBar.vue'
+import SidePanel from '../views/SidePanel.vue'
+import Console from '../components/Console.vue'
 
 @Component({
   components: {
-    MenuBar
+    MenuBar,
+    SidePanel,
+    Console
   }
 })
-export default class Workspace extends Vue {}
+export default class Workspace extends Vue {
+  resizeEvent: Function
+
+  mounted() {
+    const theConsole = this.$refs.console as Console
+    const { term } = theConsole
+
+    term.writeln(colors.cyan('Console Output'))
+    term.writeln(colors.white.bgMagenta('Okay'))
+    term.writeln(colors.redBright('Error'))
+    for (let i = 0; i < 100; i++) {
+      term.writeln(`plenty of logs: ${i}`)
+    }
+    term.write('Hello from \x1B[1;3;31mxterm.js\x1B[0m $ ')
+
+    this.resizeEvent = debounce(theConsole.resize.bind(theConsole), 100)
+  }
+
+  resize() {
+    this.resizeEvent()
+  }
+}
 </script>
 
 <style lang="scss">
@@ -87,9 +100,6 @@ main {
 
   .action-bar {
     background: #282f2f;
-    nav li {
-      padding: 1rem;
-    }
   }
 
   .main-pane {
@@ -109,17 +119,31 @@ footer.status {
   }
 }
 
-.zone {
+.side-nav {
+  a {
+    border-left: 2px solid transparent;
+    display: block;
+    padding: 1rem;
+    color: #808080;
+
+    &.is-active {
+      border-left-color: #fff;
+      color: #fff;
+    }
+  }
+}
+
+.space {
   padding: 20px;
   height: 100%;
   width: 100%;
 
-  &.zone-treeview {
+  &.space-sidebar {
     background: #343c3d;
   }
 
-  &.zone-terminal {
-    background: #151515;
+  &.space-terminal {
+    background: #000;
   }
 }
 

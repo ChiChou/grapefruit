@@ -49,7 +49,7 @@
       <div class="apps" v-if="apps.length">
         <ul>
           <li :key="app.identifier" v-for="app in apps">
-            <router-link :to="{ name: 'Workspace', params: { device, bundle: app.identifier }}">
+            <router-link :to="{ name: 'General', params: { device, bundle: app.identifier }}">
               <icon class="icon" :icon="app.largeIcon" :width="32" :height="32"></icon>
               <h2>{{ app.name }}</h2>
               <p>{{ app.identifier }}</p>
