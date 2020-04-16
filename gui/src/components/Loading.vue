@@ -4,10 +4,24 @@
   </div>
 </template>
 
-<script>
-export default {}
-</script>
+<script lang="ts">
+import { Component, Vue, Prop, Watch } from 'vue-property-decorator'
 
+@Component
+export default class Welcome extends Vue {
+  @Prop({ default: 80 })
+  size!: number
+
+  @Watch('size')
+  private resize(value: number) {
+    (this.$el as HTMLDivElement).style.zoom = (value / 80).toFixed(2)
+  }
+
+  mounted() {
+    this.resize(this.size)
+  }
+}
+</script>
 <style>
 .lds-ripple {
   display: inline-block;
