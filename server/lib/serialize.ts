@@ -8,7 +8,8 @@ export function icon(icon?: Icon): object {
 
 export function device(dev: Device): object {
   const { name, id, type } = dev
-  return { name, id, icon: icon(dev.icon), type }
+  const removable = dev.id.startsWith('remote@')
+  return { name, id, icon: icon(dev.icon), type, removable }
 }
 
 export function app(app: Application): object {

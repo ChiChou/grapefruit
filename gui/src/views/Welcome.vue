@@ -9,31 +9,42 @@
       <aside class="menu">
         <p class="menu-label">Frida version: {{ version }}</p>
 
+        <hr />
+
         <p class="menu-label">
           Devices
-          <!-- <loading v-if="loading" class="is-pulled-right"></loading> -->
+          <loading v-if="loading" size="24" class="is-pulled-right"></loading>
         </p>
 
-        <ul class="menu-list">
-          <li v-for="dev in devices" :key="dev.id" class="device-list">
+        <ul class="menu-list device-list">
+          <li v-for="dev in devices" :key="dev.id">
             <router-link :to="{ name: 'apps', params: { device: dev.id } }">
-              <icon :icon="dev.icon" :width="24" :height="24"></icon>
+              <!-- <icon :icon="dev.icon" :width="24" :height="24"></icon> -->
+              <b-icon icon="cellphone" size="is-small" />
               {{ dev.name }}
-              <button
-                v-if="dev.type === 'remote' "
-                class="is-pulled-right remove button is-text"
+              <b-button
+                v-if="dev.removable"
+                class="remove"
+                icon-right="delete"
+                type="is-danger"
                 @click.stop.prevent="remove(dev.id)"
-              >
-                <b-icon icon="delete" type="is-danger"></b-icon>
-              </button>
+              ></b-button>
             </router-link>
           </li>
-          <li>
-            <a href="#">Add Remote ...</a>
+
+          <li class="add-remote">
+            <b-button expanded icon-left="plus-circle-outline">Connect Remote ...</b-button>
           </li>
-          <li v-if="!devices.length">
+
+          <li v-if="!loading && !devices.length">
             <b-icon icon="lan-disconnect" type="is-danger"></b-icon>No device found
           </li>
+        </ul>
+
+        <p class="menu-label">Support</p>
+        <ul class="menu-list">
+          <li><a target="_blank" href="https://github.com/chichou/grapefruit"><b-icon type="is-small" icon="github" />&nbsp;GitHub</a></li>
+          <li><a target="_blank" href="https://discordapp.com/invite/pwutZNx"><b-icon type="is-small" icon="discord" />&nbsp;Discord</a></li>
         </ul>
       </aside>
     </header>
@@ -47,10 +58,12 @@ import { Component, Vue } from 'vue-property-decorator'
 import Axios from 'axios'
 
 import Icon from '../components/Icon.vue'
+import Loading from '../components/Loading.vue'
 
 @Component({
   components: {
-    Icon
+    Icon,
+    Loading
   }
 })
 export default class Welcome extends Vue {
@@ -103,6 +116,23 @@ h1 {
 .device-list {
   canvas {
     margin-right: 4px;
+  }
+
+  .add-remote {
+    margin-top: 10px;
+  }
+
+  a {
+    display: flex;
+    align-items: center;
+  }
+
+  .icon {
+    margin-right: 4px;
+  }
+
+  button {
+    margin-left: auto;
   }
 }
 </style>
