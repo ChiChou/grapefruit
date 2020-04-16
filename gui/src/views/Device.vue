@@ -79,7 +79,6 @@
             </a>
           </div>
         </div>
-        <!-- <pre>{{ info }}</pre> -->
       </section>
     </section>
   </div>
