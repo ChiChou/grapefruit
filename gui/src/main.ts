@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import axios from 'axios'
 import pane from 'vue-splitpane'
-import Buefy from 'buefy'
+import Buefy, { ToastProgrammatic as Toast } from 'buefy'
 import 'buefy/dist/buefy.css'
 import '../bulmaswatch/darkly/bulmaswatch.scss'
 import '@mdi/font/css/materialdesignicons.css'
@@ -17,6 +17,13 @@ import router from './router'
 import store from './store'
 
 axios.defaults.baseURL = '/api'
+axios.interceptors.response.use(response => response, error => {
+  Toast.open({
+    type: 'is-danger',
+    message: error.response.data
+  })
+  return Promise.reject(error)
+})
 
 Vue.config.productionTip = false
 Vue.component('split-pane', pane)

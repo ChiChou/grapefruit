@@ -1,7 +1,7 @@
 <template>
   <div class="device-info">
-    <header v-if="apps.length" class="content sticky">
-      <h1>
+    <header class="content sticky">
+      <h1 v-if="lockdown">
         {{ info.DeviceName }}
         <a
           target="_blank"
@@ -9,8 +9,9 @@
           title="Download Firmware"
         >iOS {{ info.ProductVersion }} ({{ info.BuildVersion }})</a>
       </h1>
+      <h1 v-else>{{ device }}</h1>
 
-      <b-field grouped group-multiline>
+      <b-field grouped group-multiline v-if="lockdown">
         <div class="control">
           <b-taglist attached>
             <b-tag type="is-dark">Serial:</b-tag>
@@ -59,13 +60,18 @@
 
       <div v-else class="center has-text-centered">
         <Loading v-if="loading" class="animation" />
-        <h1 v-else class="error">Error: Failed to Retrieve Device Information</h1>
+        <h1 v-else-if="error" class="error"><b-icon icon="message-alert" size="is-medium"/><br>{{ error }}</h1>
       </div>
 
       <section v-if="device && lockdown" class="info-side">
         <div class="screenshot sticky">
           <div class="frame">
-            <span @click="screen = !screen" class="toggle" :class="{ active: screen }" title="Toggle Screen">
+            <span
+              @click="screen = !screen"
+              class="toggle"
+              :class="{ active: screen }"
+              title="Toggle Screen"
+            >
               <b-icon icon="arrow-left-drop-circle" size="is-medium" type="is-white" />
             </span>
             <a v-if="screen" :href="`/api/device/${device}/screen`" target="_blank">
@@ -99,8 +105,8 @@ export default class Device extends Vue {
   device = ''
   loading = false
   lockdown = false
-  valid = false
   screen = true
+  error = ''
 
   @Watch('$route', { immediate: true })
   private navigate(route: Route) {
@@ -111,6 +117,7 @@ export default class Device extends Vue {
     this.apps = []
     this.loading = true
     this.lockdown = false
+    this.error = ''
 
     Promise.all([
       Axios.get(`/device/${device}/info`)
@@ -125,11 +132,13 @@ export default class Device extends Vue {
       Axios.get(`/device/${device}/apps`)
         .then(({ data }) => {
           this.apps = data
-          this.valid = true
+          if (!data.length) {
+            this.error = 'Unable to retrieve apps from this device'
+          }
         })
-        .catch(() => {
+        .catch(e => {
+          this.error = e.response.data
           this.apps = []
-          this.valid = false
         })
     ]).finally(() => (this.loading = false))
   }
@@ -189,10 +198,16 @@ header {
   }
 }
 
+.main {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
 .flex-frame {
   display: flex;
   flex-direction: row;
-  min-height: 100vh;
+  flex: 1;
 }
 
 .info-side {
@@ -215,9 +230,9 @@ header {
         position: absolute;
         left: 0;
         margin-left: -40px;
-        opacity: .3;
+        opacity: 0.3;
         cursor: pointer;
-        transition: ease-out .2s opacity,transform;
+        transition: ease-out 0.2s opacity, transform;
 
         &.active {
           transform: rotate(180deg);
