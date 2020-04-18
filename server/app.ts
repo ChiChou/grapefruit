@@ -13,6 +13,7 @@ import { wrap } from './lib/device'
 import { InvalidDeviceError, VersionMismatchError } from './lib/error'
 import { Lockdown } from './lib/lockdown'
 import { URL } from 'url'
+import { exec } from 'child_process'
 
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -98,6 +99,25 @@ router
     } catch(e) {
       ctx.status = 404
       ctx.body = { status: 'failed', error: e.message }
+    }
+  })
+  .get('/update', async (ctx) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const task = new Promise((resolve, reject) => 
+      exec('npm view passionfruit version', (err, stdout, stderr) => 
+        err ? reject(err) : resolve(stdout.trimRight())
+      )
+    )
+
+    const current = require('../package.json').version
+    try {
+      const latest = await task
+      ctx.body = {
+        current,
+        latest
+      }
+    } catch(err) {
+      ctx.throw(500, `failed to check update\n${err}`)
     }
   })
 
