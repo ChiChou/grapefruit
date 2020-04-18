@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import axios from 'axios'
 import pane from 'vue-splitpane'
-import Buefy, { ToastProgrammatic as Toast } from 'buefy'
+import Buefy, { SnackbarProgrammatic as Snackbar } from 'buefy'
 import 'buefy/dist/buefy.css'
 import '../bulmaswatch/darkly/bulmaswatch.scss'
 import '@mdi/font/css/materialdesignicons.css'
@@ -18,9 +18,11 @@ import store from './store'
 
 axios.defaults.baseURL = '/api'
 axios.interceptors.response.use(response => response, error => {
-  Toast.open({
-    type: 'is-danger',
-    message: error.response.data
+  Snackbar.open({
+    type: 'is-warning',
+    queue: false,
+    message: error.response.data,
+    actionText: 'Dismiss'
   })
   return Promise.reject(error)
 })
