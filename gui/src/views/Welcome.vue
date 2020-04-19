@@ -64,6 +64,7 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 import Axios from 'axios'
+import * as io from 'socket.io-client'
 
 import Icon from '../components/Icon.vue'
 import Loading from '../components/Loading.vue'
@@ -80,16 +81,21 @@ export default class Welcome extends Vue {
   loading = false
 
   mounted() {
+    const socket = io.connect('/devices', { transports: ['websocket'] })
+    socket.on('deviceChanged', this.refresh)
+    this.refresh()
+  }
+
+  refresh() {
     this.loading = true
     Axios.get('/devices')
       .then(({ data }) => {
-        this.loading = false
         this.version = data.version
         this.devices = data.list
       })
       .catch(e => {
         this.$buefy.dialog.alert({
-          title: 'Failed to laod devices',
+          title: 'Failed to load devices',
           message: e.response.data,
           type: 'is-danger',
           hasIcon: true,
@@ -97,12 +103,10 @@ export default class Welcome extends Vue {
           ariaRole: 'alertdialog',
           ariaModal: true
         })
+      })
+      .finally(() => {
         this.loading = false
       })
-  }
-
-  remove() {
-    console.log('todo: implement me')
   }
 }
 </script>
@@ -118,8 +122,6 @@ export default class Welcome extends Vue {
     min-height: 100vh;
     height: 100%;
     background: rgba(0, 0, 0, 0.2);
-
-    position: -webkit-sticky; /* Safari */
     position: sticky;
     top: 0;
   }
