@@ -1,10 +1,11 @@
 /* eslint @typescript-eslint/no-use-before-define: 0 */
+/* eslint @typescript-eslint/no-explicit-any: 0 */
 
 import path from 'path'
 import fs from 'fs'
 import { promisify } from 'util'
 
-import { Session, Script, Device } from 'frida'
+import { Session, Script } from 'frida'
 
 const readFile = promisify(fs.readFile)
 
@@ -17,36 +18,45 @@ export async function connect(session: Session): Promise<Script> {
   return script
 }
 
-export interface RPC {
-  [key: string]: any;
-}
+class Context {
+  chain: string[] = []
+  constructor(public script: Script) { }
 
-export function proxy(script: Script): RPC {
-  const func = script.exports.invoke.bind(script.exports)
-  let chain = []
-
-  const handlers = {
-    get: recursiveGetter,
-    apply,
+  push(method: string): Context {
+    this.chain.push(method)
+    return this
   }
 
-  /* eslint @typescript-eslint/explicit-function-return-type: 0 */
-  function apply(_: Device, _thisArg, argArray) {
-    let name: string, args
-    if (chain.length) {
-      name = chain.join('/')
+  apply(argArray: any): Promise<any> {
+    let name: string, args: any
+    if (this.chain.length) {
+      name = this.chain.join('/')
       args = argArray
     } else {
       [name, ...args] = argArray
     }
-    chain = []
-    return func(name, args)
+    this.chain = []
+    return this.script.exports.invoke(name, args)
   }
+}
 
-  function recursiveGetter(target: Device, name: string) {
-    chain.push(name)
-    return new Proxy(target, handlers)
-  }
+export type RPC = {
+  [key: string]: RPC;
+  (...args: any): any;
+}
 
-  return new Proxy(func, handlers)
+export function proxy(script: Script): RPC {
+  const ctx = new Context(script)
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  const p = new Proxy(() => {}, {
+    get(target: any, name: string): RPC {
+      ctx.push(name)
+      return p
+    },
+    apply(target: any, thisArg: any, argArray?: any): any {
+      return ctx.apply(argArray)
+    }
+  })
+
+  return p
 }

@@ -23,15 +23,11 @@ describe('RPC', () => {
   })
 
   it('should handle basic RPC usage', async () => {
-    expect(await (rpc as Function)('cookies/list')).to.be.an('array')
+    expect(await rpc('cookies/list')).to.be.an('array')
 
     expect(await rpc.cookies.list()).to.be.an('array')
     expect(await rpc.checksec()).to.be.an('object')
       .and.to.has.keys(['entitlements', 'encrypted', 'arc', 'canary', 'pie'])
-
-    // expect(rpc.non.exist()).to.be.rejected
-    expect(() => delete rpc.symbol).to.be.throw
-    expect(() => rpc.foo = 'bar').to.be.throw
   })
 
   it('should support common modules', async () => {
@@ -51,7 +47,7 @@ describe('RPC', () => {
     expect(await rpc.sqlite.query(BOOKMARKS, 'select count(*) from bookmarks')).to.be.an('array').and.have.lengthOf(1)
     expect(await rpc.sqlite.data(BOOKMARKS, 'bookmarks')).to.be.an('object').and.have.keys(['header', 'data'])
 
-    await rpc.touchid.disable()
+    // await rpc.touchid.disable()
     expect(await rpc.keychain.list()).to.be.an('array')
 
     await rpc.syslog.stop()
