@@ -1,5 +1,5 @@
-import { AppNotFoundError, EarlyInstrumentError, DeviceNotFoundError } from './error'
-import { Device, Session, enumerateDevices } from 'frida'
+import { AppNotFoundError, EarlyInstrumentError, DeviceNotFoundError, InvalidDeviceError, VersionMismatchError } from './error'
+import { Device, Session, enumerateDevices, getUsbDevice, getDevice } from 'frida'
 import { retry } from './utils'
 
 import * as serialize from './serialize'
@@ -69,4 +69,17 @@ export class ExDevice {
 
 export function wrap(device: Device): ExDevice {
   return new ExDevice(device)
+}
+
+export function tryGetDevice(id: string): Promise<Device> {
+  try {
+    return id === 'usb' ? getUsbDevice() : getDevice(id)
+  } catch (ex) {
+    if (ex.message.startsWith('Unable to connect to remote frida-server'))
+      throw new InvalidDeviceError(id)
+    if (ex.message.startsWith('Unable to communicate with remote frida-server'))
+      throw new VersionMismatchError(ex.message)
+    else
+      throw ex
+  }
 }

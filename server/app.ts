@@ -9,8 +9,7 @@ import * as path from 'path'
 import * as frida from 'frida'
 
 import * as serialize from './lib/serialize'
-import { wrap } from './lib/device'
-import { InvalidDeviceError, VersionMismatchError } from './lib/error'
+import { wrap, tryGetDevice } from './lib/device'
 import { Lockdown } from './lib/lockdown'
 import { URL } from 'url'
 import { exec } from 'child_process'
@@ -26,18 +25,6 @@ const router = new Router({ prefix: '/api' })
 
 const mgr = frida.getDeviceManager()
 
-function tryGetDevice(id: string): Promise<frida.Device> {
-  try {
-    return id === 'usb' ? frida.getUsbDevice() : frida.getDevice(id)
-  } catch (ex) {
-    if (ex.message.startsWith('Unable to connect to remote frida-server'))
-      throw new InvalidDeviceError(id)
-    if (ex.message.startsWith('Unable to communicate with remote frida-server'))
-      throw new VersionMismatchError(ex.message)
-    else
-      throw ex
-  }
-}
 
 router
   .get('/devices', async (ctx) => {
