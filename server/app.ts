@@ -9,10 +9,13 @@ import * as path from 'path'
 import * as frida from 'frida'
 
 import * as serialize from './lib/serialize'
+import Channels from './lib/channels'
 import { wrap, tryGetDevice } from './lib/device'
 import { Lockdown } from './lib/lockdown'
+
 import { URL } from 'url'
 import { exec } from 'child_process'
+import { createServer } from 'http'
 
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -163,4 +166,9 @@ if (process.env.NODE_ENV === 'development') {
   app.use(logger())
 }
 
-app.listen(31337)
+const server = createServer(app.callback())
+const channels = new Channels(server)
+channels.connect()
+server.listen(31337)
+
+process.on('exit', () => channels.disconnect())

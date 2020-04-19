@@ -1,9 +1,10 @@
 import * as frida from 'frida'
-import http from 'http'
+import http, { maxHeaderSize } from 'http'
 
 import io from 'socket.io'
 import { wrap, tryGetDevice } from './device'
 import { connect, proxy } from './rpc'
+import { DevicesChangedHandler } from 'frida'
 
 const mgr = frida.getDeviceManager()
 
@@ -12,29 +13,30 @@ interface RPCPacket {
   args?: object[];
 }
 
-export default class Channel {
+export default class Channels {
   socket: io.Server
   devices: io.Namespace
   session: io.Namespace
+  changedSignal: DevicesChangedHandler
 
   constructor(srv: http.Server) {
     this.socket = io(srv)
     this.devices = this.socket.of('/devices')
     this.session = this.socket.of('/session')
-    
-    mgr.added.connect(this.added)
-    mgr.removed.connect(this.removed)
   }
 
-  added(device: frida.Device): void {
-    this.devices.emit('DEVICE_ADD', wrap(device).valueOf())
+  onchange(): void {
+    this.devices.emit('deviceChanged')
   }
 
-  removed(device: frida.Device): void {
-    this.devices.emit('DEVICE_ADD', wrap(device).valueOf())
+  disconnect(): void {
+    mgr.changed.disconnect(this.changedSignal)
   }
 
-  handleEvents(): void {
+  connect(): void {
+    this.changedSignal = this.onchange.bind(this)
+    mgr.changed.connect(this.changedSignal)
+
     this.session.on('connection', async (socket) => {
       const { device, bundle } = socket.handshake.query
       const dev = await tryGetDevice(device)
@@ -46,10 +48,8 @@ export default class Channel {
         socket.disconnect(true)
       })
 
-      socket.on('bye', () => {
-        
-      }).on('disconnect', () => {
-        // todo:
+      socket.on('disconnect', async () => {
+        await session.detach()
       }).on('kill', async (data, ack) => {
         const { pid } = session
         await session.detach()
@@ -78,11 +78,11 @@ export default class Channel {
       })
 
       agent.destroyed.connect(() => {
-        socket.emit('SCRIPT_DESTROYED')
+        socket.emit('scriptDestroyed')
         socket.disconnect(true)
       })
 
-      socket.emit('READY')
+      socket.emit('ready')
     })
   }
 }
