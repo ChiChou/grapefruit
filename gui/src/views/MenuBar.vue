@@ -5,29 +5,26 @@
         <hsc-menu-bar-item label="🍎">
           <hsc-menu-item label="About" />
           <hsc-menu-separator />
-          <hsc-menu-item label="GitHub" />
-          <hsc-menu-item label="Home">
-            <div slot="body" @mousedown.stop>
-              <a href="/">Home</a>
-            </div>
-          </hsc-menu-item>
+          <hsc-menu-item label="Disconnect Sesssion" @click="$router.push({ name: 'Apps', params: { device: $route.params.device }})"/>
         </hsc-menu-bar-item>
         <hsc-menu-bar-item label="File">
-          <hsc-menu-item label="New" />
-          <hsc-menu-item label="Open" />
+          <hsc-menu-item label="New REPL" />
           <hsc-menu-separator />
-          <hsc-menu-item label="Save" :disabled="true" />
-          <hsc-menu-item label="Export to">
-            <hsc-menu-item label="PDF" />
-            <hsc-menu-item label="HTML" />
-          </hsc-menu-item>
+          <hsc-menu-item label="Open Snippet" />
+          <hsc-menu-item label="Import Snippet" />
+          <hsc-menu-separator />
+          <hsc-menu-item label="Save Snippet" keybind="meta+s" />
+          <hsc-menu-item label="Export Snippet" />
         </hsc-menu-bar-item>
-        <hsc-menu-bar-item label="Edit">
-          <hsc-menu-item label="Undo" keybind="meta+z" />
+        <hsc-menu-bar-item label="Logs">
+          <hsc-menu-item label="Export" />
+          <hsc-menu-item label="Search" />
+        </hsc-menu-bar-item>
+        <hsc-menu-bar-item label="Help">
+          <hsc-menu-item label="GitHub Repo" @click="external('https://github.com/')"/>
+          <hsc-menu-item label="Documentation" @click="external('https://github.com/')"/>
           <hsc-menu-separator />
-          <hsc-menu-item label="Cut" keybind="meta+x" />
-          <hsc-menu-item label="Copy" keybind="meta+c" />
-          <hsc-menu-item label="Paste" keybind="meta+v" :disabled="true" />
+          <hsc-menu-item label="Check NPM Updates" @click="update()"/>
         </hsc-menu-bar-item>
       </hsc-menu-bar>
     </themed-menu>
@@ -65,7 +62,15 @@ import { Component, Vue } from 'vue-property-decorator'
     })
   }
 })
-export default class MenuBar extends Vue {}
+export default class MenuBar extends Vue {
+  external(url: string) {
+    window.open(url, '_blank')
+  }
+
+  update() {
+    // todo
+  }
+}
 </script>
 
 <style lang="scss" scoped>
