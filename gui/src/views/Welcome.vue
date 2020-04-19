@@ -32,19 +32,27 @@
             </router-link>
           </li>
 
-          <li class="add-remote">
-            <b-button expanded icon-left="plus-circle-outline">Connect Remote ...</b-button>
-          </li>
-
           <li v-if="!loading && !devices.length">
             <b-icon icon="lan-disconnect" type="is-danger"></b-icon>No device found
+          </li>
+
+          <li class="add-remote">
+            <b-button expanded icon-left="plus-circle-outline">Connect Remote ...</b-button>
           </li>
         </ul>
 
         <p class="menu-label">Support</p>
         <ul class="menu-list">
-          <li><a target="_blank" href="https://github.com/chichou/grapefruit"><b-icon type="is-small" icon="github" />&nbsp;GitHub</a></li>
-          <li><a target="_blank" href="https://discordapp.com/invite/pwutZNx"><b-icon type="is-small" icon="discord" />&nbsp;Discord</a></li>
+          <li>
+            <a target="_blank" href="https://github.com/chichou/grapefruit">
+              <b-icon type="is-small" icon="github" />&nbsp;GitHub
+            </a>
+          </li>
+          <li>
+            <a target="_blank" href="https://discordapp.com/invite/pwutZNx">
+              <b-icon type="is-small" icon="discord" />&nbsp;Discord
+            </a>
+          </li>
         </ul>
       </aside>
     </header>
@@ -73,11 +81,24 @@ export default class Welcome extends Vue {
 
   mounted() {
     this.loading = true
-    Axios.get('/devices').then(({ data }) => {
-      this.loading = false
-      this.version = data.version
-      this.devices = data.list
-    })
+    Axios.get('/devices')
+      .then(({ data }) => {
+        this.loading = false
+        this.version = data.version
+        this.devices = data.list
+      })
+      .catch(e => {
+        this.$buefy.dialog.alert({
+          title: 'Failed to laod devices',
+          message: e.response.data,
+          type: 'is-danger',
+          hasIcon: true,
+          icon: 'close-circle',
+          ariaRole: 'alertdialog',
+          ariaModal: true
+        })
+        this.loading = false
+      })
   }
 
   remove() {
