@@ -60,7 +60,12 @@
 
       <div v-else class="center has-text-centered">
         <Loading v-if="loading" class="animation" />
-        <h1 v-else-if="error" class="error"><b-icon icon="message-alert" size="is-medium"/><br>{{ error }}</h1>
+        <h1 v-else-if="error.title" class="error">
+          <b-icon icon="message-alert" size="is-medium" />
+          <br />
+          {{ error.title }}
+        </h1>
+        <pre v-if="error.stack">{{ error.stack }}</pre>
       </div>
 
       <section v-if="device && lockdown" class="info-side">
@@ -92,6 +97,11 @@ import Axios from 'axios'
 import Icon from '../components/Icon.vue'
 import Loading from '../components/Loading.vue'
 
+interface Failure {
+  title?: string;
+  stack?: string;
+}
+
 @Component({
   components: {
     Icon,
@@ -105,7 +115,7 @@ export default class Device extends Vue {
   loading = false
   lockdown = false
   screen = true
-  error = ''
+  error: Failure = {}
 
   @Watch('$route', { immediate: true })
   private navigate(route: Route) {
@@ -116,7 +126,7 @@ export default class Device extends Vue {
     this.apps = []
     this.loading = true
     this.lockdown = false
-    this.error = ''
+    this.error = {}
 
     Promise.all([
       Axios.get(`/device/${device}/info`)
@@ -132,11 +142,11 @@ export default class Device extends Vue {
         .then(({ data }) => {
           this.apps = data
           if (!data.length) {
-            this.error = 'Unable to retrieve apps from this device'
+            this.error.title = 'Unable to retrieve apps from this device'
           }
         })
         .catch(e => {
-          this.error = e.response.data
+          ;[this.error.title, this.error.stack] = e.response.data.split('\n', 1)
           this.apps = []
         })
     ]).finally(() => (this.loading = false))
@@ -153,7 +163,7 @@ export default class Device extends Vue {
 
 .center {
   margin: auto;
-  width: 50%;
+  min-width: 360px;
   .animation {
     margin: auto;
     width: 144px;
@@ -162,6 +172,10 @@ export default class Device extends Vue {
   h1.error {
     font-weight: 100;
     color: #ffffff73;
+
+    .icon {
+      margin-right: 4px;
+    }
   }
 }
 
