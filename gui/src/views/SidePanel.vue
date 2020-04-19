@@ -9,7 +9,7 @@
         </li>
         <li>
           <router-link to="runtime">
-            <b-icon size="is-medium" icon="hammer-wrench"></b-icon>
+            <b-icon size="is-medium" icon="code-braces"></b-icon>
           </router-link>
         </li>
         <li>

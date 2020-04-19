@@ -63,7 +63,7 @@ import Console from '../components/Console.vue'
   }
 })
 export default class Workspace extends Vue {
-  resizeEvent: Function
+  resizeEvent: Function = () => { /* placeholder */ }
 
   mounted() {
     const theConsole = this.$refs.console as Console
