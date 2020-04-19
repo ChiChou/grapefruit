@@ -2,96 +2,87 @@ import * as frida from 'frida'
 import http from 'http'
 
 import io from 'socket.io'
-import { wrap } from './device'
+import { wrap, tryGetDevice } from './device'
 import { connect, proxy } from './rpc'
 
-const socket = io()
-const devices = socket.of('/devices')
-const session = socket.of('/session')
-
 const mgr = frida.getDeviceManager()
-const connected = new Map()
 
-session.on('connection', async (socket) => {
-  const { device, bundle } = socket.handshake.query
-  const dev = await frida.getDevice(device)
-  const ex = wrap(dev)
-  const session = await ex.launch(bundle)
+interface RPCPacket {
+  method: string;
+  args?: object[];
+}
 
-  // no more enableJIT()
-  session.detached.connect((reason) => {
-    socket.emit('detached', reason)
-    socket.disconnect(true)
-  })
+export default class Channel {
+  socket: io.Server
+  devices: io.Namespace
+  session: io.Namespace
 
-  socket
-    .on('detach', () => socket.disconnect())
-    .on('kill', async (_data, ack) => {
-      const { pid } = session
-      await session.detach()
-      await dev.kill(pid)
-      ack(true)
-      socket.disconnect()
-    })
-    .on('disconnect', async () => session.detach())
-
-  const agent = await connect(session)
-  const rpc = proxy(agent)
-
-  socket.on('rpc', async (data, ack) => {
-    if (!(typeof data === 'object' && 'method' in data))
-      return
+  constructor(srv: http.Server) {
+    this.socket = io(srv)
+    this.devices = this.socket.of('/devices')
+    this.session = this.socket.of('/session')
     
-    const { method } = data
-    const args = data.args || []
+    mgr.added.connect(this.added)
+    mgr.removed.connect(this.removed)
+  }
 
-    try {
-      const result = await rpc(method, ...args)
-      ack({ status: 'ok', data: result })
-    } catch (err) {
-      ack({ status: 'error', error: `${err}` })
-      console.error('Uncaught RPC error', err.stack || err)
-      console.error('method:', method, 'args:', args)
-    }
-  })
+  added(device: frida.Device): void {
+    this.devices.emit('DEVICE_ADD', wrap(device).valueOf())
+  }
 
-  agent.destroyed.connect(() => {
-    socket.emit('SCRIPT_DESTROYED')
-    socket.disconnect(true)
-  })
+  removed(device: frida.Device): void {
+    this.devices.emit('DEVICE_ADD', wrap(device).valueOf())
+  }
 
-  // agent.message.connect((message, data) => {
-  //   if (message.type === 'error') {
-  //     console.error('error message from frida'.red)
-  //     console.error((message.stack || message).red)
-  //   } else if (message.type === 'send') {
-  //     // todo
-  //   }
-  // })
+  handleEvents(): void {
+    this.session.on('connection', async (socket) => {
+      const { device, bundle } = socket.handshake.query
+      const dev = await tryGetDevice(device)
+      const ex = wrap(dev)
+      const session = await ex.launch(bundle)
 
-  await agent.load()
+      session.detached.connect((reason) => {
+        socket.emit('detached', reason)
+        socket.disconnect(true)
+      })
 
-  socket.emit('ready')
-})
+      socket.on('bye', () => {
+        
+      }).on('disconnect', () => {
+        // todo:
+      }).on('kill', async (data, ack) => {
+        const { pid } = session
+        await session.detach()
+        await dev.kill(pid)
+        ack(true)
+        socket.disconnect()
+      })
 
-export function attach(server: http.Server): void {
-  socket.attach(server)
+      const agent = await connect(session)
+      const rpc = proxy(agent)
 
-  /* eslint @typescript-eslint/explicit-function-return-type: 0 */
-  const event = (tag: string) => (device: frida.Device) =>
-    devices.emit(tag, wrap(device).valueOf())
+      socket.on('rpc', async (data: RPCPacket, ack) => {
+        if (typeof data !== 'object' || typeof data.method !== 'string' || !Array.isArray(data.args))
+          return
+        
+        const { method, args } = data
+        try {
+          const result = await rpc(method, ...args)
+          ack({ status: 'ok', data: result })
+        } catch(err) {
+          ack({ status: 'error', error: `${err}` })
+          // todo: log
+          console.error('Uncaught RPC error', err.stack || err)
+          console.error('method:', method, 'args:', args)
+        }
+      })
 
-  const added = event('DEVICE_ADD')
-  const removed = event('DEVICE_REMOVE')
-  mgr.added.connect(added)
-  mgr.removed.connect(removed)
-  connected.set(server, [added, removed])
+      agent.destroyed.connect(() => {
+        socket.emit('SCRIPT_DESTROYED')
+        socket.disconnect(true)
+      })
+
+      socket.emit('READY')
+    })
+  }
 }
-
-export function detach(server): void {
-  const [added, removed] = connected.get(server)
-  mgr.added.disconnect(added)
-  mgr.removed.disconnect(removed)
-}
-
-export const broadcast = session.emit.bind(session)
