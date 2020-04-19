@@ -39,7 +39,7 @@ export default class Welcome extends Vue {
   }
 
   @Watch('icon')
-  private navigate(value: Icon, oldValue: Icon) {
+  private navigate() {
     this.paint()
   }
 
