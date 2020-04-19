@@ -30,13 +30,14 @@ router
   .get('/devices', async (ctx) => {
     const devices = await mgr.enumerateDevices()
 
-    // frida bug: on Windows, if you put the computer to sleep then wake it up, it generates duplicated devices
+    // frida bug: on Windows, if you put the computer to sleep then wake it up, 
+    // or re-plug the device, it generates duplicated devices
     const uniq = new Set()
     for (const dev of devices) {
       if (uniq.has(dev.id)) {
         ctx.status = 500
-        ctx.body = `Fatal Error: Duplicated devie detected. It's a known frida bug.
-You've probably awaken the computer from sleep. Please restart this server (not the PC) to solve it`
+        ctx.body = `Fatal Error: Duplicated devie detected. It's a known frida bug. 
+Please restart this server (not the PC) to solve it`
         return
       }
       uniq.add(dev.id)
