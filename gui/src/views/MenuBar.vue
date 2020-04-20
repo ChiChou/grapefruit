@@ -3,11 +3,13 @@
     <themed-menu class="menu">
       <hsc-menu-bar>
         <hsc-menu-bar-item label="🍎">
-          <hsc-menu-item label="About" />
-          <hsc-menu-separator />
-          <hsc-menu-item label="Disconnect Sesssion" @click="$router.push({ name: 'Apps', params: { device: $route.params.device }})"/>
+          <hsc-menu-item label="About" @click="isAboutDialogActive = true" />
         </hsc-menu-bar-item>
-        <hsc-menu-bar-item label="File">
+        <hsc-menu-bar-item label="Session">
+          <hsc-menu-item label="Detach" @click="detach" />
+          <hsc-menu-item label="Kill and Quit" @click="kill" />
+        </hsc-menu-bar-item>
+        <hsc-menu-bar-item label="Snippet">
           <hsc-menu-item label="New REPL" />
           <hsc-menu-separator />
           <hsc-menu-item label="Open Snippet" />
@@ -16,22 +18,42 @@
           <hsc-menu-item label="Save Snippet" keybind="meta+s" />
           <hsc-menu-item label="Export Snippet" />
         </hsc-menu-bar-item>
-        <hsc-menu-bar-item label="Logs">
+        <hsc-menu-bar-item label="Log">
           <hsc-menu-item label="Export" />
           <hsc-menu-item label="Search" />
         </hsc-menu-bar-item>
         <hsc-menu-bar-item label="Help">
-          <hsc-menu-item label="GitHub Repo" @click="external('https://github.com/')"/>
-          <hsc-menu-item label="Documentation" @click="external('https://github.com/')"/>
+          <hsc-menu-item label="GitHub Repo" @click="external('https://github.com/chichou/grapefruit')" />
+          <hsc-menu-item label="Documentation" @click="external('https://github.com/chichou/grapefruit')" />
           <hsc-menu-separator />
-          <hsc-menu-item label="Check NPM Updates" @click="update()"/>
+          <hsc-menu-item label="Check NPM Updates" @click="update()" />
         </hsc-menu-bar-item>
       </hsc-menu-bar>
     </themed-menu>
+
+    <b-modal :active.sync="isAboutDialogActive" :width="480" scroll="keep">
+      <div class="card has-text-centered">
+        <div class="card-image">
+          <img src="../assets/logo.dark.svg" alt="Passionfruit" class="image" width="300" style="margin: 40px auto" />
+        </div>
+        <div class="card-content">
+          <h2>Passionfruit @{{ version }}</h2>
+          <p>Runtime Application Instruments for iOS</p>
+          <hr>
+          <p>Brought to you by <a href="https://twitter.com/codecolorist" target="_blank">@CodeColorist</a></p>
+          <p>Built on <a href="https://vuejs.org/" target="_blank">Vue.js</a>,
+            <a href="https://frida.re/" target="_blank">frida</a>
+            and <a href="https://buefy.org/" target="_blanl">Buefy</a></p>
+        </div>
+      </div>
+    </b-modal>
   </menu>
 </template>
 
 <script lang="ts">
+import pkg from '../../../package.json'
+
+import Axios from 'axios'
 import { StyleFactory } from '@hscmap/vue-menu'
 import { Component, Vue } from 'vue-property-decorator'
 
@@ -63,12 +85,40 @@ import { Component, Vue } from 'vue-property-decorator'
   }
 })
 export default class MenuBar extends Vue {
+  isAboutDialogActive = false
+  version = pkg.version
+
   external(url: string) {
     window.open(url, '_blank')
   }
 
+  kill() {
+    this.ws('kill')
+    this.detach()
+  }
+
+  detach() {
+    this.$router.push({
+      name: 'Apps',
+      params: { device: this.$route.params.device }
+    })
+  }
+
   update() {
-    // todo
+    Axios.get('/update').then(({ data }) => {
+      const { current, latest } = data
+      if (current !== latest) {
+        this.$buefy.dialog.alert({
+          hasIcon: true,
+          icon: 'update',
+          type: 'is-success',
+          title: 'New version found',
+          message: `Newer version ${latest} found. You are on ${current}.
+For the limitation of web app, we don't provide automate update.<br>
+Please run <code>npm install -g passionfruit@${latest}</code> in your terminal manually.`
+        })
+      }
+    })
   }
 }
 </script>
