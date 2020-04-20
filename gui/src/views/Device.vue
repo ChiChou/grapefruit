@@ -69,19 +69,29 @@
       </div>
 
       <section v-if="device && lockdown" class="info-side">
-        <div class="screenshot sticky">
+        <div class="phone-screen sticky">
           <div class="frame">
-            <span
-              @click="screen = !screen"
-              class="toggle"
-              :class="{ active: screen }"
-              title="Toggle Screen"
-            >
-              <b-icon icon="arrow-left-drop-circle" size="is-medium" type="is-white" />
-            </span>
-            <a v-if="screen" :href="`/api/device/${device}/screen`" target="_blank">
-              <img v-if="device" :src="`/api/device/${device}/screen`" />
-            </a>
+            <div class="toolbar">
+              <b-button
+                size="is-medium"
+                type="is-dark"
+                icon-left="arrow-left-drop-circle"
+                class="toggle"
+                :class="{ active: screen }"
+                @click="screen = !screen"
+                title="Toggle ScreenShot"
+              />
+              <b-button
+                size="is-medium"
+                type="is-dark"
+                class="reload"
+                icon-left="reload"
+                v-if="screen"
+                @click="$refs.screen.refresh()"
+                title="Reload"
+              />
+            </div>
+            <ScreenShot :device="device" v-if="screen" ref="screen" />
           </div>
         </div>
       </section>
@@ -96,6 +106,7 @@ import Axios from 'axios'
 
 import Icon from '../components/Icon.vue'
 import Loading from '../components/Loading.vue'
+import ScreenShot from '../components/ScreenShot.vue'
 
 interface Failure {
   title?: string;
@@ -105,7 +116,8 @@ interface Failure {
 @Component({
   components: {
     Icon,
-    Loading
+    Loading,
+    ScreenShot
   }
 })
 export default class Device extends Vue {
@@ -226,7 +238,7 @@ header {
 .info-side {
   padding: 20px;
 
-  .screenshot {
+  .phone-screen {
     @media (max-width: 1800px) {
       top: 160px;
     }
@@ -235,43 +247,25 @@ header {
       top: 100px;
     }
 
-    .frame {
-      position: relative;
+    .toolbar {
+      display: block;
+      position: absolute;
+      left: 0;
+      margin-left: -50px;
 
-      .toggle {
-        display: block;
-        position: absolute;
-        left: 0;
-        margin-left: -40px;
-        opacity: 0.3;
+      .button {
         cursor: pointer;
-        transition: ease-out 0.2s opacity, transform;
-
-        &.active {
-          transform: rotate(180deg);
-        }
+        display: block;
+        margin-top: 10px;
+        transition: ease-out 0.2s all;
 
         &:hover {
           opacity: 1;
         }
       }
-    }
 
-    a {
-      display: block;
-      margin-bottom: 20px;
-
-      img {
-        border: 10px solid #000000ad;
-        border-radius: 20px;
-
-        @media (max-width: 1800px) {
-          width: 240px;
-        }
-
-        @media (min-width: 1801px) {
-          width: 320px;
-        }
+      .toggle.active {
+        transform: rotate(180deg);
       }
     }
   }
