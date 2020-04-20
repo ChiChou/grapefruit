@@ -18,11 +18,11 @@ export async function connect(session: Session): Promise<Script> {
   return script
 }
 
-class Context {
+class Lazy {
   chain: string[] = []
   constructor(public script: Script) { }
 
-  push(method: string): Context {
+  push(method: string): Lazy {
     this.chain.push(method)
     return this
   }
@@ -46,7 +46,7 @@ export type RPC = {
 }
 
 export function proxy(script: Script): RPC {
-  const ctx = new Context(script)
+  const ctx = new Lazy(script)
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   const p = new Proxy(() => {}, {
     get(target: any, name: string): RPC {
