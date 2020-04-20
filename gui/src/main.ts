@@ -13,6 +13,7 @@ import 'golden-layout/src/css/goldenlayout-dark-theme.css'
 import * as VueMenu from '@hscmap/vue-menu'
 
 import App from './App.vue'
+import RPC from './wsrpc'
 import router from './router'
 import store from './store'
 
@@ -32,6 +33,7 @@ Vue.component('split-pane', pane)
 Vue.use(Buefy)
 Vue.use(vgl)
 Vue.use(VueMenu)
+Vue.use(RPC, { router })
 
 new Vue({
   router,

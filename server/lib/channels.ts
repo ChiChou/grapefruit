@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as frida from 'frida'
-import http, { maxHeaderSize } from 'http'
+import http from 'http'
 
 import io from 'socket.io'
 import { wrap, tryGetDevice } from './device'
@@ -59,13 +60,10 @@ export default class Channels {
       })
 
       const agent = await connect(session)
+      await agent.load()
       const rpc = proxy(agent)
 
-      socket.on('rpc', async (data: RPCPacket, ack) => {
-        if (typeof data !== 'object' || typeof data.method !== 'string' || !Array.isArray(data.args))
-          return
-        
-        const { method, args } = data
+      socket.on('rpc', async (method: string, args: any[], ack) => {
         try {
           const result = await rpc(method, ...args)
           ack({ status: 'ok', data: result })
