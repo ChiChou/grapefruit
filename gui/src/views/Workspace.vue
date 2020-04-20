@@ -1,10 +1,16 @@
 <template>
   <div class="workspace">
-    <MenuBar />
+    <MenuBar ref="menu" />
     <main>
       <SidePanel />
 
-      <split-pane :min-percent="10" :default-percent="15" split="vertical" class="main-pane" @resize="resize">
+      <split-pane
+        :min-percent="10"
+        :default-percent="15"
+        split="vertical"
+        class="main-pane"
+        @resize="resize"
+      >
         <template slot="paneL">
           <div class="space space-sidebar">
             <router-view class="classes">Place Holder</router-view>
@@ -14,46 +20,55 @@
           <split-pane split="horizontal" :default-percent="80" :min-percent="20" @resize="resize">
             <template slot="paneL">
               <div class="editor-container">
-                <golden-layout class="windows" :showPopoutIcon="false" :showMaximiseIcon="false">
-                  <gl-row>
-                    <gl-component title="component1" closable="false">
-                      <h1>Component 1</h1>
-                    </gl-component>
-                    <gl-stack>
-                      <gl-component title="component2">
-                        <h1>Component 2</h1>
-                      </gl-component>
-                      <gl-component title="component3">
-                        <h1>Component 3</h1>
-                      </gl-component>
-                    </gl-stack>
-                  </gl-row>
-                </golden-layout>
+                <!-- todo: golden-layout -->
               </div>
             </template>
             <template slot="paneR">
-              <div class="space space-terminal"><Console ref="console"/></div>
+              <div class="space space-terminal">
+                <Console ref="console" />
+              </div>
             </template>
           </split-pane>
         </template>
       </split-pane>
     </main>
     <footer class="status">
-      <div class="connecting">
-        <b-icon icon="check-network" size="is-small"></b-icon>frida@12.8.20, iOS 13.3 - Messages
+      <b-dropdown aria-role="list" position="is-top-right">
+        <div class="ws item" :class="loading" slot="trigger" role="button">
+          <!-- todo: connect to disconnect -->
+          <span v-if="loading === 'connected'">
+            <b-icon icon="check-network" size="is-small"></b-icon>Connected
+          </span>
+          <span v-else-if="loading === 'connecting'">
+            <b-icon icon="loading" size="is-small" custom-class="mdi-spin"></b-icon>Connecting
+          </span>
+          <span v-else>
+            <b-icon icon="close-network-outline" size="is-small"></b-icon>Connection Lost
+          </span>
+        </div>
+        <b-dropdown-item aria-role="listitem" @click="$refs.menu.detach()">Detach</b-dropdown-item>
+        <b-dropdown-item aria-role="listitem" @click="$refs.menu.kill()">Stop</b-dropdown-item>
+      </b-dropdown>
+      <div class="app item">
+        <b-icon icon="play" size="is-small"></b-icon>
+        {{ $route.params.bundle }}
       </div>
     </footer>
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+import { Component, Vue, Watch } from 'vue-property-decorator'
 import debounce from 'debounce'
-import colors from 'ansi-colors'
+// import colors from 'ansi-colors'
 
 import MenuBar from './MenuBar.vue'
 import SidePanel from '../views/SidePanel.vue'
 import Console from '../components/Console.vue'
+import { Route } from 'vue-router'
+import { Terminal } from 'xterm'
+
+type State = 'connected' | 'connecting' | 'disconnected'
 
 @Component({
   components: {
@@ -63,21 +78,57 @@ import Console from '../components/Console.vue'
   }
 })
 export default class Workspace extends Vue {
-  resizeEvent: Function = () => { /* placeholder */ }
+  resizeEvent: Function = () => {
+    /* placeholder */
+  }
+
+  term?: Terminal
+  loading: State = 'connecting'
+  device?: string
+  bundle?: string
 
   mounted() {
     const theConsole = this.$refs.console as Console
     const { term } = theConsole
-
-    term.writeln(colors.cyan('Console Output'))
-    term.writeln(colors.white.bgMagenta('Okay'))
-    term.writeln(colors.redBright('Error'))
-    for (let i = 0; i < 100; i++) {
-      term.writeln(`plenty of logs: ${i}`)
-    }
-    term.write('Hello from \x1B[1;3;31mxterm.js\x1B[0m $ ')
-
+    this.term = term
     this.resizeEvent = debounce(theConsole.resize.bind(theConsole), 100)
+  }
+
+  @Watch('$route', { immediate: true })
+  private navigate(route: Route) {
+    const { device, bundle } = route.params
+
+    if (device !== this.device || bundle !== this.bundle) {
+      this.device = device
+      this.bundle = bundle
+      this.changed()
+    }
+  }
+
+  changed() {
+    this.loading = 'connecting'
+
+    // todo: vuex loading
+    this.rpcReady().then(async() => {
+      this.loading = 'connected'
+
+      const decoder = new TextDecoder('utf-8')
+      const buf = await this.$rpc.fs.text('/etc/passwd')
+
+      const { term } = this
+      if (!term) return
+      term.writeln(decoder.decode(buf).replace(/\n/g, '\r\n'))
+
+      const test = async(future: Promise<any>) =>
+        term.writeln(
+          JSON.stringify(await future, null, 4).replace(/\n/g, '\r\n')
+        )
+      test(this.$rpc.info.info())
+      test(this.$rpc.checksec())
+      test(this.$rpc.fs.ls('home'))
+    })
+
+    // todo: handle disconnection
   }
 
   resize() {
@@ -110,12 +161,29 @@ main {
 footer.status {
   font-size: 12px;
   background: #505050;
+  display: flex;
 
-  .connecting {
-    background: #068068;
+  .item {
     display: inline-block;
     padding: 2px 4px;
     color: #fff;
+  }
+
+  .ws {
+    cursor: pointer;
+
+    &.connected {
+      background: #068068;
+    }
+
+    &.connecting {
+      background: #dfdf13;
+      color: #111;
+    }
+
+    &.disconnected {
+      background: #ea4335;
+    }
   }
 }
 
@@ -156,5 +224,10 @@ footer.status {
     height: 100%;
     width: 100%;
   }
+}
+
+a.dropdown-item:hover, button.dropdown-item:hover {
+  background: #00000031;
+  color: #FFC107;
 }
 </style>
