@@ -13,20 +13,26 @@
           </router-link>
         </li>
         <li>
-          <router-link to="storage">
-            <b-icon size="is-medium" icon="safe-square-outline"></b-icon>
+          <router-link to="hook">
+            <b-icon size="is-medium" icon="bug-check-outline"></b-icon>
+          </router-link>
+        </li>
+        <li>
+          <router-link to="repl">
+            <b-icon size="is-medium" icon="code-greater-than"></b-icon>
           </router-link>
         </li>
         <li>
           <router-link to="files">
-            <b-icon size="is-medium" icon="folder-home-outline"></b-icon>
+            <b-icon size="is-medium" icon="apple-finder"></b-icon>
+          </router-link>
+        </li>
+        <li>
+          <router-link to="storage">
+            <b-icon size="is-medium" icon="safe-square-outline"></b-icon>
           </router-link>
         </li>
       </ul>
     </nav>
   </header>
 </template>
-
-<script>
-export default {}
-</script>

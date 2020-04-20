@@ -1,10 +1,8 @@
 <template>
   <menu>
+    <h1 @dblclick="external('https://www.youtube.com/watch?v=dQw4w9WgXcQ')"><b-icon icon="apple"/></h1>
     <themed-menu class="menu">
       <hsc-menu-bar>
-        <hsc-menu-bar-item label="🍎">
-          <hsc-menu-item label="About" @click="isAboutDialogActive = true" />
-        </hsc-menu-bar-item>
         <hsc-menu-bar-item label="Session">
           <hsc-menu-item label="Detach" @click="detach" />
           <hsc-menu-item label="Kill and Quit" @click="kill" />
@@ -23,10 +21,12 @@
           <hsc-menu-item label="Search" />
         </hsc-menu-bar-item>
         <hsc-menu-bar-item label="Help">
+          <hsc-menu-item label="About" @click="isAboutDialogActive = true" />
+          <hsc-menu-separator />
           <hsc-menu-item label="GitHub Repo" @click="external('https://github.com/chichou/grapefruit')" />
           <hsc-menu-item label="Documentation" @click="external('https://github.com/chichou/grapefruit')" />
-          <hsc-menu-separator />
-          <hsc-menu-item label="Check NPM Updates" @click="update()" />
+          <!-- <hsc-menu-separator />
+          <hsc-menu-item label="Check NPM Updates" @click="update()" /> -->
         </hsc-menu-bar-item>
       </hsc-menu-bar>
     </themed-menu>
@@ -151,8 +151,8 @@ menu {
 h1 {
   display: block;
   float: left;
-  line-height: 36px;
-  margin: 0 10px;
+  padding: 4px;
+  margin: 2px 2px 2px 10px;
   font-weight: 100;
 }
 </style>

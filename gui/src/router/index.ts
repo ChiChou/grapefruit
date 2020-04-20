@@ -5,10 +5,13 @@ import Workspace from '../views/Workspace.vue'
 import Welcome from '../views/Welcome.vue'
 
 import DeviceView from '../views/Device.vue'
+
 import Storage from '../views/panels/Storage.vue'
 import Files from '../views/panels/Files.vue'
 import Runtime from '../views/panels/Runtime.vue'
 import General from '../views/panels/General.vue'
+import Hook from '../views/panels/Hook.vue'
+import REPL from '../views/panels/REPL.vue'
 
 Vue.use(VueRouter)
 
@@ -42,6 +45,14 @@ const routes = [
       path: 'general',
       name: 'General',
       component: General
+    }, {
+      path: 'hook',
+      name: 'Hook',
+      component: Hook
+    }, {
+      path: 'repl',
+      name: 'REPL',
+      component: REPL
     }]
   }
 ]
