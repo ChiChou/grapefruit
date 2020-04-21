@@ -5,7 +5,8 @@
       <hsc-menu-bar>
         <hsc-menu-bar-item label="Session">
           <hsc-menu-item label="Detach" @click="detach" />
-          <hsc-menu-item label="Kill and Quit" @click="kill" />
+          <hsc-menu-separator />
+          <hsc-menu-item label="Kill" @click="kill" />
         </hsc-menu-bar-item>
         <hsc-menu-bar-item label="Snippet">
           <hsc-menu-item label="New REPL" />
@@ -26,7 +27,7 @@
           <hsc-menu-item label="GitHub Repo" @click="external('https://github.com/chichou/grapefruit')" />
           <hsc-menu-item label="Documentation" @click="external('https://github.com/chichou/grapefruit')" />
           <!-- <hsc-menu-separator />
-          <hsc-menu-item label="Check NPM Updates" @click="update()" /> -->
+        <hsc-menu-item label="Check NPM Updates" @click="update()" /> -->
         </hsc-menu-bar-item>
       </hsc-menu-bar>
     </themed-menu>
