@@ -40,9 +40,14 @@ export default class Channels {
 
     this.session.on('connection', async (socket) => {
       const { device, bundle } = socket.handshake.query
-      const dev = await tryGetDevice(device)
-      const ex = wrap(dev)
-      const session = await ex.launch(bundle)
+      let dev, session
+      try {
+        dev = await tryGetDevice(device)
+        session = await wrap(dev).launch(bundle)
+      } catch(e) {
+        socket.emit('exception', e.toString())
+        socket.disconnect()
+      }
 
       session.detached.connect((reason) => {
         socket.emit('detached', reason)
