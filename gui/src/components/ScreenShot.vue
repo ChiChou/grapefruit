@@ -22,7 +22,7 @@ import Loading from '../components/Loading.vue'
 export default class Device extends Vue {
   loading = false
   fail = false
-  url?: string
+  url?: string = ''
 
   @Prop()
   device?: string;
