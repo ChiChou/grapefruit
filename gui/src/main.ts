@@ -6,8 +6,6 @@ import 'buefy/dist/buefy.css'
 import '../bulmaswatch/darkly/bulmaswatch.scss'
 import '@mdi/font/css/materialdesignicons.css'
 
-// eslint-disable-next-line
-import vgl from 'vue-golden-layout'
 import 'golden-layout/src/css/goldenlayout-dark-theme.css'
 
 import * as VueMenu from '@hscmap/vue-menu'
@@ -31,7 +29,6 @@ axios.interceptors.response.use(response => response, error => {
 Vue.config.productionTip = false
 Vue.component('split-pane', pane)
 Vue.use(Buefy)
-Vue.use(vgl)
 Vue.use(VueMenu)
 Vue.use(RPC, { router })
 
