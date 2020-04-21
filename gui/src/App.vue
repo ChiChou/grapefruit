@@ -10,6 +10,10 @@ body {
   padding: 0;
 }
 
+html.no-scroll {
+  overflow-y: hidden;
+}
+
 #app {
   font-family: sans-serif;
   -webkit-font-smoothing: antialiased;
