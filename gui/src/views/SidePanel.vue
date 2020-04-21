@@ -31,3 +31,8 @@
     </nav>
   </header>
 </template>
+
+<script>
+// supress linter error
+export default {}
+</script>
