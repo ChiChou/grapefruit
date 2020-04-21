@@ -6,7 +6,6 @@ import Welcome from '../views/Welcome.vue'
 
 import DeviceView from '../views/Device.vue'
 
-import Storage from '../views/panels/Storage.vue'
 import Files from '../views/panels/Files.vue'
 import Runtime from '../views/panels/Runtime.vue'
 import General from '../views/panels/General.vue'
@@ -30,10 +29,6 @@ const routes = [
     name: 'Workspace',
     component: Workspace,
     children: [{
-      path: 'storage',
-      name: 'Storage',
-      component: Storage
-    }, {
       path: 'files',
       name: 'Files',
       component: Files
