@@ -1,9 +1,33 @@
 import { valueOf } from '../lib/dict'
 import { NSTemporaryDirectory, NSHomeDirectory } from '../lib/foundation'
 
-const { NSBundle, NSUserDefaults } = ObjC.classes
+const { NSBundle, NSUserDefaults, UIImage } = ObjC.classes
 
 type Info = { [key: string]: any }
+
+export function icon(): ArrayBuffer {
+  const UIImagePNGRepresentation = new NativeFunction(
+    Module.findExportByName('UIKit', 'UIImagePNGRepresentation')!,
+    'pointer',
+    ['pointer']
+  )
+
+  const fail = new ArrayBuffer(0)
+  const dict = NSBundle.mainBundle().infoDictionary()
+  const icons = dict.objectForKey_('CFBundleIcons')
+  if (!icons) return fail
+  const primary = icons.objectForKey_('CFBundlePrimaryIcon')
+  if (!primary) return fail
+  const files = primary.objectForKey_('CFBundleIconFiles')
+  if (!files) return fail
+  const name = files.lastObject()
+  if (!name) return fail
+  const img = UIImage.imageNamed_(name)
+  const data = UIImagePNGRepresentation(img) as NativePointer
+  if (data.isNull()) return fail
+  const nsdata = new ObjC.Object(data)
+  return ptr(nsdata.bytes()).readByteArray(nsdata.length())!
+}
 
 export function info(): Info {
   const mainBundle = NSBundle.mainBundle()
@@ -33,14 +57,21 @@ export function info(): Info {
   }
 
   const READABLE_NAME_MAPPING = {
-    name: 'CFBundleDisplayName',
     version: 'CFBundleVersion',
     semVer: 'CFBundleShortVersionString',
     minOS: 'MinimumOSVersion'
   }
 
   for (const [key, label] of Object.entries(READABLE_NAME_MAPPING))
-    result[key] = json[label] || 'N/A'
+    result[key] = json[label] || null
+
+  if ('CFBundleDisplayName' in json) {
+    result.name = json['CFBundleDisplayName']
+  } else if ('CFBundleName' in json) {
+    result.name = json['CFBundleName']
+  } else if ('CFBundleAlternateNames' in json) {
+    result.name = json['CFBundleAlternateNames'][0]
+  }
 
   return result
 }
