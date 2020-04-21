@@ -27,11 +27,6 @@
             <b-icon size="is-medium" icon="apple-finder"></b-icon>
           </router-link>
         </li>
-        <li>
-          <router-link to="storage">
-            <b-icon size="is-medium" icon="safe-square-outline"></b-icon>
-          </router-link>
-        </li>
       </ul>
     </nav>
   </header>
