@@ -88,10 +88,18 @@ export default class Workspace extends Vue {
   bundle?: string
 
   mounted() {
-    const theConsole = this.$refs.console as Console
-    const { term } = theConsole
+    document.querySelector('html')!.classList.add('no-scroll')
+
+    const { term } = this.$refs.console as Console
     this.term = term
-    this.resizeEvent = debounce(theConsole.resize.bind(theConsole), 100)
+    this.resizeEvent = debounce(this.updateSize, 100)
+  created() {
+    window.addEventListener('resize', this.resize)
+  }
+  beforeDestroy() {
+    document.querySelector('html')!.classList.remove('no-scroll')
+    window.removeEventListener('resize', this.resize)
+    if (this.layout) this.layout.destroy()
   }
 
   @Watch('$route', { immediate: true })
@@ -129,6 +137,14 @@ export default class Workspace extends Vue {
     })
 
     // todo: handle disconnection
+  }
+
+  updateSize() {
+    (this.$refs.console as Console).resize()
+
+    if (!this.layout) return
+    const container = this.$refs.container as HTMLDivElement
+    this.layout.updateSize(container.clientWidth, container.clientHeight)
   }
 
   resize() {
