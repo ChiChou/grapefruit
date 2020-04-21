@@ -26,7 +26,24 @@ const ctx: Context = {}
 
 class Lazy {
   chain: string[] = []
-  constructor(public socket: SocketIOClient.Socket) { }
+  ready = false
+  pending: Function[] = []
+
+  constructor(public socket: SocketIOClient.Socket) {
+    socket.on('ready', () => {
+      this.ready = true
+      this.pending.forEach(f => f())
+      this.pending = []
+    })
+  }
+
+  ensureReady(): Promise<boolean> {
+    if (this.ready) return Promise.resolve(true)
+    return new Promise((resolve) =>
+      this.pending.push(() =>
+        resolve(true)
+      ))
+  }
 
   push(name: string): Lazy {
     this.chain.push(name)
@@ -42,22 +59,24 @@ class Lazy {
       [name, ...args] = argArray
     }
     this.chain = []
-    return new Promise((resolve, reject) => {
-      let ok = false
-      this.socket.emit('rpc', name, args, (response: RpcResponse) => {
-        if (response.status === 'ok') {
-          ok = true
-          resolve(response.data)
-        } else {
-          reject(new Error(response.error))
-        }
-      })
+    return this.ensureReady().then(() => {
+      return new Promise((resolve, reject) => {
+        let ok = false
+        this.socket.emit('rpc', name, args, (response: RpcResponse) => {
+          if (response.status === 'ok') {
+            ok = true
+            resolve(response.data)
+          } else {
+            reject(new Error(response.error))
+          }
+        })
 
-      setTimeout(() => {
-        if (!ok) {
-          reject(new Error('Request timed out'))
-        }
-      }, 5000)
+        setTimeout(() => {
+          if (!ok) {
+            reject(new Error('Request timed out'))
+          }
+        }, 5000)
+      })
     })
   }
 }
@@ -89,11 +108,12 @@ function install(V: typeof Vue, opt: Options) {
       console.debug('connect')
       const { device, bundle } = to.params
       const socket = io.connect('/session', { query: { device, bundle } })
+
+      V.prototype.$rpc = wrap(socket)
+      V.prototype.ws = (event: string, ...args: any) =>
+        new Promise((resolve) =>
+          ctx.socket?.emit(event, args, resolve))
       socket.on('ready', async() => {
-        V.prototype.$rpc = wrap(socket)
-        V.prototype.ws = (event: string, ...args: any) =>
-          new Promise((resolve) =>
-            ctx.socket?.emit(event, args, resolve))
         pending.forEach(cb => cb())
         pending.clear()
       })
