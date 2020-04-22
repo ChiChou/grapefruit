@@ -18,7 +18,7 @@
       <li>
         <b-icon icon="cookie" />Cookies
       </li>
-      <li>
+      <li @click="go('KeyChain')">
         <b-icon icon="folder-key-outline" />KeyChain
       </li>
       <li>
@@ -44,12 +44,12 @@ import { Component, Vue } from 'vue-property-decorator'
 
 @Component
 export default class General extends Vue {
-  open(component: string, title: string, props?: object) {
-    this.$root.$emit('openTab', component, title, props)
+  open(component: string, title?: string, props?: object) {
+    this.$root.$emit('openTab', component, title || component, props)
   }
 
-  go(component: string, title: string, props?: object) {
-    this.$root.$emit('switchTab', component, title, props)
+  go(component: string, title?: string, props?: object) {
+    this.$root.$emit('switchTab', component, title || component, props)
   }
 }
 </script>
