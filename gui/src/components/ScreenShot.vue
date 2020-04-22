@@ -10,8 +10,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
-
+import { Vue, Component, Prop } from 'vue-property-decorator'
 import Loading from '../components/Loading.vue'
 
 @Component({
@@ -19,22 +18,28 @@ import Loading from '../components/Loading.vue'
     Loading
   }
 })
-export default class Device extends Vue {
+export default class ScreenShot extends Vue {
   loading = false
   fail = false
-  url?: string = ''
+  token = Math.random()
+
+  @Prop({ default: true })
+  frame?: boolean
 
   @Prop()
-  device?: string;
+  device!: string;
 
-  @Watch('device')
   refresh() {
-    this.loading = true
-    this.fail = false
-    this.url = `/api/device/${this.device}/screen?t=` + Math.random()
+    this.token = Math.random()
+  }
+
+  get url() {
+    return `/api/device/${this.device}/screen?t=${this.token}`
   }
 
   mounted() {
+    this.loading = true
+    this.fail = false
     this.refresh()
   }
 
