@@ -47,6 +47,7 @@ export default class Channels {
       } catch(e) {
         socket.emit('exception', e.toString())
         socket.disconnect()
+        return
       }
 
       session.detached.connect((reason) => {
