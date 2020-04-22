@@ -6,7 +6,9 @@ import 'buefy/dist/buefy.css'
 import '../bulmaswatch/darkly/bulmaswatch.scss'
 import '@mdi/font/css/materialdesignicons.css'
 
-import 'golden-layout/src/css/goldenlayout-dark-theme.css'
+import 'golden-layout/src/css/goldenlayout-base.css'
+// import 'golden-layout/src/css/goldenlayout-dark-theme.css'
+import './golden-layout-theme-dark.scss'
 
 import * as VueMenu from '@hscmap/vue-menu'
 
