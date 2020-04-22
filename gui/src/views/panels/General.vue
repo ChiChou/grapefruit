@@ -15,7 +15,7 @@
 
     <p class="menu-label">Storage</p>
     <ul class="menu-list">
-      <li>
+      <li @click="go('Cookies')">
         <b-icon icon="cookie" />Cookies
       </li>
       <li @click="go('KeyChain')">
