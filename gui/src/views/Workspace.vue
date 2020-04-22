@@ -63,7 +63,7 @@ import debounce from 'debounce'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import jQuery from 'jquery'
 // import colors from 'ansi-colors'
-import GoldenLayout, { Container, ContentItem, ComponentConfig, Tab, ItemConfigType } from 'golden-layout'
+import GoldenLayout, { Container, ContentItem, ComponentConfig } from 'golden-layout'
 
 import MenuBar from './MenuBar.vue'
 import SidePanel from '../views/SidePanel.vue'
@@ -148,7 +148,7 @@ export default class Workspace extends Vue {
       const FrameClass = Vue.extend(Frame)
       const v = new FrameClass({ propsData })
       v.$mount()
-      container.setTitle(state.title)
+      container.setTitle(title)
       container.getElement().append(v.$el)
       tabsSingleton.set(component, container.parent)
     })
@@ -200,8 +200,9 @@ export default class Workspace extends Vue {
     this.$root.$on('switchTab', (component: string, title: string, props?: object) => {
       const max = findMaximised()
       if (max) max.toggleMaximise()
-      if (tabsSingleton.has(component)) {
-        const item = tabsSingleton.get(component)
+
+      const item = tabsSingleton.get(component)
+      if (item) {
         const { parent } = item
         if (parent !== max && !parent.isMaximised) parent.toggleMaximise()
         parent.setActiveContentItem(item)

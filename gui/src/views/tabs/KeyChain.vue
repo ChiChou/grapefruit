@@ -48,7 +48,7 @@ import Base from './Base.vue'
 
 @Component({
   filters: {
-    trim(val, prefix) {
+    trim(val: string | undefined, prefix: string) {
       if (!val) return ''
       return val.indexOf(prefix) === 0 ? val.substr(prefix.length) : val
     }
@@ -60,7 +60,7 @@ export default class KeyChain extends Base {
   faceid = false
 
   @Watch('faceid')
-  toggleFaceID(val, old) {
+  toggleFaceID(val: boolean, old: boolean) {
     if (val !== old) this.load(val)
   }
 
@@ -71,13 +71,14 @@ export default class KeyChain extends Base {
       'negative', 'customIcon', 'accessControl', 'generic']
     keys.forEach(key => { this.columns[key] = key.replace(/([a-z](?=[A-Z]))/g, '$1 ') })
 
+    this.columns = columns
     this.load()
   }
 
   load(faceid = false) {
     this.loading = true
     this.$rpc.keychain.list(faceid)
-      .then(data => { this.keychain = data })
+      .then((data: object[]) => { this.keychain = data })
       .finally(() => { this.loading = false })
   }
 }

@@ -26,13 +26,17 @@
 </template>
 
 <script lang="ts">
-import { Component, Watch } from 'vue-property-decorator'
+import { Component } from 'vue-property-decorator'
 import Base from './Base.vue'
 
 interface Url {
   name: string;
   schemes: string[];
   role: string;
+}
+
+interface Response {
+  urls: Url[];
 }
 
 @Component
@@ -46,15 +50,15 @@ export default class URLTab extends Base {
     this.loading = true
     this.$rpc.info
       .info()
-      .then(({ urls }) => {
-        this.urls = urls
+      .then((data: Response) => {
+        this.urls = data.urls
       })
       .finally(() => {
         this.loading = false
       })
   }
 
-  test(scheme) {
+  test(scheme: string) {
     this.payload = `${scheme}://`;
     (this.$refs.input as HTMLInputElement).focus()
   }
