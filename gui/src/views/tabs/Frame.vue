@@ -22,6 +22,7 @@ import UIDump from './UIDump.vue'
 import Info from './Info.vue'
 import Url from './URL.vue'
 import KeyChain from './KeyChain.vue'
+import Cookies from './BinaryCookie.vue'
 
 import Loading from '../../components/Loading.vue'
 
@@ -32,6 +33,7 @@ import { Component, Vue, Prop } from 'vue-property-decorator'
     Loading,
     Url,
     KeyChain,
+    Cookies,
     TextViewer,
     CheckSec,
     UIDump,
