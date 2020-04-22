@@ -10,7 +10,7 @@
           </div>
           <div class="media-content">
             <p class="title is-4">{{ info.name }}</p>
-            <p class="subtitle is-6">{{ info.semVer }} <span class="has-text-light">{{ info.id }}</span></p>
+            <p class="subtitle is-6">{{ info.id }} <span class="has-text-darker">{{ info.semVer }}</span></p>
           </div>
         </div>
       </div>
@@ -19,6 +19,8 @@
     <dl>
       <dt>Container</dt><dd>{{ info.home }}</dd>
       <dt>Temporary Directory</dt><dd>{{ info.tmp }}</dd>
+      <dt>Installation</dt><dd>{{ info.bundle }}</dd>
+      <dt>Executable</dt><dd>{{ info.binary }}</dd>
       <dt>Mininal OS Requirement</dt><dd>{{ info.minOS }}</dd>
       <dt>Info.plist</dt>
       <dd>
