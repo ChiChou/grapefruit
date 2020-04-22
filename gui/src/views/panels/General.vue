@@ -2,14 +2,14 @@
   <aside class="menu">
     <p class="menu-label">General</p>
     <ul class="menu-list">
-      <li @click="open('CheckSec')">
+      <li @click="go('Info', 'Basic Information')">
+        <b-icon icon="information-outline" />Basic
+      </li>
+      <li @click="go('CheckSec', 'Binary Protection & Entitlements')">
         <b-icon icon="briefcase-check" />CheckSec
       </li>
-      <li @click="open('Url')">
+      <li @click="go('Url', 'URL Schemes')">
         <b-icon icon="link-variant" />URL Schemes
-      </li>
-      <li @click="open('Info', {})">
-        <b-icon icon="information-outline" />Info PList
       </li>
     </ul>
 
@@ -28,10 +28,10 @@
 
     <p class="menu-label">Inspector</p>
     <ul class="menu-list">
-      <li>
+      <li @click="open('SnapShot', `Screenshot - ${new Date().toLocaleString()}`, { device: $route.params.device })">
         <b-icon icon="camera" />ScreenShot
       </li>
-      <li>
+      <li @click="open('UIDump', `UI Dump - ${new Date().toLocaleString()}`)">
         <b-icon icon="magnify-scan" />UI Dump
       </li>
     </ul>
@@ -43,9 +43,13 @@
 import { Component, Vue } from 'vue-property-decorator'
 
 @Component
-export default class MenuBar extends Vue {
-  open(component: string, props?: object) {
-    this.$root.$emit('openTab', component, props)
+export default class General extends Vue {
+  open(component: string, title: string, props?: object) {
+    this.$root.$emit('openTab', component, title, props)
+  }
+
+  go(component: string, title: string, props?: object) {
+    this.$root.$emit('switchTab', component, title, props)
   }
 }
 </script>
@@ -62,6 +66,9 @@ export default class MenuBar extends Vue {
   color: #aaa;
   transition: ease-in 0.2s background-color, color;
   text-shadow: 1px 1px 2px #00000030;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 
   .icon {
     margin-right: 8px;
