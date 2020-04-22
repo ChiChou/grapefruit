@@ -21,6 +21,7 @@ import SnapShot from './SnapShot.vue'
 import UIDump from './UIDump.vue'
 import Info from './Info.vue'
 import Url from './URL.vue'
+import KeyChain from './KeyChain.vue'
 
 import Loading from '../../components/Loading.vue'
 
@@ -30,6 +31,7 @@ import { Component, Vue, Prop } from 'vue-property-decorator'
   components: {
     Loading,
     Url,
+    KeyChain,
     TextViewer,
     CheckSec,
     UIDump,
