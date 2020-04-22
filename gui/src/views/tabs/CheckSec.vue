@@ -1,6 +1,7 @@
 <template>
   <div class="pad">
     <section class="content">
+      <h2>Binary Protections</h2>
       <b-field grouped group-multiline>
         <div class="control">
           <b-taglist attached>
@@ -28,7 +29,7 @@
         </div>
       </b-field>
 
-      <p>Entitlements</p>
+      <h2>Entitlements</h2>
       <data-field class="plist dark" :depth="0" :field="{ value: info.entitlements }" />
     </section>
   </div>

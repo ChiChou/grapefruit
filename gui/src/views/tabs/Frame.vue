@@ -66,6 +66,12 @@ export default class Frame extends Vue {
 
     &.pad {
       padding: 20px;
+
+      > h1 {
+        font-weight: 100;
+        margin: 0 0 20px 0;
+        font-size: 2rem;
+      }
     }
   }
 }
