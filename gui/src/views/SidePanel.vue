@@ -4,27 +4,27 @@
       <ul>
         <li>
           <router-link to="general">
-            <b-icon size="is-medium" icon="view-dashboard"></b-icon>
+            <b-icon size="is-medium" icon="view-dashboard" />
           </router-link>
         </li>
         <li>
           <router-link to="runtime">
-            <b-icon size="is-medium" icon="code-braces"></b-icon>
+            <b-icon size="is-medium" icon="code-braces" />
           </router-link>
         </li>
         <li>
           <router-link to="hook">
-            <b-icon size="is-medium" icon="bug-check-outline"></b-icon>
+            <b-icon size="is-medium" icon="bug-check-outline" />
           </router-link>
         </li>
         <li>
           <router-link to="repl">
-            <b-icon size="is-medium" icon="code-greater-than"></b-icon>
+            <b-icon size="is-medium" icon="code-greater-than" />
           </router-link>
         </li>
         <li>
           <router-link to="files">
-            <b-icon size="is-medium" icon="apple-finder"></b-icon>
+            <b-icon size="is-medium" icon="apple-finder" />
           </router-link>
         </li>
       </ul>

@@ -33,7 +33,7 @@
           </li>
 
           <li v-if="!loading && !devices.length">
-            <b-icon icon="lan-disconnect" type="is-danger"></b-icon>No device found
+            <b-icon icon="lan-disconnect" type="is-danger" />No device found
           </li>
 
           <li class="add-remote">

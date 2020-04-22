@@ -37,20 +37,20 @@
       <b-dropdown aria-role="list" position="is-top-right">
         <div class="ws item" :class="loading" slot="trigger" role="button">
           <span v-if="loading === 'connected'">
-            <b-icon icon="check-network" size="is-small"></b-icon>Connected
+            <b-icon icon="check-network" size="is-small" />Connected
           </span>
           <span v-else-if="loading === 'connecting'">
-            <b-icon icon="loading" size="is-small" custom-class="mdi-spin"></b-icon>Connecting
+            <b-icon icon="loading" size="is-small" custom-class="mdi-spin" />Connecting
           </span>
           <span v-else>
-            <b-icon icon="close-network-outline" size="is-small"></b-icon>Connection Lost
+            <b-icon icon="close-network-outline" size="is-small" />Connection Lost
           </span>
         </div>
         <b-dropdown-item aria-role="listitem" @click="$refs.menu.detach()">Detach</b-dropdown-item>
         <b-dropdown-item aria-role="listitem" @click="$refs.menu.kill()">Stop</b-dropdown-item>
       </b-dropdown>
       <div class="app item">
-        <b-icon icon="play" size="is-small"></b-icon>
+        <b-icon icon="play" size="is-small" />
         {{ $route.params.bundle }}
       </div>
     </footer>
