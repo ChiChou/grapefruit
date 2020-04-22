@@ -27,7 +27,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Watch } from 'vue-property-decorator'
+import { Component } from 'vue-property-decorator'
 import Base from './Base.vue'
 
 interface Cookie {
@@ -45,7 +45,7 @@ export default class CookieTab extends Base {
   mounted() {
     this.loading = true
     this.$rpc.cookies.list()
-      .then((data) => { this.cookies = data })
+      .then((data: Cookie[]) => { this.cookies = data })
       .finally(() => { this.loading = false })
   }
 }
