@@ -1,6 +1,10 @@
 <template>
   <div>
-    <b-checkbox class="authenticator" :disabled="loading" v-model="faceid">Authenticate with FaceID or TouchID</b-checkbox>
+    <b-checkbox
+      class="authenticator"
+      :disabled="loading"
+      v-model="faceid"
+    >Authenticate with FaceID or TouchID</b-checkbox>
 
     <b-table :data="keychain" narrowed hasDetails :loading="loading" default-sort="clazz" detailed>
       <template slot-scope="props">
@@ -16,7 +20,12 @@
           <code class="break-all">{{ props.row.data }}</code>
         </b-table-column>
 
-        <b-table-column field="accessibleAttribute" label="Accessible Attribute" width="180" sortable>
+        <b-table-column
+          field="accessibleAttribute"
+          label="Accessible Attribute"
+          width="180"
+          sortable
+        >
           <b-tag type="is-info">{{ props.row.accessibleAttribute | trim('kSecAttrAccessible') }}</b-tag>
         </b-table-column>
       </template>
@@ -31,7 +40,6 @@
               </dl>
             </li>
           </ul>
-
         </article>
       </template>
 
@@ -46,6 +54,30 @@
 import { Component, Watch } from 'vue-property-decorator'
 import Base from './Base.vue'
 
+const keys = [
+  'service',
+  'label',
+  'creation',
+  'modification',
+  'description',
+  'entitlementGroup',
+  'comment',
+  'creator',
+  'type',
+  'scriptCode',
+  'alias',
+  'invisible',
+  'negative',
+  'customIcon',
+  'accessControl',
+  'generic'
+]
+
+const columns: { [key: string]: string } = {}
+keys.forEach(key => {
+  columns[key] = key.replace(/([a-z](?=[A-Z]))/g, '$1 ')
+})
+
 @Component({
   filters: {
     trim(val: string | undefined, prefix: string) {
@@ -56,7 +88,7 @@ import Base from './Base.vue'
 })
 export default class KeyChain extends Base {
   keychain: object[] = []
-  columns: { [key: string]: string } = {}
+  columns = columns
   faceid = false
 
   @Watch('faceid')
@@ -65,21 +97,19 @@ export default class KeyChain extends Base {
   }
 
   mounted() {
-    const columns = {}
-    const keys = ['service', 'label', 'creation', 'modification', 'description', 'entitlementGroup',
-      'comment', 'creator', 'type', 'scriptCode', 'alias', 'invisible',
-      'negative', 'customIcon', 'accessControl', 'generic']
-    keys.forEach(key => { this.columns[key] = key.replace(/([a-z](?=[A-Z]))/g, '$1 ') })
-
-    this.columns = columns
     this.load()
   }
 
   load(faceid = false) {
     this.loading = true
-    this.$rpc.keychain.list(faceid)
-      .then((data: object[]) => { this.keychain = data })
-      .finally(() => { this.loading = false })
+    this.$rpc.keychain
+      .list(faceid)
+      .then((data: object[]) => {
+        this.keychain = data
+      })
+      .finally(() => {
+        this.loading = false
+      })
   }
 }
 </script>
@@ -103,7 +133,7 @@ ul.keychain-attributes {
     dl {
       margin-bottom: 12px;
       dt {
-        font-size: .75rem;
+        font-size: 0.75rem;
         color: #888;
       }
       dd {
