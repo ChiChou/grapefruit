@@ -21,7 +21,7 @@
       <li @click="go('KeyChain')">
         <b-icon icon="folder-key-outline" />KeyChain
       </li>
-      <li>
+      <li @click="go('UserDefaults', 'NSUserDefaults')">
         <b-icon icon="card-bulleted-outline" />NSUserDefaults
       </li>
     </ul>
