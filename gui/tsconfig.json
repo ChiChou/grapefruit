@@ -8,6 +8,7 @@
     "resolveJsonModule": true,
     "moduleResolution": "node",
     "experimentalDecorators": true,
+    "downlevelIteration": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
