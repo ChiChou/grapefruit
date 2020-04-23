@@ -1,6 +1,6 @@
 <template>
   <div>
-    <p class="uiview-inspector-toolbar" @mouseout="dismiss">
+    <p class="uiview-inspector-toolbar">
       <input type="range" :min="minSize" :max="maxSize" :step="step" v-model="size" class="slider">
     </p>
 
@@ -39,10 +39,6 @@ export default class UISnapShot extends Base {
     }).finally(() => {
       this.loading = false
     })
-  }
-
-  dismiss() {
-    this.$rpc.ui.dismissHighlight()
   }
 }
 </script>

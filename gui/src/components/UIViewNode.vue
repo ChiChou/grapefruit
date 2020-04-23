@@ -1,5 +1,5 @@
 <template>
-  <li class="uiview" @mouseover.prevent.stop="highlight">
+  <li class="uiview" @mouseenter.prevent.stop="highlight"  @mouseleave.prevent.stop="dismiss">
     <p :style="{ paddingLeft: depth + 1 + 'em' }">
       <span
         @click.prevent.stop="expanded = !expanded"
@@ -123,11 +123,9 @@ export default class UISnapShot extends Vue {
   expanded = true
   selected = false
 
-  // get syntax() {
-  //   return this.node.description.replace(/((0x)?\d)+/g, (substr, ...args): string => {
-  //     return `<span class="num">${substr}</span>`
-  //   })
-  // }
+  dismiss() {
+    this.$rpc.ui.dismissHighlight()
+  }
 
   highlight() {
     // console.log(this.node.frame)
