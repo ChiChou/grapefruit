@@ -1,5 +1,8 @@
 import './ready'
 import './polyfill'
+// import './observers/http'
+
+import { init as appLifeCycleHook } from './observers/lifecycle'
 
 import { interfaces, invoke, register } from './rpc'
 import modules from './modules/index'
@@ -21,3 +24,8 @@ function registerModules() {
 }
 
 registerModules()
+appLifeCycleHook()
+
+recv('dispose', () => {
+  // todo: dispose
+})
