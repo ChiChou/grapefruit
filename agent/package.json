@@ -5,7 +5,7 @@
   "private": true,
   "main": "src/index.ts",
   "scripts": {
-    "prepare": "npm run preprocessor && npm run build",
+    "prepare": "npm run preprocessor && npm run cmod && npm run build",
     "build": "frida-compile src/index.ts -o dist.js",
     "watch": "npm run build -- -w",
     "cmod": "node scripts/cmodule.js",
