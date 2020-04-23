@@ -43,7 +43,7 @@ export default class Channels {
       let dev, session
       try {
         dev = await tryGetDevice(device)
-        session = await wrap(dev).launch(bundle)
+        session = await wrap(dev).start(bundle)
       } catch(e) {
         socket.emit('exception', e.toString())
         socket.disconnect()
