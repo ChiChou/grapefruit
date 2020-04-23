@@ -35,25 +35,20 @@ type Tree<T> = {
   [name: string]: Tree<T> | T;
 }
 
+export type Scope = '__global__' | '__app__' | '__main__'
+
+export function list(scope: Scope | string[] | string): string[] {
+  if (scope === '__global__') return Object.keys(ObjC.classes)
+  else if (scope === '__app__') return ownClasses()
+  else if (scope === '__main__') return dump()
+  else if (Array.isArray(scope)) return flattern(scope.map(dump)) // list of paths
+  return dump(scope) // a module path
+}
+
 export function hierarchy(scope: string): Tree<string> {
-  let list: string[]
-
-  if (scope === '__global__') {
-    list = Object.keys(ObjC.classes)
-  } else if (scope === '__app__') {
-    list = ownClasses()
-  } else if (scope === '__main__') {
-    list = dump()
-  } else if (Array.isArray(scope)) {
-    // list of paths
-    list = flattern(scope.map(dump))
-  } else {
-    // a module path
-    list = dump(scope)
-  }
-
+  const classes = list(scope)
   const tree: Tree<string> = {}
-  for (const name of list) {
+  for (const name of classes) {
     const clazz = ObjC.classes[name]
     const chain = [name]
 
