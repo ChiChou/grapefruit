@@ -4,9 +4,11 @@ export function open(urlStr: string) {
 
 	// iOS 13 UISceneDelegate
 	if (ObjC.classes.UIScene) {
-    // randomly pick a scene
-		const scene = app.connectedScenes().anyObject()
-		if (scene) {
+		const scenes = app.connectedScenes().allObjects()
+		for (let i = 0; i < scenes.count(); i++) {
+			const scene = scenes.objectAtIndex_(i)
+			const delegate = scene.delegate()
+			if (!delegate) continue
 			const opt = ObjC.classes.UISceneOpenURLOptions.new()
 			const ctx = ObjC.classes.UIOpenURLContext.new().initWithURL_options_(url, opt)
 			ObjC.schedule(ObjC.mainQueue, () => {
@@ -28,7 +30,7 @@ export function open(urlStr: string) {
 		const method = delegate[sel]
 		if (typeof method === 'function') {
 			const rest = [...new Array(method.length - 2)].map(e => NULL)
-			console.log('url handler:', sel, method.length, ...rest)
+			console.log('url handler:', delegate, sel, '@' + method.implementation)
 			ObjC.schedule(ObjC.mainQueue, () => {
 				delegate[sel](app, url, ...rest)
 			})
