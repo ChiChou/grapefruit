@@ -7,6 +7,12 @@ async function c() {
   const folder = path.join(__dirname, '..', 'src', 'c');
   const output = path.join(__dirname, '..', 'gen');
   const files = await fs.readdir(folder);
+  try {
+    await fs.stat(output);
+  } catch(e) {
+    fs.mkdir(output);
+  }
+  
   for (let file of files.filter(file => path.parse(file).ext === '.c')) {
     const raw = await fs.readFile(path.join(folder, file));
     const str = JSON.stringify(raw.toString('utf8'));
