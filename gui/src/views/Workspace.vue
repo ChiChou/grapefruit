@@ -17,11 +17,9 @@
           </div>
         </template>
         <template slot="paneR">
-          <split-pane split="horizontal" :default-percent="80" :min-percent="20" @resize="resize">
+          <split-pane split="horizontal" :default-percent="80" :min-percent="10" @resize="resize">
             <template slot="paneL">
-              <div class="editor-container" ref="container">
-                <!-- todo: golden-layout -->
-              </div>
+              <div class="editor-container" ref="container"></div>
             </template>
             <template slot="paneR">
               <div class="space space-terminal">
