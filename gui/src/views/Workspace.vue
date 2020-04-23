@@ -60,7 +60,7 @@ import { Component, Vue, Watch } from 'vue-property-decorator'
 import debounce from 'debounce'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import jQuery from 'jquery'
-// import colors from 'ansi-colors'
+import colors from 'ansi-colors'
 import GoldenLayout, { Container, ContentItem, ComponentConfig } from 'golden-layout'
 
 import MenuBar from './MenuBar.vue'
@@ -105,7 +105,7 @@ export default class Workspace extends Vue {
     const { term } = this.$refs.console as Console
     this.term = term
     this.resizeEvent = debounce(this.updateSize, 100)
-    this.term.writeln('it works!')
+    this.term.writeln(colors.green('Welcome to Passionfruit!'))
 
     this.initLayout()
   }
@@ -234,11 +234,38 @@ export default class Workspace extends Vue {
 
   changed() {
     this.loading = 'connecting'
-    this.rpcReady().then(() => {
-      this.loading = 'connected'
-    })
+    this.$ws
+      .on('ready', () => {
+        this.loading = 'connected'
+      })
+      .on('detached', this.disconnected)
+      .on('destroyed', this.disconnected)
+      .on('console', (level: string, text: string) => {
+        const { term } = this
+        if (!term) return
+        let msg: string
+        if (level === 'error') msg = colors.red(text)
+        else if (level === 'warning') msg = colors.yellow(text)
+        else msg = colors.green(text)
 
-    // todo: handle disconnection
+        term.write(new Date().toLocaleString())
+        term.write(' ')
+        term.writeln(msg)
+      })
+  }
+
+  disconnected(extra: string) {
+    this.$buefy.snackbar.open({
+      type: 'is-danger',
+      position: 'is-top',
+      actionText: 'Reload',
+      // indefinite: true,
+      duration: 10 * 1000,
+      queue: false,
+      message: `Session has been terminated (${extra || 'Unknown Reason'}). Please check your connection or, did App crashed?`,
+      onAction: () => location.reload()
+    })
+    this.loading = 'disconnected'
   }
 
   updateSize() {

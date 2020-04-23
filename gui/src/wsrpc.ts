@@ -3,44 +3,29 @@
 
 import * as io from 'socket.io-client'
 import Vue from 'vue'
-import VueRouter, { Route } from 'vue-router'
+import { Route } from 'vue-router'
 
-import { RPC } from './wsrpc.d'
-
-interface Options {
-  router: VueRouter;
-}
-
-interface Context {
-  socket?: SocketIOClient.Socket;
-  proxy?: RPC;
-}
-
-interface RpcResponse {
-  status: 'ok' | 'error';
-  data: any;
-  error: string;
-}
+import { RPC, WSEvent, Context, RpcResponse, Options } from './wsrpc.d'
 
 const ctx: Context = {}
 
 class Lazy {
   chain: string[] = []
   ready = false
-  pending: Function[] = []
+  private _pending: Function[] = []
 
   constructor(public socket: SocketIOClient.Socket) {
     socket.on('ready', () => {
       this.ready = true
-      this.pending.forEach(f => f())
-      this.pending = []
+      this._pending.forEach(f => f())
+      this._pending = []
     })
   }
 
   ensureReady(): Promise<boolean> {
     if (this.ready) return Promise.resolve(true)
     return new Promise((resolve) =>
-      this.pending.push(() =>
+      this._pending.push(() =>
         resolve(true)
       ))
   }
@@ -97,10 +82,39 @@ function wrap(socket: SocketIOClient.Socket): RPC {
   return p
 }
 
+class WS {
+  private _ready = false
+  private _pending: Set<Function> = new Set()
+
+  constructor(public socket: SocketIOClient.Socket) {
+    this.socket.on('ready', () => {
+      this._pending.forEach(cb => cb())
+      this._pending.clear()
+    })
+  }
+
+  ready() {
+    if (this._ready) return Promise.resolve(true)
+    return new Promise(resolve => this._pending.add(resolve))
+  }
+
+  on(event: WSEvent, cb: Function) {
+    if (event === 'ready') {
+      this._pending.add(cb)
+    } else {
+      this.socket.on(event, cb)
+    }
+    return this
+  }
+
+  send(event: string, ...args: any[]): Promise<any> {
+    return new Promise((resolve) => this.socket.emit(event, args, resolve))
+  }
+}
+
 function install(V: typeof Vue, opt: Options) {
   const { router } = opt
   const needs = (route: Route) => 'device' in route.params && 'bundle' in route.params
-  const pending: Set<Function> = new Set()
   router.afterEach((to, from) => {
     const previous = needs(from)
     const current = needs(to)
@@ -110,13 +124,7 @@ function install(V: typeof Vue, opt: Options) {
       const socket = io.connect('/session', { query: { device, bundle } })
 
       V.prototype.$rpc = wrap(socket)
-      V.prototype.ws = (event: string, ...args: any) =>
-        new Promise((resolve) =>
-          ctx.socket?.emit(event, args, resolve))
-      socket.on('ready', async() => {
-        pending.forEach(cb => cb())
-        pending.clear()
-      })
+      V.prototype.$ws = new WS(socket)
       ctx.socket = socket
     } else if (previous && !current) {
       if (!ctx.socket) {
@@ -125,16 +133,11 @@ function install(V: typeof Vue, opt: Options) {
       console.debug('disconnect')
       ctx.socket.disconnect()
       V.prototype.$rpc = undefined
-      V.prototype.ws = undefined
+      V.prototype.$ws = undefined
     }
-  })
 
-  V.prototype.rpcReady = function(): Promise<boolean> {
-    if (ctx.socket && ctx.proxy) {
-      return Promise.resolve(true)
-    }
-    return new Promise((resolve) => pending.add(() => resolve(true)))
-  }
+    // todo: handle disconnection
+  })
 }
 
 export default { install }

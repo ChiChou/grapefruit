@@ -40,7 +40,7 @@ export default class Channels {
 
     this.session.on('connection', async (socket) => {
       const { device, bundle } = socket.handshake.query
-      let dev, session
+      let dev: frida.Device, session: frida.Session
       try {
         dev = await tryGetDevice(device)
         session = await wrap(dev).start(bundle)
@@ -66,6 +66,11 @@ export default class Channels {
       })
 
       const agent = await connect(session)
+      agent.logHandler = (level, text): void => {
+        socket.emit('console', level, text)
+        console.log(`[frida ${level}]`, text)
+      }
+
       await agent.load()
       const rpc = proxy(agent)
 
@@ -75,14 +80,14 @@ export default class Channels {
           ack({ status: 'ok', data: result })
         } catch(err) {
           ack({ status: 'error', error: `${err}` })
-          // todo: log
+          socket.emit('log', 'error', `RPC Error: \n${err.stack}`)
           console.error('Uncaught RPC error', err.stack || err)
           console.error('method:', method, 'args:', args)
         }
       })
 
       agent.destroyed.connect(() => {
-        socket.emit('scriptDestroyed')
+        socket.emit('destroyed', 'frida script is destroyed')
         socket.disconnect(true)
       })
 

@@ -94,7 +94,7 @@ export default class MenuBar extends Vue {
   }
 
   kill() {
-    this.ws('kill')
+    this.$ws.send('kill')
     this.detach()
   }
 
