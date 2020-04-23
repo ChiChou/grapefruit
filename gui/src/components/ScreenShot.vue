@@ -54,7 +54,7 @@ export default class ScreenShot extends Vue {
 .screenshot {
   .placeholder {
     position: relative;
-    min-height: 620px;
+    min-height: 480px;
     background: #000;
 
     > .loading {
