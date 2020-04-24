@@ -60,7 +60,7 @@ import { Component, Vue, Watch } from 'vue-property-decorator'
 import debounce from 'debounce'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import jQuery from 'jquery'
-import colors from 'ansi-colors'
+import colors, { StyleFunction } from 'ansi-colors'
 import GoldenLayout, { Container, ContentItem, ComponentConfig } from 'golden-layout'
 
 import MenuBar from './MenuBar.vue'
@@ -163,7 +163,14 @@ export default class Workspace extends Vue {
       if (layout.isInitialised) localStorage.setItem('layout-state', JSON.stringify(layout.toConfig()))
     })
 
-    layout.init()
+    try {
+      layout.init()
+    } catch (e) {
+      console.warn('Failed to initialize layout. Reset')
+      this.log('warn', 'Failed to initialize. Reset GUI')
+      localStorage.removeItem('layout-state')
+      location.reload()
+    }
 
     const findMaximised = () => {
       const maximised = layout.root.getItemsByFilter((item: ContentItem) => item.isMaximised)
@@ -212,6 +219,9 @@ export default class Workspace extends Vue {
 
   created() {
     window.addEventListener('resize', this.resize)
+    window.addEventListener('unhandledrejection', (ev) => {
+      this.log('error', 'unexpected error:', ev.reason)
+    })
   }
 
   beforeDestroy() {
@@ -232,6 +242,25 @@ export default class Workspace extends Vue {
     }
   }
 
+  log(level: string, ...args: string[]) {
+    const { term } = this
+    if (!term) {
+      console.warn('terminal log', ...args)
+      return
+    }
+
+    const color: {[key: string]: StyleFunction} = {
+      info: colors.greenBright,
+      error: colors.redBright,
+      warn: colors.yellow
+    }
+
+    const renderer = color[level] || colors.whiteBright
+    const ts = `[${new Date().toLocaleString()}]`
+    const text = renderer([ts, ...args].join(' ').replace(/\n/g, '\r\n'))
+    term.writeln(text)
+  }
+
   changed() {
     this.loading = 'connecting'
     this.$ws
@@ -241,16 +270,7 @@ export default class Workspace extends Vue {
       .on('detached', this.disconnected)
       .on('destroyed', this.disconnected)
       .on('console', (level: string, text: string) => {
-        const { term } = this
-        if (!term) return
-        let msg: string
-        if (level === 'error') msg = colors.red(text)
-        else if (level === 'warning') msg = colors.yellow(text)
-        else msg = colors.green(text)
-
-        term.write(new Date().toLocaleString())
-        term.write(' ')
-        term.writeln(msg)
+        this.log(level, text)
       })
   }
 

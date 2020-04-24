@@ -6,7 +6,7 @@ export type RPC = {
   (...args: any): any;
 }
 
-type WSEvent = 'ready' | 'destroyed' | 'exception' | 'detached' | 'console'
+type WSEvent = 'ready' | 'destroyed' | 'exception' | 'detached' | 'console' | 'crash'
 
 interface Options {
   router: VueRouter;
