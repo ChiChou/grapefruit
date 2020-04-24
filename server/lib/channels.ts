@@ -50,7 +50,20 @@ export default class Channels {
         return
       }
 
-      session.detached.connect((reason) => {
+      session.detached.connect((reason: frida.SessionDetachReason, crash) => {
+        // {
+        //   ApplicationRequested = "application-requested",
+        //   ProcessReplaced = "process-replaced",
+        //   ProcessTerminated = "process-terminated",
+        //   ServerTerminated = "server-terminated",
+        //   DeviceLost = "device-lost"
+        // }
+        console.error('session detached:', reason, crash)
+        if (reason === 'application-requested') return
+        if (reason === 'process-terminated' || reason === 'server-terminated') {
+          socket.emit('console', 'error', `app crash, reason: ${reason}\ndetail:\n${crash}`)
+          socket.emit('crash', reason, crash)
+        }
         socket.emit('detached', reason)
         socket.disconnect(true)
       })
@@ -87,8 +100,7 @@ export default class Channels {
       })
 
       agent.destroyed.connect(() => {
-        socket.emit('destroyed', 'frida script is destroyed')
-        socket.disconnect(true)
+        console.error('script destroyed')
       })
 
       socket.emit('ready')
