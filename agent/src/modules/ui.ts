@@ -6,6 +6,7 @@ interface Node {
   description?: string;
   children?: Node[];
   frame?: Frame;
+  delegate?: string;
 }
 
 export function dump(): Node {
@@ -15,6 +16,7 @@ export function dump(): Node {
 
     const description = view.description().toString()
     const subviews = view.subviews()
+    const delegate = typeof view.delegate === 'function' ? view.delegate()?.toString() : ''
     const frame = view.superview()?.convertRect_toView_(view.frame(), NULL) as Frame
     const children: Node[] = []
     for (let i = 0; i < subviews.count(); i++) {
@@ -23,7 +25,8 @@ export function dump(): Node {
     return {
       description,
       children,
-      frame
+      frame,
+      delegate
     }
   }
 
@@ -49,7 +52,7 @@ export function highlight(frame: Frame): void {
     if (!overlay) {
       overlay = ObjC.classes.UIView.alloc().initWithFrame_(frame)
       overlay.setBackgroundColor_(ObjC.classes.UIColor.yellowColor())
-      overlay.setAlpha_(0.2)
+      overlay.setAlpha_(0.4)
     } else {
       overlay.removeFromSuperview()
       overlay.setFrame_(frame)

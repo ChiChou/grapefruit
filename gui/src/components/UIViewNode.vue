@@ -7,8 +7,10 @@
         class="mdi"
         :class="{ 'mdi-minus': expanded, 'mdi-plus': !expanded }"
       ></span>
+      <span v-else class="mdi mdi-dots-horizontal"></span>
       <!-- <span class="description">{{ node.description }}</span> -->
       <syntax v-if="node.description" class="description" :text="node.description" />
+      <span v-if="node.delegate"> delegate: {{ node.delegate }}</span>
     </p>
     <ul class="uiview-subviews" v-if="expanded">
       <li v-for="(child, index) in node.children" :key="index">
@@ -28,6 +30,7 @@ interface Node {
   description?: string;
   children?: Node[];
   frame?: number[];
+  delegate?: string;
 }
 
 const empty: Node = {}
