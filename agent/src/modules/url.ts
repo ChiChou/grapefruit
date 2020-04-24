@@ -38,5 +38,5 @@ export function open(urlStr: string) {
 		}
   }
 
-  throw Error('delegate not found. Please file a bug')
+  throw Error(`delegate not found. Please file a bug (bundle id: ${ObjC.classes.NSBundle.mainBundle()})`)
 }
