@@ -45,11 +45,11 @@ import { Component, Vue } from 'vue-property-decorator'
 @Component
 export default class General extends Vue {
   open(component: string, title?: string, props?: object) {
-    this.$root.$emit('openTab', component, title || component, props)
+    this.$bus.$emit('openTab', component, title || component, props)
   }
 
   go(component: string, title?: string, props?: object) {
-    this.$root.$emit('switchTab', component, title || component, props)
+    this.$bus.$emit('switchTab', component, title || component, props)
   }
 }
 </script>

@@ -15,7 +15,9 @@
       ></span>
       <span v-else class="mdi mdi-dots-horizontal"></span>
       <syntax v-if="node.description" class="description" :text="node.description" />
-      <span v-if="node.delegate" class="delegate"> delegate: {{ node.delegate }}</span>
+      <span v-if="node.delegate && node.delegate.name" class="delegate" @click="classinfo">
+        delegate: {{ node.delegate.description }}
+      </span>
     </p>
     <ul class="uiview-subviews" v-if="expanded">
       <li v-for="(child, index) in node.children" :key="index">
@@ -26,17 +28,23 @@
 </template>
 
 <script lang="ts">
+import '../bus'
 import { Component, Vue, Prop } from 'vue-property-decorator'
 import { CreateElement } from 'vue'
 
 type Frame = [number, number, number, number]
 
+interface Delegate {
+  name?: string;
+  description?: string;
+}
+
 interface Node {
   description?: string;
   children?: Node[];
-  frame?: number[];
-  delegate?: string;
+  frame?: Frame;
   preview?: ArrayBuffer;
+  delegate?: Delegate;
 }
 
 const empty: Node = {}
@@ -149,6 +157,12 @@ export default class UIViewNode extends Vue {
 
   highlight() {
     this.$rpc.ui.highlight(this.node.frame)
+  }
+
+  classinfo() {
+    if (!this.node?.delegate) return
+    const { name } = this.node.delegate
+    this.$bus.$emit('openTab', 'ClassInfo', 'Class: ' + name, { name })
   }
 }
 </script>

@@ -24,6 +24,7 @@ import Url from './URL.vue'
 import KeyChain from './KeyChain.vue'
 import Cookies from './BinaryCookie.vue'
 import UserDefaults from './UserDefaults.vue'
+import ClassInfo from './ClassInfo.vue'
 
 import Loading from '../../components/Loading.vue'
 
@@ -40,7 +41,8 @@ import { Component, Vue, Prop } from 'vue-property-decorator'
     CheckSec,
     UIDump,
     SnapShot,
-    Info
+    Info,
+    ClassInfo
   }
 })
 export default class Frame extends Vue {

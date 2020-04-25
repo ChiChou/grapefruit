@@ -12,12 +12,17 @@ type Point = [number, number];
 type Size = [number, number];
 type Frame = [Point, Size];
 
+interface Delegate {
+  name?: string;
+  description?: string;
+}
+
 interface Node {
   description?: string;
   children?: Node[];
   frame?: Frame;
-  delegate?: string;
   preview?: ArrayBuffer;
+  delegate?: Delegate;
 }
 
 export function dump(includingPreview: false): Promise<Node> {
@@ -27,7 +32,15 @@ export function dump(includingPreview: false): Promise<Node> {
 
     const description = view.description().toString()
     const subviews = view.subviews()
-    const delegate = typeof view.delegate === 'function' ? view.delegate()?.toString() : ''
+    const delegate: Delegate = {}
+    if (typeof view.delegate === 'function') {
+      const instance = view.delegate() as ObjC.Object
+      if (instance) {
+        delegate.name = instance.$className
+        delegate.description = instance.debugDescription() + ''
+      }
+    }
+
     const frame = view.superview()?.convertRect_toView_(view.frame(), NULL) as Frame
     const children: Node[] = []
 

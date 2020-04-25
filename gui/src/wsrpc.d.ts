@@ -1,4 +1,3 @@
-import Vue from 'vue'
 import VueRouter from 'vue-router'
 
 export type RPC = {
@@ -32,6 +31,7 @@ declare module 'vue/types/vue' {
   interface Vue {
     $rpc: RPC;
     $ws: WS;
+    $bus: Vue;
   }
 }
 
