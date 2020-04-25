@@ -31,6 +31,7 @@ export function dump(includingPreview: false): Promise<Node> {
     const frame = view.superview()?.convertRect_toView_(view.frame(), NULL) as Frame
     const children: Node[] = []
 
+    let preview = undefined
     if (includingPreview) {
       // preview
       const bounds = view.bounds()
@@ -39,7 +40,6 @@ export function dump(includingPreview: false): Promise<Node> {
       const image = UIGraphicsGetImageFromCurrentImageContext();
       UIGraphicsEndImageContext()
       const png = UIImagePNGRepresentation(image) as NativePointer
-      let preview = undefined
       if (!png.isNull()) {
         const data = new ObjC.Object(png)
         preview = data.base64EncodedStringWithOptions_(0).toString()
