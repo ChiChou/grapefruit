@@ -36,6 +36,7 @@ interface Node {
   children?: Node[];
   frame?: number[];
   delegate?: string;
+  preview?: ArrayBuffer;
 }
 
 const empty: Node = {}

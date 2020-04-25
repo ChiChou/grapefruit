@@ -1,3 +1,11 @@
+import { performOnMainThread } from '../lib/dispatch'
+import {
+  UIGraphicsBeginImageContextWithOptions,
+  UIGraphicsGetImageFromCurrentImageContext,
+  UIGraphicsEndImageContext,
+  UIImagePNGRepresentation
+} from '../lib/UIKit'
+
 const { UIWindow, UIView, UIColor } = ObjC.classes
 
 type Point = [number, number];
@@ -9,9 +17,10 @@ interface Node {
   children?: Node[];
   frame?: Frame;
   delegate?: string;
+  preview?: ArrayBuffer;
 }
 
-export function dump(): Node {
+export function dump(includingPreview: false): Promise<Node> {
   const win = UIWindow.keyWindow()
   const recursive = (view: ObjC.Object): Node => {
     if (!view) return {}
@@ -21,24 +30,37 @@ export function dump(): Node {
     const delegate = typeof view.delegate === 'function' ? view.delegate()?.toString() : ''
     const frame = view.superview()?.convertRect_toView_(view.frame(), NULL) as Frame
     const children: Node[] = []
+
+    if (includingPreview) {
+      // preview
+      const bounds = view.bounds()
+      const size = bounds[1]
+      UIGraphicsBeginImageContextWithOptions(size, 0, 0)
+      const image = UIGraphicsGetImageFromCurrentImageContext();
+      UIGraphicsEndImageContext()
+      const png = UIImagePNGRepresentation(image) as NativePointer
+      let preview = undefined
+      if (!png.isNull()) {
+        const data = new ObjC.Object(png)
+        preview = data.base64EncodedStringWithOptions_(0).toString()
+      }
+    }
+
     for (let i = 0; i < subviews.count(); i++) {
+      // todo: use async function
       children.push(recursive(subviews.objectAtIndex_(i)))
     }
     return {
       description,
       children,
       frame,
-      delegate
+      delegate,
+      preview
     }
   }
 
-  return recursive(win)
+  return performOnMainThread(() => recursive(win))
 }
-
-// const CGFloat = (Process.pointerSize === 4) ? 'float' : 'double'
-// const CGSize = [CGFloat, CGFloat]
-// const CGPoint = CGSize
-// const NSRect = [CGPoint, CGSize]
 
 let overlay: ObjC.Object
 
@@ -63,11 +85,15 @@ export function highlight(frame: Frame): void {
   })
 }
 
-export function dismissHighlight(): void {
+export async function dismissHighlight(): Promise<void> {
   if (!overlay) return
-  ObjC.schedule(ObjC.mainQueue, () => overlay.removeFromSuperview())
+  await performOnMainThread(() => overlay.removeFromSuperview())
 }
 
 // highlight([[0,0],[375,812]])
 // setTimeout(() => { dismissHighlight() }, 3000)
 // setTimeout(() => { highlight([[100,100],[375,812]]) }, 1000)
+
+export function dispose() {
+  return dismissHighlight()
+}
