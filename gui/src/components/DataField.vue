@@ -363,7 +363,7 @@ $arrow-color: #333;
 .data-field {
   user-select: text;
   font-size: 12px;
-  font-family: Menlo, Consolas, monospace;
+  font-family: "Fira Code", monospace;
   cursor: pointer;
 }
 
@@ -463,13 +463,7 @@ $arrow-color: #333;
       font-style: italic;
       span {
         color: $vividBlue;
-        font-family: 'dejavu sans mono', monospace;
-        .platform-mac & {
-          font-family: Menlo, monospace;
-        }
-        .platform-windows & {
-          font-family: Consolas, 'Lucida Console', 'Courier New', monospace;
-        }
+        font-family: "Fira Code", monospace;
         .dark & {
           color: $purple;
         }
