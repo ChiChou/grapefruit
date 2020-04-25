@@ -64,10 +64,12 @@ export default class Frame extends Vue {
   height: 100%;
 
   > .frame {
-    min-height: 100%;
+    height: 100%;
 
     &.loading {
       visibility: hidden;
+      height: 0;
+      overflow: hidden;
     }
 
     &.pad {
