@@ -1,22 +1,21 @@
 <template>
   <div>
-    <p class="uiview-inspector-toolbar">
-      <input type="range" :min="minSize" :max="maxSize" :step="step" v-model="size" class="slider">
-    </p>
-
-    <main class="uiview-main">
+    <!-- <main class="uiview-main"> -->
       <ul :style="{ fontSize }" class="uiview-root uiview-subviews">
         <UIViewNode :node="root" />
       </ul>
 
-      <!-- todo: dynamically change element style -->
-      <!-- <aside v-if="detail">
+      <!-- todo: -->
+      <!-- <aside v-if="selected">
         <header>
-          <h2>Node <b-button type="is-small" icon-left="close" @click="dismiss"></b-button></h2>
+          <h2>Node <b-button type="is-small" icon-left="close" @click="selected = undefined"></b-button></h2>
         </header>
-        <pre>{{ detail }}</pre>
       </aside> -->
-    </main>
+    <!-- </main> -->
+
+    <p class="uiview-inspector-toolbar">
+      <input type="range" :min="minSize" :max="maxSize" :step="step" v-model="size" class="slider">
+    </p>
   </div>
 </template>
 
@@ -39,21 +38,14 @@ export default class UISnapShot extends Base {
   step = 0.1
 
   selected?: UIViewNode
-  detail? = ''
 
   get fontSize() {
     return Math.pow(12, this.size) + 'px'
   }
 
   selectNode(node: UIViewNode) {
-    if (this.selected && this.selected !== node) this.selected.selected = false
-    this.detail = node.node.description
+    if (this.selected) this.selected.selected = false
     this.selected = node
-  }
-
-  dismiss() {
-    this.selected = undefined
-    this.detail = ''
   }
 
   mounted() {
@@ -70,68 +62,30 @@ export default class UISnapShot extends Base {
 </script>
 
 <style lang="scss">
-// textarea {
-//   font-family: monospace;
-//   width: 100%;
-//   height: calc(100% - 6px);
-//   background: #222;
-//   color: #d0d0d0;
-//   padding: 20px;
-//   outline: none;
-// }
-
-.uiview-main {
-  display: flex;
-
-  > .uiview-root {
-    flex: 1
-  }
-
-  > aside {
-    position: sticky;
-    top: 10px;
-
-    > header {
-      background: #ffffff17;
-      padding: 4px;
-
-      > h2 {
-        margin-left: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-    }
-    width: 320px;
-    padding: 0 10px;
-
-    > pre {
-      white-space: pre-line;
-      word-break: break-all;
-    }
-
-    height: 100%;
-  }
-}
 
 .uiview-inspector-toolbar {
   padding: 10px;
   position: sticky;
-  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .uiview {
   font-family: 'Fira Code', monospace;
-  // display: list-item;
-  // list-style: square;
 
-  &.selected > p {
-    background: #001b27;
+//   &.selected > p {
+//     background: #001b27;
 
-    &:hover {
-      background: #002f44;
-    }
-  }
+//     &:hover {
+//       background: #002f44;
+//     }
+//   }
+}
+
+.uiview-root {
+  margin-top: 10px;
 }
 
 .uiview-subviews {
@@ -181,6 +135,7 @@ export default class UISnapShot extends Base {
 
   span.delegate {
     color: #b4af88;
+    background: #333;
     cursor: pointer;
     display: inline-block;
     margin-left: 1em;
@@ -188,7 +143,7 @@ export default class UISnapShot extends Base {
 
     &:hover {
       color: #ffeb3b;
-      background: #000;
+      background: #444;
     }
   }
 }
