@@ -4,9 +4,19 @@
       <input type="range" :min="minSize" :max="maxSize" :step="step" v-model="size" class="slider">
     </p>
 
-    <ul :style="{ fontSize }" class="uiview-root uiview-subviews">
-      <UIViewNode :node="root" />
-    </ul>
+    <main class="uiview-main">
+      <ul :style="{ fontSize }" class="uiview-root uiview-subviews">
+        <UIViewNode :node="root" />
+      </ul>
+
+      <!-- todo: dynamically change element style -->
+      <!-- <aside v-if="detail">
+        <header>
+          <h2>Node <b-button type="is-small" icon-left="close" @click="dismiss"></b-button></h2>
+        </header>
+        <pre>{{ detail }}</pre>
+      </aside> -->
+    </main>
   </div>
 </template>
 
@@ -28,8 +38,22 @@ export default class UISnapShot extends Base {
   minSize = 0.5
   step = 0.1
 
+  selected?: UIViewNode
+  detail = ''
+
   get fontSize() {
     return Math.pow(12, this.size) + 'px'
+  }
+
+  selectNode(node: UIViewNode) {
+    if (this.selected && this.selected !== node) this.selected.selected = false
+    this.detail = node.node.description
+    this.selected = node
+  }
+
+  dismiss() {
+    this.selectNode = undefined
+    this.detail = ''
   }
 
   mounted() {
@@ -39,6 +63,8 @@ export default class UISnapShot extends Base {
     }).finally(() => {
       this.loading = false
     })
+
+    this.$on('selectNode', this.selectNode)
   }
 }
 </script>
@@ -54,18 +80,65 @@ export default class UISnapShot extends Base {
 //   outline: none;
 // }
 
+.uiview-main {
+  display: flex;
+
+  > .uiview-root {
+    flex: 1
+  }
+
+  > aside {
+    position: sticky;
+    top: 10px;
+
+    > header {
+      background: #ffffff17;
+      padding: 4px;
+
+      > h2 {
+        margin-left: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+    }
+    width: 320px;
+    padding: 0 10px;
+
+    > pre {
+      white-space: pre-line;
+      word-break: break-all;
+    }
+
+    height: 100%;
+  }
+}
+
 .uiview-inspector-toolbar {
   padding: 10px;
+  position: sticky;
+  top: 0;
 }
 
 .uiview {
-  font-family: monospace;
+  font-family: 'Fira Code', monospace;
   // display: list-item;
   // list-style: square;
-  cursor: pointer;
+
+  &.selected > p {
+    background: #001b27;
+
+    &:hover {
+      background: #002f44;
+    }
+  }
 }
 
 .uiview-subviews {
+  p {
+    transition: ease-in 0.2s background-color;
+  }
+
   p:hover {
     background: #00000030;
 
@@ -101,12 +174,22 @@ export default class UISnapShot extends Base {
     }
 
     .clazz {
+      cursor: default;
       color: #e91e63;
     }
   }
 
-  p:active {
-    outline: lightblue;
+  span.delegate {
+    color: #b4af88;
+    cursor: pointer;
+    display: inline-block;
+    margin-left: 1em;
+    transition: ease-in-out 0.2s color;
+
+    &:hover {
+      color: #ffeb3b;
+      background: #000;
+    }
   }
 }
 
