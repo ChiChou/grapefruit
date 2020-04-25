@@ -39,7 +39,7 @@ export default class UISnapShot extends Base {
   step = 0.1
 
   selected?: UIViewNode
-  detail = ''
+  detail? = ''
 
   get fontSize() {
     return Math.pow(12, this.size) + 'px'
@@ -52,7 +52,7 @@ export default class UISnapShot extends Base {
   }
 
   dismiss() {
-    this.selectNode = undefined
+    this.selected = undefined
     this.detail = ''
   }
 
