@@ -50,6 +50,10 @@ export default class Channels {
         return
       }
 
+      // todo: preferences
+      session.enableJit()
+      const { pid } = session
+
       session.detached.connect((reason: frida.SessionDetachReason, crash) => {
         // {
         //   ApplicationRequested = "application-requested",
@@ -68,16 +72,6 @@ export default class Channels {
         socket.disconnect(true)
       })
 
-      socket.on('disconnect', async () => {
-        await session.detach()
-      }).on('kill', async (data, ack) => {
-        const { pid } = session
-        await session.detach()
-        await dev.kill(pid)
-        ack(true)
-        socket.disconnect()
-      })
-
       const agent = await connect(session)
       agent.logHandler = (level, text): void => {
         socket.emit('console', level, text)
@@ -87,7 +81,21 @@ export default class Channels {
       await agent.load()
       const rpc = proxy(agent)
 
-      socket.on('rpc', async (method: string, args: any[], ack) => {
+      socket.on('disconnect', async () => {
+        console.info('disconnect')
+        try {
+          await agent.post('dispose')
+          await session.detach()
+        // eslint-disable-next-line no-empty
+        } catch (e) {
+
+        }
+      }).on('kill', async (data, ack) => {
+        session.detach().catch()
+        await dev.kill(pid)
+        ack(true)
+        socket.disconnect()
+      }).on('rpc', async (method: string, args: any[], ack) => {
         try {
           const result = await rpc(method, ...args)
           ack({ status: 'ok', data: result })
