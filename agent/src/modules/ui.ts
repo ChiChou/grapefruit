@@ -1,3 +1,5 @@
+const { UIWindow, UIView, UIColor } = ObjC.classes
+
 type Point = [number, number];
 type Size = [number, number];
 type Frame = [Point, Size];
@@ -10,7 +12,7 @@ interface Node {
 }
 
 export function dump(): Node {
-  const win = ObjC.classes.UIWindow.keyWindow()
+  const win = UIWindow.keyWindow()
   const recursive = (view: ObjC.Object): Node => {
     if (!view) return {}
 
@@ -45,13 +47,13 @@ let overlay: ObjC.Object
 export function highlight(frame: Frame): void {
   if (!frame) return
 
-  const win = ObjC.classes.UIWindow.keyWindow()
+  const win = UIWindow.keyWindow()
   if (!win) return
 
   ObjC.schedule(ObjC.mainQueue, () => {
     if (!overlay) {
-      overlay = ObjC.classes.UIView.alloc().initWithFrame_(frame)
-      overlay.setBackgroundColor_(ObjC.classes.UIColor.yellowColor())
+      overlay = UIView.alloc().initWithFrame_(frame)
+      overlay.setBackgroundColor_(UIColor.yellowColor())
       overlay.setAlpha_(0.4)
     } else {
       overlay.removeFromSuperview()
