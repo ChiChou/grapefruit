@@ -4,6 +4,7 @@
     <themed-menu class="menu">
       <hsc-menu-bar>
         <hsc-menu-bar-item label="Session">
+          <hsc-menu-item label="Reload" @click="reload" />
           <hsc-menu-item label="Detach" @click="detach" />
           <hsc-menu-separator />
           <hsc-menu-item label="Kill" @click="kill" />
@@ -93,6 +94,10 @@ export default class MenuBar extends Vue {
     window.open(url, '_blank')
   }
 
+  reload() {
+    location.reload()
+  }
+
   kill() {
     this.$ws.send('kill')
     this.detach()
@@ -153,7 +158,7 @@ h1 {
   display: block;
   float: left;
   padding: 4px;
-  margin: 2px 2px 2px 10px;
+  margin: 4px 16px 2px 16px;
   font-weight: 100;
 }
 </style>

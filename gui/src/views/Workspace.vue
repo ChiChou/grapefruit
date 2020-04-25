@@ -44,6 +44,7 @@
             <b-icon icon="close-network-outline" size="is-small" />Connection Lost
           </span>
         </div>
+        <b-dropdown-item aria-role="listitem" @click="$refs.menu.reload()">Reload</b-dropdown-item>
         <b-dropdown-item aria-role="listitem" @click="$refs.menu.detach()">Detach</b-dropdown-item>
         <b-dropdown-item aria-role="listitem" @click="$refs.menu.kill()">Stop</b-dropdown-item>
       </b-dropdown>
@@ -93,10 +94,6 @@ export default class Workspace extends Vue {
   device?: string
   bundle?: string
   layout?: GoldenLayout
-
-  onclose() {
-    alert('?')
-  }
 
   mounted() {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -168,8 +165,10 @@ export default class Workspace extends Vue {
     } catch (e) {
       console.warn('Failed to initialize layout. Reset')
       this.log('warn', 'Failed to initialize. Reset GUI')
-      localStorage.removeItem('layout-state')
+      localStorage.clear()
+      // localStorage.removeItem('layout-state')
       location.reload()
+      return
     }
 
     const findMaximised = () => {
@@ -252,7 +251,8 @@ export default class Workspace extends Vue {
     const color: {[key: string]: StyleFunction} = {
       info: colors.greenBright,
       error: colors.redBright,
-      warn: colors.yellow
+      warn: colors.yellow,
+      warning: colors.yellow
     }
 
     const renderer = color[level] || colors.whiteBright
