@@ -1,5 +1,11 @@
 <template>
-  <li class="uiview" @mouseenter.prevent.stop="highlight"  @mouseleave.prevent.stop="dismiss">
+  <li
+      class="uiview"
+      :class="{ selected }"
+      @mouseenter.prevent.stop="highlight"
+      @mouseleave.prevent.stop="dismiss"
+      @click.prevent.stop="select"
+    >
     <p :style="{ paddingLeft: depth + 1 + 'em' }">
       <span
         @click.prevent.stop="expanded = !expanded"
@@ -8,9 +14,8 @@
         :class="{ 'mdi-minus': expanded, 'mdi-plus': !expanded }"
       ></span>
       <span v-else class="mdi mdi-dots-horizontal"></span>
-      <!-- <span class="description">{{ node.description }}</span> -->
       <syntax v-if="node.description" class="description" :text="node.description" />
-      <span v-if="node.delegate"> delegate: {{ node.delegate }}</span>
+      <span v-if="node.delegate" class="delegate"> delegate: {{ node.delegate }}</span>
     </p>
     <ul class="uiview-subviews" v-if="expanded">
       <li v-for="(child, index) in node.children" :key="index">
@@ -49,8 +54,9 @@ function * scan(text: string) {
     hex: /^0x?[\da-fA-F]+/,
     num: /^\d+/,
     '': /^\s+/,
-    op: /^[<,>()=;]+/,
-    clazz: /^[A-Z][\w.]+:/
+    op: /^[<,>()=;:]+/,
+    clazz: /^[A-Z_][\w.]+/,
+    property: /^[a-zA-z]+ =/
   }
 
   while (sub && sub.length) {
@@ -116,7 +122,7 @@ Vue.component('syntax', resolve => {
 @Component({
   name: 'UIViewNode'
 })
-export default class UISnapShot extends Vue {
+export default class UIViewNode extends Vue {
   @Prop({ default: () => empty })
   node!: Node
 
@@ -130,8 +136,17 @@ export default class UISnapShot extends Vue {
     this.$rpc.ui.dismissHighlight()
   }
 
+  select() {
+    this.selected = true
+    let node = this as UIViewNode
+    while (node.depth > 0) {
+      node = node.$parent as UIViewNode
+    }
+
+    if (node) node.$parent.$emit('selectNode', this)
+  }
+
   highlight() {
-    // console.log(this.node.frame)
     this.$rpc.ui.highlight(this.node.frame)
   }
 }
