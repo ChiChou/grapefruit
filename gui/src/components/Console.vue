@@ -12,7 +12,7 @@ import { Component, Vue } from 'vue-property-decorator'
 @Component
 export default class Workspace extends Vue {
   public term = new Terminal({
-    fontFamily: 'Monaco,Menlo,Consolas,Courier New',
+    fontFamily: '"Fira Code", monospace',
     fontSize: 12,
     theme: {
       background: '#1e1e1e'
