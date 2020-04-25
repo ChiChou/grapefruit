@@ -27,13 +27,18 @@ const Clazz = ObjC.registerClass({
   }
 })
 
+const signalHandler = Clazz.alloc().init()
+const center = ObjC.classes.NSNotificationCenter.defaultCenter()
+
 export function init() {
-  const delegate = Clazz.alloc().init()
-  const center = ObjC.classes.NSNotificationCenter.defaultCenter()
-  center.addObserver_selector_name_object_(delegate, ObjC.selector('inactive'), 'UIApplicationWillResignActiveNotification', NULL)
-  center.addObserver_selector_name_object_(delegate, ObjC.selector('background'), 'UIApplicationDidEnterBackgroundNotification', NULL)
+  center.addObserver_selector_name_object_(
+    signalHandler, ObjC.selector('inactive'), 'UIApplicationWillResignActiveNotification', NULL)
+  center.addObserver_selector_name_object_(
+    signalHandler, ObjC.selector('background'), 'UIApplicationDidEnterBackgroundNotification', NULL)
 }
 
 export function dispose() {
-
+  const center = ObjC.classes.NSNotificationCenter.defaultCenter()
+  center.removeObserver_name_object_(signalHandler, 'UIApplicationWillResignActiveNotification', NULL)
+  center.removeObserver_name_object_(signalHandler, 'UIApplicationDidEnterBackgroundNotification', NULL)
 }
