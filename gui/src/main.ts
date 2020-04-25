@@ -10,10 +10,13 @@ import 'golden-layout/src/css/goldenlayout-base.css'
 // import 'golden-layout/src/css/goldenlayout-dark-theme.css'
 import './golden-layout-theme-dark.scss'
 
+/// <reference path="./bus.d.ts" />
+
 import * as VueMenu from '@hscmap/vue-menu'
 
 import App from './App.vue'
 import RPC from './wsrpc'
+import Bus from './bus'
 import router from './router'
 import store from './store'
 
@@ -33,6 +36,7 @@ Vue.component('split-pane', pane)
 Vue.use(Buefy)
 Vue.use(VueMenu)
 Vue.use(RPC, { router })
+Vue.use(Bus)
 
 new Vue({
   router,

@@ -68,17 +68,51 @@ export function hierarchy(scope: string): Tree<string> {
   return tree
 }
 
-export function inspect(clazz: string) {
-  const proto = []
-  let clz = ObjC.classes[clazz]
-  if (!clz)
-    throw new Error(`class ${clazz} not found`)
+type Method = {
+  name: string;
+  impl: string;
+}
 
-  while (clz = clz.$superClass)
-    proto.unshift(clz.$className)
+// type MethodDecl = {
+//   required: boolean;
+//   types: string;
+// }
+
+// type Protocol = {
+//   name: string;
+//   methods: {[key: string]: MethodDecl};
+//   properties: string[];
+// }
+
+export function inspect(clazz: string) {
+  let cls = ObjC.classes[clazz]
+  if (!cls) throw new Error(`class ${clazz} not found`)
+
+  const methods: {[key: string]: Method } = {}
+  cls.$methods.forEach(name => {
+    const impl = cls[name].implementation.toString()
+    methods[name] = { name, impl }
+  })
+
+  const protocols = JSON.parse(JSON.stringify(cls.$protocols)) as {[key: string]: ObjC.Protocol}
+  for (const protocol of Object.values(protocols)) {
+    if (protocol.protocols) delete protocol.protocols
+  }
+
+  const module = cls.$moduleName
+  const ivars = Object.keys(cls.$ivars)
+  const own = cls.$ownMethods
+
+  const prototypeChain = []
+  while (cls = cls.$superClass)
+    prototypeChain.unshift(cls.$className)
 
   return {
-    methods: ObjC.classes[clazz].$ownMethods,
-    proto
+    protocols,
+    methods,
+    prototypeChain,
+    own,
+    ivars,
+    module
   }
 }

@@ -58,7 +58,7 @@
 
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator'
-import debounce from 'debounce'
+import throttle from 'lodash.throttle'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import jQuery from 'jquery'
 import colors, { StyleFunction } from 'ansi-colors'
@@ -101,7 +101,7 @@ export default class Workspace extends Vue {
 
     const { term } = this.$refs.console as Console
     this.term = term
-    this.resizeEvent = debounce(this.updateSize, 100)
+    this.resizeEvent = throttle(this.updateSize, 100)
     this.term.writeln(colors.green('Welcome to Passionfruit!'))
 
     this.initLayout()
@@ -145,6 +145,7 @@ export default class Workspace extends Vue {
       v.$mount()
       container.setTitle(title)
       container.getElement().append(v.$el)
+      container.on('resize', () => v.$emit('resize'))
       tabsSingleton.set(component, container.parent)
     })
 
@@ -200,8 +201,8 @@ export default class Workspace extends Vue {
       parent.toggleMaximise()
     }
 
-    this.$root.$on('openTab', createTab)
-    this.$root.$on('switchTab', (component: string, title: string, props?: object) => {
+    this.$bus.$on('openTab', createTab)
+    this.$bus.$on('switchTab', (component: string, title: string, props?: object) => {
       const max = findMaximised()
       if (max) max.toggleMaximise()
 
