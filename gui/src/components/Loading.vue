@@ -1,6 +1,8 @@
 <template>
   <div>
-    <div class="lds-ripple"><div></div><div></div></div>
+    <div class="loading-icon-placeholder" ref="frame" :style="{ height: size, width: size }">
+      <div class="lds-ripple"><div></div><div></div></div>
+    </div>
   </div>
 </template>
 
@@ -14,7 +16,7 @@ export default class Welcome extends Vue {
 
   @Watch('size')
   private resize(value: number) {
-    (this.$el as HTMLDivElement).style.zoom = (value / 80).toFixed(2)
+    (this.$refs.frame as HTMLDivElement).style.transform = `scale(${(value / 80)})`
   }
 
   mounted() {
@@ -23,6 +25,9 @@ export default class Welcome extends Vue {
 }
 </script>
 <style>
+.loading-icon-placeholder {
+  transform-origin: center;
+}
 .lds-ripple {
   display: inline-block;
   position: relative;
@@ -41,8 +46,8 @@ export default class Welcome extends Vue {
 }
 @keyframes lds-ripple {
   0% {
-    top: 36px;
-    left: 36px;
+    top: 40px;
+    left: 40px;
     width: 0;
     height: 0;
     opacity: 1;
@@ -50,8 +55,8 @@ export default class Welcome extends Vue {
   100% {
     top: 0px;
     left: 0px;
-    width: 72px;
-    height: 72px;
+    width: 80px;
+    height: 80px;
     opacity: 0;
   }
 }
