@@ -12,7 +12,7 @@
     "preprocessor": "node scripts/preprocessor.js"
   },
   "devDependencies": {
-    "@types/frida-gum": "^15.0.0",
+    "@types/frida-gum": "^15.2.0",
     "@types/node": "^13.7.0",
     "frida-compile": "^9.1.0"
   }
