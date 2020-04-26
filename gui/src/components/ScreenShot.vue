@@ -2,7 +2,7 @@
   <div class="screenshot">
     <a v-if="device" :href="url" target="_blank" class="frame">
       <div class="placeholder" v-if="loading">
-        <Loading v-if="loading" class="loading" />
+        <Loading v-if="loading" class="loading" size="120" />
       </div>
       <img :src="url" width="320" @error="onerror" @load="loading = false" :class="{ loading }">
     </a>

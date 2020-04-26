@@ -2,7 +2,9 @@
   <div class="pad">
     <nav class="breadcrumb" aria-label="breadcrumbs">
       <ul v-if="clazz.prototypeChain">
-        <li v-for="(cls, index) in clazz.prototypeChain" :key="index"><a>{{ cls }}</a></li>
+        <li v-for="(cls, index) in clazz.prototypeChain" :key="index">
+          <a @click="$bus.$emit('openTab', 'ClassInfo', 'Class: ' + cls, { name: cls })">{{ cls }}</a>
+        </li>
       </ul>
     </nav>
 
@@ -22,12 +24,15 @@
             </b-input>
 
             <b-checkbox v-model="includeSuper">
-              <b-icon icon="file-tree"></b-icon>
               <span>Include Inherited</span>
+              <b-icon icon="file-tree"></b-icon>
             </b-checkbox>
           </b-field>
         <ul>
-          <li class="monospace" v-for="(sel, index) in selectors" :key="index"><a>@{{ sel.impl }}</a> {{ sel.name }}</li>
+          <li class="monospace" v-for="(sel, index) in selectors" :key="index">
+            <a @click="$bus.$emit('openTab', 'Disasm', 'Disassembly @' + sel.impl, { addr: sel.impl })">@{{ sel.impl }}</a>
+            {{ sel.name }}
+          </li>
         </ul>
       </b-tab-item>
 
