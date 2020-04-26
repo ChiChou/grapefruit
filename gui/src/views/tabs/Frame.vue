@@ -25,6 +25,7 @@ import KeyChain from './KeyChain.vue'
 import Cookies from './BinaryCookie.vue'
 import UserDefaults from './UserDefaults.vue'
 import ClassInfo from './ClassInfo.vue'
+import Disasm from './Disasm.vue'
 
 import Loading from '../../components/Loading.vue'
 
@@ -42,7 +43,8 @@ import { Component, Vue, Prop } from 'vue-property-decorator'
     UIDump,
     SnapShot,
     Info,
-    ClassInfo
+    ClassInfo,
+    Disasm
   }
 })
 export default class Frame extends Vue {
