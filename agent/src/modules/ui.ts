@@ -18,6 +18,7 @@ interface Delegate {
 }
 
 interface Node {
+  clazz: string;
   description?: string;
   children?: Node[];
   frame?: Frame;
@@ -25,11 +26,12 @@ interface Node {
   delegate?: Delegate;
 }
 
-export function dump(includingPreview: false): Promise<Node> {
+export function dump(includingPreview: false): Promise<Node | null> {
   const win = UIWindow.keyWindow()
-  const recursive = (view: ObjC.Object): Node => {
-    if (!view) return {}
+  const recursive = (view: ObjC.Object): Node | null => {
+    if (!view) return null
 
+    const clazz = view.$className
     const description = view.description().toString()
     const subviews = view.subviews()
     const delegate: Delegate = {}
@@ -61,14 +63,16 @@ export function dump(includingPreview: false): Promise<Node> {
 
     for (let i = 0; i < subviews.count(); i++) {
       // todo: use async function
-      children.push(recursive(subviews.objectAtIndex_(i)))
+      const child = recursive(subviews.objectAtIndex_(i))
+      if (child) children.push(child)
     }
     return {
       description,
       children,
       frame,
       delegate,
-      preview
+      preview,
+      clazz
     }
   }
 

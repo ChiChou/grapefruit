@@ -1,7 +1,7 @@
 <template>
-  <div>
-    <!-- <main class="uiview-main"> -->
-      <ul :style="{ fontSize }" class="uiview-root uiview-subviews">
+  <div class="uiview-frame">
+    <main class="uiview-main">
+      <ul :style="{ transform }" class="uiview-root uiview-subviews" ref="tree">
         <UIViewNode :node="root" />
       </ul>
 
@@ -11,11 +11,14 @@
           <h2>Node <b-button type="is-small" icon-left="close" @click="selected = undefined"></b-button></h2>
         </header>
       </aside> -->
-    <!-- </main> -->
+    </main>
 
-    <p class="uiview-inspector-toolbar">
-      <input type="range" :min="minSize" :max="maxSize" :step="step" v-model="size" class="slider">
-    </p>
+    <footer class="uiview-inspector-toolbar">
+      <div class="slide">
+        <b-slider :min="minScale" :max="maxScale" :step="step" v-model="scale" />
+      </div>
+      <b-button class="button" icon-left="content-copy" @click="copy" />
+    </footer>
   </div>
 </template>
 
@@ -31,16 +34,16 @@ import UIViewNode from '../../components/UIViewNode.vue'
 })
 export default class UISnapShot extends Base {
   root = {}
-  size = 1.1
 
-  maxSize = 2
-  minSize = 0.5
-  step = 0.1
+  scale = 1
+  maxScale = 10
+  minScale = 0.2
+  step = 0.02
 
   selected?: UIViewNode
 
-  get fontSize() {
-    return Math.pow(12, this.size) + 'px'
+  get transform(): string {
+    return `scale(${this.scale}`
   }
 
   selectNode(node: UIViewNode) {
@@ -58,10 +61,37 @@ export default class UISnapShot extends Base {
 
     this.$on('selectNode', this.selectNode)
   }
+
+  copy() {
+    const el = this.$refs.tree as HTMLUListElement
+    const selection = window.getSelection()
+    if (!selection) {
+      this.$buefy.toast.open({
+        message: 'Warning: unable to copy data (selection unavaliable)',
+        type: 'is-warning'
+      })
+      return
+    }
+    selection.removeAllRanges()
+    const range = document.createRange()
+    range.selectNode(el)
+    selection.addRange(range)
+    document.execCommand('copy')
+    selection.removeAllRanges()
+    this.$buefy.toast.open({
+      message: 'Successfully copied to clipboard',
+      type: 'is-success'
+    })
+  }
 }
 </script>
 
 <style lang="scss">
+
+.uiview-frame {
+  display: flex;
+  flex-direction: column;
+}
 
 .uiview-inspector-toolbar {
   padding: 10px;
@@ -69,28 +99,36 @@ export default class UISnapShot extends Base {
   bottom: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+
+  > .slide {
+    width: 200px;
+  }
 }
 
 .uiview {
   font-family: 'Fira Code', monospace;
+}
 
-//   &.selected > p {
-//     background: #001b27;
-
-//     &:hover {
-//       background: #002f44;
-//     }
-//   }
+.uiview-main {
+  flex: 1;
+  overflow: auto;
 }
 
 .uiview-root {
   margin-top: 10px;
+  transform-origin: top left;
 }
 
 .uiview-subviews {
   p {
     transition: ease-in 0.2s background-color;
+    white-space: nowrap;
+
+    > a {
+      margin: 0 6px;
+      display: inline-block;
+    }
   }
 
   p:hover {
@@ -119,8 +157,16 @@ export default class UISnapShot extends Base {
       color: #5b8fb9;
     }
 
+    .str {
+      color: #ae4dd1;
+    }
+
     .hex {
       color: #d4a312;
+    }
+
+    .bool {
+      color: #61ad51;
     }
 
     .op {
@@ -128,14 +174,17 @@ export default class UISnapShot extends Base {
     }
 
     .clazz {
-      cursor: default;
+      cursor: cursor;
       color: #e91e63;
+      &:hover {
+        background: #000;
+      }
     }
   }
 
   span.delegate {
     color: #b4af88;
-    background: #333;
+    background: #1c1c1c;
     cursor: pointer;
     display: inline-block;
     margin-left: 1em;
@@ -143,7 +192,7 @@ export default class UISnapShot extends Base {
 
     &:hover {
       color: #ffeb3b;
-      background: #444;
+      background: #111;
     }
   }
 }

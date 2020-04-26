@@ -2,8 +2,8 @@ import Vue from 'vue'
 
 const bus = new Vue()
 
-function install(V: typeof Vue, opt: object) {
+function install(V: typeof Vue) {
   V.prototype.$bus = bus
 }
 
-export default { install }
+export default { install, bus }
