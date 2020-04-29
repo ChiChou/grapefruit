@@ -4,7 +4,14 @@
       <li v-for="(insn, index) of disasm" :key="index">
         <span class="addr">{{ insn.address }}</span>
         <span class="mnemonic">{{ insn.mnemonic }}</span>
-        <opstring class="op" :insn="insn" />
+        <span
+          v-if="insn.symbol"
+          class="symbol"
+          @click="$bus.$emit('openTab', 'Disasm', 'Disassembly: ' + insn.symbol, { addr: insn.operands[0].value })"
+        >
+          {{ insn.symbol }}
+        </span>
+        <opstring v-else class="op" :insn="insn" />
         <span v-if="insn.comment" class="comment">; {{ insn.comment }}</span>
       </li>
       <li class="more"><b-button @click="more"><span class="mdi mdi-autorenew"></span>More</b-button></li>
@@ -131,7 +138,7 @@ export default class Disasm extends Base {
 
   .addr {
     color: #999;
-    margin-right: 1em;
+    margin-right: 8em;
   }
 
   .comment {
@@ -165,6 +172,11 @@ export default class Disasm extends Base {
       width: 300px;
       display: block;
     }
+  }
+
+  .symbol {
+    color: #ffd208;
+    cursor: pointer;
   }
 }
 
