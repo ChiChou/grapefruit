@@ -18,7 +18,7 @@ export default function checksec() {
   const csops = new SystemFunction(
     Module.findExportByName('libsystem_kernel.dylib', 'csops')!,
     'int',
-    ['int', 'int', 'pointer', 'uint64']
+    ['int', 'int', 'pointer', 'ulong']
   )
 
   // todo: determine CPU endianness
