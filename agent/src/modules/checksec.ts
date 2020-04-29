@@ -4,7 +4,6 @@ import { encryptionInfo, pie } from '../lib/macho'
 
 export default function checksec() {
   const [main] = Process.enumerateModules()
-  const info = encryptionInfo(main)
   const imports = new Set(main.enumerateImports().map(i => i.name))
   const result = {
     pie: pie(main),
