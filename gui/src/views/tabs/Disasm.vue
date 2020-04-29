@@ -50,7 +50,6 @@ function * scan(str: string): IterableIterator<Token> {
     } else {
       console.debug('unknown token', token)
     }
-    console.log(type, token)
     yield {
       type,
       word: token
