@@ -88,10 +88,10 @@ export default class ClassDump extends Vue {
   loading = false
 
   @Prop()
-  keyword: string
+  keyword?: string
 
-  get filter(): RegExp {
-    return new RegExp(this.keyword, 'i')
+  get filter(): RegExp | undefined {
+    if (this.keyword) return new RegExp(this.keyword, 'i')
   }
 
   mounted() {
