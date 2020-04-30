@@ -198,7 +198,7 @@ export default class Workspace extends Vue {
         componentName: 'subview',
         componentState: { title: title.substr(0, Math.min(title.length, 30)), component, props }
       })
-      parent.toggleMaximise()
+      // parent.toggleMaximise()
     }
 
     this.$bus.$on('openTab', createTab)
@@ -209,7 +209,7 @@ export default class Workspace extends Vue {
       const item = tabsSingleton.get(component)
       if (item) {
         const { parent } = item
-        if (parent !== max && !parent.isMaximised) parent.toggleMaximise()
+        // if (parent !== max && !parent.isMaximised) parent.toggleMaximise()
         parent.setActiveContentItem(item)
       } else {
         createTab(component, title, props)
