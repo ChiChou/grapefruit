@@ -161,6 +161,7 @@ export default class Runtime extends Vue {
     padding: 8px;
     background: #222;
     color: #959595;
+    font-size: 1rem;
     border: 1px solid transparent;
 
     &:focus {
