@@ -83,8 +83,12 @@ describe('RPC', () => {
     const SAFARI_PREF = await rpc.fs.resolve('home', 'Library/Preferences/com.apple.mobilesafari.plist')
 
     expect(await rpc.fs.plist(SAFARI_PREF)).to.be.an('object')
-    expect(await rpc.fs.ls('home', 'Library')).to.be.an('array')
-    expect(await rpc.fs.ls('bundle')).to.be.an('array')
+    
+    const library = await rpc.fs.ls('home', 'Library')
+    expect(library.items).to.be.an('array')
+
+    const bundle = await rpc.fs.ls('bundle')
+    expect(bundle.items).to.be.an('array')
     // expect(rpc.fs.ls('bundle', 'nonexist-path')).to.be.rejected
 
     const WRITE_TARGET = await rpc.fs.resolve('home', 'tmp/hello' + Math.random())
