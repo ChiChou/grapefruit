@@ -1,10 +1,11 @@
-import "mocha"
+import 'mocha'
 import chaiAsPromised from 'chai-as-promised'
 import * as frida from 'frida'
 import { use, expect } from 'chai'
 
 import { wrap, ExDevice } from '../lib/device'
 import { proxy, connect, RPC } from "../lib/rpc"
+import Repl from '../lib/repl'
 
 use(chaiAsPromised)
 
@@ -20,6 +21,31 @@ describe('RPC', () => {
 
     // console.log(await __exports.interfaces())
     rpc = proxy(agent)
+  })
+
+  it('should execute user script', async () => {
+    const repl = new Repl(session)
+    repl.on('console', (uuid, level, args) => {
+      console.log('[unittest] user script: ', uuid, level, ...args)
+    })
+    repl.on('scripterror', (err) => {
+      console.log('[unittest] catched exception:', err)
+    })
+
+    await repl.eval('console.log(1)')
+    const result = await repl.eval('Process.enumerateModules()[0].base.readByteArray(16)')
+    expect(result.status).eq('ok')
+    expect(result.value).instanceOf(ArrayBuffer)
+    await repl.eval('console.log(2, Process.enumerateModules()[0].base.readByteArray(16))')
+    await repl.eval('console.log(3, new Int8Array(10))')
+
+    const err = await repl.eval('throw new Error("Runtime Error")')
+    expect(err.error).is.not.null
+    expect(err.status).eq('failed')
+
+    await repl.eval('setTimeout(function() { throw new Error("should throw") }, 0)')
+    await new Promise(resolve => setTimeout(resolve, 100))
+    repl.destroy()
   })
 
   it('should handle basic RPC usage', async () => {

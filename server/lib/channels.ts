@@ -5,7 +5,7 @@ import http from 'http'
 import io from 'socket.io'
 import { wrap, tryGetDevice } from './device'
 import { connect, proxy } from './rpc'
-import { DevicesChangedHandler } from 'frida'
+import REPL from './repl'
 
 const mgr = frida.getDeviceManager()
 
@@ -18,7 +18,7 @@ export default class Channels {
   socket: io.Server
   devices: io.Namespace
   session: io.Namespace
-  changedSignal: DevicesChangedHandler
+  changedSignal: frida.DevicesChangedHandler
 
   constructor(srv: http.Server) {
     this.socket = io(srv)
@@ -105,6 +105,27 @@ export default class Channels {
           console.error('Uncaught RPC error', err.stack || err)
           console.error('method:', method, 'args:', args)
         }
+      })
+
+      const repl = new REPL(session)
+      repl
+        .on('destroy', () => {
+          console.log('implement me: script destroy')
+          socket.emit('userscriptdestroy')
+        })
+        .on('scripterror', (err: object) => {
+          console.log('implement me: script error')
+          socket.emit('scripterror', err)
+        })
+        .on('scriptmessage', () => {
+          console.log('implement me: script message')
+        })
+        .on('console', (uuid: string, level: string, args: any[]) => {
+          socket.emit('richconsole', { uuid, level, args })
+        })
+      
+      socket.on('userscript', async (source: string, ack: Function) => {
+        ack(await repl.eval(source))
       })
 
       agent.destroyed.connect(() => {
