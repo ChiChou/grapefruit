@@ -7,7 +7,7 @@ import Welcome from '../views/Welcome.vue'
 import DeviceView from '../views/Device.vue'
 
 import Files from '../views/panels/Files.vue'
-import Runtime from '../views/panels/Runtime.vue'
+import ClassDump from '../views/panels/ClassDump.vue'
 import General from '../views/panels/General.vue'
 import Hook from '../views/panels/Hook.vue'
 import REPL from '../views/panels/REPL.vue'
@@ -33,9 +33,9 @@ const routes = [
       name: 'Files',
       component: Files
     }, {
-      path: 'runtime',
-      name: 'Runtime',
-      component: Runtime
+      path: 'classes',
+      name: 'Classes',
+      component: ClassDump
     }, {
       path: 'general',
       name: 'General',
