@@ -8,7 +8,7 @@
           </router-link>
         </li>
         <li>
-          <router-link to="runtime">
+          <router-link to="classes">
             <b-icon size="is-medium" icon="code-braces" />
           </router-link>
         </li>
