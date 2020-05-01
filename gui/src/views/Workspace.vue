@@ -13,7 +13,9 @@
       >
         <template slot="paneL">
           <div class="space space-sidebar">
-            <router-view class="classes">Place Holder</router-view>
+            <keep-alive>
+              <router-view class="classes">Place Holder</router-view>
+            </keep-alive>
           </div>
         </template>
         <template slot="paneR">
