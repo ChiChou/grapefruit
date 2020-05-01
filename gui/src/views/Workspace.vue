@@ -196,7 +196,7 @@ export default class Workspace extends Vue {
         type: 'component',
         id: uuid(),
         componentName: 'subview',
-        componentState: { title: title.substr(Math.min(title.length, 30)), component, props }
+        componentState: { title: title.substr(0, Math.min(title.length, 30)), component, props }
       })
       parent.toggleMaximise()
     }
