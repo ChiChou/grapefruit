@@ -1,3 +1,3 @@
 <template>
-  <h1>Hook</h1>
+  <h1 style="padding: 10px">Todo: Hook management</h1>
 </template>
