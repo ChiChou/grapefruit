@@ -1,120 +1,128 @@
-// import { Session, Script } from 'frida'
+import { EventEmitter } from 'events'
+import { promises as fs } from 'fs'
 
-// enum Status {
-//   OK = 'ok',
-//   FAIL = 'fail',
-// }
+import { Session, Script, MessageType } from 'frida'
+import path from 'path'
 
-// interface Result {
+type status = 'ok' | 'failed'
+
+interface Result {
+  status: status;
+  uuid: string;
+  type?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  value?: any;
+  error?: Error;
+}
+
+export default class REPL extends EventEmitter {
+  scripts: Map<string, Script> = new Map()
+  cache: string
+
+  constructor(public session: Session) {
+    super()
+  }
+
+  async source(): Promise<string> {
+    if (this.cache) return Promise.resolve(this.cache)
+    const filename = path.join(__dirname, '..', '..', 'agent', 'eval.js')
+    const buf = await fs.readFile(filename)
+    return buf.toString()
+  }
+
+  public async eval(source: string): Promise<Result> {
+    const { session } = this
+    const uuid = Math.random().toString(16).slice(2)
+    const script = await session.createScript(await this.source())
+    script.destroyed.connect(() => {
+      // todo typescript interface
+      this.emit('destroyed', { uuid })
+    })
+
+    script.message.connect((message, data) => {
+      if (message.type === MessageType.Error) {        
+        const { columnNumber, description, fileName, lineNumber, stack } = message
+        this.emit('scripterror', {
+          columnNumber, description, fileName, lineNumber, stack
+        })
+      } else {
+        const { payload } = message
+        // todo: typescript interface
+        if (payload?.subject === 'console.message') {
+          this.emit('console', uuid, payload.level, payload.args)
+        } else { 
+          this.emit('scriptmessage', {
+            uuid,
+            payload,
+            data
+          })
+        }
+      }
+    })
+
+    await script.load()
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let result: any
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      result = await script.exports.eval(source) as ArrayBuffer | { type: string; value: any }
+    } catch(e) {
+      console.error('Failed to execute user script')
+      console.error(e)
+      return {
+        status: 'failed',
+        uuid
+      }
+    }
   
-// }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let type: string, value: any
+    if (result instanceof Buffer) {
+      type = 'arraybuffer'
+      value = result.buffer
 
-// export default class Repl {
-//   session: Session
-//   scripts: Map<string, Script>
+      // hex dump
+      // value = '<Buffer ' + (
+      //   value.toString('hex')
+      //     .replace(/[\dA-Fa-f]{2}/g, s => s + ' ')
+      //     .replace(/ $/, '>')
+      //   )
+    } else {
+      [type, value] = result
+    }
 
-//   constructor(session) {
-//     this.session = session
-//     this.scripts = new Map()
-//   }
+    if (type === 'error') {
+      console.error('User frida script exception:')
+      console.error(value.stack || value)
+      return {
+        uuid,
+        status: 'failed',
+        error: new Error(value),
+      }
+    }
 
-//   /**
-//    * execute user script
-//    * @param {string} script 
-//    */
-//   async execute(source) {
-//     const { socket, session } = this
-//     const script = await session.createScript(`
-//       rpc.exports.bootstrap = function(js) {
-//         ['log', 'warn', 'error'].forEach(function(level) {
-//           console[level] = function() {
-//             send({
-//               subject: 'console.message',
-//               level: level,
-//               args: [].slice.call(arguments)
-//             });
-//           };
-//         });
+    this.scripts.set(uuid, script)
+    return {
+      status: 'ok',
+      uuid,
+      type,
+      value,
+    }
+  }
 
-//         try {
-//           const result = (1, eval)(js);
-//           if (result instanceof ArrayBuffer) {
-//             return result;
-//           } else {
-//             var type = (result === null) ? 'null' : typeof result;
-//             return [type, result];
-//           }
-//         } catch (e) {
-//           return ['error', e instanceof Error ? {
-//             name: e.name,
-//             message: e.message,
-//             stack: e.stack
-//           } : e + ''];
-//         }
-//       }
-//     `)
+  public async remove(uuid: string): Promise<void> {
+    if (!this.scripts.has(uuid))
+      throw new Error(`script not found: ${uuid}`)
 
-//     script.destroyed.connect(() => {
-//       socket.emit('userScript', {
-//         subject: 'destroyed',
-//         uuid,
-//       })
-//     })
+    const script = this.scripts.get(uuid)
+    this.scripts.delete(uuid)
+    return script.unload()
+  }
 
-//     script.message.connect((message, data) => {
-//       const { type, payload } = message
-//       // forward to frontend
-//       socket.emit('userScript', {
-//         subject: 'message',
-//         uuid,
-//         type,
-//         payload,
-//         // binary data is not supported right now
-//         hasData: data !== null,
-//       })
-//     })
-    
-//     let type, value
-//     try {
-//       await script.load()
-//       type, value = await script.exports.bootstrap(source)
-//     } catch (error) {
-//       console.error('Uncaught user frida script', error.stack || error)
-//       return {
-//         status: 'failed',
-//         error,
-//       }
-//     }
+  public async destroy(): Promise<void> {
+    for (const script of this.scripts.values()) script.unload()
+    this.scripts.clear()
+  }
+}
 
-//     if (result instanceof Buffer) {
-//       type = 'arraybuffer'
-//       value = Buffer.from(result).toString('base64')
-//     }
-
-//     this.scripts.set(uuid, script)
-
-//     if (type === 'error') {
-//       console.error('Uncaught user frida script', value.stack || value)
-//       return {
-//         status: 'failed',
-//         error: value,
-//       }
-//     }
-
-//     return {
-//       status: 'ok',
-//       uuid,
-//       type,
-//       value,
-//     }
-//   }
-
-//   async unload(uuid) {
-//     if (!this.scripts.has(uuid))
-//       throw new Error(`script not found: ${uuid}`)
-
-//     const script = this.scripts.get(uuid)
-//     this.scripts.delete(uuid)
-//     return script.unload()
-//   }
-// }
