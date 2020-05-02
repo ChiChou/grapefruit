@@ -26,6 +26,11 @@ import Cookies from './BinaryCookie.vue'
 import UserDefaults from './UserDefaults.vue'
 import ClassInfo from './ClassInfo.vue'
 import Disasm from './Disasm.vue'
+import Preview from './Preview.vue'
+import MediaPreview from './MediaPreview.vue'
+import DictPreview from './DictPreview.vue'
+import PDFPreview from './PDFPreview.vue'
+import ImagePreview from './ImagePreview.vue'
 
 import Loading from '../../components/Loading.vue'
 
@@ -44,7 +49,12 @@ import { Component, Vue, Prop } from 'vue-property-decorator'
     SnapShot,
     Info,
     ClassInfo,
-    Disasm
+    Disasm,
+    MediaPreview,
+    Preview,
+    DictPreview,
+    PDFPreview,
+    ImagePreview
   }
 })
 export default class Frame extends Vue {
