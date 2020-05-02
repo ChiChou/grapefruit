@@ -1,4 +1,5 @@
 const webpack = require('webpack')
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin')
 
 module.exports = {
   chainWebpack: config => {
@@ -10,6 +11,7 @@ module.exports = {
         JQuery: 'jquery',
         'window.jQuery': 'jquery'
       }))
+      .use(new MonacoWebpackPlugin())
   },
   devServer: {
     proxy: {

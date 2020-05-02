@@ -31,6 +31,7 @@ import MediaPreview from './MediaPreview.vue'
 import DictPreview from './DictPreview.vue'
 import PDFPreview from './PDFPreview.vue'
 import ImagePreview from './ImagePreview.vue'
+import TextPreview from './TextPreview.vue'
 
 import Loading from '../../components/Loading.vue'
 
@@ -54,7 +55,8 @@ import { Component, Vue, Prop } from 'vue-property-decorator'
     Preview,
     DictPreview,
     PDFPreview,
-    ImagePreview
+    ImagePreview,
+    TextPreview
   }
 })
 export default class Frame extends Vue {
