@@ -11,7 +11,7 @@ export function valueOf(value: ObjC.Object): any {
   if (value.isKindOfClass_(NSDictionary))
     return dictFromNSDictionary(value)
   if (value.isKindOfClass_(NSNumber))
-    return value.floatValue()
+    return parseFloat(value.toString())
   return value.toString()
 }
 
