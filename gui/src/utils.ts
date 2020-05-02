@@ -76,7 +76,7 @@ export function filetype(name: string) {
     if (/^(jpe?g|png|gif|webp)$/.exec(ext)) return 'image'
     if (/^html?$/.exec(ext)) return 'text'
 
-    if (['txt', 'log', 'csv', 'js', 'xml', 'json', 'py'].includes(ext)) return 'text'
+    if (['txt', 'log', 'csv', 'js', 'xml', 'json', 'py', 'sql'].includes(ext)) return 'text'
     if (['wav', 'mp3', 'aac', 'm4a'].includes(ext)) return 'audio'
     if (['mp4', 'mov', 'avi'].includes(ext)) return 'video'
     if (['db', 'sqlite'].includes(ext)) return 'database'

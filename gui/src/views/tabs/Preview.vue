@@ -1,3 +1,7 @@
+<template>
+  <div></div>
+</template>
+
 <script lang="ts">
 import { Prop, Component } from 'vue-property-decorator'
 import Base from './Base.vue'
@@ -8,10 +12,6 @@ import { extname } from '../../utils'
 export default class Preview extends Base {
   @Prop({ required: true })
   path!: string
-
-  get extension(): string {
-    return extname(this.path)
-  }
 
   async link(): Promise<string> {
     this.loading = true

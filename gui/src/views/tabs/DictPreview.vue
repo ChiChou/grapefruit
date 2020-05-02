@@ -8,6 +8,7 @@
 import { Component } from 'vue-property-decorator'
 import Preview from './Preview.vue'
 import DataField from '../../components/DataField.vue'
+import { extname } from '../../utils'
 
 @Component({
   components: {
@@ -23,7 +24,7 @@ export default class DictPreview extends Preview {
   }
 
   async load() {
-    const { extension } = this
+    const extension = extname(this.path)
     if (extension === 'json') {
       const url = await this.link()
       const response = await fetch(url)
