@@ -4,7 +4,9 @@
 import * as io from 'socket.io-client'
 import Vue from 'vue'
 import { Route } from 'vue-router'
+import { DialogProgrammatic as Dialog } from 'buefy'
 
+import * as regulation from './regulation'
 import { RPC, WSEvent, Context, RpcResponse, Options } from './wsrpc.d'
 
 const ctx: Context = {}
@@ -135,6 +137,19 @@ function install(V: typeof Vue, opt: Options) {
     if (!previous && current) {
       console.debug('connect')
       const { device, bundle } = to.params
+
+      if (regulation.check(bundle)) {
+        Dialog.alert({
+          title: 'Warning',
+          hasIcon: true,
+          type: 'is-warning',
+          message: 'Sorry, due to local regulation restrictions, we are not able to work on this app',
+          onConfirm() { router.go(-1) }
+        })
+
+        return
+      }
+
       const socket = io.connect('/session', { query: { device, bundle } })
 
       V.prototype.$rpc = wrap(socket)
