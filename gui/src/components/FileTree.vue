@@ -95,7 +95,6 @@ export default class FileTree extends Vue {
       this.expanded = !this.expanded
     } else {
       const t = filetype(this.item.name)
-      console.log('file type:', t)
       const mapping: {[key: string]: string} = {
         audio: 'MediaPreview',
         video: 'MediaPreview',
@@ -104,8 +103,9 @@ export default class FileTree extends Vue {
         image: 'ImagePreview',
         pdf: 'PDFPreview',
         text: 'TextPreview'
+        // todo: hex:
       }
-      const viewer = mapping[t] || 'Preview'
+      const viewer = mapping[t] || 'UnknownPreview'
       this.$bus.$emit('openTab', viewer, `Preview - ${this.item.name}`, { path: this.item.path })
     }
   }
