@@ -2,22 +2,11 @@
   <div class="runtime-panel">
     <header>
       <input v-model="keyword" placeholder="Search..." class="search">
-      <section class="class-dump-scope-select">
-        <div>
-          <input type="radio" id="one" value="__main__" v-model="scope" :disabled="loading">
-          <label for="one">Main</label>
-        </div>
-
-        <div>
-          <input type="radio" id="one" value="__app__" v-model="scope" :disabled="loading">
-          <label for="one">App</label>
-        </div>
-
-        <div>
-          <input type="radio" id="one" value="__global__" v-model="scope" :disabled="loading">
-          <label for="one">Global (slow)</label>
-        </div>
-      </section>
+      <b-tabs v-model="index" expanded class="header-only">
+        <b-tab-item label="Main" icon="folder-home-outline" :disabled="loading" />
+        <b-tab-item label="App" icon="folder-cog-outline" :disabled="loading" />
+        <b-tab-item label="Global (Slow)" icon="folder-cog-outline" :disabled="loading" />
+      </b-tabs>
     </header>
     <main class="scroll">
       <class :node="tree" :filter="filter" />
@@ -77,12 +66,17 @@ Vue.component('class', resolve => {
 export default class Runtime extends Vue {
   keyword = ''
 
-  scope: scope = '__app__'
   tree: object = {}
   loading = false
 
+  index = 1 // default: __app__
+
   get filter(): RegExp | undefined {
     if (this.keyword) return new RegExp(this.keyword, 'i')
+  }
+
+  get scope() {
+    return ['__main__', '__app__', '__global__'][this.index]
   }
 
   mounted() {
@@ -90,11 +84,11 @@ export default class Runtime extends Vue {
   }
 
   @Watch('scope')
-  scopeChanged(val) {
+  scopeChanged(val: string) {
     this.refresh(val)
   }
 
-  refresh(scope) {
+  refresh(scope: string) {
     this.loading = true
     this.$rpc.classdump.hierarchy(scope).then((tree: object) => {
       this.tree = tree
