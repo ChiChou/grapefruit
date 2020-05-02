@@ -26,21 +26,28 @@ export function readdir(path: string, max=500): File[] {
   const list = successful(pError =>
     NSFileManager.defaultManager().contentsOfDirectoryAtPath_error_(path, pError))
 
-  const isDir = Memory.alloc(Process.pointerSize)
-  const count = Math.min(max, list.count())
-  const result = new Array(count)
+  const pIsDir = Memory.alloc(Process.pointerSize)
+  const count = list.count()
+  const result = []
   const nsPath = NSString.stringWithString_(path)
-  for (let i = 0; i < count; i++) {
+  for (let i = 0, j = 0; i < count; i++) {
     const filename = list.objectAtIndex_(i)
     const absolute = nsPath.stringByAppendingPathComponent_(filename)
-    isDir.writePointer(NULL)
-    NSFileManager.defaultManager().fileExistsAtPath_isDirectory_(absolute, isDir)
-    result[i] = {
-      type: isDir.readPointer().isNull() ? 'file' : 'directory',
+    pIsDir.writePointer(NULL)
+    NSFileManager.defaultManager().fileExistsAtPath_isDirectory_(absolute, pIsDir)
+    const isFile = pIsDir.readPointer().isNull()
+
+    if (isFile && filename.toString().match(/^frida-([a-zA-z0-9]+)\.dylib$/)) continue
+    if (j++ > max) break
+
+    const item: File = {
+      type: isFile ? 'file' : 'directory',
       name: filename.toString(),
       path: absolute.toString(),
       attribute: attrs(absolute) || {}
     }
+
+    result.push(item)
   }
 
   return result
