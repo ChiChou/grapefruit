@@ -21,7 +21,6 @@ export default class MediaPreview extends Preview {
   source?: string | null = null
 
   mounted() {
-    console.log('mounted')
     this.alive = true
     this.load()
   }

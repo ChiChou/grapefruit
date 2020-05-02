@@ -41,7 +41,8 @@ export default class TextPreview extends InlinePreview {
         language: this.syntax,
         readOnly: true,
         theme: 'vs-dark',
-        fontSize: 16
+        fontSize: 16,
+        fontFamily: '"Fira Code", monospace'
       })
     }).finally(() => {
       this.loading = false
