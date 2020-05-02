@@ -37,7 +37,7 @@ export function readdir(path: string, max=500): File[] {
     NSFileManager.defaultManager().fileExistsAtPath_isDirectory_(absolute, pIsDir)
     const isFile = pIsDir.readPointer().isNull()
 
-    if (isFile && filename.toString().match(/^frida-([a-zA-z0-9]+)\.dylib$/)) continue
+    // if (isFile && filename.toString().match(/^frida-([a-zA-z0-9]+)\.dylib$/)) continue
     if (j++ > max) break
 
     const item: File = {

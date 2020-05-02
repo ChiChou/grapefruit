@@ -1,65 +1,106 @@
 <template>
-  <aside class="explorer">
+  <aside class="finder">
     <header>
-      <b-tabs v-model="index" expanded class="header-only sticky">
+      <b-tabs v-model="index" expanded class="header-only">
         <b-tab-item label="Home" icon="folder-home-outline" />
         <b-tab-item label="Bundle" icon="folder-cog-outline" />
-        <!-- <b-tab-item label="tmp" icon="timer-outline" /> -->
       </b-tabs>
     </header>
 
     <main>
-      <FileTree :root="root" cwd="/" :depth="0" :item="{ type: 'directory', name: root }" />
+      <section class="tree">
+        <FileTree :root="root" cwd="/" :depth="0" :item="{ type: 'directory', name: root }" />
+      </section>
+      <section class="detail" v-if="selected">
+        <p class="path">{{ selected.path }}</p>
+        <p>
+          {{ selected.attribute.permission | perm }}
+          {{ selected.attribute.owner }}:{{ selected.attribute.group }}
+          {{ selected.attribute.size | filesize }}
+        </p>
+
+        <p>{{ selected.attribute.type }}</p>
+
+        <p>Created: {{ selected.attribute.creation }}</p>
+        <p>Modified: {{ selected.attribute.modification }}</p>
+        <p>Protection: {{ selected.attribute.protection }}</p>
+      </section>
     </main>
   </aside>
 </template>
 
 <script lang="ts">
-import { Prop, Component, Watch, Vue } from 'vue-property-decorator'
+import { Component, Vue } from 'vue-property-decorator'
 import FileTree from '../../components/FileTree.vue'
-
-interface Context {
-  tmp?: string;
-  bundle?: string;
-  home?: string;
-}
+import { Finder } from '../../../interfaces'
 
 @Component({
   components: {
     FileTree
+  },
+  filters: {
+    perm(val: number) {
+      return val.toString(8)
+    }
   }
 })
 export default class ClassInfo extends Vue {
-  ctx: Context = {}
   index = 0
   loading = false
+  selected?: Finder.Item = null
+  highlight?: FileTree = null
 
   get root() {
     return ['home', 'bundle'][this.index]
+  }
+
+  mounted() {
+    this.$on('select', (el: FileTree) => {
+      if (this.highlight && this.highlight !== el) {
+        this.highlight.dismiss()
+      }
+
+      this.highlight = el
+      this.selected = el.item
+    })
   }
 }
 </script>
 
 <style lang="scss" scoped>
 h2 {
-  padding: 10px 20px;
+  padding: 10px;
   background: #1b1b1b;
   color: #999;
 }
 
-aside.explorer {
+aside.finder {
   display: flex;
   flex-direction: column;
   height: 100%;
 
-  > header {
-
-  }
-
   > main {
     flex: 1;
     overflow: auto;
-    padding: 0 10px 10px 10px;
+    display: flex;
+    flex-direction: column;
+
+    > .tree {
+      padding: 4px 0;
+      flex: 1;
+      overflow: auto;
+    }
+
+    > .detail {
+      > .path {
+        color: #ffc107;
+      }
+      word-break: break-all;
+      padding: 10px;
+      color: #c7c7c7;
+      text-shadow: 1px 1px 1px #00000030;
+      background: #00000030;
+    }
   }
 }
 
