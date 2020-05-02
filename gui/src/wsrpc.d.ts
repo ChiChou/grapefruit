@@ -5,7 +5,9 @@ export type RPC = {
   (...args: any): any;
 }
 
-type WSEvent = 'ready' | 'destroyed' | 'exception' | 'detached' | 'console' | 'crash'
+type WSEvent = 'ready' | 'destroyed' | 
+  'exception' | 'detached' | 'console' | 'crash' |
+  'download' | 'delivery'
 
 interface Options {
   router: VueRouter;
@@ -24,6 +26,8 @@ interface RpcResponse {
 interface WS {
   ready(): Promise<boolean>;
   on(event: WSEvent, cb: Function): WS;
+  off(event: WSEvent, cb: Function): WS;
+  once(event: WSEvent, cb: Function): WS;
   send(event: string, ...args: any[]): Promise<any>;
 }
 

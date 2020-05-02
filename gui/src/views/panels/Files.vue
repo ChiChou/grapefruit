@@ -95,6 +95,14 @@ aside.finder {
       > .path {
         color: #ffc107;
       }
+
+      p {
+        margin-bottom: 0.125rem;
+
+        &.download {
+          margin-top: 0.5rem;
+        }
+      }
       word-break: break-all;
       padding: 10px;
       color: #c7c7c7;

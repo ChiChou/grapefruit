@@ -100,7 +100,11 @@ class WS {
 
   on(event: WSEvent, cb: Function) {
     if (event === 'ready') {
-      this._pending.add(cb)
+      if (this._ready) {
+        Vue.nextTick(() => cb())
+      } else {
+        this._pending.add(cb)
+      }
     } else {
       this.socket.on(event, cb)
     }
@@ -109,6 +113,16 @@ class WS {
 
   send(event: string, ...args: any[]): Promise<any> {
     return new Promise((resolve) => this.socket.emit(event, args, resolve))
+  }
+
+  once(event: string, cb: Function) {
+    this.ready().then(() => this.socket.once(event, cb))
+    return this
+  }
+
+  off(event: string, cb: Function) {
+    this.ready().then(() => this.socket.off(event, cb))
+    return this
   }
 }
 
