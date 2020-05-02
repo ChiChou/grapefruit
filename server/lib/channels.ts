@@ -3,12 +3,12 @@ import * as frida from 'frida'
 import http from 'http'
 
 import io from 'socket.io'
+import REPL from './repl'
+import * as transfer from './transfer'
 import { wrap, tryGetDevice } from './device'
 import { connect, proxy } from './rpc'
-import REPL from './repl'
+
 import { MessageType } from 'frida/dist/script'
-import { registry } from './transfer'
-import { Readable } from 'stream'
 
 const mgr = frida.getDeviceManager()
 
@@ -88,28 +88,11 @@ export default class Channels {
             const { event, session } = msg.payload
             if (event === 'begin') {
               const { size, path } = msg.payload
-              const stream = new Readable({
-                read(): void {
-                  this.push(null)
-                }
-              })
-              registry.set(session, {
-                stream,
-                size,
-                name: path.split('/').pop()
-              })
-
-              // GC
-              setTimeout(() => {
-                if (!stream.destroyed) stream.destroy()
-              }, 5 * 60 * 1000)
+              transfer.begin(session, size, path)
             } else if (event === 'data') {
-              const task = registry.get(session)
-              if (task) task.stream.push(data)
-              return
+              transfer.push(session, data)
             } else if (event === 'end') {
-              const task = registry.get(session)
-              if (task) task.stream.destroy()
+              transfer.end(session)
             }
           }
         }

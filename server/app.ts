@@ -9,10 +9,10 @@ import * as path from 'path'
 import * as frida from 'frida'
 
 import * as serialize from './lib/serialize'
+import * as transfer from './lib/transfer'
 import Channels from './lib/channels'
 import { wrap, tryGetDevice } from './lib/device'
 import { Lockdown } from './lib/lockdown'
-import { registry } from './lib/transfer'
 
 import { URL } from 'url'
 import { exec } from 'child_process'
@@ -81,16 +81,16 @@ Please restart this server (not the PC) to solve it`
   })
   .get('/download/:uuid', async (ctx) => {
     const { uuid } = ctx.params
-    console.log(registry, uuid)
-    if (!registry.has(uuid)) {
+    try {
+      const task = transfer.request(uuid)
+      ctx.attachment(task.name)
+      ctx.set('Content-Type', 'application/octet-stream')
+      ctx.response.length = task.size
+      ctx.body = task.stream
+    } catch(e) {
+      console.error('error', e)
       ctx.throw(404)
-      return
     }
-
-    const task = registry.get(uuid)
-    ctx.attachment(task.name)
-    ctx.response.length = task.size
-    ctx.body = task.stream
   })
   .post('/url/start', async (ctx) => {
     const { device, bundle, url } = ctx.request.body
@@ -121,7 +121,7 @@ Please restart this server (not the PC) to solve it`
   .get('/update', async (ctx) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const task = new Promise((resolve, reject) => 
-      exec('npm view passionfruit version', (err, stdout, stderr) => 
+      exec('npm view passionfruit version', (err, stdout) => 
         err ? reject(err) : resolve(stdout.trimRight())
       )
     )
