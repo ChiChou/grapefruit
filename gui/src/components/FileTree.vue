@@ -12,12 +12,14 @@
       </a>
       <b-icon v-else :icon="icon" />
       <span class="name" @dblclick="open">{{ item.name }}</span>
-      <span class="extra" v-if="root === 'home'">
+      <span class="extra">
         <a @click="download(item)" v-if="item.type === 'file'">
           <span class="mdi mdi-download"></span>
         </a>
-        <a @click="mv(item)"><span class="mdi mdi-rename-box"></span></a>
-        <a @click="rm(item)"><span class="mdi mdi-delete"></span></a>
+        <span v-if="root === 'home'">
+          <a @click="mv(item)"><span class="mdi mdi-rename-box"></span></a>
+          <a @click="rm(item)"><span class="mdi mdi-delete"></span></a>
+        </span>
       </span>
     </div>
     <li v-for="(child, index) in children" :key="index">
@@ -81,7 +83,7 @@ export default class FileTree extends Vue {
       }
 
       if (['txt', 'log'].includes(ext)) return 'file-document-outline'
-      if (['wav', 'mp3', 'aac'].includes(ext)) return 'file-music-outline'
+      if (['wav', 'mp3', 'aac', 'm4a'].includes(ext)) return 'file-music-outline'
       if (['mp4', 'mov', 'avi'].includes(ext)) return 'file-video-outline'
       if (['db', 'sqlite'].includes(ext)) return 'database'
     }
@@ -118,11 +120,26 @@ export default class FileTree extends Vue {
     // todo: localStorage
   }
 
+  get viewer(): string {
+    const { name } = this.item
+    const lastIndex = name?.lastIndexOf('.')
+    if (lastIndex > -1) {
+      const ext = name.substr(lastIndex + 1).toLowerCase()
+      if (['wav', 'mp3', 'aac', 'm4a'].includes(ext)) return 'MediaPreview'
+      if (['mp4', 'mov', 'avi'].includes(ext)) return 'MediaPreview'
+      if (['json', 'plist'].includes(ext)) return 'DictPreview'
+      if (/^(jpe?g|png|gif|webp)$/.exec(ext)) return 'ImagePreview'
+      if (ext === 'pdf') return 'PDFPreview'
+    }
+
+    return 'Preview'
+  }
+
   open() {
     if (this.isDir) {
       this.expanded = !this.expanded
     } else {
-      console.log('todo: open file', this.item.path)
+      this.$bus.$emit('openTab', this.viewer, `Preview - ${this.item.name}`, { path: this.item.path })
     }
   }
 
@@ -224,7 +241,7 @@ export default class FileTree extends Vue {
     > .extra {
       display: none;
 
-      > a {
+      > a, > span > a {
         > .mdi {
           font-size: 1.5rem;
         }
