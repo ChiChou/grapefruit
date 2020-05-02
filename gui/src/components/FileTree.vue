@@ -13,6 +13,9 @@
       <b-icon v-else :icon="icon" />
       <span class="name" @dblclick="open">{{ item.name }}</span>
       <span class="extra" v-if="root === 'home'">
+        <a @click="download(item)" v-if="item.type === 'file'">
+          <span class="mdi mdi-download"></span>
+        </a>
         <a @click="mv(item)"><span class="mdi mdi-rename-box"></span></a>
         <a @click="rm(item)"><span class="mdi mdi-delete"></span></a>
       </span>
@@ -123,6 +126,11 @@ export default class FileTree extends Vue {
     }
   }
 
+  async download(item: Finder.Item) {
+    const session = await this.$rpc.fs.download(item.path)
+    location.replace(`/api/download/${session}`)
+  }
+
   // remove file
   rm(item: Finder.Item) {
     const escaped = htmlescape(item.path)
@@ -159,7 +167,6 @@ export default class FileTree extends Vue {
     }
     const escaped = htmlescape(item.path)
     const basename = item.path.substr(0, idx + 1)
-    console.log(basename, item.path)
     this.$buefy.dialog.prompt({
       message: 'Rename Item',
       inputAttrs: { placeholder: item.name },

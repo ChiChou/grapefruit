@@ -12,11 +12,11 @@ import * as serialize from './lib/serialize'
 import Channels from './lib/channels'
 import { wrap, tryGetDevice } from './lib/device'
 import { Lockdown } from './lib/lockdown'
+import { registry } from './lib/transfer'
 
 import { URL } from 'url'
 import { exec } from 'child_process'
 import { createServer } from 'http'
-
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 Buffer.prototype.toJSON = function () {
@@ -78,6 +78,19 @@ Please restart this server (not the PC) to solve it`
     })
     const response = await client.recv()
     ctx.body = response.Value
+  })
+  .get('/download/:uuid', async (ctx) => {
+    const { uuid } = ctx.params
+    console.log(registry, uuid)
+    if (!registry.has(uuid)) {
+      ctx.throw(404)
+      return
+    }
+
+    const task = registry.get(uuid)
+    ctx.attachment(task.name)
+    ctx.response.length = task.size
+    ctx.body = task.stream
   })
   .post('/url/start', async (ctx) => {
     const { device, bundle, url } = ctx.request.body

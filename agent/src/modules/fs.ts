@@ -115,7 +115,7 @@ export async function text(path: string) {
   return stream.read(SIZE)
 }
 
-function uuidv4() {
+function uuidv4(): string {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     const r = Math.random() * 16 | 0, v = c === 'x' ? r : ((r & 0x3) | 0x8)
     return v.toString(16)
@@ -128,18 +128,25 @@ export async function download(path: string) {
   const watermark = 10 * 1024 * 1024
   const subject = 'download'
 
-  const { size } = attrs(path)
-  const fd = open(name, 0, 0) as number
-  if (fd === -1)
-    throw new Error(`unable to open file ${path}`)
-
-  send({ subject, event: 'start', session, path, size })
-  const stream = new UnixInputStream(fd, { autoClose: true })
-  let eof = false
-  while (!eof) {
-    const buf = await stream.read(watermark)
-    eof = (buf.byteLength > 0 && buf.byteLength < watermark)
-    send({ subject, event: 'data', session }, buf)
+  const { size, type } = attrs(path)
+  if (type.toString() === 'NSFileTypeDirectory') {
+    throw new Error(`${path} is a directory`)
   }
-  send({ subject, event: 'finish', session })
+
+  const fd = open(name, 0, 0) as number
+  if (fd === -1) throw new Error(`unable to open file ${path}`)
+
+  send({ subject, event: 'begin', session, path, size })
+  setImmediate(async () => {
+    const stream = new UnixInputStream(fd, { autoClose: true })
+    let eof = false
+    while (!eof) {
+      const buf = await stream.read(watermark)
+      eof = (buf.byteLength > 0 && buf.byteLength < watermark)
+      send({ subject, event: 'data', session }, buf)
+    }
+    send({ subject, event: 'end', session })
+  })
+
+  return session
 }
