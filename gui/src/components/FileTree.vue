@@ -31,7 +31,7 @@
 <script lang="ts">
 import { Prop, Component, Watch, Vue } from 'vue-property-decorator'
 import { Finder } from '../../interfaces'
-import { htmlescape } from '../utils'
+import { htmlescape, icon, filetype } from '../utils'
 
 @Component({
   name: 'FileTree'
@@ -58,37 +58,7 @@ export default class FileTree extends Vue {
 
   get icon() {
     if (this.isDir) return this.expanded ? 'folder-open-outline' : 'folder-outline'
-
-    const { name } = this.item
-    const lastIndex = name?.lastIndexOf('.')
-    const mapping: { [key: string]: string } = {
-      pdf: 'file-pdf-outline',
-      js: 'language-javascript',
-      plist: 'cog-box',
-      dylib: 'cogs',
-      xml: 'xml',
-      json: 'code-json',
-      binarycookies: 'cookie'
-    }
-
-    if (lastIndex > -1) {
-      const ext = name.substr(lastIndex + 1).toLowerCase()
-      if (/^(jpe?g|png|gif)$/.exec(ext)) return 'file-image-outline'
-      if (/^html?$/.exec(ext)) return 'language-html5'
-      if (/^docx?$/.exec(ext)) return 'file-word-outline'
-      if (/^(xlsx?|csv)$/.exec(ext)) return 'file-excel-outline'
-
-      if (Object.prototype.hasOwnProperty.call(mapping, ext)) {
-        return mapping[ext]
-      }
-
-      if (['txt', 'log'].includes(ext)) return 'file-document-outline'
-      if (['wav', 'mp3', 'aac', 'm4a'].includes(ext)) return 'file-music-outline'
-      if (['mp4', 'mov', 'avi'].includes(ext)) return 'file-video-outline'
-      if (['db', 'sqlite'].includes(ext)) return 'database'
-    }
-
-    return 'file-outline'
+    return icon(this.item.name)
   }
 
   get isDir() {
@@ -120,26 +90,21 @@ export default class FileTree extends Vue {
     // todo: localStorage
   }
 
-  get viewer(): string {
-    const { name } = this.item
-    const lastIndex = name?.lastIndexOf('.')
-    if (lastIndex > -1) {
-      const ext = name.substr(lastIndex + 1).toLowerCase()
-      if (['wav', 'mp3', 'aac', 'm4a'].includes(ext)) return 'MediaPreview'
-      if (['mp4', 'mov', 'avi'].includes(ext)) return 'MediaPreview'
-      if (['json', 'plist'].includes(ext)) return 'DictPreview'
-      if (/^(jpe?g|png|gif|webp)$/.exec(ext)) return 'ImagePreview'
-      if (ext === 'pdf') return 'PDFPreview'
-    }
-
-    return 'Preview'
-  }
-
   open() {
     if (this.isDir) {
       this.expanded = !this.expanded
     } else {
-      this.$bus.$emit('openTab', this.viewer, `Preview - ${this.item.name}`, { path: this.item.path })
+      const t = filetype(this.item.name)
+      const mapping = {
+        audio: 'MediaPreview',
+        video: 'MediaPreview',
+        json: 'DictPreview',
+        plist: 'DictPreview',
+        image: 'ImagePreview',
+        pdf: 'PDFPreview'
+      }
+      const viewer = mapping[t] || 'Preview'
+      this.$bus.$emit('openTab', viewer, `Preview - ${this.item.name}`, { path: this.item.path })
     }
   }
 

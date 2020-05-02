@@ -2,15 +2,15 @@
 import { Prop, Component } from 'vue-property-decorator'
 import Base from './Base.vue'
 
+import { extname } from '../../utils'
+
 @Component
 export default class Preview extends Base {
   @Prop({ required: true })
   path!: string
 
   get extension(): string {
-    const lastIndex = this.path.lastIndexOf('.')
-    if (lastIndex === -1) return ''
-    return this.path.substr(lastIndex + 1)
+    return extname(this.path)
   }
 
   async link(): Promise<string> {
