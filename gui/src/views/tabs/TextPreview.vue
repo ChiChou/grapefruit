@@ -16,6 +16,8 @@ const decoder = new TextDecoder()
 
 @Component
 export default class TextPreview extends InlinePreview {
+  editor?: monaco.editor.ICodeEditor
+
   get syntax(): string {
     const ext = extname(this.path)
     const mapping = {
@@ -36,7 +38,7 @@ export default class TextPreview extends InlinePreview {
     this.loading = true
     this.$rpc.fs.text(this.path).then((content: ArrayBuffer) => {
       const value = decoder.decode(content)
-      monaco.editor.create(this.$refs.container as HTMLElement, {
+      this.editor = monaco.editor.create(this.$refs.container as HTMLElement, {
         value,
         language: this.syntax,
         readOnly: true,
@@ -46,6 +48,10 @@ export default class TextPreview extends InlinePreview {
       })
     }).finally(() => {
       this.loading = false
+    })
+
+    this.$parent.$on('resize', () => {
+      if (this.editor) this.editor.layout()
     })
   }
 }
