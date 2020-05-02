@@ -47,8 +47,8 @@ import { Finder } from '../../../interfaces'
 export default class ClassInfo extends Vue {
   index = 0
   loading = false
-  selected?: Finder.Item = null
-  highlight?: FileTree = null
+  selected?: Finder.Item | null = null
+  highlight?: FileTree | null = null
 
   get root() {
     return ['home', 'bundle'][this.index]
