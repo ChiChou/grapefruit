@@ -30,7 +30,9 @@ export default class TextPreview extends InlinePreview {
       sql: 'sql',
       yaml: 'yaml',
       yml: 'yaml',
-      css: 'css'
+      css: 'css',
+      xml: 'xml',
+      entitlements: 'xml'
     }
 
     return mapping[ext] || 'text'
