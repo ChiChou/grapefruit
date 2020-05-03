@@ -15,7 +15,6 @@
 </template>
 
 <script lang="ts">
-import TextViewer from './TextViewer.vue'
 import CheckSec from './CheckSec.vue'
 import SnapShot from './SnapShot.vue'
 import UIDump from './UIDump.vue'
@@ -47,7 +46,6 @@ import { Container } from 'golden-layout'
     Url,
     KeyChain,
     Cookies,
-    TextViewer,
     UserDefaults,
     CheckSec,
     UIDump,

@@ -40,6 +40,7 @@ export function icon(name: string) {
     plist: 'cog-box',
     dylib: 'cogs',
     xml: 'xml',
+    entitlements: 'xml',
     json: 'code-json',
     binarycookies: 'cookie'
   }
@@ -50,11 +51,11 @@ export function icon(name: string) {
     if (Object.prototype.hasOwnProperty.call(mapping, ext)) return mapping[ext]
 
     if (/^(jpe?g|png|gif|webp)$/.exec(ext)) return 'file-image-outline'
-    if (/^html?$/.exec(ext)) return 'language-html5'
+    if (/^html?$/.exec(ext)) return 'xml'
     if (/^docx?$/.exec(ext)) return 'file-word-outline'
     if (/^(xlsx?|csv)$/.exec(ext)) return 'file-excel-outline'
 
-    if (['txt', 'log'].includes(ext)) return 'file-document-outline'
+    if (['txt', 'log', 'glsl'].includes(ext)) return 'file-document-outline'
     if (['wav', 'mp3', 'aac', 'm4a'].includes(ext)) return 'file-music-outline'
     if (['mp4', 'mov', 'avi', 'webm'].includes(ext)) return 'file-video-outline'
     if (['db', 'sqlite'].includes(ext)) return 'database'
@@ -76,7 +77,7 @@ export function filetype(name: string) {
     if (/^(jpe?g|png|gif|webp)$/.exec(ext)) return 'image'
     if (/^html?$/.exec(ext)) return 'text'
 
-    if (['txt', 'log', 'csv', 'js', 'xml', 'json', 'py', 'sql'].includes(ext)) return 'text'
+    if (['txt', 'log', 'csv', 'js', 'xml', 'json', 'py', 'sql', 'glsl', 'entitlements', 'css'].includes(ext)) return 'text'
     if (['wav', 'mp3', 'aac', 'm4a'].includes(ext)) return 'audio'
     if (['mp4', 'mov', 'avi', 'webm'].includes(ext)) return 'video'
     if (['db', 'sqlite'].includes(ext)) return 'database'
