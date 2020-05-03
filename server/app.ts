@@ -84,7 +84,7 @@ Please restart this server (not the PC) to solve it`
     try {
       const task = transfer.request(uuid)
       ctx.attachment(task.name)
-      ctx.set('Content-Type', 'application/octet-stream')
+      ctx.set('Cache-Control', 'max-age=7200')
       ctx.response.length = task.size
       ctx.body = task.stream
     } catch(e) {
