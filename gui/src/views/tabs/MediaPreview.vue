@@ -1,5 +1,5 @@
 <template>
-  <div v-if="alive" class="stage">
+  <div class="stage">
     <b-progress v-if="buffering" :value="progress" show-value format="percent" type="is-dark" />
 
     <component v-if="source" :is="player" controls="controls" autoplay>
@@ -15,7 +15,6 @@ import { filetype } from '../../utils'
 
 @Component
 export default class MediaPreview extends Preview {
-  alive = true
   progress = 0
   buffering = false
   blob?: Blob
@@ -26,14 +25,12 @@ export default class MediaPreview extends Preview {
   }
 
   mounted() {
-    this.alive = true
     this.load()
   }
 
-  beforeDestroy() {
-    this.alive = false
-    this.source = null
+  destroyed() {
     if (this.source) URL.revokeObjectURL(this.source)
+    this.source = null
   }
 
   async load() {
