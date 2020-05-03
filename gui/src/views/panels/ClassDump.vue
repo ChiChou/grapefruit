@@ -9,7 +9,9 @@
       </b-tabs>
     </header>
     <main class="scroll">
-      <class :node="tree" :filter="filter" />
+      <ul class="hierarchy-tree-root" :class="{ loading }">
+        <class :node="tree" :filter="filter" />
+      </ul>
     </main>
   </div>
 </template>
@@ -21,45 +23,53 @@ import bus from '../../bus'
 
 type scope = '__app__' | '__main__' | '__global__'
 
-function * visit(h: CreateElement, node: object, filter: RegExp, depth = 0): IterableIterator<string | VNode> {
+function * visit(h: CreateElement, node: object, depth: number, filter: RegExp): IterableIterator<string | VNode> {
   for (const [name, child] of Object.entries(node)) {
-    const children = [...visit(h, child, filter, depth + 1)]
     let match = typeof filter === 'undefined'
     if (!match && filter) {
       match = Boolean(name.match(filter))
     }
 
     if (match) {
-      const label = h('span',
-        {
-          style: {
-            marginLeft: depth + 'em'
-          },
-          on: {
-            click: () => bus.bus.$emit('openTab', 'ClassInfo', 'Class: ' + name, { name })
-          }
-        }, name)
-      children.unshift(label)
+      yield h('span', {
+        style: {
+          marginLeft: depth + 'em'
+        },
+        on: {
+          click: () => bus.bus.$emit('openTab', 'ClassInfo', 'Class: ' + name, { name })
+        }
+      }, name)
     }
-    yield h('li', { attrs: { class: 'node' } }, children)
+
+    const vnode = h('class', {
+      props: { depth: depth + 1, filter, node: child }
+    })
+    Vue.nextTick(() => { vnode.componentInstance.$data.lazy = child })
+    yield vnode
   }
 }
 
-Vue.component('class', resolve => {
-  Vue.nextTick(() => {
-    resolve({
-      render(h: CreateElement) {
-        return h('ul', { attrs: { class: 'hierarchy-tree-root' } }, [...visit(h, this.node, this.filter)])
-      },
-      props: {
-        node: {
-          type: Object,
-          required: true
-        },
-        filter: RegExp
-      }
-    })
-  })
+Vue.component('class', {
+  render(h: CreateElement) {
+    const children = [...visit(h, this.depth > 0 ? this.lazy : this.node, this.depth, this.filter)]
+    return h('li', { attrs: { class: 'node' } }, children)
+  },
+  data() {
+    return {
+      lazy: {}
+    }
+  },
+  props: {
+    node: {
+      type: Object,
+      required: true
+    },
+    depth: {
+      type: Number,
+      default: 0
+    },
+    filter: RegExp
+  }
 })
 
 @Component
@@ -100,9 +110,13 @@ export default class Runtime extends Vue {
 </script>
 
 <style lang="scss">
-.hierarchy-tree-root {
+ul.hierarchy-tree-root {
   padding: 10px;
   color: #aaa;
+
+  &.loading {
+    display: none;
+  }
 
   .node {
     display: block;

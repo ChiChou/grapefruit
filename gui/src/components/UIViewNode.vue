@@ -107,46 +107,42 @@ function * scan(text: string): IterableIterator<Token> {
   }
 }
 
-Vue.component('uiview', resolve => {
-  Vue.nextTick(() => {
-    resolve({
-      render(createElement: CreateElement) {
-        return createElement(
-          'span',
-          {},
-          [...scan(this.text)].map(token => {
-            if (!token.type) return token.word
+Vue.component('uiview', {
+  render(createElement: CreateElement) {
+    return createElement(
+      'span',
+      {},
+      [...scan(this.text)].map(token => {
+        if (!token.type) return token.word
 
-            if (token.type === 'clazz') {
-              const name = token.word
-              return createElement('a', {
-                on: {
-                  click: () => {
-                    $bus.bus.$emit('openTab', 'ClassInfo', 'Class: ' + name, { name })
-                  }
-                },
-                attrs: {
-                  class: 'clazz'
-                }
-              }, [name])
-            }
-
-            return createElement('span', {
-              attrs: {
-                class: token.type
+        if (token.type === 'clazz') {
+          const name = token.word
+          return createElement('a', {
+            on: {
+              click: () => {
+                $bus.bus.$emit('openTab', 'ClassInfo', 'Class: ' + name, { name })
               }
-            }, [token.word])
-          })
-        )
-      },
-      props: {
-        text: {
-          type: String,
-          required: true
+            },
+            attrs: {
+              class: 'clazz'
+            }
+          }, [name])
         }
-      }
-    })
-  })
+
+        return createElement('span', {
+          attrs: {
+            class: token.type
+          }
+        }, [token.word])
+      })
+    )
+  },
+  props: {
+    text: {
+      type: String,
+      required: true
+    }
+  }
 })
 
 @Component({
