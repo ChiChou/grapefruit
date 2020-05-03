@@ -2,7 +2,7 @@
   <div class="runtime-panel">
     <header>
       <b-progress class="thin" :class="{ show: loading }"></b-progress>
-      <input v-model="keyword" placeholder="Search..." class="search">
+      <input v-model="keyword" placeholder="Search..." class="search" :disabled="loading">
       <b-tabs v-model="index" expanded class="header-only">
         <b-tab-item label="Main" icon="folder-home-outline" :disabled="loading" />
         <b-tab-item label="App" icon="folder-cog-outline" :disabled="loading" />
