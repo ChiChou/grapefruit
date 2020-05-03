@@ -10,20 +10,20 @@
     </header>
     <main class="scroll">
       <ul class="hierarchy-tree-root" :class="{ loading }">
-        <class :node="tree" :filter="filter" />
+        <class-node :node="tree" :filter="filter" />
       </ul>
     </main>
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch } from 'vue-property-decorator'
+import { Component, Vue, Watch, Prop } from 'vue-property-decorator'
 import { CreateElement, VNode } from 'vue'
 import bus from '../../bus'
 
 type scope = '__app__' | '__main__' | '__global__'
 
-function * visit(h: CreateElement, node: object, depth: number, filter: RegExp): IterableIterator<string | VNode> {
+function * visit(h: CreateElement, node: object, depth: number, filter?: RegExp): IterableIterator<string | VNode> {
   for (const [name, child] of Object.entries(node)) {
     let match = typeof filter === 'undefined'
     if (!match && filter) {
@@ -41,38 +41,39 @@ function * visit(h: CreateElement, node: object, depth: number, filter: RegExp):
       }, name)
     }
 
-    const vnode = h('class', {
-      props: { depth: depth + 1, filter, node: child }
+    const vnode = h('class-node', { props: { depth: depth + 1, filter, node: child } })
+    Vue.nextTick(() => {
+      const v = vnode.componentInstance
+      if (v) v.$data.lazy = child
     })
-    Vue.nextTick(() => { vnode.componentInstance.$data.lazy = child })
     yield vnode
   }
 }
 
-Vue.component('class', {
+@Component
+class ClassNode extends Vue {
+  lazy: object = {}
+
+  @Prop({ required: true })
+  node!: object
+
+  @Prop({ default: 0 })
+  depth!: number
+
+  @Prop()
+  filter?: RegExp
+
   render(h: CreateElement) {
     const children = [...visit(h, this.depth > 0 ? this.lazy : this.node, this.depth, this.filter)]
     return h('li', { attrs: { class: 'node' } }, children)
-  },
-  data() {
-    return {
-      lazy: {}
-    }
-  },
-  props: {
-    node: {
-      type: Object,
-      required: true
-    },
-    depth: {
-      type: Number,
-      default: 0
-    },
-    filter: RegExp
+  }
+}
+
+@Component({
+  components: {
+    ClassNode
   }
 })
-
-@Component
 export default class Runtime extends Vue {
   keyword = ''
 

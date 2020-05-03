@@ -11,7 +11,7 @@
         >
           {{ insn.symbol }}
         </span>
-        <opstring v-else class="op" :insn="insn" />
+        <Operand v-else class="op" :insn="insn" />
         <span v-if="insn.comment" class="comment">; {{ insn.comment }}</span>
       </li>
       <li class="more"><b-button @click="more"><span class="mdi mdi-autorenew"></span>More</b-button></li>
@@ -57,36 +57,34 @@ function * scan(str: string): IterableIterator<Token> {
   }
 }
 
-Vue.component('opstring', resolve => {
-  Vue.nextTick(() => {
-    resolve({
-      render(createElement: CreateElement) {
-        return createElement(
-          'span',
-          {},
-          [...scan(this.insn.opStr)].map(token => {
-            return token.type ? createElement(
-              'span',
-              {
-                attrs: {
-                  class: token.type
-                }
-              },
-              [token.word]) : token.word
-          })
-        )
-      },
-      props: {
-        insn: {
-          type: Object
-          // required: true
-        }
-      }
-    })
-  })
-})
-
 @Component
+class Operand extends Vue {
+  @Prop({ required: true })
+  insn!: ArmInstruction | Arm64Instruction
+
+  render(createElement: CreateElement) {
+    return createElement(
+      'span',
+      {},
+      [...scan(this.insn.opStr)].map(token => {
+        return token.type ? createElement(
+          'span',
+          {
+            attrs: {
+              class: token.type
+            }
+          },
+          [token.word]) : token.word
+      })
+    )
+  }
+}
+
+@Component({
+  components: {
+    Operand
+  }
+})
 export default class Disasm extends Base {
   @Prop({ required: true })
   addr!: string
