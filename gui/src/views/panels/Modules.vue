@@ -8,7 +8,7 @@
       </div>
     </header>
     <main class="scroll">
-      <b-table :data="list" default-sort="name" focusable :selected.sync="selected">
+      <b-table :data="list" default-sort="base" focusable :selected.sync="selected">
         <template slot-scope="props">
           <b-table-column field="base" label="Base" sortable numeric>
             <code>{{ props.row.base }}</code>
@@ -29,9 +29,7 @@
 // eslint-disable-next-line
 /// <reference path="../../frida.shim.d.ts" />
 
-import { Component, Vue, Watch, Prop } from 'vue-property-decorator'
-import { CreateElement, VNode } from 'vue'
-import bus from '../../bus'
+import { Component, Vue, Watch } from 'vue-property-decorator'
 
 @Component
 export default class Modules extends Vue {
