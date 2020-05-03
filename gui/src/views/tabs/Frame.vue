@@ -1,5 +1,5 @@
 <template>
-  <div class="subview-container">
+  <div class="subview-container" @keydown.alt.87.prevent="close" tabindex="0">
     <div v-if="loading" class="subview-spinner">
       <loading />
     </div>
@@ -39,6 +39,7 @@ import UnknownPreview from './UnknownPreview.vue'
 import Loading from '../../components/Loading.vue'
 
 import { Component, Vue, Prop } from 'vue-property-decorator'
+import { Container } from 'golden-layout'
 
 @Component({
   components: {
@@ -73,10 +74,17 @@ export default class Frame extends Vue {
   })
   data?: object
 
+  @Prop({ required: true })
+  container!: Container
+
   loading = false
 
-  @Prop()
-  component?: string
+  @Prop({ required: true })
+  component!: string
+
+  close() {
+    this.container.close()
+  }
 }
 </script>
 
