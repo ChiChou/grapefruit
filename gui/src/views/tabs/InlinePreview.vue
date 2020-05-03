@@ -1,7 +1,6 @@
 <script lang="ts">
 
 import { Component } from 'vue-property-decorator'
-import { CreateElement } from 'vue'
 
 import Preview from './Preview.vue'
 

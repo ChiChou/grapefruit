@@ -20,7 +20,8 @@ export default class TextPreview extends InlinePreview {
 
   get syntax(): string {
     const ext = extname(this.path)
-    const mapping = {
+    if (typeof ext === 'undefined') return 'text'
+    const mapping: { [key: string]: string } = {
       js: 'javascript',
       json: 'json',
       html: 'html',
@@ -31,6 +32,7 @@ export default class TextPreview extends InlinePreview {
       yml: 'yaml',
       css: 'css'
     }
+
     return mapping[ext] || 'text'
   }
 

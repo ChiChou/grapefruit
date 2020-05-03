@@ -6,8 +6,6 @@
 import { Prop, Component } from 'vue-property-decorator'
 import Base from './Base.vue'
 
-import { extname } from '../../utils'
-
 @Component
 export default class Preview extends Base {
   @Prop({ required: true })

@@ -14,7 +14,7 @@
         :class="{ 'mdi-minus': expanded, 'mdi-plus': !expanded }"
       ></span>
       <span v-else class="mdi mdi-dots-horizontal"></span>
-      <uiview v-if="node.description" class="description" :text="node.description" />
+      <Description v-if="node.description" class="description" :text="node.description" />
       <span
         v-if="node.delegate && node.delegate.name"
         @click="classinfo(node.delegate.name)"
@@ -107,7 +107,11 @@ function * scan(text: string): IterableIterator<Token> {
   }
 }
 
-Vue.component('uiview', {
+@Component
+class Description extends Vue {
+  @Prop({ required: true })
+  text!: string
+
   render(createElement: CreateElement) {
     return createElement(
       'span',
@@ -136,17 +140,14 @@ Vue.component('uiview', {
         }, [token.word])
       })
     )
-  },
-  props: {
-    text: {
-      type: String,
-      required: true
-    }
   }
-})
+}
 
 @Component({
-  name: 'UIViewNode'
+  name: 'UIViewNode',
+  components: {
+    Description
+  }
 })
 export default class UIViewNode extends Vue {
   @Prop({ default: () => empty })
