@@ -39,7 +39,7 @@ router
     for (const dev of devices) {
       if (uniq.has(dev.id)) {
         ctx.status = 500
-        ctx.body = `Fatal Error: Duplicated devie detected. It's a known frida bug. 
+        ctx.body = `Fatal Error: Duplicated device detected. It's a known frida bug. 
 Please restart this server (not the PC) to solve it`
         return
       }
@@ -58,6 +58,7 @@ Please restart this server (not the PC) to solve it`
     await shot.connect()
     shot.send({ 'MessageType': 'ScreenShotRequest' })
     const response = await shot.recv()
+    ctx.set('Cache-Control', 'max-age=60')
     ctx.set('Content-Type', 'image/png')
     ctx.body = response.ScreenShotData
     shot.close()
