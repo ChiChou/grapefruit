@@ -1,5 +1,5 @@
 <template>
-  <div class="runtime-panel">
+  <aside class="side-panel">
     <header>
       <b-progress class="thin" :class="{ show: loading }"></b-progress>
       <input v-model="keyword" placeholder="Search..." class="search" :disabled="loading">
@@ -14,7 +14,7 @@
         <class-node :node="tree" :filter="filter" />
       </ul>
     </main>
-  </div>
+  </aside>
 </template>
 
 <script lang="ts">
@@ -43,10 +43,10 @@ function * visit(h: CreateElement, node: object, depth: number, filter?: RegExp)
     }
 
     const vnode = h('class-node', { props: { depth: depth + 1, filter, node: child } })
-    setTimeout(() => {
+    requestAnimationFrame(() => {
       const v = vnode.componentInstance
       if (v) v.$data.lazy = child
-    }, 200)
+    })
     yield vnode
   }
 }
@@ -159,33 +159,6 @@ ul.hierarchy-tree-root {
   // .control {
   //   flex-grow: 1;
   // }
-}
-
-.runtime-panel {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-
-  .search {
-    width: 100%;
-    padding: 8px;
-    background: #222;
-    color: #959595;
-    font-size: 1rem;
-    border: 1px solid transparent;
-
-    &:focus {
-      border-color: #2196f3;
-      color: #eee;
-    }
-  }
-
-  .scroll {
-    background: #242424;
-    box-shadow: 0 4px 4px #00000030 inset;
-    overflow: auto;
-    flex: 1;
-  }
 }
 
 </style>

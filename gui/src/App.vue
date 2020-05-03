@@ -33,6 +33,33 @@ html {
   scrollbar-dark-shadow-color: #646464;
 }
 
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  .search {
+    width: 100%;
+    padding: 8px;
+    background: #222;
+    color: #959595;
+    font-size: 1rem;
+    border: 1px solid transparent;
+
+    &:focus {
+      border-color: #2196f3;
+      color: #eee;
+    }
+  }
+
+  .scroll {
+    background: #242424;
+    box-shadow: 0 4px 4px #00000030 inset;
+    overflow: auto;
+    flex: 1;
+  }
+}
+
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -104,6 +131,10 @@ html {
   .tabs:not(:last-child) {
     margin-bottom: 0;
   }
+}
+
+.b-tabs .tab-content {
+  padding: 0;
 }
 
 .progress-wrapper.thin {

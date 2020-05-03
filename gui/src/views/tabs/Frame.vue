@@ -25,6 +25,8 @@ import KeyChain from './KeyChain.vue'
 import Cookies from './BinaryCookie.vue'
 import UserDefaults from './UserDefaults.vue'
 import ClassInfo from './ClassInfo.vue'
+import ModuleInfo from './ModuleInfo.vue'
+
 import Disasm from './Disasm.vue'
 import Preview from './Preview.vue'
 import MediaPreview from './MediaPreview.vue'
@@ -51,7 +53,9 @@ import { Component, Vue, Prop } from 'vue-property-decorator'
     SnapShot,
     Info,
     ClassInfo,
+    ModuleInfo,
     Disasm,
+
     MediaPreview,
     Preview,
     DictPreview,

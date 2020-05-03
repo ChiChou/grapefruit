@@ -13,6 +13,11 @@
           </router-link>
         </li>
         <li>
+          <router-link to="modules">
+            <b-icon size="is-medium" icon="cog-clockwise" />
+          </router-link>
+        </li>
+        <!-- <li>
           <router-link to="hook">
             <b-icon size="is-medium" icon="bug-check-outline" />
           </router-link>
@@ -21,7 +26,7 @@
           <router-link to="repl">
             <b-icon size="is-medium" icon="code-greater-than" />
           </router-link>
-        </li>
+        </li> -->
         <li>
           <router-link to="files">
             <b-icon size="is-medium" icon="apple-finder" />
