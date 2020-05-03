@@ -1,6 +1,7 @@
 <template>
   <aside class="finder">
     <header>
+      <b-progress class="thin" :class="{ show: loading }"></b-progress>
       <b-tabs v-model="index" expanded class="header-only">
         <b-tab-item label="Home" icon="folder-home-outline" />
         <b-tab-item label="Bundle" icon="folder-cog-outline" />
@@ -9,7 +10,7 @@
 
     <main>
       <section class="tree">
-        <FileTree :root="root" cwd="/" :depth="0" :item="{ type: 'directory', name: root }" />
+        <FileTree :loading.sync="loading" :root="root" cwd="/" :depth="0" :item="{ type: 'directory', name: root }" />
       </section>
       <section class="detail" v-if="selected">
         <p class="path">{{ selected.path }}</p>

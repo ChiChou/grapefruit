@@ -85,7 +85,8 @@ html {
   display: none;
 }
 
-.b-tabs.header-only {
+.b-tabs.header-only,
+.b-tabs:not(:last-child).b-tabs.header-only {
   .box:not(:last-child),
   .content:not(:last-child),
   .notification:not(:last-child),
@@ -102,6 +103,19 @@ html {
   .message:not(:last-child),
   .tabs:not(:last-child) {
     margin-bottom: 0;
+  }
+}
+
+.progress-wrapper.thin {
+  margin-bottom: 0;
+  visibility: hidden;
+
+  &.show {
+    visibility: visible;
+  }
+
+  > .progress {
+    height: 2px;
   }
 }
 </style>

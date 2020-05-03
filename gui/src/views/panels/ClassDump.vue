@@ -1,6 +1,7 @@
 <template>
   <div class="runtime-panel">
     <header>
+      <b-progress class="thin" :class="{ show: loading }"></b-progress>
       <input v-model="keyword" placeholder="Search..." class="search">
       <b-tabs v-model="index" expanded class="header-only">
         <b-tab-item label="Main" icon="folder-home-outline" :disabled="loading" />
@@ -42,10 +43,10 @@ function * visit(h: CreateElement, node: object, depth: number, filter?: RegExp)
     }
 
     const vnode = h('class-node', { props: { depth: depth + 1, filter, node: child } })
-    Vue.nextTick(() => {
+    setTimeout(() => {
       const v = vnode.componentInstance
       if (v) v.$data.lazy = child
-    })
+    }, 200)
     yield vnode
   }
 }
