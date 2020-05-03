@@ -13,13 +13,16 @@
       <b-icon v-else :icon="icon" />
       <span class="name" @dblclick="open">{{ item.name }}</span>
       <span class="extra">
-        <a @click="download(item)" v-if="item.type === 'file'">
-          <span class="mdi mdi-download"></span>
-        </a>
         <span v-if="root === 'home'">
-          <a @click="mv(item)"><span class="mdi mdi-rename-box"></span></a>
-          <a @click="rm(item)"><span class="mdi mdi-delete"></span></a>
+          <a @click="mv"><span class="mdi mdi-rename-box"></span></a>
+          <a @click="rm"><span class="mdi mdi-delete"></span></a>
         </span>
+        <a @click="download" v-if="item.type === 'file'">
+          <span class="mdi mdi-download is-danger"></span>
+        </a>
+        <a @click="open" v-if="item.type === 'file'">
+          <span class="mdi mdi-open-in-new"></span>
+        </a>
       </span>
     </div>
     <li v-for="(child, index) in children" :key="index">
@@ -99,34 +102,44 @@ export default class FileTree extends Vue {
     // todo: localStorage
   }
 
-  open() {
+  dblclick() {
     if (this.isDir) {
       this.expanded = !this.expanded
     } else {
-      const t = filetype(this.item.name)
-      const mapping: {[key: string]: string} = {
-        audio: 'MediaPreview',
-        video: 'MediaPreview',
-        json: 'DictPreview',
-        plist: 'DictPreview',
-        image: 'ImagePreview',
-        pdf: 'PDFPreview',
-        text: 'TextPreview'
-        // todo: hex:
-      }
-      const viewer = mapping[t] || 'UnknownPreview'
-      this.$bus.$emit('openTab', viewer, `Preview - ${this.item.name}`, { path: this.item.path })
+      this.open()
     }
   }
 
-  async download(item: Finder.Item) {
-    const session = await this.$rpc.fs.download(item.path)
+  open() {
+    if (this.isDir) {
+      console.log('todo: finder')
+      return
+    }
+
+    const t = filetype(this.item.name)
+    const mapping: {[key: string]: string} = {
+      audio: 'MediaPreview',
+      video: 'MediaPreview',
+      json: 'DictPreview',
+      plist: 'DictPreview',
+      image: 'ImagePreview',
+      pdf: 'PDFPreview',
+      text: 'TextPreview'
+      // todo: hex:
+    }
+    const viewer = mapping[t] || 'UnknownPreview'
+    this.$bus.$emit('openTab', viewer, `Preview - ${this.item.name}`, { path: this.item.path })
+  }
+
+  async download() {
+    const session = await this.$rpc.fs.download(this.item.path)
     location.replace(`/api/download/${session}`)
   }
 
   // remove file
-  rm(item: Finder.Item) {
-    const escaped = htmlescape(item.path)
+  rm() {
+    const { path } = this.item
+    const escaped = htmlescape(path)
 
     this.$buefy.dialog.confirm({
       title: 'Removing item',
@@ -137,7 +150,7 @@ export default class FileTree extends Vue {
       hasIcon: true,
       onConfirm: async() => {
         try {
-          await this.$rpc.fs.remove(item.path)
+          await this.$rpc.fs.remove(path)
         } catch (e) {
           this.$buefy.toast.open({
             type: 'is-warning',
@@ -145,7 +158,7 @@ export default class FileTree extends Vue {
           })
           return
         }
-        this.$buefy.toast.open(`${item.path} was deleted`)
+        this.$buefy.toast.open(`${path} was deleted`)
         this.expanded = false
         if (this.$parent instanceof FileTree) this.$parent.ls()
       }
