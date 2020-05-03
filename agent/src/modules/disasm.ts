@@ -31,9 +31,9 @@ type Readers = { [section: string]: StringReader }
 
 const readers: Readers = {
   __cstring: p => `"${p.readCString()}"`,
-  __cfstring: p => `CFSTR("${p.readPointer().readPointer().readCString()}")`,
+  __cfstring: p => `@"${p.readPointer().readPointer().readCString()}"`,
   __objc_methtype: p => p.readCString(),
-  __objc_selrefs: p => `@SEL(${p.add(Process.pointerSize * 2).readPointer().readCString()})`,
+  __objc_selrefs: p => `@selector(${p.add(Process.pointerSize * 2).readPointer().readCString()})`,
   __objc_classrefs: p => DebugSymbol.fromAddress(p.readPointer()).name,
   __objc_superrefs: p => DebugSymbol.fromAddress(p.readPointer().add(Process.pointerSize).readPointer()).name,
   // todo: display protocol name
