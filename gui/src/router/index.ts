@@ -11,6 +11,7 @@ import ClassDump from '../views/panels/ClassDump.vue'
 import General from '../views/panels/General.vue'
 import Hook from '../views/panels/Hook.vue'
 import REPL from '../views/panels/REPL.vue'
+import Modules from '../views/panels/Modules.vue'
 
 Vue.use(VueRouter)
 
@@ -36,6 +37,10 @@ const routes = [
       path: 'classes',
       name: 'Classes',
       component: ClassDump
+    }, {
+      path: 'modules',
+      name: 'Modules',
+      component: Modules
     }, {
       path: 'general',
       name: 'General',

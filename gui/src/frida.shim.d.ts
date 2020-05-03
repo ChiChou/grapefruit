@@ -456,3 +456,10 @@ interface Arm64Instruction extends Instruction {
   regsRead: Arm64Register[];
   regsWritten: Arm64Register[];
 }
+
+interface Module {
+  base: string; // encoded NativePointer
+  name: string;
+  size: number;
+  path: string;
+}
