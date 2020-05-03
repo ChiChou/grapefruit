@@ -1,16 +1,17 @@
 <template>
-  <div v-if="alive">
-    <b-progress v-if="buffering" :value="progress" show-value format="percent" />
+  <div v-if="alive" class="stage">
+    <b-progress v-if="buffering" :value="progress" show-value format="percent" type="is-dark" />
 
-    <video v-if="source" width="100%" height="100%" controls autoplay>
+    <component v-if="source" :is="player" controls="controls" autoplay>
       <source :src="source">
-    </video>
+    </component>
   </div>
 </template>
 
 <script lang="ts">
 import { Component } from 'vue-property-decorator'
 import Preview from './Preview.vue'
+import { filetype } from '../../utils'
 
 @Component
 export default class MediaPreview extends Preview {
@@ -20,6 +21,10 @@ export default class MediaPreview extends Preview {
   blob?: Blob
   source?: string | null = null
 
+  get player() {
+    return filetype(this.path)
+  }
+
   mounted() {
     this.alive = true
     this.load()
@@ -27,6 +32,7 @@ export default class MediaPreview extends Preview {
 
   beforeDestroy() {
     this.alive = false
+    this.source = null
     if (this.source) URL.revokeObjectURL(this.source)
   }
 
@@ -51,3 +57,30 @@ export default class MediaPreview extends Preview {
   }
 }
 </script>
+
+<style lang="scss" scoped>
+.stage {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-items: center;
+
+  .progress-wrapper {
+    margin: auto;
+    width: 75%;
+    height: 16px;
+  }
+}
+
+audio {
+  width: 480px;
+  height: 48px;
+  margin: auto;
+}
+
+video {
+  width: 100%;
+  height: 100%;
+  background: #000;
+}
+</style>
