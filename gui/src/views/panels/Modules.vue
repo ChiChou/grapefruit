@@ -19,9 +19,9 @@
         </template>
       </b-table>
     </main>
-    <section class="detail" v-if="selected">
+    <!-- <section class="detail" v-if="selected">
       {{ selected }}
-    </section>
+    </section> -->
   </aside>
 </template>
 
@@ -84,6 +84,14 @@ code {
 
 .table td, .table th {
   padding: 0.25em 0.5em
+}
+
+.b-table table.table {
+  table-layout: fixed !important;
+
+  td[data-label=Name] {
+    overflow: hidden;
+  }
 }
 
 .system-filter {

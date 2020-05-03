@@ -1,5 +1,5 @@
 <template>
-  <div class="workspace">
+  <div class="workspace" tabindex="0" @keydown.alt.87.prevent="closeTab">
     <MenuBar ref="menu" />
     <main>
       <SidePanel />
@@ -232,6 +232,19 @@ export default class Workspace extends Vue {
     document.querySelector('html')!.classList.remove('no-scroll')
     window.removeEventListener('resize', this.resize)
     if (this.layout) this.layout.destroy()
+  }
+
+  closeTab() {
+    if (!this.layout?.selectedItem) return
+    const { selectedItem } = this.layout
+    const active = selectedItem.getActiveContentItem()
+    if (selectedItem.isStack && active.isComponent) {
+      try {
+        active.remove()
+      } finally {
+
+      }
+    }
   }
 
   @Watch('$route', { immediate: true })
