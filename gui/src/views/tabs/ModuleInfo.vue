@@ -35,14 +35,6 @@
           :paginated="true"
           per-page="100"
           :data="imports">
-          <b-input
-            v-if="!props.column.numeric"
-            slot="searchable"
-            slot-scope="props"
-            v-model="props.filters[props.column.field]"
-            placeholder="Search..."
-            icon="magnify"
-            size="is-small" />
 
           <template slot-scope="props">
             <b-table-column field="type" label="Type" sortable>
@@ -55,7 +47,7 @@
               <code>{{ props.row.address }}</code>
             </b-table-column>
             <b-table-column field="module" label="Module" sortable searchable>
-              <a>{{ props.row.module }}</a>
+              {{ props.row.module }}
             </b-table-column>
             <b-table-column field="slot" label="Slot" sortable>
               <code>{{ props.row.slot }}</code>
