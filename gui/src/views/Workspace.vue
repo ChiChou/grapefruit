@@ -141,7 +141,7 @@ export default class Workspace extends Vue {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     layout.registerComponent('subview', function(container: Container, state: any) {
       const { component, props, title } = state
-      const propsData = { data: props, component }
+      const propsData = { data: props, component, container }
       const FrameClass = Vue.extend(Frame)
       const v = new FrameClass({ propsData })
       v.$mount()
