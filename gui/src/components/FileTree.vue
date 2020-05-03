@@ -23,7 +23,7 @@
       </span>
     </div>
     <li v-for="(child, index) in children" :key="index">
-      <FileTree :root="root" :cwd="cwd + '/' + child.name" :depth="depth + 1" :item="child" />
+      <FileTree :loading.sync="loading" :root="root" :cwd="cwd + '/' + child.name" :depth="depth + 1" :item="child" />
     </li>
   </ul>
 </template>
@@ -39,10 +39,18 @@ import { htmlescape, icon, filetype } from '../utils'
 export default class FileTree extends Vue {
   private _loading = false
 
+  get loading() {
+    return this._loading
+  }
+
+  set loading(val: boolean) {
+    this._loading = val
+    this.$emit('update:loading', val)
+  }
+
   selected = false
   expanded = false
   children: Finder.Item[] = []
-  loading = false
 
   @Prop({ required: true })
   item!: Finder.Item
@@ -80,6 +88,7 @@ export default class FileTree extends Vue {
     }
 
     this.$on('select', (e: FileTree) => this.$parent.$emit('select', e))
+    // this.$on('update:loading', (val: boolean) => this.$parent.$emit('update:loading', val))
   }
 
   @Watch('expanded')
