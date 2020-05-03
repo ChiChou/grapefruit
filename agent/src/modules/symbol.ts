@@ -1,3 +1,24 @@
+const demangle = new NativeFunction(
+  Module.findExportByName('libc++abi.dylib', '__cxa_demangle')!,
+  'pointer', ['pointer', 'pointer', 'pointer', 'pointer'])
+ 
+const BUF_LEN = 256 * 1024
+const buf = Memory.alloc(BUF_LEN)
+
+function cxaDemangle(name: string) {
+  const len = Memory.alloc(Process.pointerSize)
+  const status = Memory.alloc(Process.pointerSize)
+
+  len.writeUInt(BUF_LEN)
+  const mangled = Memory.allocUtf8String(name)
+  demangle(mangled, buf, len, status)
+
+  const statusValue = status.readUInt()
+  if (statusValue == 0) return buf.readUtf8String()
+
+  throw new Error('__cxa_demangle failed, status: ' + statusValue)
+}
+
 function uniqueAndDemangle<T>(list: T[]) {
   const set = new Set()
   return list.filter((symbol) => {
@@ -9,8 +30,12 @@ function uniqueAndDemangle<T>(list: T[]) {
   }).map((symbol) => {
     const sym = (symbol as unknown as ModuleImportDetails)
     if (sym.name.startsWith('_Z')) {
-      const demangled = DebugSymbol.fromAddress(sym.address!).name
-      return Object.assign(sym, { demangled })
+      try {
+        const demangled = cxaDemangle(sym.name)
+        return Object.assign(sym, { demangled })
+      } finally {
+
+      }
     }
     return sym
   })
