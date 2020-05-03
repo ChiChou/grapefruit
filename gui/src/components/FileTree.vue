@@ -165,24 +165,25 @@ export default class FileTree extends Vue {
     })
   }
 
-  mv(item: Finder.Item) {
-    const idx = item.path.lastIndexOf('/')
+  mv() {
+    const { path, name } = this.item
+    const idx = path.lastIndexOf('/')
     if (idx === -1) {
-      console.error('Invalid path: ', item.path)
+      console.error('Invalid path: ', path)
       return
     }
-    const escaped = htmlescape(item.path)
-    const basename = item.path.substr(0, idx + 1)
+    const escaped = htmlescape(path)
+    const basename = path.substr(0, idx + 1)
     this.$buefy.dialog.prompt({
       message: 'Rename Item',
-      inputAttrs: { placeholder: item.name },
+      inputAttrs: { placeholder: name },
       trapFocus: true,
       onConfirm: async(value) => {
         // shall we prevent path traversal here?
         // maybe no? so you can actually move the file to another location
         const dest = basename + value
         try {
-          await this.$rpc.fs.move(item.path, dest)
+          await this.$rpc.fs.move(path, dest)
         } catch (e) {
           this.$buefy.toast.open({
             type: 'is-warning',
