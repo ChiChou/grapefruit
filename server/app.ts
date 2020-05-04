@@ -86,6 +86,8 @@ Please restart this server (not the PC) to solve it`
       const task = transfer.request(uuid)
       ctx.attachment(task.name)
       ctx.set('Cache-Control', 'max-age=7200')
+      // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Expose-Headers
+      ctx.set('Access-Control-Expose-Headers', 'Content-Length')
       ctx.response.length = task.size
       ctx.body = task.stream
     } catch(e) {
