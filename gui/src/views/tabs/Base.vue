@@ -14,5 +14,13 @@ export default class BaseTab extends Vue {
     return this.__loading
     // throw Error('this property is not expected to be read')
   }
+
+  mounted() {
+    this.$parent.$on('resize', this.resize)
+  }
+
+  resize() {
+    // intended to be implemented by subclasses
+  }
 }
 </script>
