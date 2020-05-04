@@ -42,3 +42,13 @@ function registerModules() {
 
 registerModules()
 appLifeCycleHook()
+
+Process.setExceptionHandler((detail) => {
+  console.error('Exception report: ')
+  console.error(JSON.stringify(detail, null, 4))
+  send({
+    subject: 'exception',
+    detail
+  })
+  return false
+})
