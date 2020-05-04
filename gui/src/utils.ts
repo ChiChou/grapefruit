@@ -39,6 +39,7 @@ export function icon(name: string) {
     js: 'language-javascript',
     plist: 'cog-box',
     dylib: 'cogs',
+    svg: 'xml',
     xml: 'xml',
     entitlements: 'xml',
     json: 'code-json',
@@ -75,7 +76,7 @@ export function filetype(name: string) {
   if (ext && ext.length) {
     if (Object.prototype.hasOwnProperty.call(mapping, ext)) return mapping[ext]
 
-    if (/^(jpe?g|png|gif|webp)$/.exec(ext)) return 'image'
+    if (/^(jpe?g|png|gif|webp|svg)$/.exec(ext)) return 'image'
     if (/^html?$/.exec(ext)) return 'text'
 
     if (['txt', 'log', 'csv', 'js', 'xml', 'json', 'py', 'sql', 'glsl', 'entitlements', 'css'].includes(ext)) return 'text'
