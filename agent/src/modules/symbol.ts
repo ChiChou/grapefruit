@@ -5,7 +5,7 @@ const demangle = new NativeFunction(
 const BUF_LEN = 256 * 1024
 const buf = Memory.alloc(BUF_LEN)
 
-function cxaDemangle(name: string) {
+function cxaDemangle(name: string): string | null {
   const len = Memory.alloc(Process.pointerSize)
   const status = Memory.alloc(Process.pointerSize)
 
@@ -15,8 +15,8 @@ function cxaDemangle(name: string) {
 
   const statusValue = status.readUInt()
   if (statusValue == 0) return buf.readUtf8String()
-
-  throw new Error('__cxa_demangle failed, status: ' + statusValue)
+  console.error('__cxa_demangle failed, status: ' + statusValue.toString(16))
+  return null
 }
 
 function uniqueAndDemangle<T>(list: T[]) {
@@ -30,12 +30,13 @@ function uniqueAndDemangle<T>(list: T[]) {
   }).map((symbol) => {
     const sym = (symbol as unknown as ModuleImportDetails)
     if (sym.name.startsWith('_Z')) {
+      let demangled
       try {
-        const demangled = cxaDemangle(sym.name)
-        return Object.assign(sym, { demangled })
-      } finally {
+        demangled = cxaDemangle(sym.name)
+      } catch(e) {
 
       }
+      return demangled ? Object.assign(sym, { demangled }) : sym
     }
     return sym
   })
