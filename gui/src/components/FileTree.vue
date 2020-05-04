@@ -1,5 +1,6 @@
 <template>
-  <ul class="file-tree-list">
+  <!-- todo: drag drop to folder -->
+  <article>
     <div v-if="item && depth > 0"
       class="name-label"
       :style="{ paddingLeft: depth * 10 + 'px' }"
@@ -11,7 +12,7 @@
         <b-icon v-else :icon="icon" />
       </a>
       <b-icon v-else :icon="icon" />
-      <span class="name" @dblclick="open">{{ item.name }}</span>
+      <span class="name" @dblclick="dblclick">{{ item.name }}</span>
       <span class="extra">
         <span v-if="root === 'home'">
           <a @click="mv"><span class="mdi mdi-rename-box"></span></a>
@@ -25,10 +26,19 @@
         </a>
       </span>
     </div>
-    <li v-for="(child, index) in children" :key="index">
-      <FileTree :loading.sync="loading" :root="root" :cwd="cwd + '/' + child.name" :depth="depth + 1" :item="child" />
-    </li>
-  </ul>
+    <ul
+      v-if="children.length"
+      class="file-tree-list"
+      @dragover.prevent.stop="dragover"
+      @dragleave.prevent.stop="dragleave"
+      @drop.prevent.stop="drop"
+      :class="{ dropping }"
+    >
+      <li v-for="(child, index) in children" :key="index">
+        <FileTree :loading.sync="loading" :root="root" :cwd="cwd + '/' + child.name" :depth="depth + 1" :item="child" />
+      </li>
+    </ul>
+  </article>
 </template>
 
 <script lang="ts">
@@ -36,9 +46,7 @@ import { Prop, Component, Watch, Vue } from 'vue-property-decorator'
 import { Finder } from '../../interfaces'
 import { htmlescape, icon, filetype } from '../utils'
 
-@Component({
-  name: 'FileTree'
-})
+@Component({ name: 'FileTree' })
 export default class FileTree extends Vue {
   private _loading = false
 
@@ -54,6 +62,7 @@ export default class FileTree extends Vue {
   selected = false
   expanded = false
   children: Finder.Item[] = []
+  dropping = false
 
   @Prop({ required: true })
   item!: Finder.Item
@@ -110,12 +119,19 @@ export default class FileTree extends Vue {
     }
   }
 
-  open() {
-    if (this.isDir) {
-      console.log('todo: finder')
-      return
-    }
+  dragover() {
+    this.dropping = true
+  }
 
+  dragleave() {
+    this.dropping = false
+  }
+
+  drop(e: DragEvent) {
+    this.dropping = false
+  }
+
+  open() {
     const t = filetype(this.item.name)
     const mapping: {[key: string]: string} = {
       audio: 'MediaPreview',
@@ -124,7 +140,8 @@ export default class FileTree extends Vue {
       plist: 'DictPreview',
       image: 'ImagePreview',
       pdf: 'PDFPreview',
-      text: 'TextPreview'
+      text: 'TextPreview',
+      cookiejar: 'Cookies'
       // todo: hex:
     }
     const viewer = mapping[t] || 'UnknownPreview'
@@ -217,6 +234,14 @@ export default class FileTree extends Vue {
 
 <style lang="scss">
 .file-tree-list {
+  &.dropping {
+    background: #009688;
+
+    div.name-label.selected{
+      background: #009688;
+    }
+  }
+
   li {
     display: block;
   }
