@@ -81,7 +81,7 @@ export default class Channels {
         console.log(`[frida ${level}]`, text)
       }
 
-      agent.message.connect((msg, data) => {
+      agent.message.connect(async (msg, data) => {
         if (msg.type === MessageType.Send) {
           const { subject } = msg.payload
           if (subject === 'download') {
@@ -91,9 +91,13 @@ export default class Channels {
               transfer.begin(session, size, path)
             } else if (event === 'data') {
               transfer.push(session, data)
+              await agent.post({ type: 'ack' })
             } else if (event === 'end') {
               transfer.end(session)
             }
+          } else if (subject === 'exception') {
+            console.error('App exception:')
+            console.error(msg.payload.detail)
           }
         }
       })
@@ -104,7 +108,7 @@ export default class Channels {
       socket.on('disconnect', async () => {
         console.info('disconnect')
         try {
-          await agent.post('dispose')
+          await agent.post({ type: 'dispose' })
           await session.detach()
         // eslint-disable-next-line no-empty
         } catch (e) {
