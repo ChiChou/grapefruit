@@ -75,10 +75,12 @@ export default function disasm(addr: string | number, count=100) {
         for (const op of operands) {
           if (op.type === 'imm') {
             const sym = DebugSymbol.fromAddress(ptr(op.value.toString()))
-            if (operands.length === 1) {
-              symbol = sym.name
-            } else {
-              comment = sym.name
+            if (!sym?.name?.match(/^0x\d+/)) {
+              if (operands.length === 1) {
+                symbol = sym.name
+              } else {
+                comment = sym.name
+              }
             }
           }
         }
