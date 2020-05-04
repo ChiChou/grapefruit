@@ -87,3 +87,7 @@ export function filetype(name: string) {
 
   return 'hex'
 }
+
+export function rem2px(factor: number) {
+  return factor * parseFloat(getComputedStyle(document.documentElement).fontSize)
+}
