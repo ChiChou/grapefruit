@@ -53,10 +53,10 @@ export default class TextPreview extends InlinePreview {
     }).finally(() => {
       this.loading = false
     })
+  }
 
-    this.$parent.$on('resize', () => {
-      if (this.editor) this.editor.layout()
-    })
+  resize() {
+    if (this.editor) this.editor.layout()
   }
 }
 </script>
