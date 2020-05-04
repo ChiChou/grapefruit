@@ -67,7 +67,8 @@ export function icon(name: string) {
 export function filetype(name: string) {
   const mapping: { [key: string]: string } = {
     pdf: 'pdf',
-    plist: 'plist'
+    plist: 'plist',
+    binarycookies: 'cookiejar'
   }
 
   const ext = extname(name)
