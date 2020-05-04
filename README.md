@@ -4,6 +4,10 @@ Code name: grapefruit
 
 ## Get Started
 
+Git clone:
+
+`git clone --recurse-submodules https://github.com/ChiChou/Grapefruit`
+
 Install dependencies:
 
 * node.js v12.x
