@@ -1,5 +1,7 @@
 # Passionfruit NG
 
+[Join Discord](https://discord.gg/Q3evb6)
+
 Code name: grapefruit
 
 ## Get Started
