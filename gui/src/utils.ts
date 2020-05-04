@@ -69,6 +69,7 @@ export function filetype(name: string) {
   const mapping: { [key: string]: string } = {
     pdf: 'pdf',
     plist: 'plist',
+    strings: 'plist',
     binarycookies: 'cookiejar'
   }
 
