@@ -11,6 +11,7 @@ body {
 }
 
 html.no-scroll {
+  font-size: 16px; // WTF is wrong with bulmaswatch, font-size: 15px??
   overflow-y: hidden;
 }
 
