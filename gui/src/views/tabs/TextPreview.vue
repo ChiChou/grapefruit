@@ -10,7 +10,7 @@ import * as monaco from 'monaco-editor'
 
 import { Component } from 'vue-property-decorator'
 import InlinePreview from './InlinePreview.vue'
-import { extname } from '../../utils'
+import { extname, rem2px } from '../../utils'
 
 const decoder = new TextDecoder()
 
@@ -47,7 +47,7 @@ export default class TextPreview extends InlinePreview {
         language: this.syntax,
         readOnly: true,
         theme: 'vs-dark',
-        fontSize: 16,
+        fontSize: rem2px(1),
         fontFamily: '"Fira Code", monospace'
       })
     }).finally(() => {
