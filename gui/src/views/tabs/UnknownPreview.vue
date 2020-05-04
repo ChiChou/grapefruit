@@ -1,6 +1,6 @@
 <template>
   <div tabindex="0" @keydown="handleKey" class="xxd">
-    <b-progress v-if="buffering" :value="progress" show-value format="percent" type="is-dark" />
+    <b-progress v-if="buffering" :value="progress" show-value format="percent" type="is-dark" class="thin" />
 
     <div class="file" v-if="dataView">
       <div class="offsets" title="Offset">
@@ -274,9 +274,7 @@ export default class UnknownPreview extends Preview {
   }
 
   resize() {
-    // const e = this.dataView ? this.$refs.rect as HTMLDivElement : this.$el
     this.height = this.$el.clientHeight
-    console.log(this.height)
   }
 }
 </script>
