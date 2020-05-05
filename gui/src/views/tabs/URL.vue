@@ -15,7 +15,6 @@
 
     <section class="playground">
       <textarea ref="input" class="input" v-model="payload" @keydown.enter.prevent="submit" autocomplete="off" />
-      <hr />
       <button class="button is-primary" @click="submit" :disabled="busy">
         <span>Submit</span> &nbsp;
         <b-icon v-if="busy" icon="loading" custom-class="mdi-spin" />
@@ -104,6 +103,25 @@ ul.url {
 }
 
 .playground {
-  margin-top: 40px;
+  margin: 10px -20px -20px -20px;
+  position: sticky;
+  bottom: 0;
+  transition: none;
 }
+
+textarea, button.button {
+  border-radius: 0;
+  width: 100%;
+  display: block;
+}
+
+textarea {
+  background: #1b1b1b;
+  color: #eee;
+  border: 1px solid turquoise;
+  padding: 1rem;
+  font-family: monospace;
+  min-height: 6em;
+}
+
 </style>
