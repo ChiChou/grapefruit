@@ -30,11 +30,11 @@ export function open(urlStr: string) {
 	for (let sel of candidates) {
 		const method = delegate[sel]
 		if (typeof method === 'function') {
-			console.log('url handler:', delegate, sel, '@' + method.implementation)
 			ObjC.schedule(ObjC.mainQueue, () => {
 				const rest = [...new Array(method.length - 2)].map(e => NULL)
 				const url = ObjC.classes.NSURL.URLWithString_(urlStr)
 				delegate[sel](app, url, ...rest)
+				console.log('request set to url handler:', delegate, sel, '@' + method.implementation)
 			})
 			return
 		}
