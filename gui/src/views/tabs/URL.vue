@@ -1,6 +1,13 @@
 <template>
   <div class="pad">
-    <!-- <h1><b-icon size="is-large" icon="link" /> URL Schemes</h1> -->
+    <section class="playground">
+      <textarea ref="input" class="input" v-model="payload" @keydown.enter.prevent="submit" autocomplete="off" />
+      <button class="button is-primary" @click="submit" :disabled="busy">
+        <span>Submit</span> &nbsp;
+        <b-icon v-if="busy" icon="loading" custom-class="mdi-spin" />
+        <b-icon v-else icon="send" />
+      </button>
+    </section>
 
     <ul class="url" v-for="(url, index) in urls" :key="index">
       <li>
@@ -12,15 +19,6 @@
         </article>
       </li>
     </ul>
-
-    <section class="playground">
-      <textarea ref="input" class="input" v-model="payload" @keydown.enter.prevent="submit" autocomplete="off" />
-      <button class="button is-primary" @click="submit" :disabled="busy">
-        <span>Submit</span> &nbsp;
-        <b-icon v-if="busy" icon="loading" custom-class="mdi-spin" />
-        <b-icon v-else icon="send" />
-      </button>
-    </section>
   </div>
 </template>
 
@@ -103,9 +101,9 @@ ul.url {
 }
 
 .playground {
-  margin: 10px -20px -20px -20px;
+  margin: -20px -20px 10px -20px;
   position: sticky;
-  bottom: 0;
+  top: 0;
   transition: none;
 }
 
