@@ -129,6 +129,7 @@ export default class FileTree extends Vue {
 
   drop(e: DragEvent) {
     this.dropping = false
+    console.log('drop file:', e.dataTransfer)
   }
 
   open() {

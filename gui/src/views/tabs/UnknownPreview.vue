@@ -187,11 +187,11 @@ export default class UnknownPreview extends Preview {
     return lineIndex === this.row.current - this.row.start
   }
 
-  handleValueClick(valueIndex, e) {
+  handleValueClick(valueIndex: number) {
     this.goToChar(valueIndex)
   }
 
-  handleLineClick(lineIndex, e) {
+  handleLineClick(lineIndex: number) {
     this.goToLineRelative(lineIndex)
   }
 
@@ -221,7 +221,7 @@ export default class UnknownPreview extends Preview {
     }
   }
 
-  handleWheel(e: MouseWheelEvent) {
+  handleWheel(e: WheelEvent) {
     if (e.deltaY < 0) {
       this.moveLineUp()
     } else {
@@ -238,13 +238,13 @@ export default class UnknownPreview extends Preview {
         console.error(e)
       }).finally(() => {
         this.loading = false
-      })
+      });
 
-    this.$el.addEventListener('wheel', this.handleWheel)
+    (this.$el as HTMLDivElement).addEventListener('wheel', this.handleWheel)
   }
 
   beforeDestroy() {
-    this.$el.removeEventListener('wheel', this.handleWheel)
+    (this.$el as HTMLDivElement).removeEventListener('wheel', this.handleWheel)
   }
 
   async load() {
