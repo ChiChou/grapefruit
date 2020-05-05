@@ -13,22 +13,30 @@ const MyAppDelegate = ObjC.registerProtocol({
   }
 })
 
+const center = ObjC.classes.NSNotificationCenter.defaultCenter()
+const subject = 'lifecycle'
 const Clazz = ObjC.registerClass({
   name,
   super: ObjC.classes.NSObject,
-  protocols: [MyAppDelegate],
+  protocols: [MyAppDelegate, ObjC.protocols.NSObject],
   methods: {
     '- inactive': () => {
+      send({ subject, event: 'inactive' })
       console.warn('App will be inactive.')
     },
     '- background': () => {
       console.warn('App is is now on the background. Passionfruit will be inresponsible.')
+      send({ subject, event: 'frozen' })
+    },
+    '- release': function() {
+      // fix UAF
+      dispose()
+      this.super.release()
     }
   }
 })
 
-const signalHandler = Clazz.alloc().init()
-const center = ObjC.classes.NSNotificationCenter.defaultCenter()
+let signalHandler = Clazz.alloc().init()
 
 export function init() {
   center.addObserver_selector_name_object_(
@@ -38,7 +46,8 @@ export function init() {
 }
 
 export function dispose() {
-  const center = ObjC.classes.NSNotificationCenter.defaultCenter()
+  if (!signalHandler) return
   center.removeObserver_name_object_(signalHandler, 'UIApplicationWillResignActiveNotification', NULL)
   center.removeObserver_name_object_(signalHandler, 'UIApplicationDidEnterBackgroundNotification', NULL)
+  signalHandler = null
 }
