@@ -1,4 +1,4 @@
-const wrap = (symbol: string, ret: string, args: string[]) => new NativeFunction(Module.findExportByName(null, symbol)!, ret, args)
+import { wrap } from './native'
 
 export const open = wrap('open', 'int', ['pointer', 'int', 'int'])
 export const close = wrap('close', 'int', ['int'])
