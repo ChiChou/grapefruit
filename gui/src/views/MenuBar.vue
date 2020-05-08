@@ -1,6 +1,8 @@
 <template>
   <menu>
-    <h1 @dblclick="external('https://www.youtube.com/watch?v=dQw4w9WgXcQ')"><b-icon icon="apple"/></h1>
+    <h1 @dblclick="external('https://www.youtube.com/watch?v=dQw4w9WgXcQ')">
+      <img src="../assets/logo.svg" width="100">
+    </h1>
     <themed-menu class="menu">
       <hsc-menu-bar>
         <hsc-menu-bar-item label="Session">
@@ -36,10 +38,10 @@
     <b-modal :active.sync="isAboutDialogActive" :width="480" scroll="keep">
       <div class="card has-text-centered">
         <div class="card-image">
-          <img src="../assets/logo.dark.svg" alt="Passionfruit" class="image" width="300" style="margin: 40px auto" />
+          <img src="../assets/logo.svg" alt="Grapefruit" class="image" width="300" style="margin: 40px auto" />
         </div>
         <div class="card-content">
-          <h2>Passionfruit @{{ version }}</h2>
+          <h2>Grapefruit @{{ version }}</h2>
           <p>Runtime Application Instruments for iOS</p>
           <hr>
           <p>Brought to you by <a href="https://twitter.com/codecolorist" target="_blank">@CodeColorist</a></p>
@@ -157,8 +159,7 @@ menu {
 h1 {
   display: block;
   float: left;
-  padding: 4px;
-  margin: 4px 16px 2px 16px;
+  margin: 8px 2px 2px 16px;
   font-weight: 100;
 }
 </style>

@@ -1,8 +1,8 @@
-# Passionfruit NG
+<img src="gui/src/assets/logo.svg" width="300" alt="Grapefruit" style="margin:auto; display: block">
 
-[Join Discord](https://discord.com/invite/pwutZNx)
+# Grapefruit: Runtime Application Instruments for iOS
 
-Code name: grapefruit
+![John Discord](https://img.shields.io/discord/591601634266578944?label=Discord) ![Commits](https://img.shields.io/github/commit-activity/w/chichou/grapefruit?label=Commits)
 
 ## Get Started
 
