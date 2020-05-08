@@ -167,7 +167,7 @@ if (process.env.NODE_ENV === 'development') {
       const u = new URL(ctx.request.origin)
       u.port = '8080'
       ctx.redirect(u.toString())
-      ctx.body = 'Passionfruit Development Server'
+      ctx.body = 'Grapefruit Development Server'
       ctx.status = 302
     }).routes())
 } else {

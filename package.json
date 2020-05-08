@@ -1,7 +1,7 @@
 {
-  "name": "passionfruit",
+  "name": "grapefruit",
   "version": "0.7.0",
-  "description": "passionfruit",
+  "description": "Runtime Application Instruments for iOS",
   "main": "index.js",
   "dependencies": {},
   "scripts": {

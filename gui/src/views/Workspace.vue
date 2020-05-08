@@ -104,7 +104,7 @@ export default class Workspace extends Vue {
     const { term } = this.$refs.console as Console
     this.term = term
     this.resizeEvent = throttle(this.updateSize, 100)
-    this.term.writeln(colors.green('Welcome to Passionfruit!'))
+    this.term.writeln(colors.green('Welcome to Grapefruit!'))
 
     this.initLayout()
   }
