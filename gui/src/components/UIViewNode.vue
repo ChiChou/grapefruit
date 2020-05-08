@@ -19,7 +19,7 @@
         v-if="node.delegate && node.delegate.name"
         @click="classinfo(node.delegate.name)"
         class="delegate"
-      >{{ node.delegate.description }}</span>
+      >delegate: {{ node.delegate.description }}</span>
     </p>
     <ul class="uiview-subviews" v-if="expanded">
       <li v-for="(child, index) in node.children" :key="index">
