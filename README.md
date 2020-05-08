@@ -2,9 +2,12 @@
 
 # Grapefruit: Runtime Application Instruments for iOS
 
-![John Discord](https://img.shields.io/discord/591601634266578944?label=Discord) ![Commits](https://img.shields.io/github/commit-activity/w/chichou/grapefruit?label=Commits)
+
+![John Discord](https://img.shields.io/discord/591601634266578944?label=Discord) ![Commits](https://img.shields.io/github/commit-activity/w/chichou/grapefruit?label=Commits) ![contributers](https://img.shields.io/github/contributors/chichou/grapefruit) ![License](https://img.shields.io/github/license/chichou/grapefruit)
 
 ## Get Started
+
+![Screenshot](images/screenshot.png)
 
 Git clone:
 
