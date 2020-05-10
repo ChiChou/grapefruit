@@ -1,5 +1,5 @@
 <template>
-  <div class="subview-container" @keydown.alt.87.prevent.stop="close" tabindex="0">
+  <div class="subview-container">
     <div v-if="loading" class="subview-spinner">
       <loading />
     </div>

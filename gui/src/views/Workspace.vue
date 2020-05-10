@@ -1,5 +1,5 @@
 <template>
-  <div class="workspace" tabindex="0" @keydown.alt.87.prevent="closeTab">
+  <div class="workspace">
     <MenuBar ref="menu" />
     <main>
       <SidePanel />
@@ -220,17 +220,27 @@ export default class Workspace extends Vue {
     })
   }
 
+  onKeyDown(ev: KeyboardEvent) {
+    if (ev.key === 'w' && ev.altKey) {
+      ev.preventDefault()
+      ev.stopPropagation()
+      this.closeTab()
+    }
+  }
+
   created() {
     window.addEventListener('resize', this.resize)
     window.addEventListener('unhandledrejection', (ev) => {
       this.log('error', 'unexpected error:', ev.reason)
     })
+    window.addEventListener('keydown', this.onKeyDown)
   }
 
   beforeDestroy() {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     document.querySelector('html')!.classList.remove('no-scroll')
     window.removeEventListener('resize', this.resize)
+    window.removeEventListener('keydown', this.onKeyDown)
     if (this.layout) this.layout.destroy()
   }
 
@@ -241,8 +251,8 @@ export default class Workspace extends Vue {
     if (selectedItem.isStack && active.isComponent) {
       try {
         active.remove()
-      } finally {
-
+      } catch (e) {
+        console.error('failed to remove item', e, active)
       }
     }
   }
