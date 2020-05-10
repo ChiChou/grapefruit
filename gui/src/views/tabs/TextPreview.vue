@@ -8,7 +8,7 @@
 import * as monaco from 'monaco-editor'
 // import * as monaco from 'monaco-editor/esm/vs/editor/editor.api'
 
-import { Component } from 'vue-property-decorator'
+import { Component, Prop } from 'vue-property-decorator'
 import InlinePreview from './InlinePreview.vue'
 import { extname, rem2px } from '../../utils'
 
@@ -17,6 +17,9 @@ const decoder = new TextDecoder()
 @Component
 export default class TextPreview extends InlinePreview {
   editor?: monaco.editor.ICodeEditor
+
+  @Prop({ default: true })
+  readonly!: boolean
 
   get syntax(): string {
     const ext = extname(this.path)
@@ -45,7 +48,7 @@ export default class TextPreview extends InlinePreview {
       this.editor = monaco.editor.create(this.$refs.container as HTMLElement, {
         value,
         language: this.syntax,
-        readOnly: true,
+        readOnly: this.readonly,
         theme: 'vs-dark',
         fontSize: rem2px(1),
         fontFamily: '"Fira Code", monospace'
