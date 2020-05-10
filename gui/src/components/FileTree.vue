@@ -142,7 +142,8 @@ export default class FileTree extends Vue {
       image: 'ImagePreview',
       pdf: 'PDFPreview',
       text: 'TextPreview',
-      cookiejar: 'Cookies'
+      cookiejar: 'Cookies',
+      database: 'SQLitePreview'
       // todo: hex:
     }
     const viewer = mapping[t] || 'UnknownPreview'

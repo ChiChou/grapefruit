@@ -33,6 +33,7 @@ import DictPreview from './DictPreview.vue'
 import PDFPreview from './PDFPreview.vue'
 import ImagePreview from './ImagePreview.vue'
 import TextPreview from './TextPreview.vue'
+import SQLitePreview from './SQLitePreview.vue'
 import UnknownPreview from './UnknownPreview.vue'
 
 import Loading from '../../components/Loading.vue'
@@ -61,6 +62,7 @@ import { Container } from 'golden-layout'
     PDFPreview,
     ImagePreview,
     TextPreview,
+    SQLitePreview,
     UnknownPreview
   }
 })

@@ -4,6 +4,12 @@ function quote(table: string) {
   return `"${table.replace(/"/g, '')}"`
 }
 
+function * all(statement: SqliteStatement) {
+  let row
+  /* eslint no-cond-assign: 0 */
+  while ((row = statement.step()) !== null) yield row
+}
+
 export class Database {
   private db: SqliteDatabase
 
@@ -14,7 +20,7 @@ export class Database {
   tables() {
     const SQL_TABLES = 'SELECT tbl_name FROM sqlite_master WHERE type="table" and tbl_name <> "sqlite_sequence"'
     const statement = this.prepare(SQL_TABLES)
-    return this.all(statement).map(row => row[0])
+    return [...all(statement)].map(row => row[0])
   }
 
   columns(table: string) {
@@ -22,17 +28,7 @@ export class Database {
     // leave this alone or help me commit some code to escape the table name
 
     const statement = this.prepare(`PRAGMA table_info(${quote(table)})`)
-    return this.all(statement)
-  }
-
-  all(statement: SqliteStatement) {
-    const result = []
-    let row
-    /* eslint no-cond-assign: 0 */
-    while ((row = statement.step()) !== null)
-      result.push(row)
-
-    return result
+    return [...all(statement)].map((info: any[6]) => info.slice(1, 3))
   }
 
   prepare(sql: string, args: any[] = []) {
@@ -73,7 +69,14 @@ export function open(path: string) {
 export function query(id: string, sql: string) {
   const db = handles.get(id)
   if (!db) throw new Error(`invalid handle ${id}`)
-  return db.all(db.prepare(sql))
+  return [...all(db.prepare(sql))]
+}
+
+export function close(id: string) {
+  const db = handles.get(id)
+  if (!db) throw new Error(`invalid handle ${id}`)
+  db.close()
+  handles.delete(id)
 }
 
 export function dump(path: string, table: string) {
@@ -81,7 +84,7 @@ export function dump(path: string, table: string) {
   const sql = `select * from ${quote(table)} limit 500`
   const result = {
     header: db.columns(table),
-    data: db.all(db.prepare(sql))
+    data: [...all(db.prepare(sql))]
   }
   db.close()
   return result
