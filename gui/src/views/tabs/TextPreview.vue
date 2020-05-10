@@ -45,7 +45,7 @@ export default class TextPreview extends InlinePreview {
     this.loading = true
     this.$rpc.fs.text(this.path).then((content: ArrayBuffer) => {
       const value = decoder.decode(content)
-      this.editor = monaco.editor.create(this.$refs.container as HTMLElement, {
+      this.editor = monaco.editor.create(this.$refs.container as HTMLDivElement, {
         value,
         language: this.syntax,
         readOnly: this.readonly,
@@ -63,7 +63,7 @@ export default class TextPreview extends InlinePreview {
   }
 
   destroyed() {
-    this.editor.dispose()
+    if (this.editor) this.editor.dispose()
   }
 }
 </script>
