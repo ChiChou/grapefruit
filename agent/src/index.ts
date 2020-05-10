@@ -41,7 +41,7 @@ function registerModules() {
 }
 
 registerModules()
-appLifeCycleHook()
+// appLifeCycleHook()
 
 Process.setExceptionHandler((detail) => {
   console.error('Exception report: ')
