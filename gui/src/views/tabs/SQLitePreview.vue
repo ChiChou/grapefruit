@@ -22,10 +22,12 @@
             <div class="editor" ref="container"></div>
           </template>
           <template slot="paneR">
-            <nav><b-button @click="execute" icon-left="play">Run (meta + Enter)</b-button></nav>
-            <section classs="data">
-              <b-table :data="data" :columns="columns"></b-table>
-            </section>
+            <article class="result">
+              <nav><b-button @click="execute" icon-left="play">Run (meta + Enter)</b-button></nav>
+              <section classs="data">
+                <b-table :data="data" :columns="columns"></b-table>
+              </section>
+            </article>
           </template>
         </split-pane>
       </template>
@@ -194,6 +196,13 @@ pre.hidden {
 
 nav {
   margin: 10px 0;
+  position: sticky;
+  top: 0;
+}
+
+article.result {
+  height: 100%;
+  overflow: auto;
 }
 
 .tables {
