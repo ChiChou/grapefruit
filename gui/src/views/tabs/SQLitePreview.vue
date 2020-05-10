@@ -22,7 +22,7 @@
             <div class="editor" ref="container"></div>
           </template>
           <template slot="paneR">
-            <nav><b-button @click="execute" icon-left="play">Run</b-button></nav>
+            <nav><b-button @click="execute" icon-left="play">Run (meta + Enter)</b-button></nav>
             <section classs="data">
               <b-table :data="data" :columns="columns"></b-table>
             </section>
@@ -37,14 +37,14 @@
 import * as monaco from 'monaco-editor'
 
 import { Component } from 'vue-property-decorator'
-import { rem2px } from '../../utils'
+import { rem2px, htmlescape } from '../../utils'
 import Preview from './Preview.vue'
 
 // eslint-disable-next-line quotes
 const DEFAULT_SQL = `SELECT name FROM sqlite_master WHERE type ='table' AND name NOT LIKE 'sqlite_%';`
 
 interface Column {
-  field: string | number;
+  field: string;
   label: string;
   width?: string;
   centered?: boolean;
@@ -74,7 +74,7 @@ export default class SQLitePreview extends Preview {
       label: 'Execute Query',
       keybindings: [
         monaco.KeyCode.F5,
-        monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R
+        monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter
       ],
       run: this.execute
     })
@@ -88,7 +88,8 @@ export default class SQLitePreview extends Preview {
 
   async dump(table: string) {
     if (!this.editor) return
-    this.editor.setValue(`SELECT * from ${table};`)
+    const sql = `SELECT * from ${table};`
+    this.editor.setValue(sql)
     this.loading = false
     try {
       const { header, data } = await this.$rpc.sqlite.dump(this.path, table)
@@ -109,6 +110,14 @@ export default class SQLitePreview extends Preview {
         header.forEach((hdr: [string, string], i: number) => { result[hdr[0]] = row[i] })
         return result
       })
+      localStorage.setItem('sql', sql)
+      this.$buefy.toast.open('Table loaded')
+    } catch (e) {
+      console.warn('Failed to execute SQL', e)
+      this.$buefy.toast.open({
+        type: 'is-danger',
+        message: `Unexpected error: <br>${htmlescape(e)}`
+      })
     } finally {
       this.loading = false
     }
@@ -127,11 +136,18 @@ export default class SQLitePreview extends Preview {
         const name = '#' + i
         return {
           label: name,
-          field: i,
+          field: i.toString(),
           sortable: true
         }
       }) : []
       localStorage.setItem('sql', sql)
+      this.$buefy.toast.open('query successfully executed')
+    } catch (e) {
+      console.warn('Failed to execute SQL', e)
+      this.$buefy.toast.open({
+        type: 'is-danger',
+        message: `Unexpected error: <br>${htmlescape(e)}`
+      })
     } finally {
       this.loading = false
     }
