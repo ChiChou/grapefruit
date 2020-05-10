@@ -61,6 +61,10 @@ export default class TextPreview extends InlinePreview {
   resize() {
     if (this.editor) this.editor.layout()
   }
+
+  destroyed() {
+    this.editor.dispose()
+  }
 }
 </script>
 
