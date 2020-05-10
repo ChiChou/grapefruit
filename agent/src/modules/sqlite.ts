@@ -1,3 +1,5 @@
+import uuid from '../lib/uuid'
+
 function quote(table: string) {
   return `"${table.replace(/"/g, '')}"`
 }
@@ -59,21 +61,28 @@ export class Database {
   }
 }
 
-export function data(path: string, table: string) {
+const handles = new Map<string, Database>()
+
+export function open(path: string) {
+  const id = uuid()
+  const db = new Database(path)
+  handles.set(id, db)
+  return id
+}
+
+export function query(id: string, sql: string) {
+  const db = handles.get(id)
+  if (!db) throw new Error(`invalid handle ${id}`)
+  return db.all(db.prepare(sql))
+}
+
+export function dump(path: string, table: string) {
   const db = new Database(path)
   const sql = `select * from ${quote(table)} limit 500`
   const result = {
     header: db.columns(table),
     data: db.all(db.prepare(sql))
   }
-  db.close()
-  return result
-}
-
-export function query(path: string, sql: string) {
-  const db = new Database(path)
-  const statement = db.prepare(sql)
-  const result = db.all(statement)
   db.close()
   return result
 }

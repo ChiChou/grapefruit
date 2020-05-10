@@ -1,6 +1,7 @@
 import { NSHomeDirectory, NSTemporaryDirectory, attrs } from '../lib/foundation'
 import { open } from '../lib/libc'
 import { valueOf } from '../lib/dict'
+import uuid from '../lib/uuid'
 
 const { NSBundle, NSFileManager, NSString, NSDictionary } = ObjC.classes
 
@@ -115,15 +116,8 @@ export async function text(path: string) {
   return stream.read(SIZE)
 }
 
-function uuidv4(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = Math.random() * 16 | 0, v = c === 'x' ? r : ((r & 0x3) | 0x8)
-    return v.toString(16)
-  })
-}
-
 export async function download(path: string) {
-  const session = uuidv4()
+  const session = uuid()
   const name = Memory.allocUtf8String(path)
   const watermark = 10 * 1024 * 1024
   const subject = 'download'
