@@ -59,7 +59,7 @@ export function icon(name: string) {
     if (['txt', 'log', 'glsl'].includes(ext)) return 'file-document-outline'
     if (['wav', 'mp3', 'aac', 'm4a'].includes(ext)) return 'file-music-outline'
     if (['mp4', 'mov', 'avi', 'webm'].includes(ext)) return 'file-video-outline'
-    if (['db', 'sqlite'].includes(ext)) return 'database'
+    if (['db', 'sqlite', 'localstorage'].includes(ext)) return 'database'
   }
 
   return 'file-outline'
@@ -83,7 +83,7 @@ export function filetype(name: string) {
     if (['txt', 'log', 'csv', 'js', 'xml', 'json', 'py', 'sql', 'glsl', 'entitlements', 'css'].includes(ext)) return 'text'
     if (['wav', 'mp3', 'aac', 'm4a'].includes(ext)) return 'audio'
     if (['mp4', 'mov', 'avi', 'webm'].includes(ext)) return 'video'
-    if (['db', 'sqlite'].includes(ext)) return 'database'
+    if (['db', 'sqlite', 'localstorage'].includes(ext)) return 'database'
   }
 
   return 'hex'
