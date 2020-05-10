@@ -61,9 +61,17 @@ export default class SQLitePreview extends Preview {
   data: object[] = []
   columns: Column[] = []
 
+  set storedSQL(sql: string) {
+    localStorage.setItem(`sql/${this.path}`, sql)
+  }
+
+  get storedSQL(): string {
+    return localStorage.getItem(`sql/${this.path}`) || DEFAULT_SQL
+  }
+
   mounted() {
     this.editor = monaco.editor.create(this.$refs.container as HTMLDivElement, {
-      value: localStorage.getItem('sql') || DEFAULT_SQL,
+      value: this.storedSQL,
       language: 'sql',
       theme: 'vs-dark',
       fontSize: rem2px(1),
@@ -110,7 +118,7 @@ export default class SQLitePreview extends Preview {
         header.forEach((hdr: [string, string], i: number) => { result[hdr[0]] = row[i] })
         return result
       })
-      localStorage.setItem('sql', sql)
+      this.storedSQL = sql
       this.$buefy.toast.open('Table loaded')
     } catch (e) {
       console.warn('Failed to execute SQL', e)
@@ -140,7 +148,7 @@ export default class SQLitePreview extends Preview {
           sortable: true
         }
       }) : []
-      localStorage.setItem('sql', sql)
+      this.storedSQL = sql
       this.$buefy.toast.open('query successfully executed')
     } catch (e) {
       console.warn('Failed to execute SQL', e)
