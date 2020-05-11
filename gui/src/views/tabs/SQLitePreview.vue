@@ -23,9 +23,12 @@
           </template>
           <template slot="paneR">
             <article class="result">
-              <nav><b-button @click="execute" icon-left="play">Run (meta + Enter)</b-button></nav>
+              <nav>
+                <b-button @click="execute" icon-left="play">Run (meta + Enter)</b-button>
+                <p :class="{ 'has-text-danger': failed, 'has-text-success': !failed }" v-if="msg">{{ msg }}</p>
+              </nav>
               <section classs="data">
-                <b-table :data="data" :columns="columns"></b-table>
+                <b-table :data="data" :columns="columns" class="data-table"></b-table>
               </section>
             </article>
           </template>
@@ -62,6 +65,8 @@ export default class SQLitePreview extends Preview {
 
   data: object[] = []
   columns: Column[] = []
+  msg = ''
+  failed = false
 
   set storedSQL(sql: string) {
     localStorage.setItem(`sql/${this.path}`, sql)
@@ -90,17 +95,19 @@ export default class SQLitePreview extends Preview {
     })
 
     this.loading = true
-    this.$rpc.sqlite.tables(this.path).then((tables: string[]) => { this.tables = tables })
-    this.$rpc.sqlite.open(this.path).then((handle: string) => {
-      this.handle = handle
-    }).finally(() => { this.loading = false })
+    this.$rpc.sqlite.tables(this.path)
+      .then((tables: string[]) => { this.tables = tables })
+    this.$rpc.sqlite.open(this.path)
+      .then((handle: string) => { this.handle = handle })
+      .finally(() => { this.loading = false })
   }
 
   async dump(table: string) {
     if (!this.editor) return
     const sql = `SELECT * from ${table};`
     this.editor.setValue(sql)
-    this.loading = false
+    this.loading = true
+    this.failed = false
     try {
       const { header, data } = await this.$rpc.sqlite.dump(this.path, table)
       this.columns = header.map((item: [string, string]) => {
@@ -121,7 +128,7 @@ export default class SQLitePreview extends Preview {
         return result
       })
       this.storedSQL = sql
-      this.$buefy.toast.open('Table loaded')
+      this.msg = 'Table loaded'
     } catch (e) {
       console.warn('Failed to execute SQL', e)
       this.$buefy.toast.open({
@@ -139,6 +146,8 @@ export default class SQLitePreview extends Preview {
     this.data = []
     this.columns = []
     this.loading = true
+    this.failed = false
+    this.msg = ''
     try {
       const data = await this.$rpc.sqlite.query(this.handle, sql)
       this.data = data
@@ -151,9 +160,11 @@ export default class SQLitePreview extends Preview {
         }
       }) : []
       this.storedSQL = sql
-      this.$buefy.toast.open('query successfully executed')
+      this.msg = 'query successfully executed'
     } catch (e) {
       console.warn('Failed to execute SQL', e)
+      this.msg = e.toString()
+      this.failed = true
       this.$buefy.toast.open({
         type: 'is-danger',
         message: `Unexpected error: <br>${htmlescape(e)}`
@@ -195,9 +206,15 @@ pre.hidden {
 }
 
 nav {
-  margin: 10px 0;
+  padding: 10px;
   position: sticky;
   top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  background: #222;
+  box-shadow: 0px 2px 4px #00000030;
+  justify-content: space-between;
 }
 
 article.result {
@@ -215,5 +232,9 @@ article.result {
       text-overflow: ellipsis;
     }
   }
+}
+
+.data-table {
+  word-wrap: break-word;
 }
 </style>
