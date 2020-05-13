@@ -223,6 +223,9 @@ article.result {
 }
 
 .tables {
+  height: 100%;
+  overflow: auto;
+
   ul {
     padding: 4px;
 
