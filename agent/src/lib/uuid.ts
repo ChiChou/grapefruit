@@ -4,3 +4,5 @@ export default function uuid(): string {
     return v.toString(16)
   })
 }
+
+// return ObjC.classes.NSUUID.UUID().UUIDString().toString()
