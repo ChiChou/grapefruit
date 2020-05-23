@@ -14,6 +14,9 @@ module.exports = {
       .use(new MonacoWebpackPlugin())
   },
   devServer: {
+    allowedHosts: [
+      '.local' // allow LAN
+    ],
     proxy: {
       '^/(api|socket\.io)': {
         target: 'http://localhost:31337/',
