@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const { connect, createServer } = require('net');
 const { platform } = require('os');
 const fs = require('fs');
