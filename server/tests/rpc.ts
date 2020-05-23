@@ -73,7 +73,6 @@ describe('RPC', () => {
     expect(await rpc.sqlite.query(BOOKMARKS, 'select count(*) from bookmarks')).to.be.an('array').and.have.lengthOf(1)
     expect(await rpc.sqlite.data(BOOKMARKS, 'bookmarks')).to.be.an('object').and.have.keys(['header', 'data'])
 
-    // await rpc.touchid.disable()
     expect(await rpc.keychain.list()).to.be.an('array')
 
     await rpc.syslog.stop()
