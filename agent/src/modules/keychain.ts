@@ -69,10 +69,12 @@ for (let symbol of constants) {
   lookup[val.toString()] = symbol
 }
 
+Module.ensureInitialized('Foundation')
+Module.ensureInitialized('CoreFoundation')
+
 const constantLookup = (val: NativePointer) => lookup[val.toString()]
 const CFRelease = new NativeFunction(Module.findExportByName('CoreFoundation', 'CFRelease')!, 'void', ['pointer'])
 
-const kCFBooleanTrue = ObjC.classes.__NSCFBoolean.numberWithBool_(true)
 const kSecClasses = [
   C.kSecClassKey,
   C.kSecClassIdentity,
@@ -143,6 +145,7 @@ const
 // }
 
 export function list(withfaceId = false): object[] {
+  const kCFBooleanTrue = ObjC.classes.__NSCFBoolean.numberWithBool_(true)
   const result: object[] = []
 
   const query = NSMutableDictionary.alloc().init()
