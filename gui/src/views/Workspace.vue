@@ -221,7 +221,7 @@ export default class Workspace extends Vue {
   }
 
   onKeyDown(ev: KeyboardEvent) {
-    if (ev.key === 'w' && ev.altKey) {
+    if (ev.key === 'w' && (ev.altKey || ev.ctrlKey)) {
       ev.preventDefault()
       ev.stopPropagation()
       this.closeTab()
