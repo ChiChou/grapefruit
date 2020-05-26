@@ -6,5 +6,8 @@
   "eslint.run": "onSave",
   "eslint.workingDirectories": [
     "server/"
-  ]
+  ],
+  "search.exclude": {
+    "gui/bulmaswatch": true
+  }
 }
