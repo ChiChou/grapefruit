@@ -9,7 +9,7 @@
           class="symbol"
           @click="$bus.$emit('openTab', 'Disasm', 'Disassembly: ' + insn.symbol, { addr: insn.operands[0].value })"
         >
-          {{ insn.symbol }}
+          {{ insn.opStr }}
         </span>
         <Operand v-else class="op" :insn="insn" />
         <span v-if="insn.comment" class="comment">; {{ insn.comment }}</span>

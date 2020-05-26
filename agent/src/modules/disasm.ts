@@ -35,6 +35,7 @@ const readers: Readers = {
   __objc_methtype: p => p.readCString(),
   __objc_selrefs: p => `@selector(${p.add(Process.pointerSize * 2).readPointer().readCString()})`,
   __la_symbol_ptr: p => DebugSymbol.fromAddress(p.readPointer()).name,
+  __la_resolver: p => DebugSymbol.fromAddress(p.readPointer()).name,
   __objc_classrefs: p => DebugSymbol.fromAddress(p.readPointer()).name,
   __objc_superrefs: p => DebugSymbol.fromAddress(p.readPointer().add(Process.pointerSize).readPointer()).name,
   // todo: display protocol name
@@ -79,9 +80,8 @@ export default function disasm(addr: string | number, count=100) {
             if (!sym?.name?.match(/^0x\d+/)) {
               if (operands.length === 1) {
                 symbol = sym.name
-              } else {
-                comment = sym.name
               }
+              comment = sym.name
             }
           }
         }
