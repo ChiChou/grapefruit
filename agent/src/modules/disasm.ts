@@ -13,10 +13,10 @@ function maps() {
   const vmmap: Section[] = []
 
   for (const mod of Process.enumerateModules()) {
-    const cb = new NativeCallback((sectname: NativePointer, base: NativeArgumentValue, size: number) => {
+    const cb = new NativeCallback((sectname: NativePointer, base: NativeArgumentValue, top: NativeArgumentValue) => {
       const name = sectname.readCString()?.slice(0, 16)
       const floor = ptr(base.toString())
-      const ceil = floor.add(size)
+      const ceil = ptr(top.toString())
       vmmap.push({ name, floor, ceil })
     }, 'void', ['pointer', uintptr_t, uintptr_t])
 
@@ -31,9 +31,10 @@ type Readers = { [section: string]: StringReader }
 
 const readers: Readers = {
   __cstring: p => `"${p.readCString()}"`,
-  __cfstring: p => `@"${p.readPointer().readPointer().readCString()}"`,
+  __cfstring: p => `@"${p.add(Process.pointerSize * 2).readPointer().readCString()}"`,
   __objc_methtype: p => p.readCString(),
   __objc_selrefs: p => `@selector(${p.add(Process.pointerSize * 2).readPointer().readCString()})`,
+  __la_symbol_ptr: p => DebugSymbol.fromAddress(p.readPointer()).name,
   __objc_classrefs: p => DebugSymbol.fromAddress(p.readPointer()).name,
   __objc_superrefs: p => DebugSymbol.fromAddress(p.readPointer().add(Process.pointerSize).readPointer()).name,
   // todo: display protocol name

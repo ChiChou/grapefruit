@@ -227,8 +227,8 @@ void sections(struct mach_header *mh,
   uintptr_t slide = 0;
   FOR_EACH_SEGMENT(mh, {
     if (seg->cmd == LC_SEGMENT_ARCH_DEPENDENT &&
-        strcmp(seg->segname, SEG_TEXT)) {
-      slide = (uintptr_t)mh - (seg->vmaddr - seg->fileoff);
+        strcmp(seg->segname, SEG_TEXT) == 0) {
+      slide = (uintptr_t)mh - seg->vmaddr;
     }
   })
 
@@ -237,22 +237,7 @@ void sections(struct mach_header *mh,
       for (uint j = 0; j < seg->nsects; j++) {
         section_t *sect = (section_t *)(cur + sizeof(segment_command_t)) + j;
         uintptr_t p = sect->addr + slide;
-        yield(sect->sectname, p, sect->size);
-
-        // printf(">> %s 0x%lx %llx\n", sect->sectname, p, sect->size);
-        // if (issection(sect, "__cfstring")) {
-        //   // printf("sample: %s\n", (const char *)(*(uintptr_t*)(p + 0x10)));
-        // } else if (issection(sect, "__objc_selrefs")) {
-        //   // printf("sample: %s\n", *(const char**)p);
-        // } else if (issection(sect, "__cstring")) {
-        //   // printf("sample: %s\n", (const char *)p);
-        // } else if (issection(sect, "__objc_methtype")) {
-        //   // printf("sample: %s\n", (const char *)p);
-        // } else if (issection(sect, "__objc_classrefs")) {
-
-        // } else if (issection(sect, "__ustring")) {
-        //   // p
-        // }
+        yield(sect->sectname, p, p + sect->size);
       }
     }
   })
