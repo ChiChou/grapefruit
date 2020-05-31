@@ -33,6 +33,7 @@ const readers: Readers = {
   __cstring: p => `"${p.readCString()}"`,
   __cfstring: p => `@"${p.add(Process.pointerSize * 2).readPointer().readCString()}"`,
   __objc_methtype: p => p.readCString(),
+  __objc_methname: p => p.readCString(),
   __objc_selrefs: p => `@selector(${p.add(Process.pointerSize * 2).readPointer().readCString()})`,
   __la_symbol_ptr: p => DebugSymbol.fromAddress(p.readPointer()).name,
   __la_resolver: p => DebugSymbol.fromAddress(p.readPointer()).name,
@@ -62,6 +63,14 @@ export default function disasm(addr: string | number, count=100) {
         return readers[sect.name](p)
       }
     }
+    console.log(`[debug] range not found for ${p}`)
+    if (Process.findRangeByAddress(p)?.protection === 'r-x') {
+      try {
+        return p.readCString()
+      } catch(_) {
+        
+      }
+    }
   }
 
   const end = range.base.add(range.size)
@@ -87,14 +96,25 @@ export default function disasm(addr: string | number, count=100) {
         }
       }
 
-      if (prev && prev.mnemonic === 'adrp' && prev.operands[1]?.type === 'imm' && insn.mnemonic === 'ldr') {
-        const op2 = insn.operands[1]
-        if (op2?.type === 'mem') {
-          const { value } = op2 as ArmMemOperand | Arm64MemOperand
-          if (value.base === prev.operands[0].value) {
-            const base = ptr(prev.operands[1].value.toString())
-            const p = base.add(value.disp)       
+      if (prev && prev.mnemonic === 'adrp' && prev.operands[1]?.type === 'imm') {
+        const base = ptr(prev.operands[1].value.toString())
+        if (insn.mnemonic === 'ldr') {
+          const op2 = insn.operands[1]
+          if (op2?.type === 'mem') {
+            const { value } = op2 as ArmMemOperand | Arm64MemOperand
+            if (value.base === prev.operands[0].value) {
+              const p = base.add(value.disp)       
+              comment = readable(p)
+            }
+          }
+        } else if (insn.mnemonic == 'add') {
+          const op3 = insn.operands[2]
+          if (op3?.type === 'imm') {
+            const { value } = op3 as ArmImmOperand | Arm64ImmOperand
+            const p = base.add(value)
+            // console.log(p.toString())
             comment = readable(p)
+            // console.log(JSON.stringify(insn))
           }
         }
       }
