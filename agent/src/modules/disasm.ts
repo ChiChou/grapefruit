@@ -117,6 +117,13 @@ export default function disasm(addr: string | number, count=100) {
             // console.log(JSON.stringify(insn))
           }
         }
+      } else if (insn.mnemonic === 'ldr' && prev?.mnemonic === 'nop') {
+        const op2 = insn.operands[1]
+        if (op2?.type === 'imm') {
+          const { value } = op2 as ArmImmOperand | Arm64ImmOperand
+          const p = ptr(value.toString())
+          comment = readable(p)          
+        }
       }
 
       const string = insn.toString()
