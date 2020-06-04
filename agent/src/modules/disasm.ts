@@ -37,10 +37,9 @@ const readers: Readers = {
   __objc_selrefs: p => `@selector(${p.add(Process.pointerSize * 2).readPointer().readCString()})`,
   __la_symbol_ptr: p => DebugSymbol.fromAddress(p.readPointer()).name,
   __la_resolver: p => DebugSymbol.fromAddress(p.readPointer()).name,
-  __objc_classrefs: p => DebugSymbol.fromAddress(p.readPointer()).name,
-  __objc_superrefs: p => DebugSymbol.fromAddress(p.readPointer().add(Process.pointerSize).readPointer()).name,
-  // todo: display protocol name
-  // __objc_protorefs: p => p.readPointer(),
+  __objc_classrefs: p => `_OBJC_CLASS_$_${new ObjC.Object(p.readPointer())}`,
+  __objc_superrefs: p => `_OBJC_CLASS_$_${new ObjC.Object(p.readPointer())}`,
+  __objc_protorefs: p => `_OBJC_PROTOCOL_$_${new ObjC.Protocol(p.readPointer())}`,
   __ustring: p => `u"${p.readUtf16String()}"`
 }
 
