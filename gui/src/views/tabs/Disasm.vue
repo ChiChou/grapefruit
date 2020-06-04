@@ -36,6 +36,11 @@ interface Token {
   word: string;
 }
 
+interface Response {
+  symbol: string;
+  instructions: Insn[];
+}
+
 function * scan(str: string): IterableIterator<Token> {
   const delimiters = ', []#!'
 
@@ -91,15 +96,14 @@ export default class Disasm extends Base {
 
   disasm: Insn[] = []
   loadingMore = false
+  symbol?: string
+
+  get cursor() {
+    return this.disasm.length > 1 ? this.disasm.pop().address : this.addr
+  }
 
   mounted() {
     this.more()
-  }
-
-  get cursor(): string {
-    const { disasm } = this
-    if (!disasm.length) return this.addr
-    return disasm[disasm.length - 1].address
   }
 
   more() {
@@ -107,9 +111,9 @@ export default class Disasm extends Base {
     const y = el ? el.scrollTop : 0
     if (!this.disasm.length) this.loading = true
     this.loadingMore = true
-    this.$rpc.disasm(this.cursor).then((response: Insn[]) => {
-      this.disasm.push(...response)
-      if (el && y) Vue.nextTick(() => { el.scrollTop = y })
+    this.$rpc.disasm(this.cursor).then((response: Response) => {
+      this.symbol = response.symbol
+      this.disasm.push(...response.instructions)
     }).finally(() => {
       this.loading = false
       this.loadingMore = false
