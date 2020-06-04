@@ -43,12 +43,13 @@ const readers: Readers = {
   __ustring: p => `u"${p.readUtf16String()}"`
 }
 
-export default function disasm(addr: string | number, count=100) {
+export default function disasm(addr: string | number, count = 100) {
   if (!new Set(['arm', 'arm64']).has(Process.arch)) throw new Error('CPU not supported')
 
   let p = ptr(addr)
   if (p.isNull()) throw new Error(`Invalid address ${addr}`)
 
+  const symbol = DebugSymbol.fromAddress(p).name
   const range = Process.findRangeByAddress(p)
   if (!range) throw new Error(`Address ${p} is not mapped`)
   if (range.protection.indexOf('x') === -1) throw new Error(`${p} is not executable`)
@@ -66,14 +67,14 @@ export default function disasm(addr: string | number, count=100) {
     if (Process.findRangeByAddress(p)?.protection === 'r-x') {
       try {
         return p.readCString()
-      } catch(_) {
-        
+      } catch (_) {
+
       }
     }
   }
 
   const end = range.base.add(range.size)
-  function * gen() {
+  function* gen() {
     let prev: ArmInstruction | Arm64Instruction | undefined
     for (let i = 0; i < count; i++) {
       const insn = Instruction.parse(p) as ArmInstruction | Arm64Instruction
@@ -102,7 +103,7 @@ export default function disasm(addr: string | number, count=100) {
           if (op2?.type === 'mem') {
             const { value } = op2 as ArmMemOperand | Arm64MemOperand
             if (value.base === prev.operands[0].value) {
-              const p = base.add(value.disp)       
+              const p = base.add(value.disp)
               comment = readable(p)
             }
           }
@@ -121,7 +122,7 @@ export default function disasm(addr: string | number, count=100) {
         if (op2?.type === 'imm') {
           const { value } = op2 as ArmImmOperand | Arm64ImmOperand
           const p = ptr(value.toString())
-          comment = readable(p)          
+          comment = readable(p)
         }
       }
 
@@ -135,5 +136,8 @@ export default function disasm(addr: string | number, count=100) {
     }
   }
 
-  return [...gen()]
+  return {
+    symbol,
+    instructions: [...gen()],
+  }
 }
