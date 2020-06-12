@@ -99,7 +99,8 @@ export default class Disasm extends Base {
   symbol?: string
 
   get cursor() {
-    return this.disasm.length > 1 ? this.disasm.pop().address : this.addr
+    const last = this.disasm.pop()
+    return last ? last.address : this.addr
   }
 
   mounted() {
@@ -107,8 +108,6 @@ export default class Disasm extends Base {
   }
 
   more() {
-    const el = this.$root.$el
-    const y = el ? el.scrollTop : 0
     if (!this.disasm.length) this.loading = true
     this.loadingMore = true
     this.$rpc.disasm(this.cursor).then((response: Response) => {
