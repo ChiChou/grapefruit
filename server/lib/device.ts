@@ -3,6 +3,7 @@ import { Device, Session, enumerateDevices, getUsbDevice, getDevice } from 'frid
 import { retry } from './utils'
 
 import * as serialize from './serialize'
+import { DeviceType } from 'frida/dist/device'
 
 export async function match(prefix: string): Promise<Device> {
   const list = await enumerateDevices()
@@ -60,8 +61,8 @@ export class ExDevice {
   }
 
   get host(): string {
-    const prefix = 'tcp@'
-    if (this.device.id.startsWith(prefix))
+    const prefix = 'remote@'
+    if (this.device.type === DeviceType.Remote && this.device.id.startsWith(prefix))
       return this.device.id.slice(prefix.length)
     return null
   }

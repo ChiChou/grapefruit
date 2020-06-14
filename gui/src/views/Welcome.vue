@@ -25,8 +25,9 @@
               {{ dev.name }}
               <b-button
                 v-if="dev.removable"
+                size="is-small"
                 class="remove"
-                icon-right="delete"
+                icon-right="delete-outline"
                 type="is-danger"
                 @click.stop.prevent="remove(dev.id)"
               ></b-button>
@@ -85,6 +86,17 @@ export default class Welcome extends Vue {
     const socket = io.connect('/devices', { transports: ['websocket'] })
     socket.on('deviceChanged', this.refresh)
     this.refresh()
+  }
+
+  remove(id: string) {
+    const pattern = /^(tcp|socket)@/
+    const matches = pattern.exec(id)
+    if (matches) {
+      const host = id.replace(pattern, '')
+      Axios.delete(`/remote/${host}`).then(() => {
+        this.$buefy.toast.open(`${host} is now disconnected`)
+      }).finally(this.refresh)
+    }
   }
 
   connect() {
@@ -163,6 +175,11 @@ h1 {
 
   .add-remote {
     margin-top: 10px;
+  }
+
+  .remove {
+    height: 1.5em;
+    width: 1.5em;
   }
 
   a {
