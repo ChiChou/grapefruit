@@ -2,7 +2,7 @@
   <div class="welcome">
     <header>
       <h1>
-        <img src="../assets/logo.svg" alt="Grapefruit" width="160" id="logo" />
+        <a href="/"><img src="../assets/logo.svg" alt="Grapefruit" width="160" id="logo" /></a>
       </h1>
       <h2 class="subtitle">Runtime app instruments for iOS</h2>
       <!-- <b-button @click="connect">Add Remote TCP</b-button> -->
