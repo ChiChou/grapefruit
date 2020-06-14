@@ -2,10 +2,11 @@
   <div class="welcome">
     <header>
       <h1>
-        <a href="/"><img src="../assets/logo.svg" alt="Grapefruit" width="160" id="logo" /></a>
+        <a href="/">
+          <img src="../assets/logo.svg" alt="Grapefruit" width="160" id="logo" />
+        </a>
       </h1>
       <h2 class="subtitle">Runtime app instruments for iOS</h2>
-      <!-- <b-button @click="connect">Add Remote TCP</b-button> -->
       <aside class="menu">
         <p class="menu-label">Frida version: {{ version }}</p>
 
@@ -37,7 +38,7 @@
           </li>
 
           <li class="add-remote">
-            <b-button expanded icon-left="plus-circle-outline">Connect Remote ...</b-button>
+            <b-button expanded icon-left="plus-circle-outline" @click="connect">Connect Remote ...</b-button>
           </li>
         </ul>
 
@@ -84,6 +85,25 @@ export default class Welcome extends Vue {
     const socket = io.connect('/devices', { transports: ['websocket'] })
     socket.on('deviceChanged', this.refresh)
     this.refresh()
+  }
+
+  connect() {
+    this.$buefy.dialog.prompt({
+      message: 'Connect Remote Device via TCP',
+      inputAttrs: { placeholder: 'IP address or hostname' },
+      trapFocus: true,
+      onConfirm: host => {
+        Axios.put('/remote/add', { host }).then(() => {
+          this.refresh()
+          this.$buefy.toast.open(`Successfully added ${host}`)
+        }).catch(e => {
+          this.$buefy.toast.open({
+            type: 'is-error',
+            message: `Failed to connect remote device, reason: ${e}`
+          })
+        })
+      }
+    })
   }
 
   refresh() {
