@@ -1,4 +1,5 @@
 import { Icon, Device, Application } from 'frida'
+import { DeviceType } from 'frida/dist/device'
 
 export function icon(icon?: Icon): object {
   if (!icon) return
@@ -8,7 +9,7 @@ export function icon(icon?: Icon): object {
 
 export function device(dev: Device): object {
   const { name, id, type } = dev
-  const removable = dev.id.startsWith('remote@')
+  const removable = dev.type === DeviceType.Remote && dev.name !== 'Local Socket'
   return { name, id, icon: icon(dev.icon), type, removable }
 }
 
