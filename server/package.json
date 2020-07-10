@@ -34,7 +34,7 @@
     "@types/frida-gum": "^15.2.0",
     "bplist-creator": "0.0.8",
     "bplist-parser": "^0.2.0",
-    "frida": "^12.9.2",
+    "frida": "^12.10.4",
     "koa": "^2.11.0",
     "koa-bodyparser": "^4.3.0",
     "koa-json": "^2.0.2",
