@@ -3,7 +3,9 @@
   "version": "0.7.0",
   "description": "Runtime Application Instruments for iOS",
   "main": "index.js",
-  "dependencies": {},
+  "dependencies": {
+    "typeorm": "^0.2.25"
+  },
   "scripts": {
     "postinstall": "node scripts/install.js",
     "start": "node scripts/dev.js",
