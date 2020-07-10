@@ -133,8 +133,14 @@ export default class Workspace extends Vue {
       }]
     }
 
-    const item = localStorage.getItem('layout-state')
-    const config = item ? JSON.parse(item) : defaultConfig
+    let config = defaultConfig
+    if (localStorage.getItem('bundle') === this.$route.params.bundle) {
+      const item = localStorage.getItem('layout-state')
+      if (item) {
+        config = JSON.parse(item)
+      }
+    }
+
     const layout = this.layout = new GoldenLayout(config, this.$refs.container as HTMLDivElement)
     const tabsSingleton = new Map<string, ContentItem>()
 
@@ -161,7 +167,10 @@ export default class Workspace extends Vue {
     })
 
     layout.on('stateChanged', () => {
-      if (layout.isInitialised) localStorage.setItem('layout-state', JSON.stringify(layout.toConfig()))
+      if (layout.isInitialised) {
+        localStorage.setItem('layout-state', JSON.stringify(layout.toConfig()))
+        localStorage.setItem('bundle', this.$route.params.bundle)
+      }
     })
 
     try {
