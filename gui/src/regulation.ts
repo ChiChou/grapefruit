@@ -1,6 +1,10 @@
 // sorry, I don't want to get into any kind of trouble
 
 export function check(bundle: string): boolean {
+  if (process.env.NODE_ENV === 'development') {
+    return false
+  }
+
   const rules = [
     'com.alibaba.',
     'com.alipay.',
