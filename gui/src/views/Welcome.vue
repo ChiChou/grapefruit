@@ -124,6 +124,11 @@ export default class Welcome extends Vue {
       .then(({ data }) => {
         this.version = data.version
         this.devices = data.list
+
+        const { device } = this.$route.params
+        if (device && !data.list.find(e => e.id === device)) {
+          this.$router.push('/') // current device has been removed
+        }
       })
       .catch(e => {
         this.$buefy.dialog.alert({
