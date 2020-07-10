@@ -29,3 +29,7 @@ Start development server:
 `npm start`
 
 Default webpack url is `http://localhost:8080`
+
+## Roadmap
+
+https://github.com/ChiChou/Grapefruit/projects/1
