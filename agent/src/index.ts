@@ -40,7 +40,7 @@ function registerModules() {
   })  
 }
 
-registerModules()
+setImmediate(registerModules)
 // appLifeCycleHook()
 
 Process.setExceptionHandler((detail) => {
