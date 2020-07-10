@@ -93,9 +93,11 @@ export default class Welcome extends Vue {
     const matches = pattern.exec(id)
     if (matches) {
       const host = id.replace(pattern, '')
-      Axios.delete(`/remote/${host}`).then(() => {
-        this.$buefy.toast.open(`${host} is now disconnected`)
-      }).finally(this.refresh)
+      Axios.delete(`/remote/${host}`)
+        .then(() => {
+          this.$buefy.toast.open(`${host} is now disconnected`)
+        })
+        .finally(this.refresh)
     }
   }
 
@@ -105,15 +107,17 @@ export default class Welcome extends Vue {
       inputAttrs: { placeholder: 'IP address or hostname' },
       trapFocus: true,
       onConfirm: host => {
-        Axios.put('/remote/add', { host }).then(() => {
-          this.refresh()
-          this.$buefy.toast.open(`Successfully added ${host}`)
-        }).catch(e => {
-          this.$buefy.toast.open({
-            type: 'is-error',
-            message: `Failed to connect remote device, reason: ${e}`
+        Axios.put('/remote/add', { host })
+          .then(() => {
+            this.refresh()
+            this.$buefy.toast.open(`Successfully added ${host}`)
           })
-        })
+          .catch(e => {
+            this.$buefy.toast.open({
+              type: 'is-error',
+              message: `Failed to connect remote device, reason: ${e}`
+            })
+          })
       }
     })
   }
@@ -126,7 +130,7 @@ export default class Welcome extends Vue {
         this.devices = data.list
 
         const { device } = this.$route.params
-        if (device && !data.list.find(e => e.id === device)) {
+        if (device && !data.list.find((e: { id: string }) => e.id === device)) {
           this.$router.push('/') // current device has been removed
         }
       })
