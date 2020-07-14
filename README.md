@@ -30,6 +30,10 @@ Start development server:
 
 Default webpack url is `http://localhost:8080`
 
+## Discord Group
+
+If you have experienced anything wrong or want to suggest new features, please join my Discord channel! https://discord.gg/pwutZNx
+
 ## Roadmap
 
 https://github.com/ChiChou/Grapefruit/projects/1
