@@ -32,20 +32,6 @@ const mgr = frida.getDeviceManager()
 router
   .get('/devices', async (ctx) => {
     const devices = await mgr.enumerateDevices()
-
-    // frida bug: on Windows, if you put the computer to sleep then wake it up, 
-    // or re-plug the device, it generates duplicated devices
-    const uniq = new Set()
-    for (const dev of devices) {
-      if (uniq.has(dev.id)) {
-        ctx.status = 500
-        ctx.body = `Fatal Error: Duplicated device detected. It's a known frida bug. 
-Please restart this server (not the PC) to solve it`
-        return
-      }
-      uniq.add(dev.id)
-    }
-
     ctx.body = {
       version: require('frida/package.json').version,
       list: devices.map(wrap).map(d => d.valueOf())
