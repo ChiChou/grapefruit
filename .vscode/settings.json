@@ -9,5 +9,6 @@
   ],
   "search.exclude": {
     "gui/bulmaswatch": true
-  }
+  },
+  "javascript.implicitProjectConfig.experimentalDecorators": true
 }
