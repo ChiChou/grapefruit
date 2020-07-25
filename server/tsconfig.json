@@ -1,5 +1,7 @@
 {
     "compilerOptions": {
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
         "lib": [
             "es2017"
         ],
@@ -14,7 +16,8 @@
             "node",
             "mocha"
         ],
-        "esModuleInterop": true
+        "esModuleInterop": true,
+        "resolveJsonModule": true
     },
     "include": [
         "app.ts",

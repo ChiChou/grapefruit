@@ -1,3 +1,5 @@
+import 'reflect-metadata'
+
 import Koa from 'koa'
 import Router from 'koa-router'
 import bodyParser from 'koa-bodyparser'
@@ -11,12 +13,22 @@ import * as frida from 'frida'
 import * as serialize from './lib/serialize'
 import * as transfer from './lib/transfer'
 import Channels from './lib/channels'
+
+import { Event } from './models/Event'
+import { Tag } from './models/Tag'
+import { Snippet } from './models/Snippet'
+
+import * as pkg from './package.json'
+
+import { concat, setup as setupWorkspace } from './lib/workspace'
 import { wrap, tryGetDevice } from './lib/device'
 import { Lockdown } from './lib/lockdown'
 
 import { URL } from 'url'
 import { exec } from 'child_process'
 import { createServer } from 'http'
+import { ConnectionOptions } from 'typeorm'
+
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 Buffer.prototype.toJSON = function () {
@@ -168,9 +180,25 @@ if (process.env.NODE_ENV === 'development') {
   app.use(logger())
 }
 
-const server = createServer(app.callback())
-const channels = new Channels(server)
-channels.connect()
-server.listen(31337)
+async function main() {
+  await setupWorkspace()
 
-process.on('exit', () => channels.disconnect())
+  const dbOpt: ConnectionOptions = {
+    type: "sqlite",
+    database: concat('logs.db'),
+    entities: [ Event, Snippet, Tag ],
+    logging: true
+  }
+
+  const server = createServer(app.callback())
+  const channels = new Channels(server)
+  channels.connect()
+  server.listen(31337)
+  process.on('exit', () => channels.disconnect())
+}
+
+function usage() {
+  console.log(`Grapefruit ${pkg}`)
+}
+
+main()
