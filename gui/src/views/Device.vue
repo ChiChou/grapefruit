@@ -2,6 +2,7 @@
   <div class="device-info">
     <header class="content sticky">
       <h1 v-if="lockdown">
+        <img :src="`https://ipsw.me/assets/devices/${info.ProductType}.png`" style="height: 40px" onerror="this.parentNode.removeChild(this)">
         {{ info.DeviceName }}
         <a
           target="_blank"
@@ -68,33 +69,6 @@
         <pre v-if="error.stack">{{ error.stack }}</pre>
       </div>
 
-      <section v-if="device && lockdown" class="info-side">
-        <div class="phone-screen sticky">
-          <div class="frame">
-            <div class="toolbar">
-              <b-button
-                size="is-medium"
-                type="is-dark"
-                icon-left="arrow-left-drop-circle"
-                class="toggle"
-                :class="{ active: screen }"
-                @click="screen = !screen"
-                title="Toggle ScreenShot"
-              />
-              <b-button
-                size="is-medium"
-                type="is-dark"
-                class="reload"
-                icon-left="reload"
-                v-if="screen"
-                @click="$refs.screen.refresh()"
-                title="Reload"
-              />
-            </div>
-            <ScreenShot :device="device" v-if="screen" ref="screen" />
-          </div>
-        </div>
-      </section>
     </section>
   </div>
 </template>
@@ -106,7 +80,6 @@ import Axios from 'axios'
 
 import Icon from '../components/Icon.vue'
 import Loading from '../components/Loading.vue'
-import ScreenShot from '../components/ScreenShot.vue'
 
 interface Failure {
   title?: string;
@@ -116,8 +89,7 @@ interface Failure {
 @Component({
   components: {
     Icon,
-    Loading,
-    ScreenShot
+    Loading
   }
 })
 export default class Device extends Vue {
