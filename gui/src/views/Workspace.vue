@@ -6,15 +6,15 @@
 
       <split-pane
         :min-percent="10"
-        :default-percent="15"
+        :default-percent="sideWidth"
         split="vertical"
         class="main-pane"
-        @resize="resize"
+        @resize="sidebarResize"
       >
         <template slot="paneL">
           <div class="space space-sidebar">
             <keep-alive>
-              <router-view class="classes">Place Holder</router-view>
+              <router-view></router-view>
             </keep-alive>
           </div>
         </template>
@@ -74,6 +74,8 @@ import Frame from '../views/tabs/Frame.vue'
 import { Route } from 'vue-router'
 import { Terminal } from 'xterm'
 
+const SIDEBAR_WIDTH_KEY = 'sidebar-width'
+
 type State = 'connected' | 'connecting' | 'disconnected'
 
 // todo: utils
@@ -96,8 +98,20 @@ export default class Workspace extends Vue {
   device?: string
   bundle?: string
   layout?: GoldenLayout
+  sideWidth = 15
 
   mounted() {
+    {
+      // remember the layout
+      const width = localStorage.getItem(SIDEBAR_WIDTH_KEY)
+      if (width) {
+        const val = parseFloat(width)
+        if (!Number.isNaN(val)) {
+          this.sideWidth = val
+        }
+      }
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     document.querySelector('html')!.classList.add('no-scroll')
 
@@ -334,6 +348,11 @@ export default class Workspace extends Vue {
 
   resize() {
     this.resizeEvent()
+  }
+
+  sidebarResize(value: number) {
+    this.resize()
+    localStorage.setItem(SIDEBAR_WIDTH_KEY, value.toString())
   }
 }
 </script>
