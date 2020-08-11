@@ -6,7 +6,7 @@
     "@types/koa-bodyparser": "^4.3.0",
     "@types/koa-router": "^7.4.0",
     "@types/mocha": "^7.0.2",
-    "@types/node": "^13.13.14",
+    "@types/node": "^13.13.15",
     "@types/plist": "^3.0.2",
     "@types/socket.io": "^2.1.4",
     "@typescript-eslint/eslint-plugin": "^2.25.0",
@@ -34,6 +34,7 @@
     "@types/frida-gum": "^15.2.0",
     "bplist-creator": "0.0.8",
     "bplist-parser": "^0.2.0",
+    "commander": "^6.0.0",
     "frida": "^12.10.4",
     "koa": "^2.11.0",
     "koa-bodyparser": "^4.3.0",
@@ -43,9 +44,14 @@
     "koa-send": "^5.0.0",
     "plist": "^3.0.1",
     "reflect-metadata": "^0.1.13",
-    "socket.io": "^2.3.0"
+    "socket.io": "^2.3.0",
+    "sqlite3": "^5.0.0",
+    "typeorm": "^0.2.25"
   },
   "scripts": {
+    "migrate:gen": "npx ts-node scripts/migrate generate -n",
+    "migrate": "npx ts-node scripts/migrate ",
+    "typeorm": "npx ts-node node_modules/typeorm/cli.js",
     "test": "mocha --expose-gc -r ts-node/register tests/**/*.ts",
     "test2": "mocha --expose-gc -r ts-node/register",
     "build": "tsc",
