@@ -20,14 +20,15 @@ import { Snippet } from './models/Snippet'
 
 import * as pkg from './package.json'
 
-import { concat, setup as setupWorkspace } from './lib/workspace'
 import { wrap, tryGetDevice } from './lib/device'
 import { Lockdown } from './lib/lockdown'
 
 import { URL } from 'url'
 import { exec } from 'child_process'
 import { createServer } from 'http'
-import { ConnectionOptions } from 'typeorm'
+import { program } from 'commander'
+import { AddressInfo } from 'net'
+import { connect } from './lib/db'
 
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -88,7 +89,7 @@ router
       ctx.set('Access-Control-Expose-Headers', 'Content-Length')
       ctx.response.length = task.size
       ctx.body = task.stream
-    } catch(e) {
+    } catch (e) {
       console.error('error', e)
       ctx.throw(404)
     }
@@ -105,7 +106,7 @@ router
     try {
       const dev = await mgr.addRemoteDevice(host)
       ctx.body = { status: 'ok', id: dev.id }
-    } catch(e) {
+    } catch (e) {
       ctx.status = 400
       ctx.body = { status: 'failed', error: e.message }
     }
@@ -114,15 +115,15 @@ router
     try {
       await mgr.removeRemoteDevice(ctx.params.host)
       ctx.body = { status: 'ok' }
-    } catch(e) {
+    } catch (e) {
       ctx.status = 404
       ctx.body = { status: 'failed', error: e.message }
     }
   })
   .get('/update', async (ctx) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const task = new Promise((resolve, reject) => 
-      exec('npm view passionfruit version', (err, stdout) => 
+    const task = new Promise((resolve, reject) =>
+      exec('npm view passionfruit version', (err, stdout) =>
         err ? reject(err) : resolve(stdout.trimRight())
       )
     )
@@ -134,7 +135,7 @@ router
         current,
         latest
       }
-    } catch(err) {
+    } catch (err) {
       ctx.throw(500, `failed to check update\n${err}`)
     }
   })
@@ -144,7 +145,7 @@ app
   .use(async (ctx, next) => {
     try {
       await next()
-    } catch(e) {
+    } catch (e) {
       if (process.env.NODE_ENV === 'development') {
         ctx.status = 500
         ctx.body = e.stack
@@ -153,8 +154,6 @@ app
       }
     }
   })
-  .use(router.routes())
-  .use(router.allowedMethods())
 
 if (process.env.NODE_ENV === 'development') {
   app
@@ -173,32 +172,70 @@ if (process.env.NODE_ENV === 'development') {
     const opt = { root: path.join(__dirname, '..', 'gui', 'dist') }
     if (ctx.path.match(/^\/(css|fonts|js|img)\//))
       await send(ctx, ctx.path, opt)
-    
+
     // else await send(ctx, '/index.html', opt)
     next()
   })
   app.use(logger())
 }
 
-async function main() {
-  await setupWorkspace()
+interface AddSnippetSchema {
+  name: string;
+  tags: string[];
+  source: string;
+}
 
-  const dbOpt: ConnectionOptions = {
-    type: "sqlite",
-    database: concat('logs.db'),
-    entities: [ Event, Snippet, Tag ],
-    logging: true
-  }
+async function main(): Promise<void> {
+  const conn = await connect()
+
+  router
+    .get('/snippets', async (ctx) => {
+      const page = ctx.params.p
+      const repo = conn.getRepository(Snippet);
+      const [all, count] = await repo.findAndCount({
+        take: 100,
+        skip: page ? parseInt(page) * 100 : null
+      })
+
+      ctx.body = {
+        all,
+        count
+      }
+    })
+    .put('/snippets', async (ctx) => {
+      const { name, tags, source } = ctx.request.body as AddSnippetSchema
+      const snippet = new Snippet()
+      snippet.name = name
+      snippet.tags = tags.map(tag => {
+        const t = new Tag()
+        t.name = tag
+        return t
+      })
+      snippet.source = source
+      const repo = conn.getRepository(Snippet)
+      const saved = await repo.save(snippet)
+
+      ctx.body = { status: 'ok', id: saved.id }
+    })
+
+  app.use(router.routes())
+    .use(router.allowedMethods())
+
+  program
+    .version(pkg.version)
+    .option('-p, --port <number>', 'port of the server side', (val) => parseInt(val, 10), 31337)
+
+  program.parse(process.argv)
 
   const server = createServer(app.callback())
   const channels = new Channels(server)
   channels.connect()
-  server.listen(31337)
+  server.listen(program.port)
+  server.on('listening', () => {
+    const addr = server.address() as AddressInfo
+    console.log(`Grapefruit running on http://${addr.address}:${addr.port}`)
+  })
   process.on('exit', () => channels.disconnect())
-}
-
-function usage() {
-  console.log(`Grapefruit ${pkg}`)
 }
 
 main()

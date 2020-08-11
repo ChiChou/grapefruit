@@ -1,6 +1,6 @@
 import * as path from 'path'
 import * as os from 'os'
-import { promises as fsp, Stats } from 'fs'
+import { promises as fsp } from 'fs'
 
 
 export function home(): string {
