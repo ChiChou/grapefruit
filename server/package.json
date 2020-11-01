@@ -35,7 +35,7 @@
     "bplist-creator": "0.0.8",
     "bplist-parser": "^0.2.0",
     "commander": "^6.0.0",
-    "frida": "^12.10.4",
+    "frida": "^14.0.5",
     "koa": "^2.11.0",
     "koa-bodyparser": "^4.3.0",
     "koa-json": "^2.0.2",
@@ -46,7 +46,7 @@
     "reflect-metadata": "^0.1.13",
     "socket.io": "^2.3.0",
     "sqlite3": "^5.0.0",
-    "typeorm": "^0.2.25"
+    "typeorm": "^0.2.28"
   },
   "scripts": {
     "migrate:gen": "npx ts-node scripts/migrate generate -n",
