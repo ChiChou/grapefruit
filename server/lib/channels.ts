@@ -54,7 +54,6 @@ export default class Channels {
       }
 
       // todo: preferences
-      session.enableJit()
       const { pid } = session
 
       session.detached.connect((reason: frida.SessionDetachReason, crash) => {
