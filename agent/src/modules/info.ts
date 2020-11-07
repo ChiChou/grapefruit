@@ -23,6 +23,7 @@ export function icon(): ArrayBuffer {
   const name = files.lastObject()
   if (!name) return fail
   const img = UIImage.imageNamed_(name)
+  if (!img) return fail
   const data = UIImagePNGRepresentation(img) as NativePointer
   if (data.isNull()) return fail
   const nsdata = new ObjC.Object(data)
