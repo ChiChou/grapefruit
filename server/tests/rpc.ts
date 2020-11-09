@@ -68,10 +68,11 @@ describe('RPC', () => {
     expect(await rpc.symbol.imps('MobileSafari')).to.be.an('array')
     expect(await rpc.symbol.exps('WebKit')).to.be.an('array')
 
-    const BOOKMARKS = '/var/mobile/Library/Safari/Bookmarks.db'
-    expect(await rpc.sqlite.tables(BOOKMARKS)).to.be.an('array')
-    expect(await rpc.sqlite.query(BOOKMARKS, 'select count(*) from bookmarks')).to.be.an('array').and.have.lengthOf(1)
-    expect(await rpc.sqlite.data(BOOKMARKS, 'bookmarks')).to.be.an('object').and.have.keys(['header', 'data'])
+    // const BOOKMARKS = '/var/mobile/Library/Safari/Bookmarks.db'
+    // expect(await rpc.sqlite.tables(BOOKMARKS)).to.be.an('array')
+    // const db = await rpc.sqlite.open(BOOKMARKS);
+    // expect(await rpc.sqlite.query(db, 'select count(*) from bookmarks')).to.be.an('array').and.have.lengthOf(1)
+    // expect(await rpc.sqlite.dump(db, 'bookmarks')).to.be.an('object').and.have.keys(['header', 'data'])
 
     expect(await rpc.keychain.list()).to.be.an('array')
 
