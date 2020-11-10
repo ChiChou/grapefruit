@@ -96,7 +96,7 @@ export function inspect(clazz: string) {
 
   const protocols = JSON.parse(JSON.stringify(cls.$protocols)) as {[key: string]: ObjC.Protocol}
   for (const protocol of Object.values(protocols)) {
-    if (protocol.protocols) delete protocol.protocols
+    if (protocol.protocols) protocol.protocols = {}
   }
 
   const module = cls.$moduleName
