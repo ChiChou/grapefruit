@@ -41,11 +41,19 @@ export function readdir(path: string, max=500): File[] {
     if (isFile && filename.toString().match(/^frida-([a-zA-z0-9]+)\.dylib$/)) continue
     if (j++ > max) break
 
+    let attribute = {}
+    try {
+      attribute = attrs(absolute);
+    } catch(e) {
+      console.warn(`Eror: unable to get attribute of ${absolute}`)
+      console.warn(`Reason: ${e}`)
+    }
+
     const item: File = {
       type: isFile ? 'file' : 'directory',
       name: filename.toString(),
       path: absolute.toString(),
-      attribute: attrs(absolute) || {}
+      attribute,
     }
 
     result.push(item)
