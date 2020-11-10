@@ -46,7 +46,7 @@ const readers: Readers = {
 export default function disasm(addr: string | number, count = 100) {
   if (!new Set(['arm', 'arm64']).has(Process.arch)) throw new Error('CPU not supported')
 
-  let p = ptr(addr)
+  let p = ptr(addr).strip()
   if (p.isNull()) throw new Error(`Invalid address ${addr}`)
 
   const symbol = DebugSymbol.fromAddress(p).name
