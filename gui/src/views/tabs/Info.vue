@@ -16,7 +16,7 @@
       </div>
     </div>
 
-    <dl>
+    <dl @click.capture="onSelectText">
       <dt>Container</dt><dd>{{ info.home }}</dd>
       <dt>Temporary Directory</dt><dd>{{ info.tmp }}</dd>
       <dt>Installation</dt><dd>{{ info.bundle }}</dd>
@@ -55,6 +55,16 @@ export default class Info extends Base {
     if (!data.byteLength) return // todo: placeholder
     const blob = new Blob([data])
     this.icon = URL.createObjectURL(blob)
+  }
+
+  onSelectText(e: MouseEvent) {
+    const target = e.target as HTMLElement
+    if (target.tagName.toLowerCase() !== 'dd') return
+    const selection = getSelection()
+    const range = document.createRange()
+    range.selectNodeContents(target)
+    selection.removeAllRanges()
+    selection.addRange(range)
   }
 }
 </script>
