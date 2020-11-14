@@ -53,7 +53,7 @@ export default class Info extends Base {
     this.info = await this.$rpc.info.info()
     const data = await this.$rpc.info.icon() as ArrayBuffer
     if (!data.byteLength) return // todo: placeholder
-    const blob = new Blob([data])
+    const blob = new Blob([data], { type: 'image/png' })
     this.icon = URL.createObjectURL(blob)
   }
 
