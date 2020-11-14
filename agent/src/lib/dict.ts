@@ -8,7 +8,7 @@ export function valueOf(value: ObjC.Object): any {
   if (value.isKindOfClass_(NSArray))
     return arrayFromNSArray(value)
   if (value.isKindOfClass_(NSDictionary))
-    return dictFromNSDictionary(value)
+    return dictFromNSDict(value)
   if (value.isKindOfClass_(NSNumber))
     return parseFloat(value.toString())
   return value.toString()
@@ -16,7 +16,7 @@ export function valueOf(value: ObjC.Object): any {
 
 type Dictionary = { [key: string]: any }
 
-export function dictFromNSDictionary(nsDict: ObjC.Object): Dictionary {
+export function dictFromNSDict(nsDict: ObjC.Object): Dictionary {
   const jsDict: { [key: string]: any } = {}
   const keys = nsDict.allKeys()
   const count = keys.count()
@@ -30,7 +30,7 @@ export function dictFromNSDictionary(nsDict: ObjC.Object): Dictionary {
 }
 
 
-export function dictFromPlistCharArray(address: NativePointer, size: number): Dictionary {
+export function dictFromBytes(address: NativePointer, size: number): Dictionary {
   const { NSData, NSPropertyListSerialization } = ObjC.classes
   const format = Memory.alloc(Process.pointerSize)
   const err = Memory.alloc(Process.pointerSize).writePointer(NULL)
@@ -46,7 +46,7 @@ export function dictFromPlistCharArray(address: NativePointer, size: number): Di
   if (!desc.isNull())
     throw new Error(new ObjC.Object(desc).toString())
 
-  return dictFromNSDictionary(dict)
+  return dictFromNSDict(dict)
 }
 
 
