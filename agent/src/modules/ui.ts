@@ -4,7 +4,7 @@ import {
   UIGraphicsGetImageFromCurrentImageContext,
   UIGraphicsEndImageContext,
   UIImagePNGRepresentation
-} from '../lib/UIKit'
+} from '../api/UIKit'
 
 type Point = [number, number];
 type Size = [number, number];

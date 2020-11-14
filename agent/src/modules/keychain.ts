@@ -1,40 +1,12 @@
+import CF from '../api/CoreFoundation'
+import Security from '../api/Security'
+
+import { CFSTR } from '../lib/foundation'
 import { valueOf } from '../lib/dict'
 
 for (const mod of ['Foundation', 'CoreFoundation', 'Security']) {
   Module.ensureInitialized(mod)
 }
-
-type Schema = [NativeType, NativeType[]]
-function api<T>(library: string, schema: Record<keyof T, Schema>): Record<keyof T, NativeFunction> {
-  const result: Record<keyof T, NativeFunction> = {} as Record<keyof T, NativeFunction>
-  for (const [name, args] of Object.entries(schema)) {
-    const [retType, argTypes] = args as Schema
-    const p = Module.findExportByName(library, name)
-    if (!p) throw new Error(`unable to resolve symbol: ${library}!${name}`)
-    result[name as keyof T] = new NativeFunction(p, retType, argTypes)
-  }
-  return result
-}
-
-const CF = api(
-  'CoreFoundation',
-  {
-    CFStringGetLength: ['long', ['pointer']],
-    CFRelease: ['void', ['pointer']],
-    CFStringGetCStringPtr: ['pointer', ['pointer', 'uint32']],
-    CFGetTypeID: ['pointer', ['pointer']],
-    CFBooleanGetTypeID: ['pointer', []],
-  }
-)
-
-const Security = api(
-  'Security',
-  {
-    SecItemCopyMatching: ['pointer', ['pointer', 'pointer']],
-    SecItemDelete: ['pointer', ['pointer']],
-    SecAccessControlGetConstraints: ['pointer', ['pointer']],
-  }
-)
 
 const constants = [
   'kSecReturnAttributes',
@@ -79,12 +51,6 @@ const constants = [
   'kSecUseAuthenticationUIFail',
   'kSecUseAuthenticationUI',
 ]
-
-function CFSTR(p: NativePointer) {
-  const kCFStringEncodingUTF8 = 0x08000100
-  const str = CF.CFStringGetCStringPtr(p, kCFStringEncodingUTF8) as NativePointer
-  return str.readUtf8String(CF.CFStringGetLength(p) as number)
-}
 
 const lookup: { [val: string]: string } = {}
 const C: { [key: string]: NativePointer } = {}
