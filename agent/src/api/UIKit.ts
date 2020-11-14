@@ -1,21 +1,14 @@
-export const CGFloat = (Process.pointerSize === 4) ? 'float' : 'double'
-export const CGSize = [CGFloat, CGFloat]
+import { api } from './index'
 
 // const CGPoint = CGSize
 // const NSRect = [CGPoint, CGSize]
 
-export const UIGraphicsBeginImageContextWithOptions = new NativeFunction(
-  Module.findExportByName('UIKit', 'UIGraphicsBeginImageContextWithOptions')!,
-  'void', [CGSize, 'bool', CGFloat])
+const CGFloat = (Process.pointerSize === 4) ? 'float' : 'double'
+const CGSize = [CGFloat, CGFloat]
 
-export const UIGraphicsGetImageFromCurrentImageContext = new NativeFunction(
-  Module.findExportByName('UIKit', 'UIGraphicsGetImageFromCurrentImageContext')!,
-  'pointer', [])
-
-export const UIGraphicsEndImageContext = new NativeFunction(
-  Module.findExportByName('UIKit', 'UIGraphicsEndImageContext')!,
-  'void', [])
-
-export const UIImagePNGRepresentation = new NativeFunction(
-  Module.findExportByName('UIKit', 'UIImagePNGRepresentation')!,
-  'pointer', ['pointer'])
+export default api('UIKit', {
+  UIGraphicsBeginImageContextWithOptions: ['void', [CGSize, 'bool', CGFloat]],
+  UIGraphicsGetImageFromCurrentImageContext: ['pointer', []],
+  UIGraphicsEndImageContext: ['void', []],
+  UIImagePNGRepresentation: ['pointer', ['pointer']],
+})

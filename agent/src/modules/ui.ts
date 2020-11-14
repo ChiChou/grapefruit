@@ -1,10 +1,6 @@
 import { performOnMainThread } from '../lib/dispatch'
-import {
-  UIGraphicsBeginImageContextWithOptions,
-  UIGraphicsGetImageFromCurrentImageContext,
-  UIGraphicsEndImageContext,
-  UIImagePNGRepresentation
-} from '../api/UIKit'
+
+import UIKit from '../api/UIKit'
 
 type Point = [number, number];
 type Size = [number, number];
@@ -50,10 +46,10 @@ export function dump(includingPreview: false): Promise<Node | null> {
       // preview
       const bounds = view.bounds()
       const size = bounds[1]
-      UIGraphicsBeginImageContextWithOptions(size, 0, 0)
-      const image = UIGraphicsGetImageFromCurrentImageContext();
-      UIGraphicsEndImageContext()
-      const png = UIImagePNGRepresentation(image) as NativePointer
+      UIKit.UIGraphicsBeginImageContextWithOptions(size, 0, 0)
+      const image = UIKit.UIGraphicsGetImageFromCurrentImageContext();
+      UIKit.UIGraphicsEndImageContext()
+      const png = UIKit.UIImagePNGRepresentation(image) as NativePointer
       if (!png.isNull()) {
         const data = new ObjC.Object(png)
         preview = data.base64EncodedStringWithOptions_(0).toString()
