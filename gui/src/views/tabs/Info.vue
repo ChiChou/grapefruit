@@ -61,6 +61,7 @@ export default class Info extends Base {
     const target = e.target as HTMLElement
     if (target.tagName.toLowerCase() !== 'dd') return
     const selection = getSelection()
+    if (!selection) return
     const range = document.createRange()
     range.selectNodeContents(target)
     selection.removeAllRanges()
