@@ -17,7 +17,11 @@ describe('device management', () => {
     expect(device.valueOf()).to.have.keys('name', 'id', 'icon', 'removable', 'type')
     expect(device.host).to.be.null
 
-    const session = await device.launch('com.apple.calculator')
-    await session.detach()
+    try {
+      const session = await device.launch('com.apple.calculator')
+      await session.detach()
+    } catch(_) {
+      // iPad has no calculator
+    }
   })
 })
