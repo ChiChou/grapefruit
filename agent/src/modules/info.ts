@@ -1,11 +1,10 @@
 import { valueOf } from '../lib/dict'
 import { NSTemporaryDirectory, NSHomeDirectory } from '../lib/foundation'
 
-const { NSBundle, NSUserDefaults, UIImage } = ObjC.classes
-
 type Info = { [key: string]: any }
 
 export function icon(): ArrayBuffer {
+  const { NSBundle, UIImage } = ObjC.classes
   const UIImagePNGRepresentation = new NativeFunction(
     Module.findExportByName('UIKit', 'UIImagePNGRepresentation')!,
     'pointer',
@@ -31,7 +30,7 @@ export function icon(): ArrayBuffer {
 }
 
 export function info(): Info {
-  const mainBundle = NSBundle.mainBundle()
+  const mainBundle = ObjC.classes.NSBundle.mainBundle()
   const json = valueOf(mainBundle.infoDictionary())
   const result: Info = {
     tmp: NSTemporaryDirectory(),
@@ -79,5 +78,5 @@ export function info(): Info {
 
 
 export function userDefaults() {
-  return valueOf(NSUserDefaults.alloc().init().dictionaryRepresentation())
+  return valueOf(ObjC.classes.NSUserDefaults.standardUserDefaults().dictionaryRepresentation())
 }

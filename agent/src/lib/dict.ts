@@ -1,9 +1,8 @@
 /* eslint no-use-before-define: 0 */
-const { NSArray, NSData, NSDictionary, NSNumber, NSPropertyListSerialization } = ObjC.classes
-
 const NSPropertyListImmutable = 0
 
 export function valueOf(value: ObjC.Object): any {
+  const { NSArray, NSDictionary, NSNumber } = ObjC.classes
   if (value === null || typeof value !== 'object')
     return value
   if (value.isKindOfClass_(NSArray))
@@ -32,6 +31,7 @@ export function dictFromNSDictionary(nsDict: ObjC.Object): Dictionary {
 
 
 export function dictFromPlistCharArray(address: NativePointer, size: number): Dictionary {
+  const { NSData, NSPropertyListSerialization } = ObjC.classes
   const format = Memory.alloc(Process.pointerSize)
   const err = Memory.alloc(Process.pointerSize).writePointer(NULL)
   const data = NSData.dataWithBytesNoCopy_length_freeWhenDone_(address, size, 0)

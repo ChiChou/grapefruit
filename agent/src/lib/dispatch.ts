@@ -1,6 +1,6 @@
-const { NSThread } = ObjC.classes
-
 export function performOnMainThread(action: Function): Promise<any> {
+  const { NSThread } = ObjC.classes
+
   return new Promise((resolve, reject) => {
     function performAction() {
       try {

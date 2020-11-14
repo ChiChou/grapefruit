@@ -6,8 +6,6 @@ import {
   UIImagePNGRepresentation
 } from '../lib/UIKit'
 
-const { UIWindow, UIView, UIColor } = ObjC.classes
-
 type Point = [number, number];
 type Size = [number, number];
 type Frame = [Point, Size];
@@ -27,6 +25,7 @@ interface Node {
 }
 
 export function dump(includingPreview: false): Promise<Node | null> {
+  const { UIWindow } = ObjC.classes
   const win = UIWindow.keyWindow()
   const recursive = (view: ObjC.Object): Node | null => {
     if (!view) return null
@@ -84,6 +83,7 @@ let overlay: ObjC.Object
 // NSMakePoint
 // NSMakeSize
 export function highlight(frame: Frame): void {
+  const { UIWindow, UIView, UIColor } = ObjC.classes
   if (!frame) return
 
   const win = UIWindow.keyWindow()
