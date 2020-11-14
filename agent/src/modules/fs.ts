@@ -1,4 +1,4 @@
-import { NSHomeDirectory, NSTemporaryDirectory, attrs } from '../lib/foundation'
+import { NSHomeDirectory, NSTemporaryDirectory, attrs, Attributes } from '../lib/foundation'
 import { open } from '../lib/libc'
 import { valueOf } from '../lib/dict'
 import uuid from '../lib/uuid'
@@ -41,7 +41,7 @@ export function readdir(path: string, max=500): File[] {
     if (isFile && filename.toString().match(/^frida-([a-zA-z0-9]+)\.dylib$/)) continue
     if (j++ > max) break
 
-    let attribute = {}
+    let attribute = {} as Attributes
     try {
       attribute = attrs(absolute);
     } catch(e) {
