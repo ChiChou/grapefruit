@@ -81,8 +81,8 @@ keys.forEach((key) => {
   const matches = key.match(/[A-Z]/)
   columns[key] =
     key.substr(0, 1).toUpperCase() +
-    (matches && matches.index
-      ? key.substr(1, matches.index) + ' ' + key.substr(matches.index)
+    (matches
+      ? key.substr(1, matches.index - 1) + ' ' + key.substr(matches.index)
       : key.substr(1))
 })
 
