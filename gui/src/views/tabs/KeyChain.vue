@@ -76,15 +76,10 @@ const keys = [
   'generic'
 ]
 
-const columns: { [key: string]: string } = {}
-keys.forEach((key) => {
-  const matches = key.match(/[A-Z]/)
-  columns[key] =
-    key.substr(0, 1).toUpperCase() +
-    (matches
-      ? key.substr(1, matches.index - 1) + ' ' + key.substr(matches.index)
-      : key.substr(1))
-})
+const columns: {[key: string]: string} = {}
+for (const key of keys) {
+  columns[key] = key.replace(/[A-Z]/g, m => ' ' + m).replace(/^[a-z]/, c => c.toUpperCase())
+}
 
 @Component({
   filters: {
