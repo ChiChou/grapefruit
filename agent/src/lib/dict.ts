@@ -2,9 +2,11 @@
 const NSPropertyListImmutable = 0
 
 export function valueOf(value: ObjC.Object): any {
-  const { NSArray, NSDictionary, NSNumber } = ObjC.classes
+  const { NSArray, NSDictionary, NSNumber, __NSCFBoolean } = ObjC.classes
   if (value === null || typeof value !== 'object')
     return value
+  if (value.isKindOfClass_(__NSCFBoolean))
+    return value.boolValue()
   if (value.isKindOfClass_(NSArray))
     return arrayFromNSArray(value)
   if (value.isKindOfClass_(NSDictionary))
