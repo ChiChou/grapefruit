@@ -17,7 +17,7 @@ Git clone:
 
 Install dependencies:
 
-* node.js v12.x
+* node.js v14.x
 * tmux (or Windows Terminal on Windows)
 
 Install npm packages:
