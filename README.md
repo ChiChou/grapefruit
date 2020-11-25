@@ -33,7 +33,7 @@ Default webpack url is `http://localhost:8080`
 ## FAQ
 
 [How do I decide which version of nodejs to use?](https://github.com/ChiChou/Grapefruit/wiki/How-do-I-decide-which-version-of-nodejs-to-use%3F)
-
+[Frida CRITICAL: No such interface re.frida.HostSession*](https://github.com/ChiChou/Grapefruit/wiki/Frida-CRITICAL:-No-such-interface-re.frida.HostSession*)
 ## Discord Group
 
 If you have experienced anything wrong or want to suggest new features, please join my Discord channel! https://discord.gg/pwutZNx
