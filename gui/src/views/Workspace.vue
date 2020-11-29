@@ -130,9 +130,9 @@ export default class Workspace extends Vue {
         // showMaximiseIcon: false,
         selectionEnabled: true
       },
-      // dimensions: {
-      //   headerHeight: 30
-      // },
+      dimensions: {
+        headerHeight: 42
+      },
       content: [{
         type: 'row',
         content: [{
@@ -452,4 +452,31 @@ a.dropdown-item:hover, button.dropdown-item:hover {
   background: #00000031;
   color: #FFC107;
 }
+
+.lm_tab {
+  height: 36px !important;
+  line-height: 36px;
+}
+
+.lm_header .lm_tab .lm_close_tab {
+  height: 24px;
+  top: 8px;
+  width: 24px;
+}
+
+.lm_controls {
+  top: 12px;
+}
+
+.lm_header .lm_tab .lm_title {
+  display: inline-block;
+  margin: 0 1em;
+  font-size: 14px;
+}
+
+.lm_header .lm_controls > li {
+  height: 24px;
+  width: 24px;
+}
+
 </style>
