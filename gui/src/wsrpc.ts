@@ -62,7 +62,7 @@ class Lazy {
           if (!ok) {
             reject(new Error('Request timed out'))
           }
-        }, 5000)
+        }, 10000)
       })
     })
   }
