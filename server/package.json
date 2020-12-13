@@ -44,14 +44,11 @@
     "koa-send": "^5.0.0",
     "plist": "^3.0.1",
     "reflect-metadata": "^0.1.13",
-    "socket.io": "^2.3.0",
-    "sqlite3": "^5.0.0",
-    "typeorm": "^0.2.28"
+    "socket.io": "^2.3.0"
   },
   "scripts": {
     "migrate:gen": "npx ts-node scripts/migrate generate -n",
-    "migrate": "npx ts-node scripts/migrate ",
-    "typeorm": "npx ts-node node_modules/typeorm/cli.js",
+    "migrate": "npx ts-node scripts/migrate",
     "test": "mocha --expose-gc -r ts-node/register tests/**/*.ts",
     "test2": "mocha --expose-gc -r ts-node/register",
     "build": "tsc",
