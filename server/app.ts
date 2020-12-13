@@ -7,16 +7,13 @@ import logger from 'koa-logger'
 import KoaJSON from 'koa-json'
 import send from 'koa-send'
 
+import * as fs from 'fs'
 import * as path from 'path'
 import * as frida from 'frida'
 
 import * as serialize from './lib/serialize'
 import * as transfer from './lib/transfer'
 import Channels from './lib/channels'
-
-import { Event } from './models/Event'
-import { Tag } from './models/Tag'
-import { Snippet } from './models/Snippet'
 
 import * as pkg from './package.json'
 
@@ -28,7 +25,7 @@ import { exec } from 'child_process'
 import { createServer } from 'http'
 import { program } from 'commander'
 import { AddressInfo } from 'net'
-import { connect } from './lib/db'
+import { concat } from './lib/workspace'
 
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -179,43 +176,39 @@ if (process.env.NODE_ENV === 'development') {
   app.use(logger())
 }
 
-interface AddSnippetSchema {
-  name: string;
-  tags: string[];
-  source: string;
-}
-
 async function main(): Promise<void> {
-  const conn = await connect()
-
+  const base = concat('scripts')
   router
+    .param('script', (script, ctx, next) => {
+      if (!script.match(/^\w+\.[jt]s$/)) {
+        ctx.status = 404
+        return
+      }
+      return next()
+    })
     .get('/snippets', async (ctx) => {
-      const page = ctx.params.p
-      const repo = conn.getRepository(Snippet);
-      const [all, count] = await repo.findAndCount({
-        take: 100,
-        skip: page ? parseInt(page) * 100 : null
-      })
-
-      ctx.body = {
-        all,
-        count
+      try {
+        ctx.body = await fs.promises.readdir(base)
+      } catch (e) {
+        ctx.status = 404
+        ctx.body = 'user scripts not found'
       }
     })
-    .put('/snippets', async (ctx) => {
-      const { name, tags, source } = ctx.request.body as AddSnippetSchema
-      const snippet = new Snippet()
-      snippet.name = name
-      snippet.tags = tags.map(tag => {
-        const t = new Tag()
-        t.name = tag
-        return t
-      })
-      snippet.source = source
-      const repo = conn.getRepository(Snippet)
-      const saved = await repo.save(snippet)
-
-      ctx.body = { status: 'ok', id: saved.id }
+    .delete('/snippet/:script', async (ctx) => {
+      const abs = path.join(base, ctx.params.script)
+      try {
+        await fs.promises.access(abs, fs.constants.F_OK)
+        await fs.promises.unlink(abs)
+      } catch(e) {
+        ctx.status = 404
+        return
+      }
+      ctx.body = 'ok'
+    })
+    .put('/snippet/:script', async (ctx) => {
+      const abs = path.join(base, ctx.params.script)
+      ctx.req.pipe(fs.createWriteStream(abs))
+      ctx.body = 'ok'
     })
 
   app.use(router.routes())
