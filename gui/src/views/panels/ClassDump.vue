@@ -2,77 +2,49 @@
   <aside class="side-panel">
     <header>
       <b-progress class="thin" :class="{ show: loading }"></b-progress>
-      <input v-model="keyword" placeholder="Search..." class="search" :disabled="loading">
+      <input v-model="keyword" ref="keyword" placeholder="Search..." class="search" tabindex="-1">
       <b-tabs v-model="index" expanded class="header-only">
         <b-tab-item label="Main" icon="folder-home-outline" :disabled="loading" />
         <b-tab-item label="App" icon="folder-cog-outline" :disabled="loading" />
-        <b-tab-item label="Global (Slow)" icon="folder-cog-outline" :disabled="loading" />
+        <b-tab-item label="Global" icon="folder-cog-outline" :disabled="loading" />
       </b-tabs>
     </header>
     <main class="scroll">
-      <ul class="hierarchy-tree-root" :class="{ loading }">
-        <class-node :node="tree" :filter="filter" />
+      <ul class="classes" :class="{ loading }">
+        <RecycleScroller
+          class="scroller"
+          page-mode
+          :items="list"
+          :item-size="32"
+          key-field="id"
+          v-slot="{ item }"
+        >
+          <li class="node" @click="$bus.$emit('openTab', 'ClassInfo', 'Class: ' + item.name, { name: item.name })">
+            <b-icon icon="file-cog-outline"></b-icon>&nbsp;{{ item.name }}
+          </li>
+        </RecycleScroller>
       </ul>
     </main>
   </aside>
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch, Prop } from 'vue-property-decorator'
-import { CreateElement, VNode } from 'vue'
+import debounce from 'lodash.debounce'
+
+import { Component, Vue, Watch } from 'vue-property-decorator'
 import bus from '../../bus'
 
 type scope = '__app__' | '__main__' | '__global__'
-
-function * visit(h: CreateElement, node: object, depth: number, filter?: RegExp): IterableIterator<string | VNode> {
-  for (const [name, child] of Object.entries(node)) {
-    let match = typeof filter === 'undefined'
-    if (!match && filter) {
-      match = Boolean(name.match(filter))
-    }
-
-    if (match) {
-      yield h('span', {
-        style: {
-          marginLeft: depth + 'em'
-        },
-        on: {
-          click: () => bus.bus.$emit('openTab', 'ClassInfo', 'Class: ' + name, { name })
-        }
-      }, name)
-    }
-
-    const vnode = h('class-node', { props: { depth: depth + 1, filter, node: child } })
-    requestAnimationFrame(() => {
-      const v = vnode.componentInstance
-      if (v) v.$data.lazy = child
-    })
-    yield vnode
-  }
-}
-
-@Component
-class ClassNode extends Vue {
-  lazy: object = {}
-
-  @Prop({ required: true })
-  node!: object
-
-  @Prop({ default: 0 })
-  depth!: number
-
-  @Prop()
-  filter?: RegExp
-
-  render(h: CreateElement) {
-    const children = [...visit(h, this.depth > 0 ? this.lazy : this.node, this.depth, this.filter)]
-    return h('li', { attrs: { class: 'node' } }, children)
-  }
+type Item = {
+  id: number;
+  name: string;
 }
 
 @Component({
-  components: {
-    ClassNode
+  watch: {
+    keyword: debounce(function(this: Runtime, newVal: string) {
+      this.refresh(this.scope, newVal)
+    }, 500)
   }
 })
 export default class Runtime extends Vue {
@@ -81,6 +53,7 @@ export default class Runtime extends Vue {
   tree: object = {}
   loading = false
 
+  list: Item[] = []
   index = 1 // default: __app__
 
   get filter(): RegExp | undefined {
@@ -97,22 +70,26 @@ export default class Runtime extends Vue {
 
   @Watch('scope')
   scopeChanged(val: string) {
-    this.refresh(val)
+    this.refresh(val, this.keyword)
   }
 
-  refresh(scope: string) {
+  refresh(scope: string, keyword?: string) {
     this.loading = true
-    this.$rpc.classdump.hierarchy(scope).then((tree: object) => {
-      this.tree = tree
-    }).finally(() => {
-      this.loading = false
-    })
+    this.$rpc.classdump
+      .search(scope, keyword)
+      .then((list: string[]) => {
+        this.list = list.map((name, id) => ({ id, name }))
+      })
+      .finally(() => {
+        (this.$refs.keyword as HTMLInputElement).focus()
+        this.loading = false
+      })
   }
 }
 </script>
 
 <style lang="scss">
-ul.hierarchy-tree-root {
+ul.classes {
   padding: 10px;
   color: #aaa;
 
@@ -120,24 +97,15 @@ ul.hierarchy-tree-root {
     display: none;
   }
 
-  .node {
-    display: block;
+  & li {
+    cursor: pointer;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: .2s ease-in color;
 
-    > span {
-      &::before {
-        font: normal normal normal 18px/1 "Material Design Icons";
-        content: "\F0770";
-        margin-right: 4px;
-        color: #616161;
-      }
-
-      font-weight: 100;
-      cursor: pointer;
-      color: #ddd;
-      transition: 0.2s color;
-      &:hover {
-        color: #ffeb3b;
-      }
+    &:hover {
+      color: #fff;
     }
   }
 }
@@ -156,9 +124,6 @@ ul.hierarchy-tree-root {
     display: flex;
     flex-grow: 1;
   }
-  // .control {
-  //   flex-grow: 1;
-  // }
-}
 
+}
 </style>

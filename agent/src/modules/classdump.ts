@@ -45,6 +45,13 @@ export function list(scope: Scope | string[] | string): string[] {
   return dump(scope) // a module path
 }
 
+export function search(scope: Scope | string[] | string, keyword?: string): string[] {
+  const all = list(scope)
+  if (!keyword || !keyword.length) return all
+  const query = new RegExp(keyword.split('').join('.*?'))
+  return all.filter(name => query.test(name))
+}
+
 export function hierarchy(scope: string): Tree<string> {
   const classes = list(scope)
   const tree: Tree<string> = {}
