@@ -24,6 +24,7 @@
     "vue-property-decorator": "^8.5.1",
     "vue-router": "^3.4.8",
     "vue-splitpane": "^1.0.6",
+    "vue-virtual-scroller": "^1.0.10",
     "vuex": "^3.5.1",
     "xterm": "^4.9.0",
     "xterm-addon-fit": "^0.3.0"

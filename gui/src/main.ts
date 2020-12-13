@@ -1,10 +1,14 @@
 import Vue from 'vue'
 import axios from 'axios'
 import pane from 'vue-splitpane'
+import VueVirtualScroller from 'vue-virtual-scroller'
+
 import Buefy, { SnackbarProgrammatic as Snackbar } from 'buefy'
 import 'buefy/dist/buefy.css'
 import '../bulmaswatch/darkly/bulmaswatch.scss'
 import '@mdi/font/css/materialdesignicons.css'
+
+import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 
 import 'golden-layout/src/css/goldenlayout-base.css'
 // import 'golden-layout/src/css/goldenlayout-dark-theme.css'
@@ -33,6 +37,7 @@ axios.interceptors.response.use(response => response, error => {
 Vue.config.productionTip = false
 Vue.component('split-pane', pane)
 Vue.use(Buefy)
+Vue.use(VueVirtualScroller)
 Vue.use(VueMenu)
 Vue.use(RPC, { router })
 Vue.use(Bus)
