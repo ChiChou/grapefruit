@@ -180,7 +180,7 @@ async function main(): Promise<void> {
   const base = concat('scripts')
   router
     .param('script', (script, ctx, next) => {
-      if (!script.match(/^\w+\.[jt]s$/)) {
+      if (!script.match(/^[\w-_\.]+\.[jt]s$/)) {
         ctx.status = 404
         return
       }
