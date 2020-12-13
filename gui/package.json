@@ -10,7 +10,6 @@
   "dependencies": {
     "@hscmap/vue-menu": "^2.10.0",
     "@mdi/font": "^5.8.55",
-    "@types/frida-gum": "^15.3.0",
     "ansi-colors": "^4.1.1",
     "axios": "^0.19.2",
     "buefy": "^0.8.20",

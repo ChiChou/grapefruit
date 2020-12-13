@@ -31,7 +31,7 @@
     "test": "test"
   },
   "dependencies": {
-    "@types/frida-gum": "^15.2.0",
+    "@types/frida-gum": "^16.2.0",
     "bplist-creator": "0.0.8",
     "bplist-parser": "^0.2.0",
     "commander": "^6.0.0",
