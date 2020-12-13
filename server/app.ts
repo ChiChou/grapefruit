@@ -136,6 +136,9 @@ router
       ctx.throw(500, `failed to check update\n${err}`)
     }
   })
+  .get('/types', async (ctx) => {
+    ctx.body = fs.createReadStream(path.join(__dirname, 'node_modules', '@types', 'frida-gum', 'index.d.ts'))
+  })
 
 app
   .use(bodyParser())
