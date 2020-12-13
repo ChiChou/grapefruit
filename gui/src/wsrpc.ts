@@ -114,7 +114,7 @@ class WS {
   }
 
   send(event: string, ...args: any[]): Promise<any> {
-    return new Promise((resolve) => this.socket.emit(event, args, resolve))
+    return new Promise((resolve) => this.socket.emit(event, ...args, resolve))
   }
 
   once(event: string, cb: Function) {
