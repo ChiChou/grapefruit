@@ -21,7 +21,8 @@
     },
     "include": [
         "app.ts",
-        "tests/**/*.js",
-        "lib/**/*.js"
+        "tests/**/*.ts",
+        "lib/**/*.ts",
+        "scripts/*.ts",
     ]
 }
