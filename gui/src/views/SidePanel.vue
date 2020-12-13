@@ -21,12 +21,12 @@
           <router-link to="hook">
             <b-icon size="is-medium" icon="bug-check-outline" />
           </router-link>
-        </li>
+        </li> -->
         <li>
           <router-link to="repl">
             <b-icon size="is-medium" icon="code-greater-than" />
           </router-link>
-        </li> -->
+        </li>
         <li>
           <router-link to="files">
             <b-icon size="is-medium" icon="apple-finder" />
