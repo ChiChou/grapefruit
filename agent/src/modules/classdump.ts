@@ -48,7 +48,7 @@ export function list(scope: Scope | string[] | string): string[] {
 export function search(scope: Scope | string[] | string, keyword?: string): string[] {
   const all = list(scope)
   if (!keyword || !keyword.length) return all
-  const query = new RegExp(keyword.split('').join('.*?'))
+  const query = new RegExp(keyword/*.split('').join('.*?')*/, 'i')
   return all.filter(name => query.test(name))
 }
 
