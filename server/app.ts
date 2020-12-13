@@ -210,6 +210,16 @@ async function main(): Promise<void> {
       ctx.req.pipe(fs.createWriteStream(abs))
       ctx.body = 'ok'
     })
+    .get('/snippet/:script', async (ctx) => {
+      const abs = path.join(base, ctx.params.script)
+      const mapping = {
+        ts: 'type',
+        js: 'java'
+      }
+      const lang = mapping[path.extname(ctx.params.script)]
+      ctx.set('Content-Type', `text/${lang}script`)
+      ctx.body = fs.createReadStream(abs)
+    })
 
   app.use(router.routes())
     .use(router.allowedMethods())
