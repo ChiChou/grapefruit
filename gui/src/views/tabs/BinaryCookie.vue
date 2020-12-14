@@ -114,7 +114,7 @@ export default class CookieTab extends Base {
       type: 'is-danger',
       hasIcon: true,
       onConfirm: () => {
-        this.$rpc.cookies.clear().then(this.reload())
+        this.$rpc.cookies.clear().then(this.reload)
       }
     })
   }
