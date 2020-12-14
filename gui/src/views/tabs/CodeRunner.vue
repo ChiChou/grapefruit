@@ -1,10 +1,26 @@
 <template>
   <div class="main">
     <header class="toolbar">
-      <b-button icon-left="content-save" @click="save">Save</b-button>
-      <b-button icon-left="play" @click="run">Run</b-button>
+      <b-field>
+        <p class="control">
+          <b-button icon-left="content-save" @click="save">Save</b-button>
+        </p>
+        <p class="control">
+          <b-button icon-left="play" @click="run">Run</b-button>
+        </p>
+        <p class="control">
+          <b-button icon-left="broom" @click="clear">Clear Console</b-button>
+        </p>
+      </b-field>
     </header>
     <main><div class="editor" ref="container"></div></main>
+    <footer class="output content">
+      <ol type="1" class="messages">
+        <li v-for="(log, i) in logs" :key="i">
+          <data-field class="plist dark" :depth="0" :field="{ value: log.value }" />
+        </li>
+      </ol>
+    </footer>
   </div>
 </template>
 
@@ -14,10 +30,13 @@ import * as monaco from 'monaco-editor'
 import { Component, Prop } from 'vue-property-decorator'
 import { extname, rem2px } from '../../utils'
 
+import DataField from '../../components/DataField.vue'
 import Base from './Base.vue'
 
 @Component({
-
+  components: {
+    DataField
+  }
 })
 export default class CodeRunner extends Base {
   editor?: monaco.editor.ICodeEditor
@@ -27,8 +46,9 @@ export default class CodeRunner extends Base {
 
   path = ''
 
+  logs: any[] = []
+
   get syntax(): string {
-    // todo: TypeScript
     const ext = extname(this.path)
     return ext === 'ts' ? 'typescript' : 'javascript'
   }
@@ -86,6 +106,10 @@ export default class CodeRunner extends Base {
       })
   }
 
+  clear() {
+    this.logs = []
+  }
+
   async save() {
     if (!this.editor) return
 
@@ -101,8 +125,10 @@ export default class CodeRunner extends Base {
           try {
             await Axios.put(`/snippet/${path}`, content, { headers })
             this.path = path
+            this.$buefy.snackbar.open('Saved')
           } catch (e) {
-            const reason = e.response.code === 404 ? 'Invalid filename' : 'Unknown reason'
+            const reason =
+              e.response.code === 404 ? 'Invalid filename' : 'Unknown reason'
             this.$buefy.toast.open(`Failed to save document: ${reason}`)
           }
         }
@@ -110,11 +136,12 @@ export default class CodeRunner extends Base {
       return
     }
     await Axios.put(`/snippet/${this.path}`, content, { headers })
+    this.$buefy.snackbar.open('Saved')
   }
 
   async run() {
     const result = await this.$ws.send('userscript', this.editor?.getValue())
-    console.log(result)
+    this.logs.push(result)
   }
 
   resize() {
@@ -125,7 +152,6 @@ export default class CodeRunner extends Base {
     if (this.editor) this.editor.dispose()
   }
 }
-
 </script>
 
 <style lang="scss" scoped>
@@ -143,4 +169,10 @@ main {
   height: 100%;
   width: 100%;
 }
+
+footer {
+  height: 40%;
+  overflow: auto;
+}
+
 </style>
