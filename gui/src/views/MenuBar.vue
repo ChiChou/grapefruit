@@ -11,6 +11,9 @@
           <hsc-menu-separator />
           <hsc-menu-item label="Kill" @click="kill" />
         </hsc-menu-bar-item>
+        <hsc-menu-bar-item label="Layout">
+          <hsc-menu-item label="Reset" @click="reset"/>
+        </hsc-menu-bar-item>
         <hsc-menu-bar-item label="Snippet">
           <hsc-menu-item label="New REPL" />
           <hsc-menu-separator />
@@ -103,6 +106,11 @@ export default class MenuBar extends Vue {
   kill() {
     this.$ws.send('kill')
     this.detach()
+  }
+
+  reset() {
+    localStorage.removeItem('layout-state')
+    location.reload()
   }
 
   detach() {
