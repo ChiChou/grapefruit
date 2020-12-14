@@ -14,7 +14,7 @@
         <hsc-menu-bar-item label="Layout">
           <hsc-menu-item label="Reset" @click="reset"/>
         </hsc-menu-bar-item>
-        <hsc-menu-bar-item label="Snippet">
+        <!-- <hsc-menu-bar-item label="Snippet">
           <hsc-menu-item label="New REPL" />
           <hsc-menu-separator />
           <hsc-menu-item label="Open Snippet" />
@@ -26,7 +26,7 @@
         <hsc-menu-bar-item label="Log">
           <hsc-menu-item label="Export" />
           <hsc-menu-item label="Search" />
-        </hsc-menu-bar-item>
+        </hsc-menu-bar-item> -->
         <hsc-menu-bar-item label="Help">
           <hsc-menu-item label="About" @click="isAboutDialogActive = true" />
           <hsc-menu-separator />
