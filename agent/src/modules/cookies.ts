@@ -31,11 +31,9 @@ export function list(): Cookie[] {
 }
 
 export function write(predicate: Cookie, value: string) {
-  const storage = shared()
-  const jar = storage.cookies()
+  const storage = shared()  
   const keys = ['name', 'domain', 'path', 'portList']
-  for (let i = 0; i < jar.count(); i++) {
-    const cookie = jar.objectAtIndex_(i)
+  for (const cookie of cookies(storage)) {
     if (keys.every(key => cookie[key]() === predicate[key])) {
       cookie.setValue_(value)
       storage.setCookie_(cookie)
@@ -47,8 +45,7 @@ export function write(predicate: Cookie, value: string) {
 
 export function clear() {
   const storage = shared()
-  const jar = storage.cookies()
-  for (let i = 0; i < jar.count(); i++) {
-
+  for (const cookie of cookies(storage)) {
+    storage.deleteCookie_(cookie)
   }
 }

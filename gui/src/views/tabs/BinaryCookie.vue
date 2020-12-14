@@ -1,6 +1,11 @@
 <template>
   <div>
-    <p><b-button icon-left="reload">Reload</b-button></p>
+    <header>
+      <b-field>
+        <p class="control"><b-button icon-left="reload" type="is-success" @click="reload">Reload</b-button></p>
+        <p class="control"><b-button icon-left="delete-forever" type="is-danger" @click="clear">Clear</b-button></p>
+      </b-field>
+    </header>
     <b-table :data="cookies" narrowed :loading="loading" default-sort="name">
       <template slot-scope="props">
         <b-table-column field="name" label="Name" sortable width="120">
@@ -101,6 +106,17 @@ export default class CookieTab extends Base {
     this.$rpc.cookies.list()
       .then((data: Cookie[]) => { this.cookies = data })
       .finally(() => { this.loading = false })
+  }
+
+  clear() {
+    this.$buefy.dialog.confirm({
+      message: 'Clear all cookies?',
+      type: 'is-danger',
+      hasIcon: true,
+      onConfirm: () => {
+        this.$rpc.cookies.clear().then(this.reload())
+      }
+    })
   }
 }
 </script>
