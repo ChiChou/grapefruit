@@ -32,7 +32,6 @@
 import debounce from 'lodash.debounce'
 
 import { Component, Vue, Watch } from 'vue-property-decorator'
-import bus from '../../bus'
 
 type scope = '__app__' | '__main__' | '__global__'
 type Item = {
