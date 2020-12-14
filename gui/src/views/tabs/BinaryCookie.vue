@@ -19,12 +19,28 @@
           <b-icon v-if="props.row.HTTPOnly" icon="check" type="is-success" />
         </b-table-column>
         <b-table-column field="value" label="Value" sortable width="240">
-          <span class="break-all">{{ props.row.value }}</span>
+          <div
+            class="break-all value"
+            contenteditable="true"
+            tabindex="-1"
+            @blur="dismiss(props.row, $event)"
+            @focus="select"
+            @keydown.esc="dismiss(props.row, $event)"
+            @keydown.enter="submit(props.row, $event)"
+            >{{ props.row.value }}</div>
+        </b-table-column>
+        <b-table-column field="SessionOnly" label="SessionOnly" width="80">
+          <b-icon v-if="props.row.sessionOnly" icon="check" type="is-success" />
+        </b-table-column>
+        <b-table-column field="sameSitePolicy" label="SameSitePolicy" width="80">
+          <span class="break-all">{{ props.row.sameSitePolicy }}</span>
         </b-table-column>
       </template>
 
       <div slot="empty" class="has-text-centered">
-        <p v-show="!loading"><b-icon icon="info"></b-icon> <span>No binary cookie found</span></p>
+        <p v-show="!loading">
+          <b-icon icon="info"></b-icon> <span>No binary cookie found</span>
+        </p>
       </div>
     </b-table>
   </div>
@@ -39,7 +55,10 @@ interface Cookie {
   value: string;
   domain: string;
   path: string;
-  isSecured: boolean;
+  secure: boolean;
+  HTTPOnly: boolean;
+  sessionOnly: boolean;
+  sameSitePolicy: string;
 }
 
 @Component
@@ -48,6 +67,33 @@ export default class CookieTab extends Base {
 
   mounted() {
     this.reload()
+  }
+
+  select() {
+    requestAnimationFrame(() => document.execCommand('selectAll', false))
+  }
+
+  deselect() {
+    const sel = window.getSelection()
+    if (sel) sel.removeAllRanges()
+  }
+
+  dismiss(row: Cookie, event: Event) {
+    const el = event.target as HTMLDivElement
+    el.textContent = row.value
+    el.blur()
+    this.deselect()
+  }
+
+  submit(row: Cookie, event: Event) {
+    const el = event.target as HTMLDivElement
+    const value = el.textContent!
+    this.loading = true
+    row.value = value
+    this.$rpc.cookies.write(row, value)
+      .finally(() => { this.loading = false })
+    el.blur()
+    this.deselect()
   }
 
   reload() {
@@ -59,8 +105,14 @@ export default class CookieTab extends Base {
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .b-table {
   width: 100%;
+}
+
+.value {
+  overflow-wrap: break-word;
+  display: block;
+  max-width: 600px;
 }
 </style>
