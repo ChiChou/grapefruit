@@ -23,7 +23,9 @@ rpc.exports.eval = function (js) {
 
   try {
     const result = (1, eval)(js);
-    if (result instanceof ArrayBuffer) {
+    if (result instanceof ObjC.Object) {
+      return ['string', result.toString()];
+    } else if (result instanceof ArrayBuffer) {
       return result;
     } else {
       var type = (result === null) ? 'null' : typeof result;
