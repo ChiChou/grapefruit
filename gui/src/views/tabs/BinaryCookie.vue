@@ -12,7 +12,7 @@
           <span class="break-all">{{ props.row.path }}</span>
         </b-table-column>
         <b-table-column field="secure" label="Secure" width="80">
-          <b-icon v-if="props.row.isSecured" icon="check" type="is-success" />
+          <b-icon v-if="props.row.isSecure" icon="check" type="is-success" />
         </b-table-column>
         <b-table-column field="value" label="Value" sortable width="240">
           <span class="break-all">{{ props.row.value }}</span>
