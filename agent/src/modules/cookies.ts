@@ -10,8 +10,9 @@ export function list(): Cookie[] {
     const entry: Cookie = {}
     for (const prop of PROPERTIES) {
       entry[prop] = cookie[prop]().toString()
-      entry.isSecure = cookie.isSecure()
     }
+    entry.HTTPOnly = cookie.isHTTPOnly()
+    entry.secure = cookie.isSecure()
     result[i] = entry
   }
 

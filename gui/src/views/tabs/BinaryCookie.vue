@@ -1,5 +1,6 @@
 <template>
   <div>
+    <p><b-button icon-left="reload">Reload</b-button></p>
     <b-table :data="cookies" narrowed :loading="loading" default-sort="name">
       <template slot-scope="props">
         <b-table-column field="name" label="Name" sortable width="120">
@@ -12,7 +13,10 @@
           <span class="break-all">{{ props.row.path }}</span>
         </b-table-column>
         <b-table-column field="secure" label="Secure" width="80">
-          <b-icon v-if="props.row.isSecure" icon="check" type="is-success" />
+          <b-icon v-if="props.row.secure" icon="check" type="is-success" />
+        </b-table-column>
+        <b-table-column field="HTTPOnly" label="HTTPOnly" width="80">
+          <b-icon v-if="props.row.HTTPOnly" icon="check" type="is-success" />
         </b-table-column>
         <b-table-column field="value" label="Value" sortable width="240">
           <span class="break-all">{{ props.row.value }}</span>
@@ -43,6 +47,10 @@ export default class CookieTab extends Base {
   cookies: Cookie[] = []
 
   mounted() {
+    this.reload()
+  }
+
+  reload() {
     this.loading = true
     this.$rpc.cookies.list()
       .then((data: Cookie[]) => { this.cookies = data })
