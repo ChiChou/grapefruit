@@ -46,7 +46,7 @@ export default class CodeRunner extends Base {
 
   path = ''
 
-  logs: any[] = []
+  logs: object[] = []
 
   get syntax(): string {
     const ext = extname(this.path)
