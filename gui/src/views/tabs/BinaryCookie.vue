@@ -40,6 +40,9 @@
         <b-table-column field="sameSitePolicy" label="SameSitePolicy" width="80">
           <span class="break-all">{{ props.row.sameSitePolicy }}</span>
         </b-table-column>
+        <b-table-column field="icon" label="" width="16">
+          <b-button type="is-danger" icon-right="delete" @click="remove(props.row)" size="is-small" />
+        </b-table-column>
       </template>
 
       <div slot="empty" class="has-text-centered">
@@ -81,6 +84,20 @@ export default class CookieTab extends Base {
   deselect() {
     const sel = window.getSelection()
     if (sel) sel.removeAllRanges()
+  }
+
+  remove(row: Cookie) {
+    this.$buefy.dialog.confirm({
+      message: 'Delete this cookie?',
+      type: 'is-danger',
+      hasIcon: true,
+      onConfirm: () => {
+        this.loading = true
+        this.$rpc.cookies.remove(row)
+          .then(() => this.reload())
+          .finally(() => { this.loading = false })
+      }
+    })
   }
 
   dismiss(row: Cookie, event: Event) {

@@ -30,17 +30,36 @@ export function list(): Cookie[] {
   return result
 }
 
-export function write(predicate: Cookie, value: string) {
-  const storage = shared()  
+function match(predicate: Cookie): ObjC.Object | undefined {
   const keys = ['name', 'domain', 'path', 'portList']
-  for (const cookie of cookies(storage)) {
-    if (keys.every(key => cookie[key]() === predicate[key])) {
-      cookie.setValue_(value)
-      storage.setCookie_(cookie)
-      return true
+  for (const cookie of cookies(shared())) {
+    if (keys.every(key => cookie[key]() + '' === predicate[key])) {
+      return cookie
     }
   }
-  return false  // not found
+}
+
+export function write(predicate: Cookie, value: string) {
+  const cookie = match(predicate)
+  const storage = shared()
+  if (cookie) {
+    const mutable = cookie.properties().mutableCopy()
+    mutable.setObject_forKey_(value, 'Value')
+    const newCookie = ObjC.classes.NSHTTPCookie.cookieWithProperties_(mutable)
+    storage['setCo' + 'okie_'](newCookie)
+    return true
+  }
+  return false
+}
+
+export function remove(predicate: Cookie) {
+  const cookie = match(predicate)
+  console.log('found', cookie)
+  if (cookie) {
+    shared().deleteCookie_(cookie)
+    return true
+  }
+  return false
 }
 
 export function clear() {
