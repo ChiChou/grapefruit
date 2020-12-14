@@ -35,7 +35,7 @@ export default class REPL extends Vue {
   }
 
   create() {
-    // todo:
+    this.$bus.$emit('openTab', 'CodeRunner', 'CodeRunner - new *')
   }
 
   open(file: string) {

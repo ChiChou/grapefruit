@@ -1,7 +1,7 @@
 <template>
   <div class="main">
     <header class="toolbar">
-      <b-button icon-left="content-save">Save</b-button>
+      <b-button icon-left="content-save" @click="save">Save</b-button>
       <b-button icon-left="play" @click="run">Run</b-button>
     </header>
     <main><div class="editor" ref="container"></div></main>
@@ -25,9 +25,11 @@ export default class CodeRunner extends Base {
   @Prop({ default: '' })
   file!: string
 
+  path = ''
+
   get syntax(): string {
     // todo: TypeScript
-    const ext = extname(this.file)
+    const ext = extname(this.path)
     return ext === 'ts' ? 'typescript' : 'javascript'
   }
 
@@ -40,7 +42,7 @@ export default class CodeRunner extends Base {
     }
 
     const editor = monaco.editor.create(container, {
-      value: value || '// write your code here',
+      value,
       language: 'javascript',
       theme: 'vs-dark',
       fontSize: rem2px(1),
@@ -59,6 +61,7 @@ export default class CodeRunner extends Base {
     })
 
     editor.layout()
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () => this.save())
     return editor
   }
 
@@ -72,13 +75,41 @@ export default class CodeRunner extends Base {
       return
     }
 
-    Axios.get(`/snippet/${this.file}`)
+    this.path = this.file
+
+    Axios.get(`/snippet/${this.path}`)
       .then(async({ data }) => {
         this.editor = await this.createEditor(this.$refs.container as HTMLDivElement, data)
       })
       .finally(() => {
         this.loading = false
       })
+  }
+
+  async save() {
+    if (!this.editor) return
+
+    const content = this.editor.getValue()
+    const headers = { 'Content-Type': 'text/plain' }
+
+    if (!this.path) {
+      this.$buefy.dialog.prompt({
+        message: 'Save the script',
+        inputAttrs: { placeholder: 'snippet.js' },
+        trapFocus: true,
+        onConfirm: async(path) => {
+          try {
+            await Axios.put(`/snippet/${path}`, content, { headers })
+            this.path = path
+          } catch (e) {
+            const reason = e.response.code === 404 ? 'Invalid filename' : 'Unknown reason'
+            this.$buefy.toast.open(`Failed to save document: ${reason}`)
+          }
+        }
+      })
+      return
+    }
+    await Axios.put(`/snippet/${this.path}`, content, { headers })
   }
 
   async run() {
