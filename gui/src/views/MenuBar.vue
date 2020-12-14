@@ -31,7 +31,7 @@
           <hsc-menu-item label="About" @click="isAboutDialogActive = true" />
           <hsc-menu-separator />
           <hsc-menu-item label="GitHub Repo" @click="external('https://github.com/chichou/grapefruit')" />
-          <hsc-menu-item label="Documentation" @click="external('https://github.com/chichou/grapefruit')" />
+          <hsc-menu-item label="Support Me on Patreon" @click="external('https://www.patreon.com/codecolorist')" />
           <!-- <hsc-menu-separator />
         <hsc-menu-item label="Check NPM Updates" @click="update()" /> -->
         </hsc-menu-bar-item>
