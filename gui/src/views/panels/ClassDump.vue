@@ -33,7 +33,9 @@ import debounce from 'lodash.debounce'
 
 import { Component, Vue, Watch } from 'vue-property-decorator'
 
-type scope = '__app__' | '__main__' | '__global__'
+const ScopeValues = ['__main__', '__app__', '__global__'] as const
+
+type Scope = typeof ScopeValues[number]
 type Item = {
   id: number;
   name: string;
@@ -59,8 +61,8 @@ export default class Runtime extends Vue {
     if (this.keyword) return new RegExp(this.keyword, 'i')
   }
 
-  get scope() {
-    return ['__main__', '__app__', '__global__'][this.index]
+  get scope(): Scope {
+    return ScopeValues[this.index]
   }
 
   mounted() {
@@ -68,11 +70,11 @@ export default class Runtime extends Vue {
   }
 
   @Watch('scope')
-  scopeChanged(val: string) {
+  scopeChanged(val: Scope) {
     this.refresh(val, this.keyword)
   }
 
-  refresh(scope: string, keyword?: string) {
+  refresh(scope: Scope, keyword?: string) {
     this.loading = true
     this.$rpc.classdump
       .search(scope, keyword)
