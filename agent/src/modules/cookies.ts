@@ -46,7 +46,8 @@ export function write(predicate: Cookie, value: string) {
     const mutable = cookie.properties().mutableCopy()
     mutable.setObject_forKey_(value, 'Value')
     const newCookie = ObjC.classes.NSHTTPCookie.cookieWithProperties_(mutable)
-    storage['setCo' + 'okie_'](newCookie) /// <-- is this a censored word?
+    storage.setCookie_(newCookie)
+    // this comment makes no sense but it can bypass some QuickJS parser bug
     return true
   }
   return false
