@@ -2,7 +2,7 @@
   <aside class="side-panel">
     <header>
       <b-progress class="thin" :class="{ show: loading }"></b-progress>
-      <input v-model="keyword" ref="keyword" placeholder="Search..." class="search" tabindex="-1">
+      <input v-model="keyword" ref="keyword" placeholder="Search Class Name..." class="search" tabindex="-1">
       <b-tabs v-model="index" expanded class="header-only">
         <b-tab-item label="Main" icon="folder-home-outline" :disabled="loading" />
         <b-tab-item label="App" icon="folder-cog-outline" :disabled="loading" />
