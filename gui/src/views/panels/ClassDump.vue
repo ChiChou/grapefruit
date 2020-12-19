@@ -51,15 +51,10 @@ type Item = {
 export default class Runtime extends Vue {
   keyword = ''
 
-  tree: object = {}
   loading = false
 
   list: Item[] = []
   index = 1 // default: __app__
-
-  get filter(): RegExp | undefined {
-    if (this.keyword) return new RegExp(this.keyword, 'i')
-  }
 
   get scope(): Scope {
     return ScopeValues[this.index]
