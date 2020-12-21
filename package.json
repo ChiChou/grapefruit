@@ -5,8 +5,8 @@
   "main": "index.js",
   "dependencies": {},
   "scripts": {
-    "postinstall": "node scripts/install.js",
-    "start": "node scripts/dev.js",
+    "installdev": "node scripts/install.js",
+    "dev": "node scripts/dev.js",
     "test": "node scripts/test.js"
   },
   "repository": {

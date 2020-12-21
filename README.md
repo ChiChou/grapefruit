@@ -22,11 +22,11 @@ Install dependencies:
 
 Install npm packages:
 
-`npm install`
+`npm installdev`
 
 Start development server:
 
-`npm start`
+`npm run dev`
 
 Default webpack url is `http://localhost:8080`
 
