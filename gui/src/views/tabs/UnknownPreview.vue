@@ -71,7 +71,7 @@ export default class UnknownPreview extends Preview {
   }
 
   get rows() {
-    return Math.ceil(this.height / this.lineHeight) // NOTE: This is not the row length (it's the pixel height of each line)
+    return Math.floor(this.height / this.lineHeight) // NOTE: This is not the row length (it's the pixel height of each line)
   }
 
   get offsets() {
@@ -230,7 +230,7 @@ export default class UnknownPreview extends Preview {
   }
 
   mounted() {
-    this.lineHeight = rem2px(1.75)
+    this.lineHeight = rem2px(1.625)
     this.resize()
     this.loading = true
     this.load()
