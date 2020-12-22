@@ -1,7 +1,7 @@
 const demangle = new NativeFunction(
   Module.findExportByName('libc++abi.dylib', '__cxa_demangle')!,
   'pointer', ['pointer', 'pointer', 'pointer', 'pointer'])
- 
+
 const BUF_LEN = 256 * 1024
 const buf = Memory.alloc(BUF_LEN)
 
@@ -33,7 +33,7 @@ function uniqueAndDemangle<T>(list: T[]) {
       let demangled
       try {
         demangled = cxaDemangle(sym.name)
-      } catch(e) {
+      } catch (e) {
 
       }
       return demangled ? Object.assign(sym, { demangled }) : sym
@@ -60,4 +60,12 @@ export function imps(name?: string) {
 export function exps(name: string) {
   const mod = name || Process.enumerateModules()[0].name
   return uniqueAndDemangle<ModuleExportDetails>(find(name).enumerateExports())
+}
+
+export function resolve(type: 'objc' | 'module', query: string) {
+  const matches = new ApiResolver(type).enumerateMatches(query)  
+  return type === 'module' ? matches.map(item => {
+    const [module, symbol] = item.name.split('!', 2)
+    return Object.assign({}, item, { module, symbol })
+  }) : matches
 }

@@ -32,6 +32,11 @@
             <b-icon size="is-medium" icon="apple-finder" />
           </router-link>
         </li>
+        <li>
+          <router-link to="resolver">
+            <b-icon size="is-medium" icon="toy-brick-search-outline" />
+          </router-link>
+        </li>
       </ul>
     </nav>
   </header>

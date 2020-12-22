@@ -12,6 +12,7 @@ import General from '../views/panels/General.vue'
 import Hook from '../views/panels/Hook.vue'
 import REPL from '../views/panels/REPL.vue'
 import Modules from '../views/panels/Modules.vue'
+import ApiResolver from '../views/panels/ApiResolver.vue'
 
 Vue.use(VueRouter)
 
@@ -49,6 +50,10 @@ const routes = [
       path: 'hook',
       name: 'Hook',
       component: Hook
+    }, {
+      path: 'resolver',
+      name: 'Api Resolver',
+      component: ApiResolver
     }, {
       path: 'repl',
       name: 'REPL',

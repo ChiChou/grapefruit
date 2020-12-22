@@ -105,7 +105,6 @@ export default class Channels {
       const rpc = proxy(agent)
 
       socket.on('disconnect', async () => {
-        console.info('disconnect')
         try {
           await agent.post({ type: 'dispose' })
           await session.detach()

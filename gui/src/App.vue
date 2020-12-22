@@ -53,6 +53,10 @@ html {
     }
   }
 
+  .square > input {
+    border-radius: 0;
+  }
+
   .scroll {
     background: #242424;
     box-shadow: 0 4px 4px #00000030 inset;
