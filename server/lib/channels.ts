@@ -123,7 +123,7 @@ export default class Channels {
           const result = await rpc(method, ...args)
           ack({ status: 'ok', data: result })
         } catch(err) {
-          ack({ status: 'error', error: `${err}` })
+          ack({ status: 'error', error: `${err.message}` })
           socket.emit('log', 'error', `RPC Error: \n${err.stack}`)
           console.error('Uncaught RPC error', err.stack || err)
           console.error('method:', method, 'args:', args)
