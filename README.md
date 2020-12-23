@@ -22,7 +22,7 @@ Install dependencies:
 
 Install npm packages:
 
-`npm installdev`
+`npm run installdev`
 
 Start development server:
 
