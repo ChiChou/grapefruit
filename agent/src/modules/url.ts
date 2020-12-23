@@ -13,7 +13,9 @@ export function open(urlStr: string) {
 				const url = ObjC.classes.NSURL.URLWithString_(urlStr)
 				const opt = ObjC.classes.UISceneOpenURLOptions.new()
 				const ctx = ObjC.classes.UIOpenURLContext.new().initWithURL_options_(url, opt)
+				const imp = scene.delegate().scene_openURLContexts_.implementation
 				scene.delegate().scene_openURLContexts_(scene, ObjC.classes.NSSet.setWithObject_(ctx))
+				console.log('request sent to url handler:', delegate, 'scene:openURLContexts:', '@' + imp)
 			})
 			return
 		}
@@ -34,7 +36,7 @@ export function open(urlStr: string) {
 				const rest = [...new Array(method.length - 2)].map(e => NULL)
 				const url = ObjC.classes.NSURL.URLWithString_(urlStr)
 				delegate[sel](app, url, ...rest)
-				console.log('request set to url handler:', delegate, sel, '@' + method.implementation)
+				console.log('request sent to url handler:', delegate, sel, '@' + method.implementation)
 			})
 			return
 		}
