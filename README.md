@@ -17,7 +17,7 @@ Git clone:
 
 Install dependencies:
 
-* node.js v14.x
+* node.js v12.x (for 14.x, there is a known issue that will cause the server to unexpectly crash)
 * tmux (or Windows Terminal on Windows)
 
 Install npm packages:
