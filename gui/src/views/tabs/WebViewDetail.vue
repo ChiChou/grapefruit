@@ -18,11 +18,11 @@
 
     <h2>JavaScript</h2>
     <div class="editor" ref="container"></div>
-    <div>
-      <b-button icon-left="play" type="is-success" @click="run">Run (F3)</b-button>
+    <div class="toolbar">
+      <b-button icon-left="play" type="is-success" @click="run">Run (F4)</b-button>
     </div>
 
-    <!-- todo: results-->
+    <pre v-if="result" class="result">{{ result }}</pre>
   </div>
 </template>
 
@@ -40,7 +40,7 @@ export default class WebViewDetail extends Base {
 
   active = false
   url = 'http://'
-  outputs: string[] = []
+  result = ''
 
   @Prop({ required: true })
   handle!: string
@@ -59,7 +59,7 @@ export default class WebViewDetail extends Base {
 
     this.editor = editor
     editor.layout()
-    editor.addCommand(monaco.KeyCode.F3, () => this.run())
+    editor.addCommand(monaco.KeyCode.F4, () => this.run())
   }
 
   mounted() {
@@ -76,9 +76,17 @@ export default class WebViewDetail extends Base {
     })
   }
 
-  run() {
+  async run() {
     if (!this.editor) throw new Error('Unexpected error: editor is not ready')
-    this.$rpc.webview.run(this.handle, this.editor.getValue())
+    this.loading = true
+
+    try {
+      this.result = await this.$rpc.webview.run(this.handle, this.editor.getValue())
+    } catch (e) {
+      this.result = `${e}`
+    } finally {
+      this.loading = false
+    }
   }
 
   resize() {
@@ -101,5 +109,9 @@ export default class WebViewDetail extends Base {
 
 .editor {
   height: 320px;
+}
+
+.toolbar, .result {
+  margin-top: 10px;
 }
 </style>
