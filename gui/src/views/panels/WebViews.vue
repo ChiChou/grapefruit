@@ -8,7 +8,7 @@
       </nav>
     </header>
 
-    <aside class="menu">
+    <aside class="menu" :class="{ loading }">
       <p class="menu-label">WK</p>
       <ul class="menu-list">
         <li v-for="(title, handle) in this.WK" :key="handle">
@@ -76,6 +76,10 @@ header {
 
 .menu {
   padding: 10px;
+
+  &.loading {
+    display: none;
+  }
 }
 
 .menu-list li {
