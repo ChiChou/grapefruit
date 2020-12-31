@@ -64,7 +64,7 @@ export async function watch(handle: string) {
   return true
 }
 
-export async function exec(handle: string, js: string): Promise<string> {
+export async function run(handle: string, js: string): Promise<string> {
   const webview = await get(handle)
   return evaluate(webview, js)
 }
@@ -84,5 +84,22 @@ async function evaluate(webview: ObjC.Object, js: string): Promise<string> {
           resolve('' + result)
       }
     })))
+  })
+}
+
+export async function url(handle: string) {
+  const webview = await get(handle)
+  if (webview.isKindOfClass_(ObjC.classes.UIWebView))
+    return webview.request().mainDocumentURL() + ''
+  return webview.URL() + ''
+}
+
+export async function navigate(handle: string, url: string) {
+  const webview = await get(handle)
+  return performOnMainThread(() => {
+    // WARNING: performOnMainThread could lead to use after free
+    const u = ObjC.classes.NSURL.URLWithString_(url)
+    const req = ObjC.classes.NSURLRequest.requestWithURL_(u)
+    webview.loadRequest_(req)
   })
 }

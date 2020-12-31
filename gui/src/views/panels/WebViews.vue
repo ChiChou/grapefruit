@@ -11,13 +11,13 @@
     <aside class="menu" :class="{ loading }">
       <p class="menu-label">WK</p>
       <ul class="menu-list">
-        <li v-for="(title, handle) in this.WK" :key="handle">
+        <li v-for="(title, handle) in this.WK" :key="handle" @click="open(handle, title)">
           <b-icon icon="web-box" />{{ title }}
         </li>
       </ul>
       <p class="menu-label">UI</p>
       <ul class="menu-list">
-        <li v-for="(title, handle) in this.UI" :key="handle">
+        <li v-for="(title, handle) in this.UI" :key="handle" @click="open(handle, title)">
           <b-icon icon="web-box" />{{ title }}
         </li>
       </ul>
@@ -37,6 +37,10 @@ export default class WebViews extends Vue {
 
   mounted() {
     this.refresh()
+  }
+
+  open(handle: string, title: string) {
+    this.$bus.$emit('openTab', 'WebViewDetail', 'WebView - ' + title, { handle })
   }
 
   async refresh() {
