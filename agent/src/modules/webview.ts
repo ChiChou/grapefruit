@@ -1,16 +1,27 @@
 import { performOnMainThread } from "../lib/dispatch"
 
-export function list() {
-  const { UIWebView, WKWebView } = ObjC.classes
+const WebViewKinds = ['UI', 'WK'] as const
 
-  return {
-    ui: ObjC.chooseSync(UIWebView).map(e => e.handle),
-    wk: ObjC.chooseSync(WKWebView).map(e => e.handle)
+type Kind = typeof WebViewKinds[number]
+type WebViewsCollection = Record<Kind, { [handle: string]: string }>
+
+export async function list(): Promise<WebViewsCollection> {
+  const result: WebViewsCollection = { WK: {}, UI: {} }
+  for (const kind of WebViewKinds) {
+    const clazz = ObjC.classes[`${kind}WebView`]
+
+    for (const instance of ObjC.chooseSync(clazz)) {
+      const title = await evaluate(instance, 'document.title')
+      const handle = instance.handle.toString()
+      result[kind][handle] = title
+    }
   }
+
+  return result
 }
 
 async function get(handle: string): Promise<ObjC.Object> {
-  for (const kind of ['UI', 'WK']) {
+  for (const kind of WebViewKinds) {
     const clazz = ObjC.classes[`${kind}WebView`]
     try {
       const webview: NativePointer = await new Promise((resolve, reject) => {
@@ -53,25 +64,25 @@ export async function watch(handle: string) {
   return true
 }
 
-export async function evaluate(handle: string, js: string): Promise<string> {
+export async function exec(handle: string, js: string): Promise<string> {
   const webview = await get(handle)
+  return evaluate(webview, js)
+}
 
-  if (webview.isKindOfClass_(ObjC.classes.UIWebView)) {
+async function evaluate(webview: ObjC.Object, js: string): Promise<string> {
+  if (webview.isKindOfClass_(ObjC.classes.UIWebView))
     return performOnMainThread(() => webview.stringByEvaluatingJavaScriptFromString_(js))
-  } else if (webview.isKindOfClass_(ObjC.classes.WKWebView)) {
-    return new Promise((resolve, reject) => {
-      performOnMainThread(() => webview.evaluateJavaScript_completionHandler_(js, new ObjC.Block({
-        retType: 'void',
-        argTypes: ['object', 'object'],
-        implementation(result: ObjC.Object, error: ObjC.Object) {
-          if (error)
-            reject(new Error(`Unable to execute Javascript. ${error}`))
-          else
-            resolve('' + result)
-        }
-      })))
-    })
-  }
 
-  throw new Error(`Unsupported class type ${webview.$className} (${handle})`)
+  return new Promise((resolve, reject) => {
+    performOnMainThread(() => webview.evaluateJavaScript_completionHandler_(js, new ObjC.Block({
+      retType: 'void',
+      argTypes: ['object', 'object'],
+      implementation(result: ObjC.Object, error: ObjC.Object) {
+        if (error)
+          reject(new Error(`Unable to execute Javascript. ${error}`))
+        else
+          resolve('' + result)
+      }
+    })))
+  })
 }

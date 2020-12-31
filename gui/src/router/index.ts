@@ -13,6 +13,7 @@ import Hook from '../views/panels/Hook.vue'
 import REPL from '../views/panels/REPL.vue'
 import Modules from '../views/panels/Modules.vue'
 import ApiResolver from '../views/panels/ApiResolver.vue'
+import WebViews from '../views/panels/WebViews.vue'
 
 Vue.use(VueRouter)
 
@@ -54,6 +55,10 @@ const routes = [
       path: 'resolver',
       name: 'Api Resolver',
       component: ApiResolver
+    }, {
+      path: 'webviews',
+      name: 'WebViews',
+      component: WebViews
     }, {
       path: 'repl',
       name: 'REPL',

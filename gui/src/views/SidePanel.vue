@@ -37,6 +37,11 @@
             <b-icon size="is-medium" icon="toy-brick-search-outline" />
           </router-link>
         </li>
+        <li>
+          <router-link to="webviews">
+            <b-icon size="is-medium" icon="apple-safari" />
+          </router-link>
+        </li>
       </ul>
     </nav>
   </header>
