@@ -169,6 +169,7 @@ export default class Workspace extends Vue {
       container.getElement().append(v.$el)
       container.on('resize', () => v.$emit('resize'))
       container.on('destroy', () => v.$destroy())
+      v.$on('update:title', (newTitle: string) => container.setTitle(newTitle))
       tabsSingleton.set(component, container.parent)
     })
 
