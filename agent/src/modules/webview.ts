@@ -71,7 +71,7 @@ export async function run(handle: string, js: string): Promise<string> {
 
 async function evaluate(webview: ObjC.Object, js: string): Promise<string> {
   if (webview.isKindOfClass_(ObjC.classes.UIWebView))
-    return performOnMainThread(() => webview.stringByEvaluatingJavaScriptFromString_(js))
+    return performOnMainThread(() => webview.stringByEvaluatingJavaScriptFromString_(js) + '')
 
   return new Promise((resolve, reject) => {
     performOnMainThread(() => webview.evaluateJavaScript_completionHandler_(js, new ObjC.Block({
