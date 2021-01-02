@@ -4,10 +4,12 @@
       <b-progress class="thin" :class="{ show: loading }"></b-progress>
       <input v-model="keyword" placeholder="Search..." class="search" :disabled="loading">
       <div class="system-filter">
+        <a class="reload" @click="reload"><b-icon icon="refresh" :custom-class="loading ? 'mdi-spin' : ''"/></a>
         <b-checkbox v-model="system">Include System Libraries</b-checkbox>
       </div>
     </header>
-    <main class="scroll">
+
+    <main class="scroll" :class="{ loading }">
       <b-table :data="list" default-sort="base" focusable :selected.sync="selected">
         <template slot-scope="props">
           <b-table-column field="base" label="Base" sortable numeric>
@@ -55,6 +57,10 @@ export default class Modules extends Vue {
   }
 
   mounted() {
+    this.reload()
+  }
+
+  reload() {
     this.loading = true
     this.$rpc.symbol.modules().then((result: Module[]) => {
       this.list = this.modules = result
@@ -92,6 +98,14 @@ code {
   td[data-label=Name] {
     overflow: hidden;
   }
+}
+
+.reload {
+  margin-right: 4px;
+}
+
+main.loading {
+  display: none;
 }
 
 .system-filter {
