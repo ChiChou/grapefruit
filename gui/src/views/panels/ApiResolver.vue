@@ -3,7 +3,7 @@
     <header>
       <b-progress class="thin" :class="{ show: loading }"></b-progress>
       <b-field :type="queryState" :message="error">
-        <b-input v-model="query" placeholder="Search Class Name..." tabindex="-1" class="square"></b-input>
+        <b-input v-model="query" placeholder="Search Api" tabindex="-1" class="square"></b-input>
       </b-field>
 
       <b-tabs v-model="index" expanded class="header-only">
@@ -135,6 +135,7 @@ export default class ApiResolver extends Vue {
   .overflow {
     text-overflow: ellipsis;
     overflow: hidden;
+    white-space: nowrap;
   }
 
   .api-module-path {
