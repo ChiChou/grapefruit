@@ -79,9 +79,11 @@ export default class WebViewDetail extends Base {
   async run() {
     if (!this.editor) throw new Error('Unexpected error: editor is not ready')
     this.loading = true
+    const code = this.editor.getValue()
+    localStorage.setItem(WEBVIEW_JS, code)
 
     try {
-      this.result = await this.$rpc.webview.run(this.handle, this.editor.getValue())
+      this.result = await this.$rpc.webview.run(this.handle, code)
     } catch (e) {
       this.result = `${e}`
     } finally {
