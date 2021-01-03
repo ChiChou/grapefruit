@@ -1,4 +1,5 @@
-const name = `PassionfruitAppDelegate${Math.random().toString(36).slice(2)}`
+const salt = Math.random().toString(36).slice(2)
+const name = `GrapefruitAppDelegate${salt}`
 const MyAppDelegate = ObjC.registerProtocol({
   name: name + 'Protocol',
   methods: {
@@ -14,6 +15,7 @@ const MyAppDelegate = ObjC.registerProtocol({
 })
 
 const center = ObjC.classes.NSNotificationCenter.defaultCenter()
+
 const subject = 'lifecycle'
 const Clazz = ObjC.registerClass({
   name,
@@ -25,13 +27,8 @@ const Clazz = ObjC.registerClass({
       console.warn('App will be inactive.')
     },
     '- background': () => {
-      console.warn('App is is now on the background. Passionfruit will be inresponsible.')
+      console.warn('App is is now on the background. Grapefruit will be inresponsible.')
       send({ subject, event: 'frozen' })
-    },
-    '- release': function() {
-      // fix UAF
-      dispose()
-      this.super.release()
     }
   }
 })
@@ -51,3 +48,5 @@ export function dispose() {
   center.removeObserver_name_object_(signalHandler, 'UIApplicationDidEnterBackgroundNotification', NULL)
   signalHandler = null
 }
+
+WeakRef.bind(this, dispose)
