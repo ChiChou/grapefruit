@@ -44,7 +44,7 @@
     "koa-send": "^5.0.0",
     "plist": "^3.0.1",
     "reflect-metadata": "^0.1.13",
-    "socket.io": "^2.3.0"
+    "socket.io": "^2.4.1"
   },
   "scripts": {
     "migrate": "npx ts-node scripts/migrate",
