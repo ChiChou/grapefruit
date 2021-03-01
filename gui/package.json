@@ -50,7 +50,7 @@
     "eslint-plugin-vue": "^6.1.2",
     "golden-layout": "^1.5.9",
     "monaco-editor-webpack-plugin": "^1.9.1",
-    "node-sass": "^4.14.1",
+    "sass": "^1.32.8",
     "sass-loader": "^8.0.2",
     "typescript": "~3.7.5",
     "vue-template-compiler": "^2.6.12",
