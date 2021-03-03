@@ -112,10 +112,9 @@ export default class Channels {
         } catch (e) {
 
         }
-      }).on('kill', async (data, ack) => {
+      }).on('kill', async () => {
         session.detach().catch()
         await dev.kill(pid)
-        ack(true)
         socket.disconnect()
       }).on('rpc', async (method: string, args: any[], ack) => {
         try {
