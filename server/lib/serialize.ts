@@ -1,14 +1,7 @@
 import { Icon, Device, Application } from 'frida'
 import { DeviceType } from 'frida/dist/device'
 
-const major = (() => {
-  // a workaround for
-  // https://github.com/ChiChou/Grapefruit/issues/20
-  // https://github.com/frida/frida-node/issues/61
-
-  const [major, ] = process.versions.node.split('.')
-  return parseInt(major)
-})()
+import { buggy } from './workaround'
 
 export function icon(icon?: Icon): object {
   if (!icon) return
@@ -19,7 +12,7 @@ export function icon(icon?: Icon): object {
 export function device(dev: Device): object {
   const { name, id, type } = dev
   const removable = dev.type === DeviceType.Remote && dev.name !== 'Local Socket'
-  return { name, id, icon: major > 12 ? undefined : icon(dev.icon), type, removable }
+  return { name, id, icon: buggy ? undefined : icon(dev.icon), type, removable }
 }
 
 export function app(app: Application): object {

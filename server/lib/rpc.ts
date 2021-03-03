@@ -6,6 +6,7 @@ import fs from 'fs'
 import { promisify } from 'util'
 
 import { Session, Script } from 'frida'
+import { buggy } from './workaround'
 
 const readFile = promisify(fs.readFile)
 
@@ -36,7 +37,9 @@ class Lazy {
       [name, ...args] = argArray
     }
     this.chain = []
-    return this.script.exports.invoke(name, args)
+    return this.script.exports.invoke(name, args).then(result => 
+      (buggy && result instanceof Buffer) ? Buffer.alloc(0) : result
+    )
   }
 }
 
