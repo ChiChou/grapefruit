@@ -17,7 +17,7 @@ Git clone:
 
 Install dependencies:
 
-* node.js v12.x (for 14.x, there is a known issue that will cause the server to unexpectly crash)
+* node.js LTS (for Apple Silicon, use Node.js Current)
 * tmux (or Windows Terminal on Windows)
 
 Install npm packages:
