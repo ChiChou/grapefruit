@@ -26,4 +26,12 @@ export async function setup(): Promise<void> {
   } catch(e) {
     await fsp.mkdir(cwd, { recursive: true })
   }
+
+  const scripts = path.join(cwd, 'scripts')
+  await fsp.mkdir(scripts)
+  await fsp.writeFile(path.join(scripts, 'hello.js'), `'hello ' + Process.id`)
+}
+
+export async function cleanup(): Promise<void> {
+  return fsp.rmdir(home(), { recursive: true })
 }

@@ -47,7 +47,7 @@
     "socket.io": "^2.4.1"
   },
   "scripts": {
-    "migrate": "npx ts-node scripts/migrate",
+    "postinstall": "npx ts-node scripts/migrate",
     "test": "mocha --expose-gc -r ts-node/register tests/**/*.ts",
     "test2": "mocha --expose-gc -r ts-node/register",
     "build": "tsc",
