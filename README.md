@@ -9,7 +9,6 @@
 
 
 ## Get Started
----
  
 Grapefruit requires the following tools to build:
 
@@ -22,7 +21,6 @@ Grapefruit requires the following tools to build:
 
 
 ## Installing Grapefruit
----
 
 First, you'll want to check out this repository:
 
@@ -42,14 +40,12 @@ Default webpack url is `http://localhost:8080`
 
 
 ## Troubleshooting
----
 
 * [How do I decide which version of nodejs to use?][wiki nodejs version]
 * [Frida CRITICAL: No such interface re.frida.HostSession*][frida critical]
 
 
 ## Contact
----
 
 If you have experienced anything wrong or want to suggest new features, please join my [Discord server][discord]!
 
@@ -57,7 +53,6 @@ If you'd like to donate, please take a look at [Patreon][patreon].
 
 
 ## Roadmap
----
 
 In this repository, you can find the [product roadmap][roadmap].
 
