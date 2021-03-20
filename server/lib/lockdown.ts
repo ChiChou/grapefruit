@@ -52,9 +52,6 @@ export class Lockdown {
     if (magic !== MAGIC)
       throw new RangeError(`unexpected magic ${magic}`);
 
-    if (major !== 300)
-      throw new RangeError(`unknown lockdown protocol version ${major}`);
-
     if (minor !== 0)
       throw new RangeError(`unexpected minor version ${minor}`);
 
