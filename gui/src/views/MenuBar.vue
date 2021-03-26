@@ -1,7 +1,7 @@
 <template>
   <menu>
     <h1 @dblclick="external('https://www.youtube.com/watch?v=dQw4w9WgXcQ')">
-      <img src="../assets/logo.svg" width="100">
+      <img src="../assets/grapefruit.svg" width="20">
     </h1>
     <themed-menu class="menu">
       <hsc-menu-bar>
@@ -167,7 +167,7 @@ menu {
 h1 {
   display: block;
   float: left;
-  margin: 8px 2px 2px 16px;
+  margin: 8px 16px 2px 24px;
   font-weight: 100;
 }
 </style>
