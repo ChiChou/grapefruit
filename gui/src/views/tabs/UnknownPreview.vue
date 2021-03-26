@@ -234,9 +234,7 @@ export default class UnknownPreview extends Preview {
     this.resize()
     this.loading = true
     this.load()
-      .catch((e) => {
-        console.error(e)
-      }).finally(() => {
+      .finally(() => {
         this.loading = false
       });
 

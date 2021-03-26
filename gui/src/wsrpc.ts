@@ -135,7 +135,6 @@ function install(V: typeof Vue, opt: Options) {
     const previous = needs(from)
     const current = needs(to)
     if (!previous && current) {
-      console.debug('connect')
       const { device, bundle } = to.params
 
       if (regulation.check(bundle)) {
@@ -159,7 +158,6 @@ function install(V: typeof Vue, opt: Options) {
       if (!ctx.socket) {
         throw new Error('invalid state, expected socket !== null')
       }
-      console.debug('disconnect')
       ctx.socket.disconnect()
       V.prototype.$rpc = undefined
       V.prototype.$ws = undefined

@@ -52,8 +52,6 @@ function * scan(str: string): IterableIterator<Token> {
       type = 'num'
     } else if (token.match(/^([rx]\d+|\w+)$/)) {
       type = 'reg'
-    } else {
-      console.debug('unknown token', token)
     }
     yield {
       type,
