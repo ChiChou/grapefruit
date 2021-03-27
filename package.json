@@ -1,6 +1,6 @@
 {
   "name": "igf",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "description": "Runtime Application Instruments for iOS",
   "main": "index.js",
   "dependencies": {
@@ -34,7 +34,9 @@
     "agent/gen",
     "agent/dist.js"
   ],
-  "bin": "./bin/igf",
+  "bin": {
+    "igf": "bin/igf"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ChiChou/Grapefruit.git"
