@@ -11,6 +11,10 @@
 
 ![Screenshot](images/screenshot.png)
 
+**The npm package is about to release soon!**
+
+## For Development
+
 Git clone:
 
 `git clone --recurse-submodules https://github.com/ChiChou/Grapefruit`
@@ -22,7 +26,7 @@ Install dependencies:
 
 Install npm packages:
 
-`npm run installdev`
+`npm install`
 
 Start development server:
 
