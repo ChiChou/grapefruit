@@ -21,13 +21,13 @@ jobs:
           npm i
           npm run prepublishOnly
           npm pack
+          mv *.tgz ${{ github.ref }}.tgz
 
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
         with:
           name: dist
-          path: |
-            *.tgz
+          path: ${{ github.ref }}.tgz
 
       - name: Create Release
         id: create_release
@@ -48,7 +48,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: |
-            *.tgz
+          asset_path: ${{ github.ref }}.tgz
           asset_name: ${{ github.ref }}.tgz
           asset_content_type: application/gzip
