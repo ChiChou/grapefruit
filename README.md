@@ -13,14 +13,13 @@
 Grapefruit requires the following tools to build:
 
 1. [Node.js][node] `LTS`. For Apple Silicon, use Node.js `Current`.
-2. [Frida][frida] on computer.
-3. For jailbroken iOS [Frida iOS][frida ios].
+2. For jailbroken iOS [Frida iOS][frida ios].
 3. Tmux or Windows Terminal on Windows.
 
 ![Screenshot](images/screenshot.png)
 
 
-## Installing Grapefruit
+## Build Grapefruit
 
 First, you'll want to check out this repository:
 
@@ -61,7 +60,6 @@ In this repository, you can find the [product roadmap][roadmap].
 [patreon]: https://www.patreon.com/codecolorist
 [discord]: https://discord.gg/pwutZNx
 [roadmap]: https://github.com/ChiChou/Grapefruit/projects/1
-[frida]: https://frida.re/docs/installation/
 [frida ios]: https://frida.re/docs/ios/#with-jailbreak
 [frida critical]: https://github.com/ChiChou/Grapefruit/wiki/Frida-CRITICAL:-No-such-interface-re.frida.HostSession*
 [wiki nodejs version]: https://github.com/ChiChou/Grapefruit/wiki/How-do-I-decide-which-version-of-nodejs-to-use%3F
