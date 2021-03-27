@@ -129,7 +129,6 @@ export default class FileTree extends Vue {
 
   drop(e: DragEvent) {
     this.dropping = false
-    console.log('drop file:', e.dataTransfer)
   }
 
   open() {
@@ -187,10 +186,7 @@ export default class FileTree extends Vue {
   mv() {
     const { path, name } = this.item
     const idx = path.lastIndexOf('/')
-    if (idx === -1) {
-      console.error('Invalid path: ', path)
-      return
-    }
+    if (idx === -1) return
     const escaped = htmlescape(path)
     const basename = path.substr(0, idx + 1)
     this.$buefy.dialog.prompt({

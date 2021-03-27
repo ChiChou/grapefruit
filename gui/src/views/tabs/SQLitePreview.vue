@@ -130,7 +130,6 @@ export default class SQLitePreview extends Preview {
       this.storedSQL = sql
       this.msg = 'Table loaded'
     } catch (e) {
-      console.warn('Failed to execute SQL', e)
       this.$buefy.toast.open({
         type: 'is-danger',
         message: `Unexpected error: <br>${htmlescape(e)}`
@@ -162,7 +161,6 @@ export default class SQLitePreview extends Preview {
       this.storedSQL = sql
       this.msg = 'query successfully executed'
     } catch (e) {
-      console.warn('Failed to execute SQL', e)
       this.msg = e.toString()
       this.failed = true
       this.$buefy.toast.open({

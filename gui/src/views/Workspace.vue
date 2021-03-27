@@ -191,7 +191,6 @@ export default class Workspace extends Vue {
     try {
       layout.init()
     } catch (e) {
-      console.warn('Failed to initialize layout. Reset')
       this.log('warn', 'Failed to initialize. Reset GUI')
       localStorage.clear()
       // localStorage.removeItem('layout-state')
@@ -275,8 +274,8 @@ export default class Workspace extends Vue {
     if (selectedItem.isStack && active.isComponent) {
       try {
         active.remove()
-      } catch (e) {
-        console.error('failed to remove item', e, active)
+      } catch (_) {
+
       }
     }
   }
@@ -294,10 +293,7 @@ export default class Workspace extends Vue {
 
   log(level: string, ...args: string[]) {
     const { term } = this
-    if (!term) {
-      console.warn('terminal log', ...args)
-      return
-    }
+    if (!term) return
 
     const color: {[key: string]: StyleFunction} = {
       info: colors.greenBright,
