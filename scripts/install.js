@@ -1,8 +1,18 @@
 const cp = require('child_process')
+const fs = require('fs')
 const path = require('path')
 
-
-for (let child of ['gui', 'server', 'agent']) {
-  const cwd = path.join(__dirname, '..', child)
-  cp.execSync('npm i', { cwd, stdio: 'inherit' })
+function main() {
+  try {
+    fs.accessSync('.gitignore', fs.constants.F_OK)
+  } catch(_) {
+    return
+  }
+ 
+  for (let child of ['gui', 'server', 'agent']) {
+    const cwd = path.join(__dirname, '..', child)
+    cp.execSync('npm i', { cwd, stdio: 'inherit' })
+  }
 }
+
+main()

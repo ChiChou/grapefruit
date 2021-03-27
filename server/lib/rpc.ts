@@ -12,7 +12,8 @@ const readFile = promisify(fs.readFile)
 
 
 export async function connect(session: Session): Promise<Script> {
-  const filename = path.join(__dirname, '..', '..', 'agent', 'dist.js')
+  const filename = path.join(__dirname, '..', '..', 
+    process.env.NODE_ENV === 'development' ? '.' : '..', 'agent', 'dist.js')
   const source = await readFile(filename, 'utf8')
   const script = await session.createScript(source)
 

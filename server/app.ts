@@ -15,8 +15,6 @@ import * as serialize from './lib/serialize'
 import * as transfer from './lib/transfer'
 import Channels from './lib/channels'
 
-import * as pkg from './package.json'
-
 import { wrap, tryGetDevice } from './lib/device'
 import { Lockdown } from './lib/lockdown'
 
@@ -169,12 +167,13 @@ if (process.env.NODE_ENV === 'development') {
     }).routes())
 } else {
   app.use(async (ctx, next) => {
-    const opt = { root: path.join(__dirname, '..', 'gui', 'dist') }
-    if (ctx.path.match(/^\/(css|fonts|js|img)\//))
+    const opt = { root: path.join(__dirname, '..', '..', 'gui', 'dist') }
+    if (ctx.path.match(/^\/(css|fonts|js|img)\//)) {
       await send(ctx, ctx.path, opt)
-
-    // else await send(ctx, '/index.html', opt)
-    next()
+    } else if (!ctx.path.startsWith('/api')) {
+      await send(ctx, '/index.html', opt)
+    }
+    await next()
   })
   app.use(logger())
 }
@@ -228,7 +227,7 @@ async function main(): Promise<void> {
     .use(router.allowedMethods())
 
   program
-    .version(pkg.version)
+    .option('-h, --host <string>', 'hostname', '127.0.0.1')
     .option('-p, --port <number>', 'port of the server side', (val) => parseInt(val, 10), 31337)
 
   program.parse(process.argv)
@@ -236,7 +235,7 @@ async function main(): Promise<void> {
   const server = createServer(app.callback())
   const channels = new Channels(server)
   channels.connect()
-  server.listen(program.port)
+  server.listen(program.port, program.hostname)
   server.on('listening', () => {
     const addr = server.address() as AddressInfo
     console.log(`Grapefruit running on http://${addr.address}:${addr.port}`)

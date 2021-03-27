@@ -1,14 +1,39 @@
 {
-  "name": "grapefruit",
-  "version": "0.7.1",
+  "name": "igf",
+  "version": "0.7.2",
   "description": "Runtime Application Instruments for iOS",
   "main": "index.js",
-  "dependencies": {},
+  "dependencies": {
+    "@types/frida-gum": "^16.2.0",
+    "bplist-creator": "0.0.8",
+    "bplist-parser": "^0.2.0",
+    "commander": "^6.0.0",
+    "frida": "^14.0.5",
+    "koa": "^2.11.0",
+    "koa-bodyparser": "^4.3.0",
+    "koa-json": "^2.0.2",
+    "koa-logger": "^3.2.1",
+    "koa-router": "^8.0.8",
+    "koa-send": "^5.0.0",
+    "plist": "^3.0.1",
+    "reflect-metadata": "^0.1.13",
+    "socket.io": "^2.4.1"
+  },
   "scripts": {
-    "installdev": "node scripts/install.js",
+    "postinstall": "node scripts/install.js",
+    "prepublishOnly": "node scripts/prepublish.js",
     "dev": "node scripts/dev.js",
     "test": "node scripts/test.js"
   },
+  "files": [
+    "server/bin",
+    "server/dist",
+    "gui/dist",
+    "scripts",
+    "agent/gen",
+    "agent/dist.js"
+  ],
+  "bin": "./bin/igf",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ChiChou/Grapefruit.git"

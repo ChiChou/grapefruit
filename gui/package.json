@@ -56,6 +56,9 @@
     "vue-template-compiler": "^2.6.12",
     "vuex-module-decorators": "^0.16.1"
   },
+  "files": [
+    "dist"
+  ],
   "prettier": {
     "semi": false,
     "singleQuote": true
