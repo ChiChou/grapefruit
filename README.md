@@ -23,9 +23,9 @@ Setup frida on your iOS device: https://www.frida.re/docs/ios/
 
 ### Setup
 
-1. Get the [Latest Release](https://github.com/ChiChou/grapefruit/releases)
-2. Download the `.tgz` archive
-3. `npm install -g [downloaded tgz]`
+[Download the Latest Release](https://github.com/chichou/grapefruit/releases/latest/download/package.tgz)
+
+`npm install -g [downloaded tgz]`
 
 Now you have the grapefruit cli as `igf`:
 
