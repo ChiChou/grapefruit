@@ -227,6 +227,7 @@ async function main(): Promise<void> {
     .use(router.allowedMethods())
 
   program
+    .name('igf')
     .option('-h, --host <string>', 'hostname', '127.0.0.1')
     .option('-p, --port <number>', 'port of the server side', (val) => parseInt(val, 10), 31337)
 
@@ -235,7 +236,7 @@ async function main(): Promise<void> {
   const server = createServer(app.callback())
   const channels = new Channels(server)
   channels.connect()
-  server.listen(program.port, program.hostname)
+  server.listen(program.port, program.host)
   server.on('listening', () => {
     const addr = server.address() as AddressInfo
     console.log(`Grapefruit running on http://${addr.address}:${addr.port}`)

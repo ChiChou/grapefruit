@@ -1,4 +1,4 @@
-<img src="gui/src/assets/logo.svg" width="300" alt="Grapefruit" style="margin:auto; display: block">
+<img src="gui/src/assets/logo.svg" width="300" alt="Grapefruit" style="margin:40px auto; display: block">
 
 # Grapefruit: Runtime Application Instruments for iOS
 
@@ -7,11 +7,44 @@
 [![contributers](https://img.shields.io/github/contributors/chichou/grapefruit)](https://github.com/ChiChou/Grapefruit/graphs/contributors)
 [![License](https://img.shields.io/github/license/chichou/grapefruit)](https://github.com/ChiChou/Grapefruit/blob/master/LICENSE)
 
-## Get Started
-
 ![Screenshot](images/screenshot.png)
 
-**The npm package is about to release soon!**
+## Get Started
+
+### Dependencies
+
+Grapefruit requires [node.js](https://nodejs.org/) to be installed. If you can't install the frida-node dependency, please check out the troubleshooting section to choose another version of NodeJS.
+
+Setup frida on your iOS device: https://www.frida.re/docs/ios/
+
+> Start `Cydia` and add Frida’s repository by going to `Manage` -> `Sources` -> `Edit` -> `Add` and enter `https://build.frida.re`. You should now be able to find and install the `Frida` package which lets Frida inject JavaScript into apps running on your iOS device. This happens over USB, so you will need to have your USB cable handy, though there’s no need to plug it in just yet.
+
+**The npm package is about to release soon!** Now you can download the prebuilt package from release page.
+
+### Setup
+
+1. Get the [Latest Release](https://github.com/ChiChou/grapefruit/releases)
+2. Download the `.tgz` archive
+3. `npm install -g [downloaded tgz]`
+
+Now you have the grapefruit cli as `igf`:
+
+```
+~ igf --help
+
+Usage: igf [options]
+
+Options:
+  -h, --host <string>  hostname (default: "127.0.0.1")
+  -p, --port <number>  port of the server side (default: 31337)
+  --help               display help for command
+```
+
+Default URL for the web UI is `http://localhost:31337`
+
+*Security Warning*
+
+At this moment, grapefruit has no authentication. It's possible to use it to inject arbitrary code to your iPhone for anyone that has the access to the web UI. Please limit it to `localhost` as much as possible. Contribution welcomed.
 
 ## For Development
 
@@ -21,7 +54,6 @@ Git clone:
 
 Install dependencies:
 
-* node.js LTS (for Apple Silicon, use Node.js Current)
 * tmux (or Windows Terminal on Windows)
 
 Install npm packages:
@@ -34,7 +66,7 @@ Start development server:
 
 Default webpack url is `http://localhost:8080`
 
-## FAQ
+## Troubleshooting
 
 * [How do I decide which version of nodejs to use?](https://github.com/ChiChou/Grapefruit/wiki/How-do-I-decide-which-version-of-nodejs-to-use%3F)
 * [Frida CRITICAL: No such interface re.frida.HostSession*](https://github.com/ChiChou/Grapefruit/wiki/Frida-CRITICAL:-No-such-interface-re.frida.HostSession*)
