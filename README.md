@@ -19,11 +19,11 @@ Setup frida on your iOS device: https://www.frida.re/docs/ios/
 
 > Start `Cydia` and add Frida’s repository by going to `Manage` -> `Sources` -> `Edit` -> `Add` and enter `https://build.frida.re`. You should now be able to find and install the `Frida` package which lets Frida inject JavaScript into apps running on your iOS device. This happens over USB, so you will need to have your USB cable handy, though there’s no need to plug it in just yet.
 
-**The npm package is about to release soon!** Now you can download the prebuilt package from release page.
-
 ### Setup
 
-[Download the Latest Release](https://github.com/chichou/grapefruit/releases/latest/download/package.tgz)
+**The npm package is about to release soon!** Now you can download the prebuilt package from [release page](https://github.com/chichou/grapefruit/releases).
+
+[![Download](https://img.shields.io/badge/dynamic/json.svg?label=download&url=https://api.github.com/repos/chichou/grapefruit/releases/latest&query=$.assets[0].name&style=for-the-badge)](https://github.com/chichou/grapefruit/releases/latest/download/package.tgz)
 
 `npm install -g [downloaded tgz]`
 
