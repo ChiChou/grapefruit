@@ -21,6 +21,7 @@
   },
   "scripts": {
     "postinstall": "node scripts/install.js",
+    "postuninstall": "node server/dist/scripts/cleanup.js",
     "prepublishOnly": "node scripts/prepublish.js",
     "dev": "node scripts/dev.js",
     "test": "node scripts/test.js"

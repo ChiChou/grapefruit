@@ -6,6 +6,8 @@ function main() {
   try {
     fs.accessSync('.gitignore', fs.constants.F_OK)
   } catch(_) {
+    // production
+    cp.execSync('node server/dist/scripts/migrate.js')
     return
   }
  
