@@ -1,6 +1,6 @@
 import * as path from 'path'
 import * as os from 'os'
-import { promises as fsp } from 'fs'
+import { promises as fsp, constants } from 'fs'
 
 
 export function home(): string {
@@ -19,16 +19,19 @@ export function concat(...args: string[]): string {
   return path.join(home(), ...args)
 }
 
+async function mkdirp(dir: string): Promise<void> {
+  try {
+    await fsp.access(dir)
+  } catch(e) {
+    await fsp.mkdir(dir, { recursive: true })
+  }
+}
+
 export async function setup(): Promise<void> {
   const cwd = home()
-  try {
-    await fsp.access(cwd)
-  } catch(e) {
-    await fsp.mkdir(cwd, { recursive: true })
-  }
-
+  await mkdirp(cwd)
   const scripts = path.join(cwd, 'scripts')
-  await fsp.mkdir(scripts)
+  await mkdirp(scripts)
   await fsp.writeFile(path.join(scripts, 'hello.js'), `'hello ' + Process.id`)
 }
 
