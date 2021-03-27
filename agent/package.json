@@ -1,6 +1,5 @@
 {
   "name": "grapefruit-agent",
-  "version": "1.0.0",
   "description": "",
   "private": true,
   "main": "src/index.ts",
