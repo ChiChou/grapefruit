@@ -109,7 +109,8 @@ export default class CookieTab extends Base {
 
   submit(row: Cookie, event: Event) {
     const el = event.target as HTMLDivElement
-    const value = el.textContent!
+    const value = el.textContent
+    if (!value) return
     this.loading = true
     row.value = value
     this.$rpc.cookies.write(row, value)
