@@ -21,11 +21,9 @@ Setup frida on your iOS device: https://www.frida.re/docs/ios/
 
 ### Setup
 
-**The npm package is about to release soon!** Now you can download the prebuilt package from [release page](https://github.com/chichou/grapefruit/releases).
+Grapefruit is not on npm as [igf](https://www.npmjs.com/package/igf)! Interprets as iGrapefruit or maybe iOS Graphical Frida
 
-[![Download](https://img.shields.io/badge/dynamic/json.svg?label=download&url=https://api.github.com/repos/chichou/grapefruit/releases/latest&query=$.assets[0].name&style=for-the-badge)](https://github.com/chichou/grapefruit/releases/latest/download/package.tgz)
-
-`npm install -g [downloaded tgz]`
+`npm install -g igf`
 
 Now you have the grapefruit cli as `igf`:
 
