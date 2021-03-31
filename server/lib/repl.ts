@@ -25,7 +25,8 @@ export default class REPL extends EventEmitter {
 
   async source(): Promise<string> {
     if (this.cache) return Promise.resolve(this.cache)
-    const filename = path.join(__dirname, '..', '..', 'agent', 'eval.js')
+    const filename = path.join(__dirname, '..', '..', 
+      process.env.NODE_ENV === 'development' ? '.' : '..', 'agent', 'eval.js')
     const buf = await fs.readFile(filename)
     return buf.toString()
   }

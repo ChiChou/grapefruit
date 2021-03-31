@@ -31,8 +31,9 @@
     "server/dist",
     "gui/dist",
     "scripts",
-    "agent/gen",
-    "agent/dist.js"
+    "agent/system-wide",
+    "agent/dist.js",
+    "agent/eval.js"
   ],
   "bin": {
     "igf": "bin/igf"

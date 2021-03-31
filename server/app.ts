@@ -135,7 +135,8 @@ router
     }
   })
   .get('/types', async (ctx) => {
-    ctx.body = fs.createReadStream(path.join(__dirname, 'node_modules', '@types', 'frida-gum', 'index.d.ts'))
+    const base = require.resolve('frida/package.json')
+    ctx.body = fs.createReadStream(path.join(base, '..', '..', '@types', 'frida-gum', 'index.d.ts'))
   })
 
 app
@@ -167,13 +168,15 @@ if (process.env.NODE_ENV === 'development') {
     }).routes())
 } else {
   app.use(async (ctx, next) => {
-    const opt = { root: path.join(__dirname, '..', '..', 'gui', 'dist') }
-    if (ctx.path.match(/^\/(css|fonts|js|img)\//)) {
+    const root = path.join(__dirname, '..', '..', 'gui', 'dist')
+    const opt = { root }
+    if (ctx.path.startsWith('/api')) {
+      await next()
+    } else if (ctx.path.match(/(^\/(css|fonts|js|img)\/|\.js(.map)?$)/)) {
       await send(ctx, ctx.path, opt)
-    } else if (!ctx.path.startsWith('/api')) {
+    } else {
       await send(ctx, '/index.html', opt)
     }
-    await next()
   })
   app.use(logger())
 }
