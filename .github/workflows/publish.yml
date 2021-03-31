@@ -19,18 +19,13 @@ jobs:
         with:
           submodules: 'true'
 
-      - name: Build Package
-        run: |
-          npm i
-          npm run prepublishOnly
-          npm pack
-          mv *.tgz ${{ github.sha }}.tgz
+      - name: Install Dependency
+        run: npm ci
 
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@v2
+      - name: Publish
+        uses: JS-DevTools/npm-publish@v1
         with:
-          name: dist
-          path: ${{ github.sha }}.tgz
+          token: ${{ secrets.NPM_TOKEN }}
 
       - name: Create Release
         id: create_release
@@ -43,14 +38,3 @@ jobs:
           body: ''
           draft: false
           prerelease: false
-
-      - name: Upload Asset
-        id: upload-release-asset 
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ github.sha }}.tgz
-          asset_name: package.tgz
-          asset_content_type: application/gzip
