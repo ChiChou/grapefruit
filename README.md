@@ -21,7 +21,7 @@ Setup frida on your iOS device: https://www.frida.re/docs/ios/
 
 ### Setup
 
-Grapefruit is not on npm as [igf](https://www.npmjs.com/package/igf)! Interprets as iGrapefruit or maybe iOS Graphical Frida
+Grapefruit is now on npm as [igf](https://www.npmjs.com/package/igf)! Interprets as iGrapefruit or maybe iOS Graphical Frida
 
 `npm install -g igf`
 
