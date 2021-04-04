@@ -1,52 +1,19 @@
 <template>
   <div class="device-info">
-    <header class="content sticky">
+    <header class="content">
       <h1 v-if="lockdown">
-        <img :src="`https://ipsw.me/assets/devices/${info.ProductType}.png`" style="height: 40px" onerror="this.parentNode.removeChild(this)">
+        <img :src="`https://ipsw.me/assets/devices/${info.ProductType}.png`" onerror="this.parentNode.removeChild(this)">
         {{ info.DeviceName }}
-        <a
+        iOS {{ info.ProductVersion }} <a
           target="_blank"
           :href="`https://ipsw.me/download/${info.ProductType}/${info.BuildVersion}`"
           title="Download Firmware"
-        >iOS {{ info.ProductVersion }} ({{ info.BuildVersion }})</a>
+        >({{ info.BuildVersion }})</a>
       </h1>
       <h1 v-else>{{ device }}</h1>
-
-      <b-field grouped group-multiline v-if="lockdown">
-        <div class="control">
-          <b-taglist attached>
-            <b-tag type="is-dark">Serial:</b-tag>
-            <b-tag type="is-info">{{ info.SerialNumber }}</b-tag>
-          </b-taglist>
-        </div>
-        <div class="control">
-          <b-taglist attached>
-            <b-tag type="is-dark">Bluetooth:</b-tag>
-            <b-tag type="is-info">{{ info.BluetoothAddress }}</b-tag>
-          </b-taglist>
-        </div>
-        <div class="control">
-          <b-taglist attached>
-            <b-tag type="is-dark">WiFi:</b-tag>
-            <b-tag type="is-info">{{ info.WiFiAddress }}</b-tag>
-          </b-taglist>
-        </div>
-        <div class="control">
-          <b-taglist attached>
-            <b-tag type="is-dark">Firmware:</b-tag>
-            <b-tag type="is-info">{{ info.FirmwareVersion }}</b-tag>
-          </b-taglist>
-        </div>
-        <div class="control">
-          <b-taglist attached>
-            <b-tag type="is-dark">Baseband:</b-tag>
-            <b-tag type="is-info">{{ info.BasebandVersion }}</b-tag>
-          </b-taglist>
-        </div>
-      </b-field>
     </header>
 
-    <section class="flex-frame">
+    <section>
       <div class="apps" v-if="apps.length">
         <ul>
           <li :key="app.identifier" v-for="app in apps">
@@ -68,8 +35,17 @@
         </h1>
         <pre v-if="error.stack">{{ error.stack }}</pre>
       </div>
-
     </section>
+
+    <footer v-if="lockdown">
+      <p>
+        Serial: {{ info.SerialNumber }},
+        Bluetooth: {{ info.BluetoothAddress }},
+        Wi-Fi: {{ info.WiFiAddress }},
+        Firmware: {{ info.FirmwareVersion }},
+        Baseband: {{ info.BasebandVersion }}
+      </p>
+    </footer>
   </div>
 </template>
 
@@ -139,12 +115,6 @@ export default class Device extends Vue {
 </script>
 
 <style lang="scss" scoped>
-.sticky {
-  position: -webkit-sticky; /* Safari */
-  position: sticky;
-  top: 0;
-}
-
 .center {
   margin: auto;
   min-width: 360px;
@@ -170,20 +140,26 @@ export default class Device extends Vue {
 }
 
 header {
-  padding: 20px 40px;
-  background: #1f2424;
-  box-shadow: 0 2px 1px #0000002e;
-  border-bottom: 3px solid #0000000d;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
+  padding: 40px;
 
   h1 {
+    > img {
+      height: 32px;
+      margin-right: 0.5rem;
+    }
+
+    padding-left: 10px;
+    padding-right: 10px;
+    font-size: 2rem;
     font-weight: 100;
     top: 0;
-    margin-bottom: 0;
+    margin-bottom: 0 !important;
   }
+}
+
+footer {
+  padding: 40px 40px 20px 40px;
+  color: rgb(124, 124, 124);
 }
 
 @media (max-width: 1800px) {
@@ -199,12 +175,6 @@ header {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-}
-
-.flex-frame {
-  display: flex;
-  flex-direction: row;
-  flex: 1;
 }
 
 .info-side {
@@ -244,8 +214,15 @@ header {
 }
 
 .apps {
-  flex: 1;
-  padding: 30px;
+  padding: 0 20px;
+
+  ul {
+    display: grid;
+    grid-row-gap: 10px;
+    grid-column-gap: 10px;
+    justify-content: space-around;
+    grid-template-columns: repeat(auto-fill, 320px);
+  }
 
   ul > li {
     display: inline-block;

@@ -42,6 +42,7 @@ router
     const devices = await mgr.enumerateDevices()
     ctx.body = {
       version: require('frida/package.json').version,
+      node: process.version,
       list: devices.map(wrap).map(d => d.valueOf())
     }
   })

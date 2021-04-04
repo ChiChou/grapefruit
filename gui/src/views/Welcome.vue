@@ -6,9 +6,9 @@
           <img src="../assets/logo.svg" alt="Grapefruit" width="160" id="logo" />
         </a>
       </h1>
-      <h2 class="subtitle">Runtime app instruments for iOS</h2>
+
       <aside class="menu">
-        <p class="menu-label">Frida version: {{ version }}</p>
+        <p class="menu-label">NodeJS: {{ node }};<br>node-frida: {{ version }}</p>
 
         <hr />
 
@@ -42,6 +42,8 @@
             <b-button expanded icon-left="plus-circle-outline" @click="connect">Connect Remote ...</b-button>
           </li>
         </ul>
+
+        <hr />
 
         <p class="menu-label">Support</p>
         <ul class="menu-list">
@@ -79,6 +81,7 @@ import Loading from '../components/Loading.vue'
 })
 export default class Welcome extends Vue {
   version = 'N/A'
+  node = 'N/A'
   devices = []
   loading = false
 
@@ -127,6 +130,7 @@ export default class Welcome extends Vue {
     Axios.get('/devices')
       .then(({ data }) => {
         this.version = data.version
+        this.node = data.node
         this.devices = data.list
 
         const { device } = this.$route.params
