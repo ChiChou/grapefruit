@@ -2,7 +2,7 @@
   "name": "grapefruit-agent",
   "description": "",
   "private": true,
-  "main": "src/index.ts",
+  "main": "dist.js",
   "scripts": {
     "prepare": "npm run preprocessor && npm run cmod && npm run build",
     "build": "frida-compile src/index.ts -o dist.js",
@@ -10,6 +10,11 @@
     "cmod": "node scripts/cmodule.js",
     "preprocessor": "node scripts/preprocessor.js"
   },
+  "files": [
+    "dist.js",
+    "eval.js",
+    "system-wide"
+  ],
   "devDependencies": {
     "@types/frida-gum": "^15.3.0",
     "@types/node": "^13.7.0",
