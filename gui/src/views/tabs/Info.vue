@@ -21,7 +21,7 @@
       <dt>Temporary Directory</dt><dd>{{ info.tmp }}</dd>
       <dt>Installation</dt><dd>{{ info.bundle }}</dd>
       <dt>Executable</dt><dd>{{ info.binary }}</dd>
-      <dt>Mininal OS Requirement</dt><dd>{{ info.minOS }}</dd>
+      <dt>Minimum OS Requirement</dt><dd>{{ info.minOS }}</dd>
       <dt>Info.plist</dt>
       <dd>
         <data-field class="plist dark" :depth="0" :field="{ value: info.json }" />
