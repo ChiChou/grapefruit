@@ -1,5 +1,8 @@
-type Hook = ScriptInvocationListenerCallbacks
-type Handler = { [sel: string]: Hook }
+/*
+ * thanks to 
+ * https://github.com/FLEXTool/FLEX
+ * https://github.com/ProxymanApp/atlantis
+ */
 
 const subject = 'http'
 
@@ -11,7 +14,6 @@ const objc_getAssociatedObject = new NativeFunction(
 const objc_setAssociatedObject = new NativeFunction(
   Module.findExportByName(null, 'objc_setAssociatedObject') as NativePointer,
   'void', ['pointer', 'pointer', 'pointer', 'ulong'])
-
 
 function setid(id: ObjC.Object, task: NativePointer) {
   objc_setAssociatedObject(
@@ -41,171 +43,174 @@ function reqid(task: NativePointer) {
   return new ObjC.Object(id).toString()
 }
 
-const dataTaskHookHandler: Hook = {
-  onEnter(args) {
-    if (args[3]) {
-      this.completionHandler = new ObjC.Block(args[3])
+const avaliable = (() => {
+  let cached: number = NaN
+  return (expected: number) => {
+    if (Number.isNaN(cached))
+      cached = ObjC.classes.UIDevice.currentDevice().systemVersion().intValue()
+    return cached > expected
+  }
+})()
+
+function hook(clazz: ObjC.Object, sel: string, cb: InvocationListenerCallbacks) {
+  const method = clazz[sel]
+  if (!method) {
+    console.warn(`method ${sel} not found in class ${clazz}`)
+    return
+  }
+  const { implementation } = method as ObjC.ObjectMethod
+  return Interceptor.attach(implementation, cb)
+}
+
+function injectIntoURLSessionDelegate(clazz: ObjC.Object) {
+  const selector = avaliable(13) ? '- _didReceiveResponse:sniff:rewrite:' : '- _didReceiveResponse:sniff:'
+  hook(clazz, selector, {
+    onEnter(args) {
+      console.log('response:', new ObjC.Object(args[2]))
     }
-  },
-  onLeave(retVal) {
-    const { completionHandler } = this
-    if (completionHandler) {
-      reqid(retVal)
+  })
 
-      const task = new ObjC.Object(retVal)
-      const req = task.currentRequest()
+  hook(clazz, '- _didReceiveData:', {
+    onEnter(args) {
+      console.log('data:', new ObjC.Object(args[2]))
+    }
+  })
 
-      console.log('>', req.HTTPMethod(), req.URL())
-      const body = req.HTTPBody()
-      console.log(headers(req.allHTTPHeaderFields()))
-      if (body)
-        console.log(body)
+  hook(clazz, '- _didFinishWithError:', {
+    onEnter(args) {
+      console.log('data:', new ObjC.Object(args[2]))
+    }
+  })
+}
 
-      const originalCallback = completionHandler.implementation
-      completionHandler.implementation = (...args: any) => {
-        console.log('finish', this.method)
-        originalCallback(...args)
-      }
+function injectURLConnectionDelegate(clazz: ObjC.Object) {
+  // _swizzleConnectionDidReceiveResponse
+  hook(clazz, '- connection:didReceiveResponse:', {
+    onEnter(args) {
+      console.log('receive response', new ObjC.Object(args[3]))
+    }
+  })
+
+  hook(clazz, '- connection:didReceiveData:', {
+    onEnter(args) {
+      console.log('receive data', new ObjC.Object(args[3]))
+    }
+  })
+
+  hook(clazz, '- connection:didFailWithError:', {
+    onEnter(args) {
+      console.log('connection:didFailWithError:', new ObjC.Object(args[3]))
+    }
+  })
+}
+
+function injectAllURLSession() {
+  const clazz = ObjC.classes.__NSCFURLLocalSessionConnection || ObjC.classes.__NSCFURLSessionConnection
+  if (!clazz) throw new Error('failed to hook NSURLSession. Unsupported iOS')
+  injectIntoURLSessionDelegate(clazz)
+}
+
+function injectAllURLConnection() {
+  const r = new ApiResolver('objc')
+  for (const method of r.enumerateMatches('-[* connection:didReceiveResponse:]')) {
+    const name = method.name.slice('-['.length, method.name.indexOf(' '))
+    const clazz = ObjC.classes[name]
+
+    if ('NSURLConnectionDataDelegate' in clazz.$protocols || 'NSURLConnectionDelegate' in clazz.$protocols) {
+      injectURLConnectionDelegate(clazz)
     }
   }
 }
 
-const uploadTaskHookHandler: Hook = {
-  onEnter(args) {
-
+function injectURLSessionResume() {
+  // In iOS 7 resume lives in __NSCFLocalSessionTask
+  // In iOS 8 resume lives in NSURLSessionTask
+  // In iOS 9 resume lives in __NSCFURLSessionTask
+  // In iOS 14 resume lives in NSURLSessionTask
+  
+  let clazz: ObjC.Object
+  const info = ObjC.classes.NSProcessInfo.processInfo()
+  if (typeof info.operatingSystemVersion !== 'function') {
+    clazz = ObjC.classes.__NSCFLocalSessionTask
+  } else {
+    const major = +(info.operatingSystemVersion()[0] as string)
+    if (major < 9 || major >= 14) {
+      clazz = ObjC.classes.NSURLSessionTask
+    } else {
+      clazz = ObjC.classes.__NSCFURLSessionTask
+    }
   }
+
+  if (!clazz)
+    throw new Error('Unable to find URLSession class, your iOS may not be supported')
+
+  hook(clazz, '- resume', {
+    onEnter(args) {
+      console.log('resume', new ObjC.Object(args[0]).currentRequest())
+    }
+  })
 }
 
-const handlers: Handler = {
-  // https://github.com/Flipboard/FLEX/blob/b38cca06b/Classes/Network/PonyDebugger/FLEXNetworkObserver.m#L157
-  'connectionDidFinishLoading:': {
+function injectURLSessionUploadTasks() {
+  const clazz = ObjC.classes.NSURLSession
+  hook(clazz, '- uploadTaskWithRequest:fromFile:', {
     onEnter(args) {
 
     }
-  },
-  'connection:willSendRequest:redirectResponse:': {
+  })
+
+  hook(clazz, '- uploadTaskWithRequest:fromFile:completionHandler:', {
     onEnter(args) {
 
     }
-  },
-  'connection:didReceiveResponse:': {
+  })
+
+  hook(clazz, '- uploadTaskWithRequest:fromData:', {
     onEnter(args) {
 
     }
-  },
-  'connection:didReceiveData:': {
-    onEnter(args) {
+  })
 
-    }
-  },
-  'connection:didFailWithError:': {
-    onEnter(args) {
-
-    }
-  },
-  'URLSession:task:willPerformHTTPRedirection:newRequest:completionHandler:': {
-    onEnter(args) {
-
-    }
-  },
-  'URLSession:dataTask:didReceiveData:': {
-    onEnter(args) {
-
-    }
-  },
-  'URLSession:dataTask:didReceiveResponse:completionHandler:': {
-    onEnter(args) {
-      console.log(reqid(args[3]))
-      const response = new ObjC.Object(args[4])
-      console.log('<', response.statusCode(), response.valueForHTTPHeaderField_('Content-Length'))
-      console.log(headers(response.allHeaderFields()))
-    }
-  },
-  'URLSession:task:didCompleteWithError:': {
-    onEnter(args) {
-      console.log(reqid(args[3]))
-      const error = new ObjC.Object(args[4])
-      console.log(error)
-    }
-  },
-  'URLSession:dataTask:didBecomeDownloadTask:': {
-    onEnter(args) {
-
-    }
-  },
-  'URLSession:downloadTask:didWriteData:totalBytesWritten:totalBytesExpectedToWrite:': {
-    onEnter(args) {
-
-    }
-  },
-  'URLSession:downloadTask:didFinishDownloadingToURL:': {
-    onEnter(args) {
-
-    }
-  },
-
-  // https://github.com/Flipboard/FLEX/blob/b38cca06b/Classes/Network/PonyDebugger/FLEXNetworkObserver.m#L275
-  'af_resume': { // AFNetworking
-    onEnter(args) {
-
-    }
-  },
-
-  // https://github.com/Flipboard/FLEX/blob/b38cca06b/Classes/Network/PonyDebugger/FLEXNetworkObserver.m#L500
-  'dataTaskWithRequest:completionHandler:': dataTaskHookHandler,
-  'dataTaskWithURL:completionHandler:': dataTaskHookHandler,
-  'downloadTaskWithRequest:completionHandler:': dataTaskHookHandler,
-  'downloadTaskWithResumeData:completionHandler:': dataTaskHookHandler,
-  'downloadTaskWithURL:completionHandler:': dataTaskHookHandler,
-
-  // https://github.com/Flipboard/FLEX/blob/b38cca06b/Classes/Network/PonyDebugger/FLEXNetworkObserver.m#L568
-  'uploadTaskWithRequest:fromData:completionHandler:': uploadTaskHookHandler,
-  'uploadTaskWithRequest:fromFile:completionHandler:': uploadTaskHookHandler
-}
-
-const mapping: { [key: string]: ObjC.Object } = {}
-
-export function init() {
-  const resolver = new ApiResolver('objc')
-  for (const [sel, handler] of Object.entries(handlers)) {
-    for (const match of resolver.enumerateMatches(`-[* ${sel}]`)) {
-      // console.log(subject, match.name)
-      // const clazz = match.name.substr(2, match.name.indexOf(' ') - 2)
-      // for (const protocol of Object.keys(ObjC.classes[clazz].$protocols)) {
-      //   protocols.add(protocol)
-      // }
-      Interceptor.attach(match.address, {
-        onEnter(args: InvocationArguments) {
-          this.method = match.name
-          console.log(match.name)
-          if (handler.onEnter) handler.onEnter.call(this, args)
-        },
-        onLeave(retval: InvocationReturnValue) {
-          if (handler.onLeave) handler.onLeave?.call(this, retval)
-        }
-      })
-    }
-  }
-
-  for (const clazz of ['__NSCFLocalSessionTask', 'NSURLSessionTask', '__NSCFURLSessionTask']) {
-    const cls = ObjC.classes[clazz]
-    if (!cls) continue
-    const method = cls['- resume'] as ObjC.ObjectMethod
-    if (!method) continue
-    Interceptor.attach(method.implementation, {
-      onEnter(args) {
-        // todo:
-      }
-    })
-  }
-
-  Interceptor.attach(ObjC.classes.NSURLConnection['- cancel'].implementation, {
+  hook(clazz, '- uploadTaskWithRequest:fromData:completionHandler:', {
     onEnter(args) {
 
     }
   })
 }
 
-export function dispose() {
+function injectURLSessionWebsocketTasks() {
+  const clazz = ObjC.classes.__NSURLSessionWebSocketTask
+  if (!clazz) return
+  
+  hook(clazz, '- sendMessage:completionHandler:', {
+    onEnter(args) {
 
+    }
+  })
+
+  hook(clazz, '- receiveMessageWithCompletionHandler:', {
+    onEnter(args) {
+
+    }
+  })
+
+  hook(clazz, '- sendPingWithPongReceiveHandler:', {
+    onEnter(args) {
+
+    }
+  })
+
+  hook(clazz, '- cancelWithCloseCode:reason:', {
+    onEnter(args) {
+
+    }
+  })
+}
+
+export function init() {
+  injectAllURLSession()
+  injectAllURLConnection()
+  injectURLSessionResume()
+  injectURLSessionUploadTasks()
+  injectURLSessionWebsocketTasks()
 }

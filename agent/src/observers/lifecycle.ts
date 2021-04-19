@@ -42,7 +42,7 @@ export function init() {
     signalHandler, ObjC.selector('background'), 'UIApplicationDidEnterBackgroundNotification', NULL)
 }
 
-export function dispose() {
+function dispose() {
   if (!signalHandler) return
   center.removeObserver_name_object_(signalHandler, 'UIApplicationWillResignActiveNotification', NULL)
   center.removeObserver_name_object_(signalHandler, 'UIApplicationDidEnterBackgroundNotification', NULL)

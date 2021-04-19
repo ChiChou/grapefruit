@@ -2,8 +2,8 @@ import './ready'
 import './polyfill'
 // import './observers/http'
 
-import { init as enableLifeCycleHook, dispose as disableLifeCycleHook} from './observers/lifecycle'
-import { init as initHttpHooks, dispose as disableHttpHooks } from './observers/http'
+import { init as enableLifeCycleHook } from './observers/lifecycle'
+import { init as initHttpHooks } from './observers/http'
 import { interfaces, invoke, register } from './rpc'
 import modules from './modules/index'
 
@@ -24,10 +24,6 @@ function registerModules() {
 
   enableLifeCycleHook()
   initHttpHooks()
-
-  WeakRef.bind(globalThis, () => {
-    disableLifeCycleHook()
-  })
 }
 
 setImmediate(registerModules)
