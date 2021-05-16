@@ -362,17 +362,17 @@ $arrow-color: #333;
 
 .data-field {
   user-select: text;
-  font-size: 12px;
+  font-size: .875rem;
   font-family: "Fira Code", monospace;
   cursor: pointer;
 }
 
 .self {
-  height: 20px;
-  line-height: 20px;
+  height: 1.5rem;
+  line-height: 1.5rem;
   position: relative;
   white-space: nowrap;
-  padding-left: 14px;
+  padding-left: .875rem;
 
   span, div {
     display: inline-block;
@@ -406,6 +406,17 @@ $arrow-color: #333;
     .dark & {
       color: #242424;
     }
+  }
+}
+
+@media only screen and (min-width: 2000px) {
+  .data-field {
+    font-size: 1rem;
+  }
+
+  .self {
+    height: 1.625rem;
+    line-height: 1.625rem;
   }
 }
 
