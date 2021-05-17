@@ -29,10 +29,14 @@ export default class SnapShot extends Base {
     fetch(`/api/device/${this.device}/screen?t=` + Math.random())
       .then(r => {
         if (r.ok) return r.blob()
-        r.text().then(t => {
-          this.error = t
-          this.failed = true
-        })
+        return Promise.reject(r.text())
+      })
+      .then((blob: Blob) => {
+        this.url = URL.createObjectURL(blob)
+      })
+      .catch(e => {
+        this.error = e
+        this.failed = true
       })
       .finally(() => { this.loading = false })
   }
