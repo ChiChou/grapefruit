@@ -87,3 +87,50 @@ export async function navigate(handle: string, url: string) {
     webview.loadRequest_(req)
   })
 }
+
+export async function dump(handle: string) {
+  const webview = await get(handle)
+  if (!webview.isKindOfClass_(ObjC.classes.UIWebView))
+    throw new Error(`invalid UIWebView ${webview}`)
+
+  return new Promise((resolve) => {
+    performOnMainThread(() => {
+      const jsc = webview.valueForKeyPath_('documentView.webView.mainFrame.javaScriptContext')
+      const window = webview.windowScriptObject()
+      const keys = window.evaluateWebScript_('Object.keys(this)')
+      const count = keys.valueForKey_('length')
+      const result: {[key: string]: string} = {}
+      for (let i = 0; i < count; i++) {
+        const key = keys.webScriptValueAtIndex_(i).toString()
+        if (!jsc.objectForKeyedSubscript_(key).isObject()) continue
+        const obj = window.valueForKey_(key)
+        if (!obj.isKindOfClass_(ObjC.classes.WebScriptObject))
+          result[key] = `<${obj.$className} ${obj.handle}>`
+      }
+      resolve(result)
+    })
+  })
+}
+
+export async function prefs(handle: string) {
+  const webview = await get(handle)
+  if (!webview.isKindOfClass_(ObjC.classes.WKWebView)) throw new Error(`${webview} is not a WKWebView`)
+
+  const conf = webview.configuration()
+  const pref = conf.preferences()
+
+  const result = {
+    ua: webview.customUserAgent(),
+    javaScriptEnabled: pref.javaScriptEnabled(),
+    allowsContentJavaScript: undefined,
+    jsAutoOpenWindow: pref.javaScriptCanOpenWindowsAutomatically()
+  }
+
+  // > iOS 13
+  if (typeof conf.defaultWebpagePreferences === 'function') {
+    // todo: get preference per natigation
+    result['allowsContentJavaScript'] = conf.defaultWebpagePreferences().allowsContentJavaScript()
+  }
+
+  return result
+}

@@ -62,3 +62,16 @@ export function arrayFromNSArray(original: ObjC.Object, limit: number = Infinity
   }
   return arr
 }
+
+export function description(obj: ObjC.Object) {
+  if (!obj) return obj
+  if (obj.isKindOfClass_(ObjC.classes.NSBlock))
+    return `<Block ${obj.handle}, invoke=${obj.handle.add(Process.pointerSize * 2).readPointer()}>`
+  if (obj.isKindOfClass_(ObjC.classes.__NSCFBoolean)) return obj.boolValue()
+  if (obj.isKindOfClass_(ObjC.classes.NSArray)) return `[Array of ${obj.count()} elements]`
+  if (obj.isKindOfClass_(ObjC.classes.NSDictionary)) return `{Dictionary of ${obj.count()} entries}`
+  if (obj.isKindOfClass_(ObjC.classes.NSNumber)) return parseFloat(obj.toString())
+  if (obj.isKindOfClass_(ObjC.classes.NSString)) return obj.toString()
+  if ('isa' in obj.$ivars) return `<${obj.$className} ${obj.handle}>`
+  return `<Class ${obj}>`
+}
