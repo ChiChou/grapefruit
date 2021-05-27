@@ -45,3 +45,9 @@ Process.setExceptionHandler((detail) => {
   
   return false
 })
+
+Interceptor.attach(Module.findExportByName(null, 'objc_exception_throw')!, {
+  onEnter(args) {
+    console.error('Objective-C exception:', new ObjC.Object(args[0]))
+  }
+})
