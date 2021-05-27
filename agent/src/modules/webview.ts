@@ -1,4 +1,5 @@
 import { performOnMainThread } from "../lib/dispatch"
+import { get as getInstance } from '../lib/choose'
 
 const WebViewKinds = ['UI', 'WK'] as const
 
@@ -24,24 +25,7 @@ async function get(handle: string): Promise<ObjC.Object> {
   for (const kind of WebViewKinds) {
     const clazz = ObjC.classes[`${kind}WebView`]
     try {
-      const webview: NativePointer = await new Promise((resolve, reject) => {
-        let p: NativePointer = NULL
-        ObjC.choose(clazz, {
-          onMatch(item) {
-            if (item.handle.equals(handle)) {
-              p = item.handle
-              return 'stop'
-            }
-          },
-          onComplete() {
-            if (!p.isNull()) {
-              resolve(p)
-            }
-            reject()
-          }
-        })
-      })
-      return new ObjC.Object(webview)
+      return getInstance(clazz, handle)
     } catch (_) {
 
     }
