@@ -2,7 +2,7 @@ import './ready'
 import './polyfill'
 // import './observers/http'
 
-import { init as enableLifeCycleHook, dispose as disableLifeCycleHook} from './observers/lifecycle'
+import { init as enableLifeCycleHook } from './observers/lifecycle'
 
 import { interfaces, invoke, register } from './rpc'
 import modules from './modules/index'
@@ -21,16 +21,10 @@ function registerModules() {
         register(func, [name, func.name].join('/'))
     }
   }
-
-  enableLifeCycleHook()
-
-  WeakRef.bind(globalThis, () => {
-    disableLifeCycleHook()
-  })
 }
 
 setImmediate(registerModules)
-// appLifeCycleHook()
+setImmediate(enableLifeCycleHook)
 
 Process.setExceptionHandler((detail) => {
   console.error('Exception report: ')
