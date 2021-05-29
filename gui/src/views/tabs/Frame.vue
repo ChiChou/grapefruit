@@ -38,6 +38,7 @@ import UnknownPreview from './UnknownPreview.vue'
 
 import CodeRunner from './CodeRunner.vue'
 import WebViewDetail from './WebViewDetail.vue'
+import JSCDetail from './JSCDetail.vue'
 
 import Loading from '../../components/Loading.vue'
 
@@ -69,7 +70,8 @@ import { Container } from 'golden-layout'
     UnknownPreview,
 
     CodeRunner,
-    WebViewDetail
+    WebViewDetail,
+    JSCDetail
   }
 })
 export default class Frame extends Vue {

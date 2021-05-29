@@ -2,7 +2,7 @@
   <div>
     <b-progress class="thin" :class="{ show: loading }"></b-progress>
     <header>
-      <h1>WebViews</h1>
+      <h1>WebView &amp; JavaScript</h1>
       <nav>
         <a @click="refresh"><b-icon icon="refresh" /></a>
       </nav>
@@ -21,6 +21,12 @@
           <b-icon icon="web-box" />{{ title }}
         </li>
       </ul>
+      <p class="menu-label">JSContext</p>
+      <ul class="menu-list">
+        <li v-for="(description, handle) in this.jsc" :key="handle" @click="jsContext(handle, description)">
+          <b-icon icon="language-javascript" />{{ description }}
+        </li>
+      </ul>
     </aside>
   </div>
 </template>
@@ -32,8 +38,9 @@ import { Component, Vue } from 'vue-property-decorator'
 export default class WebViews extends Vue {
   loading = false
 
-  WK: string[] = []
-  UI: string[] = []
+  WK = {}
+  UI = {}
+  jsc = {}
 
   mounted() {
     this.refresh()
@@ -43,12 +50,17 @@ export default class WebViews extends Vue {
     this.$bus.$emit('openTab', 'WebViewDetail', 'WebView - ' + title, { handle })
   }
 
+  jsContext(handle: string, description: string) {
+    this.$bus.$emit('openTab', 'JSCDetail', 'JSContext - ' + description, { handle })
+  }
+
   async refresh() {
     this.loading = true
     try {
       const { WK, UI } = await this.$rpc.webview.list()
       this.WK = WK
       this.UI = UI
+      this.jsc = await this.$rpc.jsc.list()
     } finally {
       this.loading = false
     }
