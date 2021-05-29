@@ -65,7 +65,7 @@ export default class JSCDetail extends Base {
     localStorage.setItem(WEBVIEW_JS, code)
 
     try {
-      this.result = await this.$rpc.webview.run(this.handle, code)
+      this.result = await this.$rpc.jsc.run(this.handle, code)
     } catch (e) {
       this.result = `${e}`
     } finally {

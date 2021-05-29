@@ -17,7 +17,7 @@ export function get(handle: string): Promise<ObjC.Object> {
 }
 
 export async function dump(handle: string) {
-  const jsc = await get(handle)  
+  const jsc = await get(handle)
   const topKeys = jsc.evaluateScript_('Object.keys(this)').toArray()
   const result: { [key: string]: any } = {}
   for (const key of Arr.values(topKeys)) {
@@ -27,4 +27,12 @@ export async function dump(handle: string) {
   }
   console.log(JSON.stringify(result, null, 4))
   return result
+}
+
+export async function run(handle: string, js: string) {
+  const jsc = await get(handle)
+  const val = jsc.evaluateScript_(js)
+  if (val.isUndefined())
+    return jsc.exception()?.toString()
+  return val.toString()
 }
