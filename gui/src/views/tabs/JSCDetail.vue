@@ -1,21 +1,26 @@
 <template>
   <div class="browser-frame">
-    <h2>Context</h2>
-    <pre>{{ context }}</pre>
+    <b-tabs v-model="tab" :animated="false">
+      <b-tab-item label="Context">
+        <pre>{{ context }}</pre>
+      </b-tab-item>
 
-    <h2>JavaScript</h2>
-    <div class="editor" ref="container"></div>
-    <div class="toolbar">
-      <b-button icon-left="play" type="is-success" @click="run">Run (F4)</b-button>
-    </div>
+      <b-tab-item label="Evaluate">
+        <div class="editor" ref="container"></div>
+        <div class="toolbar">
+          <b-button icon-left="play" type="is-success" @click="run">Run (F4)</b-button>
+        </div>
 
-    <pre v-if="result" class="result">{{ result }}</pre>
+        <pre v-if="result" class="result">{{ result }}</pre>
+      </b-tab-item>
+
+    </b-tabs>
   </div>
 </template>
 
 <script lang="ts">
 import * as monaco from 'monaco-editor'
-import { Component, Prop } from 'vue-property-decorator'
+import { Component, Prop, Watch } from 'vue-property-decorator'
 import { rem2px } from '../../utils'
 import Base from './Base.vue'
 
@@ -28,6 +33,8 @@ export default class JSCDetail extends Base {
   active = false
   context = {}
   result = ''
+
+  tab = 0
 
   @Prop({ required: true })
   handle!: string
@@ -45,8 +52,13 @@ export default class JSCDetail extends Base {
     })
 
     this.editor = editor
-    editor.layout()
     editor.addCommand(monaco.KeyCode.F4, () => this.run())
+  }
+
+  @Watch('tab')
+  onTabChanged(newTab: number) {
+    const { editor } = this
+    if (editor) setTimeout(() => editor.layout(), 0)
   }
 
   mounted() {

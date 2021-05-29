@@ -16,6 +16,43 @@ export function get(handle: string): Promise<ObjC.Object> {
   return getInstance(ObjC.classes.JSContext, handle)
 }
 
+function serialize(obj: ObjC.Object) {
+  if (!obj) return obj
+  if (obj.isKindOfClass_(ObjC.classes.__NSCFBoolean)) return obj.boolValue()
+  if (obj.isKindOfClass_(ObjC.classes.NSNumber)) return parseFloat(obj.toString())
+  if (obj.isKindOfClass_(ObjC.classes.NSString)) return obj.toString()
+  if (obj.isKindOfClass_(ObjC.classes.NSBlock))
+    return {
+      type: 'block',
+      handle: obj.handle,
+      invoke: obj.handle.add(Process.pointerSize * 2).readPointer()
+    }
+
+  if (obj.isKindOfClass_(ObjC.classes.NSArray))
+    return {
+      type: 'array',
+      size: obj.count()
+    }
+
+  if (obj.isKindOfClass_(ObjC.classes.NSDictionary))
+    return {
+      type: 'dict',
+      size: obj.count()
+    }
+
+  if ('isa' in obj.$ivars) 
+    return {
+      type: 'instance',
+      clazz: obj.$className,
+      handle: obj.handle
+    }
+  
+  return {
+    type: 'class',
+    name: obj.$className
+  }
+}
+
 export async function dump(handle: string) {
   const jsc = await get(handle)
   const topKeys = jsc.evaluateScript_('Object.keys(this)').toArray()
@@ -23,9 +60,10 @@ export async function dump(handle: string) {
   for (const key of Arr.values(topKeys)) {
     const val = jsc.objectForKeyedSubscript_(key)
     if (!val.isObject()) continue
-    result[key] = description(val.toObject())
+    const obj = val.toObject()
+    result[key] = serialize(obj)
+    console.log(key, description(obj))
   }
-  console.log(JSON.stringify(result, null, 4))
   return result
 }
 
