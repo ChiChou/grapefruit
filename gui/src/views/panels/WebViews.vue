@@ -23,7 +23,7 @@
       </ul>
       <p class="menu-label">JSContext</p>
       <ul class="menu-list">
-        <li v-for="(description, handle) in this.jsc" :key="handle" @click="jsContext(handle, description)">
+        <li v-for="(description, handle) in this.jsc" :key="handle" @click="jsContext(handle)">
           <b-icon icon="language-javascript" />{{ description }}
         </li>
       </ul>
@@ -50,8 +50,8 @@ export default class WebViews extends Vue {
     this.$bus.$emit('openTab', 'WebViewDetail', 'WebView - ' + title, { handle })
   }
 
-  jsContext(handle: string, description: string) {
-    this.$bus.$emit('openTab', 'JSCDetail', 'JSContext - ' + description, { handle })
+  jsContext(handle: string) {
+    this.$bus.$emit('openTab', 'JSCDetail', 'JSContext - ' + handle, { handle })
   }
 
   async refresh() {

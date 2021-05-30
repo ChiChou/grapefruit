@@ -2,7 +2,7 @@
   <div class="browser-frame">
     <b-tabs v-model="tab" :animated="false">
       <b-tab-item label="Context">
-        <pre>{{ context }}</pre>
+        <JSValue :obj="context" />
       </b-tab-item>
 
       <b-tab-item label="Evaluate">
@@ -23,17 +23,21 @@ import * as monaco from 'monaco-editor'
 import { Component, Prop, Watch } from 'vue-property-decorator'
 import { rem2px } from '../../utils'
 import Base from './Base.vue'
+import JSValue from '../../components/JSValue.vue'
 
 const WEBVIEW_JS = 'tabs.webview.javaascript'
 
-@Component
+@Component({
+  components: {
+    JSValue
+  }
+})
 export default class JSCDetail extends Base {
   editor?: monaco.editor.ICodeEditor
 
   active = false
   context = {}
   result = ''
-
   tab = 0
 
   @Prop({ required: true })
@@ -58,12 +62,14 @@ export default class JSCDetail extends Base {
   @Watch('tab')
   onTabChanged(newTab: number) {
     const { editor } = this
-    if (editor) setTimeout(() => editor.layout(), 0)
+    if (newTab === 1) {
+      if (!editor) this.createEditor()
+      this.resize()
+    }
   }
 
   mounted() {
     this.loading = true
-    this.createEditor()
     this.$rpc.jsc.dump(this.handle).then((ctx: object) => {
       this.context = ctx
     })
@@ -86,7 +92,8 @@ export default class JSCDetail extends Base {
   }
 
   resize() {
-    if (this.editor) this.editor.layout()
+    const { editor } = this
+    if (editor) setTimeout(() => editor.layout(), 0)
   }
 
   destroyed() {
