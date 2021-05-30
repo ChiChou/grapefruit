@@ -10,7 +10,7 @@ import { Terminal } from 'xterm'
 import { Component, Vue } from 'vue-property-decorator'
 
 @Component
-export default class Workspace extends Vue {
+export default class Console extends Vue {
   public term = new Terminal({
     fontFamily: '"Fira Code", monospace',
     fontSize: 12,

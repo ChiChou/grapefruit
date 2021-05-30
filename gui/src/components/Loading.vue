@@ -10,7 +10,7 @@
 import { Component, Vue, Prop, Watch } from 'vue-property-decorator'
 
 @Component
-export default class Welcome extends Vue {
+export default class Loading extends Vue {
   @Prop({ default: 80 })
   size!: number
 

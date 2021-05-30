@@ -12,7 +12,7 @@ interface Icon {
 }
 
 @Component
-export default class Welcome extends Vue {
+export default class IconView extends Vue {
   @Prop()
   icon!: Icon
 
