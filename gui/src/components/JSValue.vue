@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="jsvalue">
     <ul id="v-for-object" class="demo">
       <li class="entry" v-for="(value, name) in obj" :key="name">
         <span class="key">{{ name }}</span><JSObject :value="value"></JSObject>
@@ -15,11 +15,12 @@ import { Component, Vue, Prop } from 'vue-property-decorator'
 import $bus from '../bus'
 
 interface NSObject {
-  type?: 'instance' | 'block' | 'class' | 'dict' | 'array';
+  type?: 'instance' | 'block' | 'class' | 'dict' | 'array' | 'function';
   clazz?: string;
   handle?: string;
   invoke?: string;
   size?: number;
+  source?: string;
 }
 
 @Component
@@ -47,41 +48,47 @@ class JSObject extends Vue {
     }, addr)
   }
 
+  renderHandle(createElement: CreateElement, handle?: string) {
+    return createElement('span', { attrs: { class: 'handle' } }, handle)
+  }
+
   render(createElement: CreateElement) {
     if (typeof this.value === 'object') {
       const obj = this.value as NSObject
       const { type } = obj
-      // console.log(type, JSON.stringify(this.value))
       if (type === 'instance') {
         const clazz = this.linkToClass(createElement, obj.clazz)
-        const handle = createElement('span', {}, obj.handle)
+        const handle = this.renderHandle(createElement, obj.handle)
         return createElement(
           'span',
           {},
-          ['<', clazz, ' ', handle, '>']
+          ['<Class ', clazz, ' ', handle, '>']
         )
       } else if (type === 'block') {
+        const handle = this.renderHandle(createElement, obj.handle)
         return createElement(
           'span',
           {},
-          ['<Block ', obj.handle, ' invoke=', this.linkToInvoke(createElement, obj.invoke), '>']
+          ['<Block ', handle, ' invoke=', this.linkToInvoke(createElement, obj.invoke), '>']
         )
       } else if (type === 'class') {
         const clazz = this.linkToClass(createElement, obj.clazz)
         return createElement(
           'span',
           {},
-          ['<', clazz, ' >']
+          ['<', clazz, '>']
         )
       } else if (type === 'dict') {
-        return createElement('code', {}, `Dictionary of ${obj.size} elements`)
+        return createElement('code', {}, `Dictionary{${obj.size} entries}`)
       } else if (type === 'array') {
-        return createElement('code', {}, `Dictionary of ${obj.size} elements`)
+        return createElement('span', {}, `Array[${obj.size}]`)
+      } else if (type === 'function') {
+        return createElement('code', {}, obj.source)
       }
       return createElement(
         'span',
         {},
-        'todo'
+        `${obj}`
       )
     }
 
@@ -104,16 +111,24 @@ export default class JSValue extends Vue {
 }
 </script>
 
-<style lang="scss" scoped>
-.entry {
-  font-family: "Fira Code", monospace;
-  margin: .5rem;
-}
+<style lang="scss">
+.jsvalue {
+  .entry {
+    font-family: "Fira Code", monospace;
+    margin: .25rem .25rem .25rem 1em;
+    color: #999;
 
-span.key {
-  margin-right: .5em;
-  &::after {
-    content: ':';
+    .handle {
+      color: #e33e3a;
+    }
+  }
+
+  span.key {
+    color: #e36eec;
+    margin-right: .5em;
+    &::after {
+      content: ':';
+    }
   }
 }
 </style>
