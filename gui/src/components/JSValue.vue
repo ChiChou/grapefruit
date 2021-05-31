@@ -62,7 +62,7 @@ class JSObject extends Vue {
         return createElement(
           'span',
           {},
-          ['<Class ', clazz, ' ', handle, '>']
+          ['<', clazz, ' ', handle, '>']
         )
       } else if (type === 'block') {
         const handle = this.renderHandle(createElement, obj.handle)
@@ -76,7 +76,7 @@ class JSObject extends Vue {
         return createElement(
           'span',
           {},
-          ['<', clazz, '>']
+          ['<Class ', clazz, '>']
         )
       } else if (type === 'dict') {
         return createElement('code', {}, `Dictionary{${obj.size} entries}`)
