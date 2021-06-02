@@ -80,7 +80,7 @@ export async function dump(handle: string) {
 export async function run(handle: string, js: string) {
   const jsc = await get(handle)
   const val = jsc.evaluateScript_(js)
-  if (val.isUndefined())
-    return jsc.exception()?.toString()
+  if (val.isUndefined() && jsc.exception())
+    return jsc.exception().toString()
   return val.toString()
 }
