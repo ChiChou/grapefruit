@@ -34,17 +34,29 @@ function serialize(obj: ObjC.Object) {
       size: obj.count()
     }
 
-  if ('isa' in obj.$ivars)
+  if ('isa' in obj.$ivars) {
+    const { methods, properties } = findJSExport(obj)
     return {
       type: 'instance',
       clazz: obj.$className,
-      handle: obj.handle
+      handle: obj.handle,
+      methods,
+      properties
     }
+  }
 
   return {
     type: 'class',
     clazz: obj.$className
   }
+}
+
+function findJSExport(obj: ObjC.Object) {
+  for (const prot of Object.values(obj.$protocols))
+    if ('JSExport' in prot.protocols)
+      return prot
+
+  throw new Error(`${obj} does not confirms to JSExport`)
 }
 
 export async function dump(handle: string) {
