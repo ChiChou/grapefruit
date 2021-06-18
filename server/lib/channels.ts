@@ -66,7 +66,7 @@ export default class Channels {
         // }
         console.error('session detached:', reason, crash)
         if (reason === 'application-requested') return
-        if (reason === 'process-terminated' || reason === 'server-terminated') {
+        if (reason === 'process-terminated') {
           socket.emit('console', 'error', `app crash, reason: ${reason}\ndetail:\n${crash}`)
           socket.emit('crash', reason, crash)
         }
