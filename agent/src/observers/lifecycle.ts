@@ -27,7 +27,7 @@ const Clazz = ObjC.registerClass({
       console.warn('App will be inactive.')
     },
     '- background': () => {
-      console.warn('App is is now on the background. Grapefruit will be inresponsible.')
+      console.warn('App is is now on the background. Grapefruit will be irresponsive.')
       send({ subject, event: 'frozen' })
     }
   }
