@@ -25,7 +25,7 @@ async function get(handle: string): Promise<ObjC.Object> {
   for (const kind of WebViewKinds) {
     const clazz = ObjC.classes[`${kind}WebView`]
     try {
-      return getInstance(clazz, handle)
+      return await getInstance(clazz, handle)
     } catch (_) {
 
     }
@@ -113,24 +113,24 @@ export async function dump(handle: string) {
 }
 
 export async function prefs(handle: string) {
-  const webview = await get(handle)
-  if (!webview.isKindOfClass_(ObjC.classes.WKWebView)) throw new Error(`${webview} is not a WKWebView`)
+    const webview = await get(handle)
+    if (!webview.isKindOfClass_(ObjC.classes.WKWebView)) throw new Error(`${webview} is not a WKWebView`)
 
-  const conf = webview.configuration()
-  const pref = conf.preferences()
-
-  const result = {
-    ua: webview.customUserAgent(),
-    javaScriptEnabled: pref.javaScriptEnabled(),
-    allowsContentJavaScript: undefined,
-    jsAutoOpenWindow: pref.javaScriptCanOpenWindowsAutomatically()
-  }
-
-  // > iOS 13
-  if (typeof conf.defaultWebpagePreferences === 'function') {
-    // todo: get preference per natigation
-    result['allowsContentJavaScript'] = conf.defaultWebpagePreferences().allowsContentJavaScript()
-  }
-
-  return result
+    const conf = webview.configuration()
+    const pref = conf.preferences()
+  
+    const result = {
+      customUserAgent: webview.customUserAgent().toString(),
+      javaScriptEnabled: pref.javaScriptEnabled(),
+      allowsContentJavaScript: undefined,
+      jsAutoOpenWindow: pref.javaScriptCanOpenWindowsAutomatically(),
+    }
+  
+    // > iOS 13
+    if (typeof conf.defaultWebpagePreferences === 'function') {
+      // todo: get preference per natigation
+      result['allowsContentJavaScript'] = conf.defaultWebpagePreferences().allowsContentJavaScript()
+    }
+  
+    return result
 }
