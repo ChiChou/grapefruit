@@ -1,7 +1,7 @@
 /* eslint @typescript-eslint/no-explicit-any: 0 */
 /* eslint no-useless-constructor: 0 */
 
-import * as io from 'socket.io-client'
+import { io, Socket } from 'socket.io-client'
 import Vue from 'vue'
 import { Route } from 'vue-router'
 import { DialogProgrammatic as Dialog } from 'buefy'
@@ -16,7 +16,7 @@ class Lazy {
   ready = false
   private _pending: Function[] = []
 
-  constructor(public socket: SocketIOClient.Socket) {
+  constructor(public socket: Socket) {
     socket.on('ready', () => {
       this.ready = true
       this._pending.forEach(f => f())
@@ -68,7 +68,7 @@ class Lazy {
   }
 }
 
-function wrap(socket: SocketIOClient.Socket): RPC {
+function wrap(socket: Socket): RPC {
   const lazy = new Lazy(socket)
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   const p = new Proxy(() => {}, {
@@ -84,11 +84,13 @@ function wrap(socket: SocketIOClient.Socket): RPC {
   return p
 }
 
+type Handler = (...args: any[]) => void;
+
 class WS {
   private _ready = false
   private _pending: Set<Function> = new Set()
 
-  constructor(public socket: SocketIOClient.Socket) {
+  constructor(public socket: Socket) {
     this.socket.on('ready', () => {
       this._pending.forEach(cb => cb())
       this._pending.clear()
@@ -100,7 +102,7 @@ class WS {
     return new Promise(resolve => this._pending.add(resolve))
   }
 
-  on(event: WSEvent, cb: Function) {
+  on(event: WSEvent, cb: Handler) {
     if (event === 'ready') {
       if (this._ready) {
         Vue.nextTick(() => cb())
@@ -117,12 +119,12 @@ class WS {
     return new Promise((resolve) => this.socket.emit(event, ...args, resolve))
   }
 
-  once(event: string, cb: Function) {
+  once(event: string, cb: Handler) {
     this.ready().then(() => this.socket.once(event, cb))
     return this
   }
 
-  off(event: string, cb: Function) {
+  off(event: string, cb: Handler) {
     this.ready().then(() => this.socket.off(event, cb))
     return this
   }
@@ -149,7 +151,7 @@ function install(V: typeof Vue, opt: Options) {
         return
       }
 
-      const socket = io.connect('/session', { query: { device, bundle } })
+      const socket = io('/session', { query: { device, bundle }, transports: ['websocket'] })
 
       V.prototype.$rpc = wrap(socket)
       V.prototype.$ws = new WS(socket)

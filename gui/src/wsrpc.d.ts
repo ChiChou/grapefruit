@@ -1,3 +1,4 @@
+import { Socket } from 'socket.io-client';
 import VueRouter from 'vue-router'
 
 export type RPC = {
@@ -14,7 +15,7 @@ interface Options {
 }
 
 interface Context {
-  socket?: SocketIOClient.Socket;
+  socket?: Socket;
 }
 
 interface RpcResponse {

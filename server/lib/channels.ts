@@ -2,7 +2,7 @@
 import * as frida from 'frida'
 import http from 'http'
 
-import io from 'socket.io'
+import { Server, Namespace } from 'socket.io'
 import REPL from './repl'
 import * as transfer from './transfer'
 import { wrap, tryGetDevice } from './device'
@@ -18,13 +18,13 @@ interface RPCPacket {
 }
 
 export default class Channels {
-  socket: io.Server
-  devices: io.Namespace
-  session: io.Namespace
+  socket: Server
+  devices: Namespace
+  session: Namespace
   changedSignal: frida.DevicesChangedHandler
 
   constructor(srv: http.Server) {
-    this.socket = io(srv)
+    this.socket = new Server(srv)
     this.devices = this.socket.of('/devices')
     this.session = this.socket.of('/session')
   }
@@ -44,6 +44,13 @@ export default class Channels {
     this.session.on('connection', async (socket) => {
       const { device, bundle } = socket.handshake.query
       let dev: frida.Device, session: frida.Session
+
+      if (typeof device !== 'string' || typeof bundle !== 'string') {
+        socket.emit('exception', 'invalid parameter type')
+        socket.disconnect()
+        return
+      }
+
       try {
         dev = await tryGetDevice(device)
         session = await wrap(dev).start(bundle)

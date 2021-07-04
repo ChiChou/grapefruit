@@ -68,7 +68,7 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 import Axios from 'axios'
-import * as io from 'socket.io-client'
+import { io } from 'socket.io-client'
 
 import Icon from '../components/Icon.vue'
 import Loading from '../components/Loading.vue'
@@ -86,7 +86,7 @@ export default class Welcome extends Vue {
   loading = false
 
   mounted() {
-    const socket = io.connect('/devices', { transports: ['websocket'] })
+    const socket = io('/devices', { transports: ['websocket'] })
     socket.on('deviceChanged', this.refresh)
     this.refresh()
   }

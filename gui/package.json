@@ -16,7 +16,7 @@
     "lodash.debounce": "^4.0.8",
     "lodash.throttle": "^4.1.1",
     "monaco-editor": "^0.20.0",
-    "socket.io-client": "^2.3.1",
+    "socket.io-client": "^4.1.2",
     "vue": "^2.6.12",
     "vue-class-component": "^7.2.6",
     "vue-property-decorator": "^8.5.1",
