@@ -25,7 +25,7 @@ async function get(handle: string): Promise<ObjC.Object> {
   for (const kind of WebViewKinds) {
     const clazz = ObjC.classes[`${kind}WebView`]
     try {
-      return getInstance(clazz, handle)
+      return await getInstance(clazz, handle)
     } catch (_) {
 
     }
@@ -120,10 +120,10 @@ export async function prefs(handle: string) {
   const pref = conf.preferences()
 
   const result = {
-    ua: webview.customUserAgent(),
+    customUserAgent: webview.customUserAgent().toString(),
     javaScriptEnabled: pref.javaScriptEnabled(),
     allowsContentJavaScript: undefined,
-    jsAutoOpenWindow: pref.javaScriptCanOpenWindowsAutomatically()
+    jsAutoOpenWindow: pref.javaScriptCanOpenWindowsAutomatically(),
   }
 
   // > iOS 13

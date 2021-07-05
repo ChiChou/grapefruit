@@ -11,6 +11,7 @@ export async function get(clazz: ObjC.Object, handle: string): Promise<ObjC.Obje
       onComplete() {
         if (!p.isNull()) {
           resolve(p)
+          return;
         }
         reject()
       }

@@ -23,24 +23,33 @@
     </div>
 
     <pre v-if="result" class="result">{{ result }}</pre>
+    <div v-if="prefs" class="prefs">
+      <data-field class="plist dark" :depth="0" :field="{ value: prefs }" />
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 import * as monaco from 'monaco-editor'
+import DataField from '../../components/DataField.vue'
 import { Component, Prop } from 'vue-property-decorator'
 import { rem2px } from '../../utils'
 import Base from './Base.vue'
 
 const WEBVIEW_JS = 'tabs.webview.javaascript'
 
-@Component
+@Component({
+  components: {
+    DataField
+  }
+})
 export default class WebViewDetail extends Base {
   editor?: monaco.editor.ICodeEditor
 
   active = false
   url = 'http://'
   result = ''
+  prefs = ''
 
   @Prop({ required: true })
   handle!: string
@@ -66,6 +75,7 @@ export default class WebViewDetail extends Base {
     this.loading = true
     this.createEditor()
     this.$rpc.webview.url(this.handle).then((url: string) => { this.url = url })
+    this.$rpc.webview.prefs(this.handle).then((prefs: string) => { this.prefs = prefs })
     this.loading = false
   }
 
@@ -113,7 +123,8 @@ export default class WebViewDetail extends Base {
   height: 320px;
 }
 
-.toolbar, .result {
+.toolbar, .result, .prefs {
   margin-top: 10px;
 }
+
 </style>
