@@ -94,7 +94,7 @@ export default class UnknownPreview extends Preview {
     return this.getRows((value: number) => value >= 32 && value <= 127 ? String.fromCharCode(value) : '.')
   }
 
-  getRows(fn: Function) {
+  getRows(fn: (val: number) => string) {
     if (!this.dataView) return []
 
     const rows = []
@@ -102,7 +102,7 @@ export default class UnknownPreview extends Preview {
       const values = []
       for (let column = 0; column < this.rowLength; column++) {
         const offset = row * this.rowLength + column
-        const value = offset < this.dataView.byteLength ? this.dataView.getUint8(offset) : '  '
+        const value = offset < this.dataView.byteLength ? this.dataView.getUint8(offset) : 0
         values.push(fn(value))
       }
       rows.push(values)

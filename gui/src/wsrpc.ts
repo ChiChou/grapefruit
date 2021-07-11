@@ -84,7 +84,7 @@ function wrap(socket: Socket): RPC {
   return p
 }
 
-type Handler = (...args: any[]) => void;
+export type Handler = (...args: any[]) => void;
 
 class WS {
   private _ready = false

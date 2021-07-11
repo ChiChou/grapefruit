@@ -203,7 +203,7 @@ export default class Workspace extends Vue {
       if (maximised.length) return maximised.pop()
     }
 
-    const createTab = (component: string, title: string, props?: object) => {
+    const createTab = (component: string, title: string, props?: Record<string, unknown>) => {
       const { root } = layout
       if (!root.contentItems.length) {
         root.addChild({
@@ -228,7 +228,7 @@ export default class Workspace extends Vue {
     }
 
     this.$bus.$on('openTab', createTab)
-    this.$bus.$on('switchTab', (component: string, title: string, props?: object) => {
+    this.$bus.$on('switchTab', (component: string, title: string, props?: Record<string, unknown>) => {
       const max = findMaximised()
       if (max) max.toggleMaximise()
 

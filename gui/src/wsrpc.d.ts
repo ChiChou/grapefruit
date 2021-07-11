@@ -1,12 +1,13 @@
-import { Socket } from 'socket.io-client';
+import { Socket } from 'socket.io-client'
 import VueRouter from 'vue-router'
+import { Handler } from './wsrpc'
 
 export type RPC = {
   [key: string]: RPC;
   (...args: any): any;
 }
 
-type WSEvent = 'ready' | 'destroyed' | 
+type WSEvent = 'ready' | 'destroyed' |
   'exception' | 'detached' | 'console' | 'crash' |
   'download' | 'delivery'
 
@@ -26,9 +27,9 @@ interface RpcResponse {
 
 interface WS {
   ready(): Promise<boolean>;
-  on(event: WSEvent, cb: Function): WS;
-  off(event: WSEvent, cb: Function): WS;
-  once(event: WSEvent, cb: Function): WS;
+  on(event: WSEvent, cb: Handler): WS;
+  off(event: WSEvent, cb: Handler): WS;
+  once(event: WSEvent, cb: Handler): WS;
   send(event: string, ...args: any[]): Promise<any>;
 }
 
@@ -40,7 +41,7 @@ declare module 'vue/types/vue' {
   }
 }
 
-declare module "*.json" {
-  const value: any;
-  export default value;
+declare module '*.json' {
+  const value: any
+  export default value
 }
