@@ -16,9 +16,9 @@ export class ExDevice {
   constructor(public device: Device) {}
 
   async start(bundle: string): Promise<Session> {
-    const apps = await this.device.enumerateApplications()
-    const app = apps.find(item => item.identifier === bundle)
-    if (!app) throw new AppNotFoundError(bundle)
+    const apps = await this.device.enumerateApplications({ identifiers: [bundle] })
+    if (!apps.length) throw new AppNotFoundError(bundle)
+    const app = apps[0]
     if (app.pid) {
       const front = await this.device.getFrontmostApplication()
       if (front && front.pid === app.pid) {
