@@ -1,0 +1,21 @@
+name: pack
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+
+      - name: Install Dependency
+        run: npm ci
+
+      - name: CI
+        run: npm run prepublishOnly
