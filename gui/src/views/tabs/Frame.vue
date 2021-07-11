@@ -16,7 +16,6 @@
 
 <script lang="ts">
 import CheckSec from './CheckSec.vue'
-import SnapShot from './SnapShot.vue'
 import UIDump from './UIDump.vue'
 import Info from './Info.vue'
 import Url from './URL.vue'
@@ -54,7 +53,6 @@ import { Container } from 'golden-layout'
     UserDefaults,
     CheckSec,
     UIDump,
-    SnapShot,
     Info,
     ClassInfo,
     ModuleInfo,

@@ -28,9 +28,6 @@
 
     <p class="menu-label">Inspector</p>
     <ul class="menu-list">
-      <li @click="open('SnapShot', `Screenshot - ${new Date().toLocaleString()}`, { device: $route.params.device })">
-        <b-icon icon="camera" />ScreenShot
-      </li>
       <li @click="open('UIDump', `UI Dump - ${new Date().toLocaleString()}`)">
         <b-icon icon="magnify-scan" />UI Dump
       </li>
