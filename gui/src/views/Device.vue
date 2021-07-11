@@ -1,16 +1,8 @@
 <template>
   <div class="device-info">
     <header class="content">
-      <h1 v-if="lockdown">
-        <img :src="`https://ipsw.me/assets/devices/${info.ProductType}.png`" onerror="this.parentNode.removeChild(this)">
-        {{ info.DeviceName }}
-        iOS {{ info.ProductVersion }} <a
-          target="_blank"
-          :href="`https://ipsw.me/download/${info.ProductType}/${info.BuildVersion}`"
-          title="Download Firmware"
-        >({{ info.BuildVersion }})</a>
-      </h1>
-      <h1 v-else>{{ device }}</h1>
+      <h1 v-if="lockdown">{{ info.name }} {{ info.os.version }}</h1>
+      <h1 v-else>{{ shortened }}</h1>
     </header>
 
     <section>
@@ -18,7 +10,7 @@
         <ul>
           <li :key="app.identifier" v-for="app in apps">
             <router-link :to="{ name: 'General', params: { device, bundle: app.identifier }}">
-              <icon class="icon" :icon="app.largeIcon" :width="32" :height="32"></icon>
+              <img :src="`/api/device/${device}/icon/${app.identifier}`" width="180" height="180">
               <h2>{{ app.name }}</h2>
               <p>{{ app.identifier }}</p>
             </router-link>
@@ -39,11 +31,10 @@
 
     <footer v-if="lockdown">
       <p>
-        Serial: {{ info.SerialNumber }},
-        Bluetooth: {{ info.BluetoothAddress }},
-        Wi-Fi: {{ info.WiFiAddress }},
-        Firmware: {{ info.FirmwareVersion }},
-        Baseband: {{ info.BasebandVersion }}
+        Arch: {{ info.arch }}
+        Version: {{ info.os.version }}
+        Platform: {{ info.platform }}
+        Access: {{ info.access }}
       </p>
     </footer>
   </div>
@@ -54,7 +45,6 @@ import { Route } from 'vue-router'
 import { Component, Vue, Watch } from 'vue-property-decorator'
 import Axios from 'axios'
 
-import Icon from '../components/Icon.vue'
 import Loading from '../components/Loading.vue'
 
 interface Failure {
@@ -64,7 +54,6 @@ interface Failure {
 
 @Component({
   components: {
-    Icon,
     Loading
   }
 })
@@ -76,6 +65,10 @@ export default class Device extends Vue {
   lockdown = false
   screen = true
   error: Failure = {}
+
+  get shortened() {
+    return this.device.substring(0, 8) + '...'
+  }
 
   @Watch('$route', { immediate: true })
   private navigate(route: Route) {
@@ -143,17 +136,11 @@ header {
   padding: 40px;
 
   h1 {
-    > img {
-      height: 32px;
-      margin-right: 0.5rem;
-    }
-
     padding-left: 10px;
     padding-right: 10px;
     font-size: 2rem;
     font-weight: 100;
     top: 0;
-    margin-bottom: 0 !important;
   }
 }
 
@@ -177,42 +164,6 @@ footer {
   flex-direction: column;
 }
 
-.info-side {
-  padding: 20px;
-
-  .phone-screen {
-    @media (max-width: 1800px) {
-      top: 160px;
-    }
-
-    @media (min-width: 1801px) {
-      top: 100px;
-    }
-
-    .toolbar {
-      display: block;
-      position: absolute;
-      left: 0;
-      margin-left: -50px;
-
-      .button {
-        cursor: pointer;
-        display: block;
-        margin-top: 10px;
-        transition: ease-out 0.2s all;
-
-        &:hover {
-          opacity: 1;
-        }
-      }
-
-      .toggle.active {
-        transform: rotate(180deg);
-      }
-    }
-  }
-}
-
 .apps {
   padding: 0 20px;
 
@@ -221,13 +172,11 @@ footer {
     grid-row-gap: 10px;
     grid-column-gap: 10px;
     justify-content: space-around;
-    grid-template-columns: repeat(auto-fill, 320px);
+    grid-template-columns: repeat(auto-fill, 15rem);
   }
 
   ul > li {
-    display: inline-block;
-    margin: 4px;
-    width: 280px;
+    text-align: center;
 
     a {
       display: block;
@@ -242,21 +191,21 @@ footer {
 
     h2 {
       font-size: 1.5rem;
-      margin-left: 42px;
       color: #efefef;
     }
 
     p {
-      margin-left: 42px;
       color: #888;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
-    canvas {
-      float: left;
-      margin: 4px;
+    img {
+      width: 90px;
+      height: 90px;
+      display: block;
+      margin: 1rem auto;
     }
   }
 }

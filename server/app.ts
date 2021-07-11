@@ -16,7 +16,6 @@ import * as transfer from './lib/transfer'
 import Channels from './lib/channels'
 
 import { wrap, tryGetDevice } from './lib/device'
-import { Lockdown } from './lib/lockdown'
 
 import { URL } from 'url'
 import { exec } from 'child_process'
@@ -24,6 +23,7 @@ import { createServer } from 'http'
 import { program } from 'commander'
 import { AddressInfo } from 'net'
 import { concat } from './lib/workspace'
+import { Scope } from 'frida/dist/device'
 
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -46,17 +46,11 @@ router
       list: devices.map(wrap).map(d => d.valueOf())
     }
   })
-  .get('/device/:device/screen', async (ctx) => {
+  .get('/device/:device/apps', async (ctx) => {
     const id = ctx.params.device
     const dev = await tryGetDevice(id)
-    const shot = new Lockdown(dev, 'com.apple.mobile.screenshotr')
-    await shot.connect()
-    shot.send({ 'MessageType': 'ScreenShotRequest' })
-    const response = await shot.recv()
-    ctx.set('Cache-Control', 'max-age=60')
-    ctx.set('Content-Type', 'image/png')
-    ctx.body = response.ScreenShotData
-    shot.close()
+    const apps = await dev.enumerateApplications()
+    ctx.body = apps.map(serialize.app)
   })
   .get('/device/:device/icon/:bundle', async (ctx) => {
     const id = ctx.params.device
@@ -77,13 +71,7 @@ router
   .get('/device/:device/info', async (ctx) => {
     const id = ctx.params.device
     const dev = await tryGetDevice(id)
-    const client = new Lockdown(dev)
-    await client.connect()
-    client.send({
-      'Request': 'GetValue'
-    })
-    const response = await client.recv()
-    ctx.body = response.Value
+    ctx.body = await dev.querySystemParameters()
   })
   .get('/download/:uuid', async (ctx) => {
     const { uuid } = ctx.params
