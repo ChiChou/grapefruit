@@ -14,7 +14,7 @@ const ctx: Context = {}
 class Lazy {
   chain: string[] = []
   ready = false
-  private _pending: Function[] = []
+  private _pending: Handler[] = []
 
   constructor(public socket: Socket) {
     socket.on('ready', () => {
@@ -88,7 +88,7 @@ type Handler = (...args: any[]) => void;
 
 class WS {
   private _ready = false
-  private _pending: Set<Function> = new Set()
+  private _pending: Set<Handler> = new Set()
 
   constructor(public socket: Socket) {
     this.socket.on('ready', () => {

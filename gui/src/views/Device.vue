@@ -99,7 +99,7 @@ export default class Device extends Vue {
           }
         })
         .catch(e => {
-          ;[this.error.title, this.error.stack] = e.response.data.split('\n', 1)
+          [this.error.title, this.error.stack] = e.response.data.split('\n', 1)
           this.apps = []
         })
     ]).finally(() => (this.loading = false))
