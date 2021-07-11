@@ -69,3 +69,64 @@ export function resolve(type: 'objc' | 'module', query: string) {
     return Object.assign({}, item, { module, symbol })
   }) : matches
 }
+
+export function importedModules(name?: string) {
+  const modules = new Set<string>()
+  for (const imp of find(name).enumerateImports()) {
+    if (imp.module)
+      modules.add(imp.module)
+  }
+  return [...modules]
+}
+
+function loadDemangler() {
+  const canidates = ['/usr/lib/swift', '/System/Library/PrivateFrameworks/Swift/']
+  for (const base of canidates) {
+    try {
+      return Module.load(`${base}/libswiftDemangle.dylib`)
+    } catch(e) {
+      continue
+    }
+  }
+}
+
+let cachedSwiftDemangler: (name: string) => string | null
+function swiftDemangle(name: string) {
+  if (cachedSwiftDemangler) return cachedSwiftDemangler(name)
+  const mod = loadDemangler()
+  if (mod) {
+    const demangle = new NativeFunction(mod.findExportByName('swift_demangle_getDemangledName')!, 'uint', ['pointer', 'pointer', 'uint'])
+    cachedSwiftDemangler = (name: string) => {
+      const len = demangle(Memory.allocUtf8String(name), buf, BUF_LEN) as number
+      if (!len) return null
+      return buf.readUtf8String(len)
+    }
+    return cachedSwiftDemangler(name)
+  }
+  return null
+}
+
+function tryDemangle(name: string): string | null {
+  try {
+    if (name.startsWith('_Z')) {
+      return cxaDemangle(name)
+    } else if (name.startsWith('$s')) {
+      return swiftDemangle(name)
+    }
+  } catch(e) {
+
+  }
+  return null
+}
+
+export function imported(module: string, name?: string) {
+  const result = []
+  for (const imp of find(name).enumerateImports()) {
+    if (imp.module === module) {
+      const { name, address, slot, type } = imp
+      const demangled = tryDemangle(name)
+      result.push({ name, address, slot, type, demangled })
+    }
+  }
+  return result
+}
