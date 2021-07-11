@@ -58,11 +58,21 @@ router
     ctx.body = response.ScreenShotData
     shot.close()
   })
-  .get('/device/:device/apps', async (ctx) => {
+  .get('/device/:device/icon/:bundle', async (ctx) => {
     const id = ctx.params.device
     const dev = await tryGetDevice(id)
-    const apps = await dev.enumerateApplications()
-    ctx.body = apps.map(serialize.app)
+    const bundle = ctx.params.bundle
+    const apps = await dev.enumerateApplications({
+      identifiers: [bundle],
+      scope: Scope.Full
+    })
+    if (!apps.length) ctx.throw(404, `app "${bundle}" not found`)
+    const app = apps[0]
+    const { icons } = app.parameters
+    if (!icons || !icons.length) ctx.throw(404, 'icons unavaliable')
+    const icon = icons.find(i => i.format === 'png')
+    if (!icon || !icon.image) ctx.throw(404, 'Invalid icon format. Consider upgrading your frida on device')
+    ctx.body = icon.image
   })
   .get('/device/:device/info', async (ctx) => {
     const id = ctx.params.device

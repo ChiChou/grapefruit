@@ -5,8 +5,8 @@ import { buggy } from './workaround'
 
 export function icon(icon?: Icon): object {
   if (!icon) return
-  const { pixels, height, width, rowstride } = icon
-  return { width, height, rowstride, pixels: pixels.toString('base64') }
+  const { height, width, image, format } = icon
+  return { width, height, image: image.toString('base64'), format }
 }
 
 export function device(dev: Device): object {
@@ -16,12 +16,12 @@ export function device(dev: Device): object {
 }
 
 export function app(app: Application): object {
-  const { name, smallIcon, largeIcon, identifier, pid } = app
+  const { name, parameters, identifier, pid } = app
+  const ico = parameters.icons?.pop()
   return {
     name,
     pid,
     identifier,
-    smallIcon: icon(smallIcon),
-    largeIcon: icon(largeIcon),
+    icon: ico ? icon(ico) : undefined,
   }
 }
