@@ -1,5 +1,8 @@
 <template>
   <div class="pad">
+    <h1>{{ module.name }}</h1>
+    <h2>{{ module.path }}</h2>
+
     <b-tabs>
       <b-tab-item label="Exports">
         <b-table
