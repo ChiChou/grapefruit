@@ -110,7 +110,7 @@ function tryDemangle(name: string): string | null {
   try {
     if (name.startsWith('_Z')) {
       return cxaDemangle(name)
-    } else if (name.startsWith('$s')) {
+    } else if (name.match(/(_T|_?\\$[Ss])[_a-zA-Z0-9$.]+/)) {
       return swiftDemangle(name)
     }
   } catch(e) {
