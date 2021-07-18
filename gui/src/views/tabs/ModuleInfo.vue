@@ -61,8 +61,8 @@
         </b-field>
         <ul>
           <li class="symbol" v-for="(sym, index) in symbols.list" :key="index">
-            <b-field class="actions" v-if="sym.type === 'function'">
-              <b-button icon-left="open-in-new" 
+            <b-field class="actions">
+              <b-button icon-left="open-in-new" :disabled="sym.type !== 'function'"
                 @click="$bus.$emit('openTab', 'Disasm', 'Disasm @' + sym.address, { addr: sym.address })" />
             </b-field>
             <b-icon icon="comma" />
