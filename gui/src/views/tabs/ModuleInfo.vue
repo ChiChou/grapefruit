@@ -204,9 +204,12 @@ export default class ModuleInfo extends Base {
 
   view(sym: Symbol) {}
 
-  copy(mod: string, name: string) {
-    this.codeTemplate.module = mod
-    this.codeTemplate.name = name
+  copy(module: string, name: string, type: string) {
+    this.codeTemplate = {
+      module,
+      name,
+      type
+    }
     this.isCopyCodeActive = true
   }
 
