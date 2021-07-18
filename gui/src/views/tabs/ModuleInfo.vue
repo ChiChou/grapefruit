@@ -1,5 +1,5 @@
 <template>
-  <div class="pad">
+  <div class="pad module-info">
     <h1 class="title">{{ module.name }}</h1>
     <h2 class="subtitle">{{ module.path }}</h2>
 
@@ -38,6 +38,18 @@
           <li class="symbol" v-for="(exp, index) in exps.list" :key="index">
             <b-icon :icon="exp.type" />
             <code>{{ exp.address }}</code>
+              <b-field class="actions">
+                <p class="control">
+                  <b-button icon-left="hook" />
+                </p>
+                <p class="control">
+                  <b-button icon-left="code-tags" />
+                </p>
+                <p class="control">
+                  <b-button icon-left="open-in-new" :disabled="exp.type !== 'function'"
+                    @click="$bus.$emit('openTab', 'Disasm', 'Disasm @' + exp.address, { addr: exp.address })"/>
+                </p>
+              </b-field>
             <span class="symbol-name">{{ exp.demangled || exp.name }}</span>
           </li>
         </ul>
@@ -49,16 +61,25 @@
         </b-field>
         <ul>
           <li class="symbol" v-for="(sym, index) in symbols.list" :key="index">
-            <b-icon icon="function" v-if="sym.g" />
-            <code>{{ sym.a }}</code>
-            <span class="symbol-name">{{ sym.n }}</span>
+            <b-field class="actions" v-if="sym.type === 'function'">
+              <b-button icon-left="open-in-new" 
+                @click="$bus.$emit('openTab', 'Disasm', 'Disasm @' + sym.address, { addr: sym.address })" />
+            </b-field>
+            <b-icon icon="comma" />
+            <code>{{ sym.address }}</code>
+            <span class="symbol-name">{{ sym.demangled || sym.name }}</span>
           </li>
         </ul>
         <p v-if="symbols.count > 200">Showing 200 items of {{ symbols.count }}</p>
       </b-tab-item>
       <b-tab-item label="Classes">
         <ul>
-          <li v-for="(clazz, index) in classes" :key="index">{{ clazz }}</li>
+          <li v-for="(clazz, index) in classes" :key="index" class="symbol">
+            <b-icon icon="code-braces" />
+            <a @click="$bus.$emit('openTab', 'ClassInfo', 'Class: ' + clazz, { name: clazz })">
+              <span class="symbol-name">{{ clazz }}</span>
+            </a>
+          </li>
         </ul>
       </b-tab-item>
     </b-tabs>
@@ -69,22 +90,21 @@
 // eslint-disable-next-line
 /// <reference path="../../frida.shim.d.ts" />
 
-import { BuefyNamespace } from 'buefy';
 import debounce from 'lodash.debounce'
 import { Component, Prop, Watch } from 'vue-property-decorator'
 import Base from './Base.vue'
 
-interface NativeSymbol {
-  type: string;
+type SymbolKind = 'function' | 'variable' | 'class';
+
+interface Import {
   address: string;
   name: string;
+  type: SymbolKind;
 }
-
-type SymbolKind = 'function' | 'variable';
 
 interface Group {
   path: string;
-  imps: string[];
+  imps: Import[];
   expanded: boolean;
   loading: boolean;
 }
@@ -102,10 +122,11 @@ interface Exports {
 }
 
 interface Symbol {
-  n: string;
-  g: boolean;
-  a: string;
-  t: SymbolKind;
+  name: string;
+  demangled?: string;
+  global: boolean;
+  address: string;
+  type?: SymbolKind;
 }
 
 interface Symbols {
@@ -146,6 +167,8 @@ export default class ModuleInfo extends Base {
   async loadSymbols(keyword: string) {
     this.symbols = await this.$rpc.symbol.symbols(this.module.name, keyword)
   }
+
+  view(sym: Symbol) {}
 
   @Watch('activeTab')
   onTabChanged(tab: number) {
@@ -201,13 +224,13 @@ export default class ModuleInfo extends Base {
     this.expandAllLoading = false
   }
 
-  disasm(item: NativeSymbol) {
-    const classPrefix = 'OBJC_CLASS_$_'
-    if (item.type === 'variable' && item.name.startsWith(classPrefix)) {
-      const name = item.name.substring(classPrefix.length)
+  viewImport(imp: Import) {
+    const PREFIX = 'OBJC_CLASS_$_'
+    if (imp.type === 'variable' && imp.name.startsWith(PREFIX)) {
+      const name = imp.name.substring(PREFIX.length)
       this.$bus.$emit('openTab', 'ClassInfo', 'Class: ' + name, { name })
-    } else if (item.type === 'function') {
-      const addr = item.address
+    } else if (imp.type === 'function') {
+      const addr = imp.address
       this.$bus.$emit('openTab', 'Disasm', 'Disasm @' + addr, { addr })
     }
   }
@@ -215,22 +238,33 @@ export default class ModuleInfo extends Base {
 </script>
 
 <style lang="scss">
-.symbol {
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
-.symbol-name {
-  font-family: monospace;
-}
+.module-info {
+  .symbol {
+    font-size: 1.25rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
 
-.imports-group {
-  > span {
-    cursor: pointer;
+    &:hover {
+      background: rgba(0, 0, 0, .1)
+    }
   }
-}
+  .symbol-name {
+    font-family: monospace;
+  }
 
-ul.imports li > ul {
-  margin-left: 1rem;
+  .imports-group {
+    > span {
+      cursor: pointer;
+    }
+  }
+
+  ul.imports li > ul {
+    margin-left: 1rem;
+  }
+
+  .actions {
+    float: right;
+  }
 }
 </style>
