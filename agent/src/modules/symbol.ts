@@ -63,7 +63,7 @@ export function exps(name: string) {
 }
 
 export function resolve(type: 'objc' | 'module', query: string) {
-  const matches = new ApiResolver(type).enumerateMatches(query)  
+  const matches = new ApiResolver(type).enumerateMatches(query)
   return type === 'module' ? matches.map(item => {
     const [module, symbol] = item.name.split('!', 2)
     return Object.assign({}, item, { module, symbol })
@@ -84,7 +84,7 @@ function loadDemangler() {
   for (const base of canidates) {
     try {
       return Module.load(`${base}/libswiftDemangle.dylib`)
-    } catch(e) {
+    } catch (e) {
       continue
     }
   }
@@ -113,20 +113,60 @@ function tryDemangle(name: string): string | null {
     } else if (name.match(/(_T|_?\\$[Ss])[_a-zA-Z0-9$.]+/)) {
       return swiftDemangle(name)
     }
-  } catch(e) {
+  } catch (e) {
 
   }
   return null
 }
 
-export function imported(module: string, name?: string) {
-  const result = []
-  for (const imp of find(name).enumerateImports()) {
-    if (imp.module === module) {
+export function imported(name: string, module: string) {
+  const unique = new Set<number>()
+  return find(name).enumerateImports()
+    .filter(imp => imp.module === module)
+    .filter(imp => {
+      if (!imp.address) return false
+      const key = imp.address.toInt32()
+      if (unique.has(key)) return false
+      unique.add(key)
+      return true
+    })
+    .map(imp => {
       const { name, address, slot, type } = imp
       const demangled = tryDemangle(name)
-      result.push({ name, address, slot, type, demangled })
+      return { name, address, slot, type, demangled }
+    })
+}
+
+export function symbols(name?: string, keyword?: string) {
+  let canidates = find(name).enumerateSymbols()
+  if (typeof keyword === 'string' && keyword.length)
+    canidates = canidates.filter(sym => sym.name.toLowerCase().includes(keyword.toLowerCase()))
+
+  return {
+    count: canidates.length,
+    list: canidates.slice(0, 200)
+      .filter(sym => sym.name !== '<redacted>')
+      .map(sym => {
+        return {
+          n: sym.name,
+          g: sym.isGlobal,
+          a: sym.address
+        }
+      })
     }
+}
+
+export function exported(name?: string, keyword?: string) {
+  let canidates = find(name).enumerateExports()
+  if (typeof keyword === 'string' && keyword.length)
+    canidates = canidates.filter(exp => exp.name.toLowerCase().includes(keyword.toLowerCase()))
+
+  return {
+    count: canidates.length,
+    list: canidates.slice(0, 200).map(exp => {
+      const { name, address, type } = exp
+      const demangled = tryDemangle(exp.name)
+      return { name, address, type, demangled }
+    })
   }
-  return result
 }
