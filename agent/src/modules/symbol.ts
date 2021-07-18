@@ -139,18 +139,27 @@ export function imported(name: string, module: string) {
 
 export function symbols(name?: string, keyword?: string) {
   let canidates = find(name).enumerateSymbols()
+    .filter(sym => sym.name !== '<redacted>' && !sym.address.isNull())
+
   if (typeof keyword === 'string' && keyword.length)
     canidates = canidates.filter(sym => sym.name.toLowerCase().includes(keyword.toLowerCase()))
 
   return {
     count: canidates.length,
     list: canidates.slice(0, 200)
-      .filter(sym => sym.name !== '<redacted>')
       .map(sym => {
+        const { name, address } = sym
+        const demangled = tryDemangle(name)
+        let type = undefined
+        if (sym.name !== '_mh_execute_header' && sym.section?.id.endsWith('__TEXT.__text')) {
+          type = 'function'
+        }
         return {
-          n: sym.name,
-          g: sym.isGlobal,
-          a: sym.address
+          global: sym.isGlobal,
+          type,
+          name,
+          demangled,
+          address
         }
       })
     }
