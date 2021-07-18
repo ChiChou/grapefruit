@@ -6,8 +6,8 @@
     <b-tabs v-model="activeTab" expanded :animated="false">
       <b-tab-item label="Imports">
         <header>
-          <b-button @click="expandOrFold(true)" icon-left="plus" :loading="expandAllLoading">Expand All</b-button>
-          <b-button @click="expandOrFold(false)" icon-left="minus">Fold All</b-button>
+          <b-button @click="expandOrCollapse(true)" icon-left="plus" :loading="expandAllLoading">Expand All</b-button>
+          <b-button @click="expandOrCollapse(false)" icon-left="minus">Collapse All</b-button>
         </header>
 
         <ul class="imports">
@@ -213,7 +213,7 @@ export default class ModuleInfo extends Base {
     }
   }
 
-  async expandOrFold(expand: boolean) {
+  async expandOrCollapse(expand: boolean) {
     if (expand)
       this.expandAllLoading = true
     for (const group of this.importGroups) {
