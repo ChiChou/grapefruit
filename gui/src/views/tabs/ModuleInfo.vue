@@ -6,7 +6,7 @@
     <b-tabs v-model="activeTab" expanded :animated="false">
       <b-tab-item label="Imports">
         <header>
-          <b-button @click="expandOrFold(true)" icon-left="plus">Expand All</b-button>
+          <b-button @click="expandOrFold(true)" icon-left="plus" :loading="expandAllLoading">Expand All</b-button>
           <b-button @click="expandOrFold(false)" icon-left="minus">Fold All</b-button>
         </header>
 
@@ -137,6 +137,8 @@ export default class ModuleInfo extends Base {
   keywordOfExport = ''
   keywordOfSymbol = ''
 
+  expandAllLoading = false
+
   async loadExported(keyword: string) {
     this.exps = await this.$rpc.symbol.exported(this.module.name, keyword)
   }
@@ -189,11 +191,14 @@ export default class ModuleInfo extends Base {
   }
 
   async expandOrFold(expand: boolean) {
+    if (expand)
+      this.expandAllLoading = true
     for (const group of this.importGroups) {
       if (expand && !group.expanded)
         await this.expandImportsGroup(group)
       group.expanded = expand
     }
+    this.expandAllLoading = false
   }
 
   disasm(item: NativeSymbol) {
