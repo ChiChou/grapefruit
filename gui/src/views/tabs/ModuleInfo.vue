@@ -43,7 +43,8 @@
                   <b-button icon-left="hook" />
                 </p>
                 <p class="control">
-                  <b-button icon-left="code-tags" />
+                  <b-button icon-left="code-tags"
+                    @click="copy(module.name, exp.name, exp.type)" />
                 </p>
                 <p class="control">
                   <b-button icon-left="open-in-new" :disabled="exp.type !== 'function'"
@@ -83,6 +84,26 @@
         </ul>
       </b-tab-item>
     </b-tabs>
+
+    <b-modal :active.sync="isCopyCodeActive" 
+        aria-role="dialog"
+        aria-label="Example Modal"
+        aria-modal>
+      <h1>Hook Template</h1>
+      <pre v-if="codeTemplate.type !== 'function'">
+Module.getExportByName('{{ codeTemplate.module }}', '{{ codeTemplate.name }}').readPointer()</pre>
+      <pre v-else>
+Interceptor.attach(
+  Module.getExportByName('{{ codeTemplate.module }}', '{{ codeTemplate.name }}'),
+  {
+    onEnter(args) {
+      console.log('{{ codeTemplate.name }} has been called')
+    },
+    onLeave(retval) {
+
+    }
+  })</pre>
+    </b-modal>
   </div>
 </template>
 
@@ -134,6 +155,12 @@ interface Symbols {
   list: Symbol[];
 }
 
+interface CodeSample {
+  name: string;
+  module: string;
+  type: string;
+}
+
 @Component({
   watch: {
     keywordOfExport: debounce(function(this: ModuleInfo, newVal: string) {
@@ -160,6 +187,13 @@ export default class ModuleInfo extends Base {
 
   expandAllLoading = false
 
+  isCopyCodeActive = false
+  codeTemplate: CodeSample = {
+    module: '',
+    name: '',
+    type: ''
+  }
+
   async loadExported(keyword: string) {
     this.exps = await this.$rpc.symbol.exported(this.module.name, keyword)
   }
@@ -169,6 +203,12 @@ export default class ModuleInfo extends Base {
   }
 
   view(sym: Symbol) {}
+
+  copy(mod: string, name: string) {
+    this.codeTemplate.module = mod
+    this.codeTemplate.name = name
+    this.isCopyCodeActive = true
+  }
 
   @Watch('activeTab')
   onTabChanged(tab: number) {
