@@ -52,29 +52,25 @@ export function search(scope: Scope | string[] | string, keyword?: string): stri
   return all.filter(name => query.test(name))
 }
 
-export function ivars(clazz: string) {
-  const cls = ObjC.classes[clazz]
-  if (!cls) throw new Error('Unknown class ' + clazz)
-
+function copyIvars(clazz: ObjC.Object) {
   const { pointerSize } = Process
   const numIvarsBuf = Memory.alloc(pointerSize)
-  const ivarHandles = ObjC.api.class_copyIvarList(cls, numIvarsBuf)
-  const fields: string[] = []
+  const ivarHandles = ObjC.api.class_copyIvarList(clazz.handle, numIvarsBuf)
+  const result: { [offset: string]: string } = {}
+
   try {
-    const numIvars = numIvarsBuf.readUInt();
-    for (let i = 0; i < numIvars; i++) {
+    const numIvars = numIvarsBuf.readUInt()
+    for (let i = 0, offset = pointerSize; i < numIvars; i++) {
       const handle = ivarHandles.add(i * pointerSize).readPointer()
       const name = ObjC.api.ivar_getName(handle).readUtf8String() as string
-      fields.push(name)
+      offset += pointerSize
+      result[offset.toString()] = name
     }
   } finally {
     ObjC.api.free(ivarHandles)
   }
 
-  return {
-    pointerSize,
-    fields
-  }
+  return result
 }
 
 export function hierarchy(scope: string): Tree<string> {
@@ -133,6 +129,7 @@ export function inspect(clazz: string) {
 
   const module = cls.$moduleName
   const own = cls.$ownMethods
+  const ivars = copyIvars(cls)
 
   const prototypeChain = []
   while (cls = cls.$superClass)
@@ -143,6 +140,7 @@ export function inspect(clazz: string) {
     methods,
     prototypeChain,
     own,
+    ivars,
     module
   }
 }
