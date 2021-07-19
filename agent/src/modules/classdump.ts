@@ -63,8 +63,8 @@ function copyIvars(clazz: ObjC.Object) {
     for (let i = 0, offset = pointerSize; i < numIvars; i++) {
       const handle = ivarHandles.add(i * pointerSize).readPointer()
       const name = ObjC.api.ivar_getName(handle).readUtf8String() as string
+      result['0x' + offset.toString(16)] = name
       offset += pointerSize
-      result[offset.toString()] = name
     }
   } finally {
     ObjC.api.free(ivarHandles)

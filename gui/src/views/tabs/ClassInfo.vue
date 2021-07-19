@@ -57,7 +57,7 @@
 
       <b-tab-item label="ivars" class="content" icon="format-list-bulleted">
         <ul>
-          <li v-for="(name, offset) in clazz.ivars" :key="offset">{{ name }}</li>
+          <li v-for="(name, offset) in clazz.ivars" :key="offset"><code>{{ offset }}</code> {{ name }}</li>
           <li v-if="!clazz.ivars || !Object.keys(clazz.ivars).length">This class doesn't have any ivar</li>
         </ul>
       </b-tab-item>
