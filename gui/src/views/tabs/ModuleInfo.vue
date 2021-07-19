@@ -12,11 +12,11 @@
 
         <ul class="imports">
           <li v-for="(group, i) in importGroups" :key="i" class="imports-group">
-            <span @click="expandImportsGroup(group)">
+            <div @click="expandImportsGroup(group)" class="expand">
               <b-icon icon="loading" custom-class="mdi-loading mdi-spin" v-if="group.loading" />
               <b-icon :icon="group.expanded ? 'minus-box' : 'plus-box' " v-else />
               {{ group.path }}
-            </span>
+            </div>
 
             <ul v-if="group.expanded">
               <li v-for="(imp, j) in group.imps" :key="j" class="symbol">
@@ -297,7 +297,7 @@ export default class ModuleInfo extends Base {
   }
 
   .imports-group {
-    > span {
+    .expand {
       cursor: pointer;
     }
   }
