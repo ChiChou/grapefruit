@@ -3,7 +3,7 @@
     <h1 class="title">{{ module.name }}</h1>
     <h2 class="subtitle">{{ module.path }}</h2>
 
-    <b-tabs v-model="activeTab" expanded :animated="false">
+    <b-tabs expanded :animated="false">
       <b-tab-item label="Imports">
         <header>
           <b-button @click="expandOrCollapse(true)" icon-left="plus" :loading="expandAllLoading">Expand All</b-button>
@@ -223,32 +223,29 @@ export default class ModuleInfo extends Base {
     this.isCopyCodeActive = true
   }
 
-  @Watch('activeTab')
-  onTabChanged(tab: number) {
-    const loaders = [
-      () => this.$rpc.symbol.importedModules(this.module.name).then((imps: string[]) => {
-        this.importGroups = imps.map(path => {
-          return {
-            path,
-            imps: [],
-            expanded: false,
-            loading: false
-          }
-        })
-      }),
-      () => this.loadExported(this.keywordOfExport),
-      () => this.loadSymbols(this.keywordOfSymbol),
-      () => this.$rpc.classdump.list(this.module.path).then((classes: string[]) => {
-        this.classes = classes
+  async load() {
+    this.loading = true
+    try {
+      const imps = await this.$rpc.symbol.importedModules(this.module.name) as strings[]
+      this.importGroups = imps.map(path => {
+        return {
+          path,
+          imps: [],
+          expanded: false,
+          loading: false
+        }
       })
-    ]
 
-    this.tabLoading[tab] = true
-    loaders[tab].call(this).finally(() => { this.tabLoading[tab] = false })
+      await this.loadExported(this.keywordOfExport)
+      await this.loadSymbols(this.keywordOfSymbol)
+      this.classes = await this.$rpc.classdump.list(this.module.path)
+    } finally {
+      this.loading = false
+    }
   }
 
   mounted() {
-    this.onTabChanged(0)
+    this.load()
   }
 
   async expandImportsGroup(group: Group) {
@@ -292,6 +289,11 @@ export default class ModuleInfo extends Base {
       const addr = entry.address
       this.$bus.$emit('openTab', 'Disasm', 'Disasm @' + addr, { addr })
     }
+  }
+
+  hook(entry: Import | Export | Symbol) {
+    // entry.name
+    // entry.address
   }
 }
 </script>
