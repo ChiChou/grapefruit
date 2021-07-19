@@ -81,28 +81,27 @@ export default class Device extends Vue {
     this.lockdown = false
     this.error = {}
 
-    Promise.all([
-      Axios.get(`/device/${device}/info`)
-        .then(({ data }) => {
-          this.info = data
-          this.lockdown = true
-        })
-        .catch(() => {
-          this.info = {}
-          this.lockdown = false
-        }),
-      Axios.get(`/device/${device}/apps`)
-        .then(({ data }) => {
-          this.apps = data
-          if (!data.length) {
-            this.error.title = 'Unable to retrieve apps from this device'
-          }
-        })
-        .catch(e => {
-          [this.error.title, this.error.stack] = e.response.data.split('\n', 1)
-          this.apps = []
-        })
-    ]).finally(() => (this.loading = false))
+    Axios.get(`/device/${device}/info`)
+      .then(({ data }) => {
+        this.info = data
+        this.lockdown = true
+      })
+      .catch(() => {
+        this.info = {}
+        this.lockdown = false
+      })
+      .then(() => Axios.get(`/device/${device}/apps`))
+      .then(({ data }) => {
+        this.apps = data
+        if (!data.length) {
+          this.error.title = 'Unable to retrieve apps from this device'
+        }
+      })
+      .catch(e => {
+        [this.error.title, this.error.stack] = e.response.data.split('\n', 1)
+        this.apps = []
+      })  
+      .finally(() => (this.loading = false))
   }
 }
 </script>
