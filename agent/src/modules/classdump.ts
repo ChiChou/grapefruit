@@ -52,6 +52,31 @@ export function search(scope: Scope | string[] | string, keyword?: string): stri
   return all.filter(name => query.test(name))
 }
 
+export function ivars(clazz: string) {
+  const cls = ObjC.classes[clazz]
+  if (!cls) throw new Error('Unknown class ' + clazz)
+
+  const { pointerSize } = Process
+  const numIvarsBuf = Memory.alloc(pointerSize)
+  const ivarHandles = ObjC.api.class_copyIvarList(cls, numIvarsBuf)
+  const fields: string[] = []
+  try {
+    const numIvars = numIvarsBuf.readUInt();
+    for (let i = 0; i < numIvars; i++) {
+      const handle = ivarHandles.add(i * pointerSize).readPointer()
+      const name = ObjC.api.ivar_getName(handle).readUtf8String() as string
+      fields.push(name)
+    }
+  } finally {
+    ObjC.api.free(ivarHandles)
+  }
+
+  return {
+    pointerSize,
+    fields
+  }
+}
+
 export function hierarchy(scope: string): Tree<string> {
   const classes = list(scope)
   const tree: Tree<string> = {}
@@ -95,19 +120,18 @@ export function inspect(clazz: string) {
   let cls = ObjC.classes[clazz]
   if (!cls) throw new Error(`class ${clazz} not found`)
 
-  const methods: {[key: string]: Method } = {}
+  const methods: { [key: string]: Method } = {}
   cls.$methods.forEach(name => {
     const impl = cls[name].implementation.toString()
     methods[name] = { name, impl }
   })
 
-  const protocols = JSON.parse(JSON.stringify(cls.$protocols)) as {[key: string]: ObjC.Protocol}
+  const protocols = JSON.parse(JSON.stringify(cls.$protocols)) as { [key: string]: ObjC.Protocol }
   for (const protocol of Object.values(protocols)) {
     if (protocol.protocols) protocol.protocols = {}
   }
 
   const module = cls.$moduleName
-  const ivars = Object.keys(cls.$ivars)
   const own = cls.$ownMethods
 
   const prototypeChain = []
@@ -119,7 +143,6 @@ export function inspect(clazz: string) {
     methods,
     prototypeChain,
     own,
-    ivars,
     module
   }
 }
