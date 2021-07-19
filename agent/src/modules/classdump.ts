@@ -63,7 +63,7 @@ function copyIvars(clazz: ObjC.Object) {
     for (let i = 0; i < numIvars; i++) {
       const handle = ivarHandles.add(i * pointerSize).readPointer()
       const name = ObjC.api.ivar_getName(handle).readUtf8String() as string
-      const offset = ObjC.api.ivar_getOffset(handle).toString(16)
+      const offset = '0x' + ObjC.api.ivar_getOffset(handle).toString(16)
       result[offset] = name
     }
   } finally {
