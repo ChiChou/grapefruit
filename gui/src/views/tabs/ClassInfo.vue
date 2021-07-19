@@ -29,7 +29,7 @@
             </b-checkbox>
           </b-field>
         <ul>
-          <li class="monospace" v-for="(sel, index) in selectors" :key="index">
+          <li class="monospace method" v-for="(sel, index) in selectors" :key="index">
             <a @click="$bus.$emit('openTab', 'Disasm', 'Disassembly @' + sel.impl, { addr: sel.impl })">@{{ sel.impl }}</a>
             {{ sel.name }}
           </li>
@@ -158,6 +158,10 @@ h1, h2 {
 
 .monospace {
   font-family: "Fira Code", monospace;
+}
+
+.method:hover {
+  background: rgba(0, 0, 0, .1);
 }
 
 .protocols > li {

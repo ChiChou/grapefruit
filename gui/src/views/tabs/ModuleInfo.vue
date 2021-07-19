@@ -23,6 +23,18 @@
                 <b-icon :icon="imp.type" />
                 <code>{{ imp.address }}</code>
                 <span class="symbol-name">{{ imp.demangled || imp.name }}</span>
+                <b-field class="actions">
+                  <p class="control">
+                    <b-button icon-left="hook" />
+                  </p>
+                  <p class="control">
+                    <b-button icon-left="code-tags"
+                      @click="copy(group.path, imp.name, imp.type)" />
+                  </p>
+                  <p class="control">
+                    <b-button icon-left="open-in-new" :disabled="!clickable(imp)" @click="view(imp)" />
+                  </p>
+                </b-field>
               </li>
             </ul>
 
@@ -38,20 +50,20 @@
           <li class="symbol" v-for="(exp, index) in exps.list" :key="index">
             <b-icon :icon="exp.type" />
             <code>{{ exp.address }}</code>
-              <b-field class="actions">
-                <p class="control">
-                  <b-button icon-left="hook" />
-                </p>
-                <p class="control">
-                  <b-button icon-left="code-tags"
-                    @click="copy(module.name, exp.name, exp.type)" />
-                </p>
-                <p class="control">
-                  <b-button icon-left="open-in-new" :disabled="exp.type !== 'function'"
-                    @click="$bus.$emit('openTab', 'Disasm', 'Disasm @' + exp.address, { addr: exp.address })"/>
-                </p>
-              </b-field>
-            <span class="symbol-name">{{ exp.demangled || exp.name }}</span>
+            <b-field class="actions">
+              <p class="control">
+                <b-button icon-left="hook" />
+              </p>
+              <p class="control">
+                <b-button icon-left="code-tags"
+                  @click="copy(module.name, exp.name, exp.type)" />
+              </p>
+              <p class="control">
+                <b-button icon-left="open-in-new" :disabled="!clickable(exp)" @click="view(exp)" />
+              </p>
+            </b-field>
+            <a v-if="clickable(exp)" @click="view(exp)"><span class="symbol-name">{{ exp.demangled || exp.name }}</span></a>
+            <span v-else class="symbol-name">{{ exp.demangled || exp.name }}</span>
           </li>
         </ul>
         <p v-if="exps.count > 200">Showing 200 items of {{ exps.count }}</p>
@@ -63,12 +75,12 @@
         <ul>
           <li class="symbol" v-for="(sym, index) in symbols.list" :key="index">
             <b-field class="actions">
-              <b-button icon-left="open-in-new" :disabled="sym.type !== 'function'"
-                @click="$bus.$emit('openTab', 'Disasm', 'Disasm @' + sym.address, { addr: sym.address })" />
+              <b-button icon-left="open-in-new" :disabled="!clickable(sym)" @click="view(sym)" />
             </b-field>
             <b-icon icon="comma" />
             <code>{{ sym.address }}</code>
-            <span class="symbol-name">{{ sym.demangled || sym.name }}</span>
+            <a v-if="clickable(sym)" @click="view(sym)"><span class="symbol-name">{{ sym.demangled || sym.name }}</span></a>
+            <span v-else class="symbol-name">{{ sym.demangled || sym.name }}</span>
           </li>
         </ul>
         <p v-if="symbols.count > 200">Showing 200 items of {{ symbols.count }}</p>
@@ -202,8 +214,6 @@ export default class ModuleInfo extends Base {
     this.symbols = await this.$rpc.symbol.symbols(this.module.name, keyword)
   }
 
-  view(sym: Symbol) {}
-
   copy(module: string, name: string, type: string) {
     this.codeTemplate = {
       module,
@@ -267,13 +277,19 @@ export default class ModuleInfo extends Base {
     this.expandAllLoading = false
   }
 
-  viewImport(imp: Import) {
+  clickable(entry: Import | Export | Symbol) {
     const PREFIX = 'OBJC_CLASS_$_'
-    if (imp.type === 'variable' && imp.name.startsWith(PREFIX)) {
-      const name = imp.name.substring(PREFIX.length)
+    if (entry.name.startsWith(PREFIX) && entry.type === 'variable') return true
+    if (entry.type === 'function') return true
+  }
+
+  view(entry: Import | Export | Symbol) {
+    const PREFIX = 'OBJC_CLASS_$_'
+    if (entry.name.startsWith(PREFIX) && entry.type === 'variable') {
+      const name = entry.name.substring(PREFIX.length)
       this.$bus.$emit('openTab', 'ClassInfo', 'Class: ' + name, { name })
-    } else if (imp.type === 'function') {
-      const addr = imp.address
+    } else if (entry.type === 'function') {
+      const addr = entry.address
       this.$bus.$emit('openTab', 'Disasm', 'Disasm @' + addr, { addr })
     }
   }
