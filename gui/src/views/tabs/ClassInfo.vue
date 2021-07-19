@@ -57,8 +57,8 @@
 
       <b-tab-item label="ivars" class="content" icon="format-list-bulleted">
         <ul>
-          <li v-for="(k, index) in clazz.ivars" :key="index">{{ k }}</li>
-          <li v-if="!clazz.ivars || !clazz.ivars.length">This class doesn't have any ivar</li>
+          <li v-for="(name, offset) in clazz.ivars" :key="offset">{{ name }}</li>
+          <li v-if="!clazz.ivars || !Object.keys(clazz.ivars).length">This class doesn't have any ivar</li>
         </ul>
       </b-tab-item>
     </b-tabs>
@@ -81,7 +81,7 @@ interface Info {
   methods: { [key: string]: Method };
   prototypeChain?: string[];
   own?: string[];
-  ivars?: string[];
+  ivars?: { [offset: string]: string };
   module?: string;
 }
 
