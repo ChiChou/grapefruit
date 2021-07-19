@@ -151,9 +151,12 @@ export function symbols(name?: string, keyword?: string) {
         const { name, address } = sym
         const demangled = tryDemangle(name)
         let type = undefined
-        if (sym.name !== '_mh_execute_header' && sym.section?.id.endsWith('__TEXT.__text')) {
+        if (sym.name !== '_mh_execute_header' && sym.section?.id.endsWith('__TEXT.__text'))
           type = 'function'
-        }
+
+        if (sym.name.startsWith('OBJC_CLASS_$_'))
+          type = 'variable'
+
         return {
           global: sym.isGlobal,
           type,
