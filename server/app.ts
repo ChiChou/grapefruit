@@ -39,11 +39,19 @@ const mgr = frida.getDeviceManager()
 
 router
   .get('/devices', async (ctx) => {
+    const unique = new Set()
     const devices = await mgr.enumerateDevices()
+
     ctx.body = {
       version: require('frida/package.json').version,
       node: process.version,
-      list: devices.map(wrap).map(d => d.valueOf())
+      list: devices.filter(dev => {
+        if (unique.has(dev.id))
+          return false
+
+        unique.add(dev.id)
+        return true
+      }).map(wrap).map(d => d.valueOf())
     }
   })
   .get('/device/:device/apps', async (ctx) => {
