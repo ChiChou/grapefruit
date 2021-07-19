@@ -226,7 +226,7 @@ export default class ModuleInfo extends Base {
   async load() {
     this.loading = true
     try {
-      const imps = await this.$rpc.symbol.importedModules(this.module.name) as strings[]
+      const imps = await this.$rpc.symbol.importedModules(this.module.name) as string[]
       this.importGroups = imps.map(path => {
         return {
           path,
