@@ -164,7 +164,7 @@ export function list(withfaceId = false): object[] {
     entitlementGroup: C.kSecAttrAccessGroup,
     generic: C.kSecAttrGeneric,
     service: C.kSecAttrService,
-    account: C.kSecAttrAccount,
+    // account: C.kSecAttrAccount,
     label: C.kSecAttrLabel,
     data: C.kSecValueData
   }
@@ -189,6 +189,20 @@ export function list(withfaceId = false): object[] {
 
       for (const [key, attr] of Object.entries(KEY_MAPPING)) {
         readable[key] = valueOf(item.objectForKey_(attr))
+      }
+
+      const account = item.objectForKey_(C.kSecAttrAccount)
+      if (account) {
+        readable['account'] = (
+          account.isKindOfClass_(ObjC.classes.NSData) ?
+            ObjC.classes.NSString.alloc().initWithData_encoding_(account, 4) :
+            account
+          ).toString()
+      }
+
+      const data = item.objectForKey_(C.kSecValueData)
+      if (data) {
+        readable['raw'] = data.base64EncodedStringWithOptions_(0).toString()
       }
 
       result.push(readable)

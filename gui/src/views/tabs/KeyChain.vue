@@ -21,6 +21,7 @@
         </b-table-column>
 
         <b-table-column field="data" label="Data">
+          <a :download="props.row.label || props.row.account || 'download'" :href="'data:application/octet-stream;base64,' + props.row.raw"><b-icon icon="download" /></a>
           <code class="break-all">{{ props.row.data }}</code>
         </b-table-column>
 
@@ -120,7 +121,12 @@ export default class KeyChain extends Base {
 <style lang="scss">
 .b-table .table tr.detail {
   background: #282f2f;
-  box-shadow: inset 0 1px 3px #000000d6;
+  box-shadow: inset 0 1px 3px #000000d6;  
+}
+
+.break-all {
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .authenticator {
