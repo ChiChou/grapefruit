@@ -150,7 +150,7 @@ export default class Channels {
           console.log('implement me: script message')
         })
         .on('console', (uuid: string, level: string, text: string) => {
-          socket.emit('richconsole', { uuid, level, value: text })
+          socket.emit('console', level, text)
         })
       
       socket.on('userscript', async (source: string, uuid: string, ack: Function) => {
