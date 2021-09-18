@@ -41,13 +41,6 @@ export class ExDevice {
     const pid = await this.device.spawn(bundle)
     const session = await this.device.attach(pid)
     await this.device.resume(pid)
-
-    const probe = await session.createScript(`
-      Module.ensureInitialized('Foundation'); rpc.exports.ok = function() { return true }`)
-
-    await probe.load()
-    const ok = await retry(probe.exports.ok.bind(probe.exports))
-    if (!ok) throw new EarlyInstrumentError(bundle)
     return session
   }
 
