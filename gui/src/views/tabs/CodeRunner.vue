@@ -20,7 +20,8 @@
     <footer class="output content">
       <ol type="1" class="messages">
         <li v-for="(log, i) in logs" :key="i">
-          <data-field class="plist dark" :depth="0" :field="{ value: log.value }" />
+          <p><code>{{ log.source }}</code></p>
+          <p><data-field class="plist dark" :depth="0" :field="{ value: log.result }" /></p>
         </li>
       </ol>
     </footer>
@@ -36,6 +37,17 @@ import { extname, rem2px } from '../../utils'
 import DataField from '../../components/DataField.vue'
 import Base from './Base.vue'
 
+interface Pair {
+  source: string;
+  result: string;
+}
+
+function truncate(text: string) {
+  const LEN = 64
+  const shorten = text.length > LEN ? text.substring(0, LEN) + '...' : text
+  return shorten
+}
+
 @Component({
   components: {
     DataField
@@ -49,7 +61,7 @@ export default class CodeRunner extends Base {
 
   path = ''
 
-  logs: object[] = []
+  logs: Pair[] = []
 
   uuid: string = ''
 
@@ -109,12 +121,6 @@ export default class CodeRunner extends Base {
       .finally(() => {
         this.loading = false
       })
-
-    this.$ws.on('richconsole', (info) => {
-      if (this.uuid === info.uuid) {
-        this.logs.push(Object.assign({ value: info.text }, info))
-      }
-    })
   }
 
   clear() {
@@ -151,11 +157,17 @@ export default class CodeRunner extends Base {
   }
 
   async run() {
+    if (!this.editor) return
+
     this.stop()
     const uuid = Math.random().toString(36).slice(2)
     this.uuid = uuid
-    const result = await this.$ws.send('userscript', this.editor?.getValue(), uuid)
-    this.logs.push(result)
+    const src = this.editor.getValue()
+    const result = await this.$ws.send('userscript', src, uuid)
+    this.logs.push({
+      source: truncate(src),
+      result: result.value
+    })
   }
 
   stop() {
