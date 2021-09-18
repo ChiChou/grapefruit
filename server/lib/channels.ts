@@ -54,7 +54,7 @@ export default class Channels {
       try {
         dev = await tryGetDevice(device)
         session = await wrap(dev).start(bundle)
-      } catch(e) {
+      } catch (e) {
         socket.emit('exception', e.toString())
         socket.disconnect()
         return
@@ -115,7 +115,7 @@ export default class Channels {
         try {
           agent.post({ type: 'dispose' })
           await session.detach()
-        // eslint-disable-next-line no-empty
+          // eslint-disable-next-line no-empty
         } catch (e) {
 
         }
@@ -127,7 +127,7 @@ export default class Channels {
         try {
           const result = await rpc(method, ...args)
           ack({ status: 'ok', data: result })
-        } catch(err) {
+        } catch (err) {
           ack({ status: 'error', error: `${err.message}` })
           socket.emit('console', 'error', `RPC Error: \n${err.stack}`)
           console.error('Uncaught RPC error', err.stack || err)
@@ -152,7 +152,7 @@ export default class Channels {
         .on('console', (uuid: string, level: string, text: string) => {
           socket.emit('console', level, `(user script) ${text}`)
         })
-      
+
       socket.on('userscript', async (source: string, uuid: string, ack: Function) => {
         ack(await repl.eval(source, uuid))
       })
