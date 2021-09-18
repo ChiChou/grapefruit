@@ -8,6 +8,9 @@
         <p class="control">
           <b-button icon-left="play" @click="run">Run</b-button>
         </p>
+        <p class="control" v-if="uuid">
+          <b-button icon-left="stop" @click="stop">Stop</b-button>
+        </p>
         <p class="control">
           <b-button icon-left="broom" @click="clear">Clear Console</b-button>
         </p>
@@ -149,11 +152,18 @@ export default class CodeRunner extends Base {
   }
 
   async run() {
-    this.$ws.send('removescript', this.uuid)
+    this.stop()
     const uuid = Math.random().toString(36).slice(2)
     this.uuid = uuid
     const result = await this.$ws.send('userscript', this.editor?.getValue(), uuid)
     this.logs.push(result)
+  }
+
+  stop() {
+    if (this.uuid) {
+      this.$ws.send('removescript', this.uuid)
+      this.uuid = ''
+    }
   }
 
   resize() {
