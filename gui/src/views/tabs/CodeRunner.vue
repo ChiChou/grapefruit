@@ -111,7 +111,6 @@ export default class CodeRunner extends Base {
       })
 
     this.$ws.on('richconsole', (info) => {
-      console.log(this.uuid, info.uuid, info)
       if (this.uuid === info.uuid) {
         this.logs.push(Object.assign({ value: info.text }, info))
       }
