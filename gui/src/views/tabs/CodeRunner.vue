@@ -48,6 +48,8 @@ export default class CodeRunner extends Base {
 
   logs: object[] = []
 
+  uuid: string = ''
+
   get syntax(): string {
     const ext = extname(this.path)
     return ext === 'ts' ? 'typescript' : 'javascript'
@@ -104,6 +106,13 @@ export default class CodeRunner extends Base {
       .finally(() => {
         this.loading = false
       })
+
+    this.$ws.on('richconsole', (info) => {
+      console.log(this.uuid, info.uuid, info)
+      if (this.uuid === info.uuid) {
+        this.logs.push(Object.assign({ value: info.text }, info))
+      }
+    })
   }
 
   clear() {
@@ -140,7 +149,10 @@ export default class CodeRunner extends Base {
   }
 
   async run() {
-    const result = await this.$ws.send('userscript', this.editor?.getValue())
+    this.$ws.send('removescript', this.uuid)
+    const uuid = Math.random().toString(36).slice(2)
+    this.uuid = uuid
+    const result = await this.$ws.send('userscript', this.editor?.getValue(), uuid)
     this.logs.push(result)
   }
 

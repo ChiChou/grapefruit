@@ -11,16 +11,6 @@ ArrayBuffer.prototype.toJSON = function() {
 }
 
 rpc.exports.eval = function (js) {
-  ['log', 'warn', 'error', 'warning', 'info'].forEach(function (level) {
-    console[level] = function () {
-      send({
-        subject: 'console.message',
-        level: level,
-        args: [].slice.call(arguments)
-      });
-    };
-  });
-
   try {
     const result = (1, eval)(js);
     if (result instanceof ObjC.Object) {

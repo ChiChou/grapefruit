@@ -113,7 +113,7 @@ export default class Channels {
 
       socket.on('disconnect', async () => {
         try {
-          await agent.post({ type: 'dispose' })
+          agent.post({ type: 'dispose' })
           await session.detach()
         // eslint-disable-next-line no-empty
         } catch (e) {
@@ -136,8 +136,9 @@ export default class Channels {
       })
 
       const repl = new REPL(session)
+
       repl
-        .on('destroy', () => {
+        .on('destroyed', ({ uuid }) => {
           console.log('implement me: script destroy')
           socket.emit('userscriptdestroy')
         })
@@ -148,12 +149,17 @@ export default class Channels {
         .on('scriptmessage', () => {
           console.log('implement me: script message')
         })
-        .on('console', (uuid: string, level: string, args: any[]) => {
-          socket.emit('richconsole', { uuid, level, args })
+        .on('console', (uuid: string, level: string, text: string) => {
+          socket.emit('richconsole', { uuid, level, value: text })
         })
       
-      socket.on('userscript', async (source: string, ack: Function) => {
-        ack(await repl.eval(source))
+      socket.on('userscript', async (source: string, uuid: string, ack: Function) => {
+        ack(await repl.eval(source, uuid))
+      })
+
+      socket.on('removescript', async (uuid: string, ack: Function) => {
+        repl.remove(uuid)
+        ack(true)
       })
 
       agent.destroyed.connect(() => {
