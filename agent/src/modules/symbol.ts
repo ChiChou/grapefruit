@@ -19,29 +19,6 @@ function cxaDemangle(name: string): string | null {
   return null
 }
 
-function uniqueAndDemangle<T>(list: T[]) {
-  const set = new Set()
-  return list.filter((symbol) => {
-    const key = (symbol as unknown as ModuleImportDetails).address
-    if (set.has(key))
-      return false
-    set.add(key)
-    return true
-  }).map((symbol) => {
-    const sym = (symbol as unknown as ModuleImportDetails)
-    if (sym.name.startsWith('_Z')) {
-      let demangled
-      try {
-        demangled = cxaDemangle(sym.name)
-      } catch (e) {
-
-      }
-      return demangled ? Object.assign(sym, { demangled }) : sym
-    }
-    return sym
-  })
-}
-
 export function modules() {
   return Process.enumerateModules()
 }
@@ -51,15 +28,6 @@ function find(name?: string): Module {
     return Process.findModuleByName(name)!
   const [main, ] = Process.enumerateModules()
   return main
-}
-
-export function imps(name?: string) {
-  return uniqueAndDemangle<ModuleImportDetails>(find(name).enumerateImports())
-}
-
-export function exps(name: string) {
-  const mod = name || Process.enumerateModules()[0].name
-  return uniqueAndDemangle<ModuleExportDetails>(find(name).enumerateExports())
 }
 
 export function resolve(type: 'objc' | 'module', query: string) {
