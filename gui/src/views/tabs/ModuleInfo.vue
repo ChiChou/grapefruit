@@ -103,10 +103,10 @@
         aria-modal>
       <h1>Hook Template</h1>
       <pre v-if="codeTemplate.type !== 'function'">
-Module.getExportByName('{{ codeTemplate.module }}', '{{ codeTemplate.name }}').readPointer()</pre>
+Module.findExportByName('{{ codeTemplate.module }}', '{{ codeTemplate.name }}').readPointer()</pre>
       <pre v-else>
 Interceptor.attach(
-  Module.getExportByName('{{ codeTemplate.module }}', '{{ codeTemplate.name }}'),
+  Module.findExportByName('{{ codeTemplate.module }}', '{{ codeTemplate.name }}'),
   {
     onEnter(args) {
       console.log('{{ codeTemplate.name }} has been called')
