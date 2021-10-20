@@ -77,8 +77,18 @@ export default function disasm(addr: string | number, count = 100) {
   function* gen() {
     let prev: ArmInstruction | Arm64Instruction | undefined
     for (let i = 0; i < count; i++) {
-      const insn = Instruction.parse(p) as ArmInstruction | Arm64Instruction
-      if (!insn) return
+      let insn : ArmInstruction | Arm64Instruction
+      try {
+        insn = Instruction.parse(p) as ArmInstruction | Arm64Instruction
+      } catch(e) {
+        yield {
+          opStr: 'unknown',
+          string: 'invalid',
+          address: p
+        }
+        return
+      }
+
       const { opStr, address, groups, operands, mnemonic, regsRead, regsWritten } = insn
       let comment, symbol
 
