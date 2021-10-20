@@ -145,6 +145,16 @@ router
     const base = require.resolve('frida/package.json')
     ctx.body = fs.createReadStream(path.join(base, '..', '..', '@types', 'frida-gum', 'index.d.ts'))
   })
+  .get('/template/:name', async (ctx) => {
+    const name = `${ctx.params.name}`.toLowerCase()
+    const valid = /^(intercept|pointer|swizzling)$/
+    if (!name.match(valid)) {
+      ctx.body = 'invalid name'
+      ctx.status = 400
+      return
+    }
+    ctx.body = fs.createReadStream(path.join(__dirname, 'templates', `${name}.js`))
+  })
 
 app
   .use(bodyParser())
