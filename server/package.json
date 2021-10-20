@@ -47,7 +47,7 @@
       "lib",
       "app.ts"
     ],
-    "exec": "cross-env NODE_ENV=development node -r ts-node/register app.ts",
+    "exec": "npx cross-env NODE_ENV=development node -r ts-node/register app.ts",
     "ext": "ts"
   },
   "files": [
