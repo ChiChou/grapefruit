@@ -34,6 +34,9 @@
                   <p class="control">
                     <b-button icon-left="open-in-new" :disabled="!clickable(imp)" @click="view(imp)" />
                   </p>
+                  <p class="control">
+                    <b-button icon-left="magnify" @click="search(imp.name)" />
+                  </p>
                 </b-field>
               </li>
             </ul>
@@ -60,6 +63,9 @@
               </p>
               <p class="control">
                 <b-button icon-left="open-in-new" :disabled="!clickable(exp)" @click="view(exp)" />
+              </p>
+              <p class="control">
+                <b-button icon-left="magnify" @click="search(exp.name)" />
               </p>
             </b-field>
             <a v-if="clickable(exp)" @click="view(exp)"><span class="symbol-name">{{ exp.demangled || exp.name }}</span></a>
@@ -294,6 +300,10 @@ export default class ModuleInfo extends Base {
   hook(entry: Import | Export | Symbol) {
     // entry.name
     // entry.address
+  }
+
+  search(name: string) {
+    window.open('https://developer.apple.com/search/?q=' + name, '_blank')
   }
 }
 </script>
