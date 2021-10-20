@@ -168,6 +168,10 @@ export default class CodeRunner extends Base {
       source: truncate(src),
       result: result.value
     })
+
+    if (this.logs.length > 10) {
+      this.logs.shift()
+    }
   }
 
   stop() {
