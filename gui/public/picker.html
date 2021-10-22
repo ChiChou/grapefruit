@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Google Maps</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+    integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+    crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+    integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+    crossorigin=""></script>
+  <style>
+    html,
+    body {
+      margin: 0
+    }
+
+    #mapid {
+      height: 100vh;
+      width: 100vw;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="mapid"></div>
+  <script>
+    const KEY_NAME = 'MAP_PICKER_STATE';
+
+    function getView() {      
+      try {
+        const state = JSON.parse(localStorage.getItem(KEY_NAME));
+        return [state.center, state.zoom];
+      } catch(e) {
+        return [[37.334392145274386, -122.00797505475639], 14];
+      }
+    }
+
+    const [center, zoom] = getView();
+    const map = L.map('mapid').setView(center, zoom);
+    const layerGroup = L.layerGroup().addTo(map);
+    L.tileLayer('https://b.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      minZoom: 4,
+      maxZoom: 18,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      id: 'mapbox/streets-v11',
+      tileSize: 512,
+      zoomOffset: -1
+    }).addTo(map);
+
+    function template(latlng) {
+      const element = document.createElement('div');
+      const span = document.createElement('span');
+      span.textContent = 'Simulated Location:';
+      element.appendChild(span);
+      element.appendChild(document.createElement('br'));
+      const span2 = document.createElement('span');
+      span2.textContent = `${latlng.lat},${latlng.lng}`;
+      element.appendChild(span2);
+      const toolbar = document.createElement('div');
+      const button = document.createElement('button');
+      button.textContent = 'Stop';
+      button.addEventListener('click', (e) => {
+        layerGroup.clearLayers();
+        parent.postMessage({ 'event': 'STOP_GPS_SIMULATE' })
+      });
+      toolbar.appendChild(button);
+      element.appendChild(toolbar);
+      return element;
+    }
+
+    map.on('click', (e) => {
+      layerGroup.clearLayers();
+      L.marker(e.latlng).addTo(layerGroup)
+        .bindPopup(template(e.latlng))
+        .openPopup();
+    
+      parent.postMessage({
+        event: 'GPS_SIMULATE',
+        lat: e.latlng.lat,
+        lng: e.latlng.lng
+      });
+    });
+
+    function save() {
+      const center = this.getCenter();
+      const state = {
+        zoom: this.getZoom(),
+        center: [center.lat, center.lng]
+      };
+      localStorage.setItem(KEY_NAME, JSON.stringify(state));
+    }
+
+    for (const event of ['zoomlevelschange', 'zoomend', 'moveend', 'resize']) {
+      map.on(event, save.bind(map));
+    }
+  </script>
+</body>
+
+</html>

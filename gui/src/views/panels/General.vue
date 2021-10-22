@@ -32,6 +32,13 @@
         <b-icon icon="magnify-scan" />UI Dump
       </li>
     </ul>
+
+    <p class="menu-label">Simulate</p>
+    <ul class="menu-list">
+      <li @click="go('GeoLocation', `GeoLocation Simulator`)">
+        <b-icon icon="earth" />GPS
+      </li>
+    </ul>
   </aside>
 </template>
 

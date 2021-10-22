@@ -173,6 +173,8 @@ if (process.env.NODE_ENV === 'development') {
       await next()
     } else if (ctx.path.match(/(^\/(css|fonts|js|img)\/|\.js(.map)?$)/)) {
       await send(ctx, ctx.path, opt)
+    } else if (ctx.path === '/picker.html') {
+      await send(ctx, '/picker.html', opt)
     } else {
       await send(ctx, '/index.html', opt)
     }
