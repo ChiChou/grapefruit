@@ -112,12 +112,13 @@ export function swizzle(clazz: string, sel: string, traceResult = true) {
         }
       }
 
-      // Objective C's backtrace does not contain valuable information,
-      // so I removed it
+      const backtrace = Thread.backtrace(this.context, Backtracer.ACCURATE)
+        .map(DebugSymbol.fromAddress).filter(e => e.name)
 
       send({
         subject,
         event: 'objc-call',
+        backtrace,
         args: readableArgs,
         clazz,
         sel,
