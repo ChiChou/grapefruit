@@ -127,13 +127,17 @@ export default class CodeRunner extends Base {
     this.logs = []
   }
 
-  async save() {
+  save() {
     if (!this.editor) return
 
     const content = this.editor.getValue()
     const headers = { 'Content-Type': 'text/plain' }
 
-    if (!this.path) {
+    if (this.path) {
+      Axios.put(`/snippet/${this.path}`, content, { headers }).then(() => {
+        this.$buefy.snackbar.open('Saved')
+      })
+    } else {
       this.$buefy.dialog.prompt({
         message: 'Save the script',
         inputAttrs: { placeholder: 'snippet.js' },
