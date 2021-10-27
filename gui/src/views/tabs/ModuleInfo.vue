@@ -303,7 +303,8 @@ export default class ModuleInfo extends Base {
   }
 
   search(name: string) {
-    window.open('https://developer.apple.com/search/?q=' + name, '_blank')
+    const keyword = name.replace(/^OBJC_CLASS_\$_/, '')
+    window.open('https://developer.apple.com/search/?q=' + keyword, '_blank')
   }
 }
 </script>
