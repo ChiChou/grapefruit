@@ -138,22 +138,21 @@ export default class CodeRunner extends Base {
         message: 'Save the script',
         inputAttrs: { placeholder: 'snippet.js' },
         trapFocus: true,
-        onConfirm: async(path) => {
-          try {
-            await Axios.put(`/snippet/${path}`, content, { headers })
+        onConfirm: (path) => {
+          Axios.put(`/snippet/${path}`, content, { headers }).then(() => {
             this.path = path
             this.$buefy.snackbar.open('Saved')
-          } catch (e) {
+          }).catch(e => {
             const reason =
               e.response.code === 404 ? 'Invalid filename' : 'Unknown reason'
             this.$buefy.toast.open(`Failed to save document: ${reason}`)
-          }
+          })
         }
       })
-      return
+    } else {
+      await Axios.put(`/snippet/${this.path}`, content, { headers })
+      this.$buefy.snackbar.open('Saved')
     }
-    await Axios.put(`/snippet/${this.path}`, content, { headers })
-    this.$buefy.snackbar.open('Saved')
   }
 
   async run() {
