@@ -138,6 +138,7 @@ type SymbolKind = 'function' | 'variable' | 'class';
 interface Import {
   address: string;
   name: string;
+  demangled: string;
   type: SymbolKind;
 }
 
