@@ -24,6 +24,7 @@ import Cookies from './BinaryCookie.vue'
 import UserDefaults from './UserDefaults.vue'
 import ClassInfo from './ClassInfo.vue'
 import ModuleInfo from './ModuleInfo.vue'
+import Output from './Output.vue'
 
 import Disasm from './Disasm.vue'
 import Preview from './Preview.vue'
@@ -57,6 +58,8 @@ import { Container } from 'golden-layout'
     Info,
     ClassInfo,
     ModuleInfo,
+    Output,
+
     Disasm,
 
     MediaPreview,

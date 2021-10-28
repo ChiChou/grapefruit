@@ -9,7 +9,7 @@ export type RPC = {
 
 type WSEvent = 'ready' | 'destroyed' |
   'exception' | 'detached' | 'console' | 'crash' |
-  'download' | 'delivery'
+  'download' | 'delivery' | 'richconsole'
 
 interface Options {
   router: VueRouter;

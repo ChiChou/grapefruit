@@ -93,6 +93,7 @@ export function fake(lat: number, lng: number) {
   const instances = ObjC.chooseSync(ObjC.classes.CLLocationManager)
   for (const mgr of instances) {
     hookDelegate(mgr.delegate())
+    ObjC.schedule(ObjC.mainQueue, () => mgr.startUpdatingLocation())
   }
 
   for (const methodName of methods) {

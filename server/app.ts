@@ -39,11 +39,19 @@ const mgr = frida.getDeviceManager()
 
 router
   .get('/devices', async (ctx) => {
+    const unique = new Set()
     const devices = await mgr.enumerateDevices()
+
     ctx.body = {
       version: require('frida/package.json').version,
       node: process.version,
-      list: devices.map(wrap).map(d => d.valueOf())
+      list: devices.filter(dev => {
+        if (unique.has(dev.id))
+          return false
+
+        unique.add(dev.id)
+        return true
+      }).map(wrap).map(d => d.valueOf())
     }
   })
   .get('/device/:device/apps', async (ctx) => {
@@ -136,6 +144,16 @@ router
   .get('/types', async (ctx) => {
     const base = require.resolve('frida/package.json')
     ctx.body = fs.createReadStream(path.join(base, '..', '..', '@types', 'frida-gum', 'index.d.ts'))
+  })
+  .get('/template/:name', async (ctx) => {
+    const name = `${ctx.params.name}`.toLowerCase()
+    const valid = /^(intercept|pointer|swizzling)$/
+    if (!name.match(valid)) {
+      ctx.body = 'invalid name'
+      ctx.status = 400
+      return
+    }
+    ctx.body = fs.createReadStream(path.join(__dirname, 'templates', `${name}.js`))
   })
 
 app

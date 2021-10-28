@@ -29,7 +29,7 @@
             </b-checkbox>
           </b-field>
         <ul>
-          <li class="monospace" v-for="(sel, index) in selectors" :key="index">
+          <li class="monospace method" v-for="(sel, index) in selectors" :key="index">
             <a @click="$bus.$emit('openTab', 'Disasm', 'Disassembly @' + sel.impl, { addr: sel.impl })">@{{ sel.impl }}</a>
             {{ sel.name }}
           </li>
@@ -57,8 +57,8 @@
 
       <b-tab-item label="ivars" class="content" icon="format-list-bulleted">
         <ul>
-          <li v-for="(k, index) in clazz.ivars" :key="index">{{ k }}</li>
-          <li v-if="!clazz.ivars || !clazz.ivars.length">This class doesn't have any ivar</li>
+          <li v-for="(name, offset) in clazz.ivars" :key="offset"><code>{{ offset }}</code> {{ name }}</li>
+          <li v-if="!clazz.ivars || !Object.keys(clazz.ivars).length">This class doesn't have any ivar</li>
         </ul>
       </b-tab-item>
     </b-tabs>
@@ -81,7 +81,7 @@ interface Info {
   methods: { [key: string]: Method };
   prototypeChain?: string[];
   own?: string[];
-  ivars?: string[];
+  ivars?: { [offset: string]: string };
   module?: string;
 }
 
@@ -158,6 +158,10 @@ h1, h2 {
 
 .monospace {
   font-family: "Fira Code", monospace;
+}
+
+.method:hover {
+  background: rgba(0, 0, 0, .1);
 }
 
 .protocols > li {

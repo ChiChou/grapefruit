@@ -8,6 +8,9 @@
         <p class="control">
           <b-button icon-left="play" @click="run">Run</b-button>
         </p>
+        <p class="control" v-if="uuid">
+          <b-button icon-left="stop" @click="stop">Stop</b-button>
+        </p>
         <p class="control">
           <b-button icon-left="broom" @click="clear">Clear Console</b-button>
         </p>
@@ -17,7 +20,8 @@
     <footer class="output content">
       <ol type="1" class="messages">
         <li v-for="(log, i) in logs" :key="i">
-          <data-field class="plist dark" :depth="0" :field="{ value: log.value }" />
+          <p><code>{{ log.source }}</code></p>
+          <p><data-field class="plist dark" :depth="0" :field="{ value: log.result }" /></p>
         </li>
       </ol>
     </footer>
@@ -33,6 +37,17 @@ import { extname, rem2px } from '../../utils'
 import DataField from '../../components/DataField.vue'
 import Base from './Base.vue'
 
+interface Pair {
+  source: string;
+  result: string;
+}
+
+function truncate(text: string) {
+  const LEN = 64
+  const shorten = text.length > LEN ? text.substring(0, LEN) + '...' : text
+  return shorten
+}
+
 @Component({
   components: {
     DataField
@@ -44,9 +59,14 @@ export default class CodeRunner extends Base {
   @Prop({ default: '' })
   file!: string
 
+  @Prop({ default: '' })
+  code!: string
+
   path = ''
 
-  logs: object[] = []
+  logs: Pair[] = []
+
+  uuid: string = ''
 
   get syntax(): string {
     const ext = extname(this.path)
@@ -90,7 +110,7 @@ export default class CodeRunner extends Base {
     const container = this.$refs.container as HTMLDivElement
 
     if (!this.file) {
-      this.editor = await this.createEditor(container)
+      this.editor = await this.createEditor(container, this.code)
       this.loading = false
       return
     }
@@ -99,7 +119,7 @@ export default class CodeRunner extends Base {
 
     Axios.get(`/snippet/${this.path}`)
       .then(async({ data }) => {
-        this.editor = await this.createEditor(this.$refs.container as HTMLDivElement, data)
+        this.editor = await this.createEditor(container, data)
       })
       .finally(() => {
         this.loading = false
@@ -110,38 +130,58 @@ export default class CodeRunner extends Base {
     this.logs = []
   }
 
-  async save() {
+  save() {
     if (!this.editor) return
 
     const content = this.editor.getValue()
     const headers = { 'Content-Type': 'text/plain' }
 
-    if (!this.path) {
+    if (this.path) {
+      Axios.put(`/snippet/${this.path}`, content, { headers }).then(() => {
+        this.$buefy.snackbar.open('Saved')
+      })
+    } else {
       this.$buefy.dialog.prompt({
         message: 'Save the script',
         inputAttrs: { placeholder: 'snippet.js' },
         trapFocus: true,
-        onConfirm: async(path) => {
-          try {
-            await Axios.put(`/snippet/${path}`, content, { headers })
+        onConfirm: (path) => {
+          Axios.put(`/snippet/${path}`, content, { headers }).then(() => {
             this.path = path
             this.$buefy.snackbar.open('Saved')
-          } catch (e) {
+          }).catch(e => {
             const reason =
               e.response.code === 404 ? 'Invalid filename' : 'Unknown reason'
             this.$buefy.toast.open(`Failed to save document: ${reason}`)
-          }
+          })
         }
       })
-      return
     }
-    await Axios.put(`/snippet/${this.path}`, content, { headers })
-    this.$buefy.snackbar.open('Saved')
   }
 
   async run() {
-    const result = await this.$ws.send('userscript', this.editor?.getValue())
-    this.logs.push(result)
+    if (!this.editor) return
+
+    this.stop()
+    const uuid = Math.random().toString(36).slice(2)
+    this.uuid = uuid
+    const src = this.editor.getValue()
+    const result = await this.$ws.send('userscript', src, uuid)
+    this.logs.push({
+      source: truncate(src),
+      result: result.value
+    })
+
+    if (this.logs.length > 10) {
+      this.logs.shift()
+    }
+  }
+
+  stop() {
+    if (this.uuid) {
+      this.$ws.send('removescript', this.uuid)
+      this.uuid = ''
+    }
   }
 
   resize() {

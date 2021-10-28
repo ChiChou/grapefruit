@@ -136,13 +136,24 @@ export default class Workspace extends Vue {
       content: [{
         type: 'row',
         content: [{
-          type: 'component',
-          componentName: 'subview',
-          componentState: { title: 'Basic Information', component: 'Info' }
+          type: 'stack',
+          content: [{
+            type: 'component',
+            componentName: 'subview',
+            componentState: { title: 'Basic Information', component: 'Info' }
+          }, {
+            type: 'component',
+            componentName: 'subview',
+            isClosable: false,
+            componentState: { title: 'Console', component: 'Output' }
+          }]
         }, {
-          type: 'component',
-          componentName: 'subview',
-          componentState: { title: 'Mitigations and Entitlements', component: 'CheckSec' }
+          type: 'stack',
+          content: [{
+            type: 'component',
+            componentName: 'subview',
+            componentState: { title: 'Mitigations and Entitlements', component: 'CheckSec' }
+          }]
         }]
       }]
     }

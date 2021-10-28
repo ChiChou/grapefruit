@@ -8,7 +8,6 @@ type status = 'ok' | 'failed'
 
 interface Result {
   status: status;
-  uuid: string;
   type?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value?: any;
@@ -31,14 +30,17 @@ export default class REPL extends EventEmitter {
     return buf.toString()
   }
 
-  public async eval(source: string): Promise<Result> {
+  public async eval(source: string, uuid: string): Promise<Result> {
     const { session } = this
-    const uuid = Math.random().toString(16).slice(2)
     const script = await session.createScript(await this.source())
     script.destroyed.connect(() => {
-      // todo typescript interface
       this.emit('destroyed', { uuid })
+      this.scripts.delete(uuid)
     })
+
+    script.logHandler = (level, text) => {
+      this.emit('console', uuid, level, text)
+    };
 
     script.message.connect((message, data) => {
       if (message.type === MessageType.Error) {        
@@ -48,16 +50,11 @@ export default class REPL extends EventEmitter {
         })
       } else {
         const { payload } = message
-        // todo: typescript interface
-        if (payload?.subject === 'console.message') {
-          this.emit('console', uuid, payload.level, payload.args)
-        } else { 
-          this.emit('scriptmessage', {
-            uuid,
-            payload,
-            data
-          })
-        }
+        this.emit('scriptmessage', {
+          uuid,
+          payload,
+          data
+        })
       }
     })
 
@@ -73,7 +70,6 @@ export default class REPL extends EventEmitter {
       console.error(e)
       return {
         status: 'failed',
-        uuid
       }
     }
   
@@ -97,7 +93,6 @@ export default class REPL extends EventEmitter {
       console.error('User frida script exception:')
       console.error(value.stack || value)
       return {
-        uuid,
         status: 'failed',
         error: new Error(value),
       }
@@ -106,7 +101,6 @@ export default class REPL extends EventEmitter {
     this.scripts.set(uuid, script)
     return {
       status: 'ok',
-      uuid,
       type,
       value,
     }
