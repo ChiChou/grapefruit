@@ -59,6 +59,9 @@ export default class CodeRunner extends Base {
   @Prop({ default: '' })
   file!: string
 
+  @Prop({ default: '' })
+  code!: string
+
   path = ''
 
   logs: Pair[] = []
@@ -107,7 +110,7 @@ export default class CodeRunner extends Base {
     const container = this.$refs.container as HTMLDivElement
 
     if (!this.file) {
-      this.editor = await this.createEditor(container)
+      this.editor = await this.createEditor(container, this.code)
       this.loading = false
       return
     }
@@ -116,7 +119,7 @@ export default class CodeRunner extends Base {
 
     Axios.get(`/snippet/${this.path}`)
       .then(async({ data }) => {
-        this.editor = await this.createEditor(this.$refs.container as HTMLDivElement, data)
+        this.editor = await this.createEditor(container, data)
       })
       .finally(() => {
         this.loading = false
@@ -153,9 +156,6 @@ export default class CodeRunner extends Base {
           })
         }
       })
-    } else {
-      await Axios.put(`/snippet/${this.path}`, content, { headers })
-      this.$buefy.snackbar.open('Saved')
     }
   }
 

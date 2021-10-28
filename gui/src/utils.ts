@@ -11,7 +11,7 @@ export function * tokenize(text: string, delimiters: string): IterableIterator<s
   yield text.substr(left)
 }
 
-export function htmlescape(text: string) {
+export function htmlescape(text: string): string {
   const e = document.createElement('span')
   e.textContent = text
   return e.innerHTML
@@ -27,12 +27,19 @@ export function humanFileSize(size: number): string {
   return parseFloat(val.toFixed(2)).toString() + ' ' + unit
 }
 
-export function extname(name: string) {
+export function extname(name: string): string {
   const lastIndex = name.lastIndexOf('.')
   if (lastIndex) return name.substr(lastIndex + 1).toLowerCase()
+  return name
 }
 
-export function icon(name: string) {
+export function basename(name: string): string {
+  const lastIndex = name.lastIndexOf('/')
+  if (lastIndex) return name.substr(lastIndex + 1)
+  return name
+}
+
+export function icon(name: string): string {
   const lastIndex = name?.lastIndexOf('.')
   const mapping: { [key: string]: string } = {
     pdf: 'file-pdf-outline',
@@ -65,7 +72,7 @@ export function icon(name: string) {
   return 'file-outline'
 }
 
-export function filetype(name: string) {
+export function filetype(name: string): string {
   const mapping: { [key: string]: string } = {
     pdf: 'pdf',
     plist: 'plist',
@@ -89,6 +96,21 @@ export function filetype(name: string) {
   return 'hex'
 }
 
-export function rem2px(factor: number) {
+export function rem2px(factor: number): number {
   return factor * parseFloat(getComputedStyle(document.documentElement).fontSize)
+}
+
+const PREFIX = 'OBJC_CLASS_$_'
+
+export function isClass(name: string): boolean {
+  return name.startsWith(PREFIX)
+}
+
+export function className(name: string): string {
+  if (isClass(name)) return name.substring(PREFIX.length)
+  throw new Error(`${name} is not an Objective-C class`)
+}
+
+export function render(template: string, vars: { [key: string]: string }) {
+  return template.replace(/\{\{ (\w+) \}\}/g, (substr, token) => vars[token])
 }

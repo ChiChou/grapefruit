@@ -24,12 +24,13 @@
                 <code>{{ imp.address }}</code>
                 <span class="symbol-name">{{ imp.demangled || imp.name }}</span>
                 <b-field class="actions">
-                  <p class="control">
+                  <!-- todo -->
+                  <!-- <p class="control">
                     <b-button icon-left="hook" />
-                  </p>
+                  </p> -->
                   <p class="control">
                     <b-button icon-left="code-tags"
-                      @click="copy(group.path, imp.name, imp.type)" />
+                      @click="code(group.path, imp.name, imp.type)" />
                   </p>
                   <p class="control">
                     <b-button icon-left="open-in-new" :disabled="!clickable(imp)" @click="view(imp)" />
@@ -59,7 +60,7 @@
               </p>
               <p class="control">
                 <b-button icon-left="code-tags"
-                  @click="copy(module.name, exp.name, exp.type)" />
+                  @click="code(module.name, exp.name, exp.type)" />
               </p>
               <p class="control">
                 <b-button icon-left="open-in-new" :disabled="!clickable(exp)" @click="view(exp)" />
@@ -102,26 +103,6 @@
         </ul>
       </b-tab-item>
     </b-tabs>
-
-    <b-modal :active.sync="isCopyCodeActive" 
-        aria-role="dialog"
-        aria-label="Example Modal"
-        aria-modal>
-      <h1>Hook Template</h1>
-      <pre v-if="codeTemplate.type !== 'function'">
-Module.findExportByName('{{ codeTemplate.module }}', '{{ codeTemplate.name }}').readPointer()</pre>
-      <pre v-else>
-Interceptor.attach(
-  Module.findExportByName('{{ codeTemplate.module }}', '{{ codeTemplate.name }}'),
-  {
-    onEnter(args) {
-      console.log('{{ codeTemplate.name }} has been called')
-    },
-    onLeave(retval) {
-
-    }
-  })</pre>
-    </b-modal>
   </div>
 </template>
 
@@ -129,8 +110,10 @@ Interceptor.attach(
 // eslint-disable-next-line
 /// <reference path="../../frida.shim.d.ts" />
 
+import Axios from 'axios'
 import debounce from 'lodash.debounce'
-import { Component, Prop, Watch } from 'vue-property-decorator'
+import { Component, Prop } from 'vue-property-decorator'
+import { basename, className, isClass, render } from '@/utils';
 import Base from './Base.vue'
 
 type SymbolKind = 'function' | 'variable' | 'class';
@@ -221,13 +204,19 @@ export default class ModuleInfo extends Base {
     this.symbols = await this.$rpc.symbol.symbols(this.module.name, keyword)
   }
 
-  copy(module: string, name: string, type: string) {
-    this.codeTemplate = {
-      module,
-      name,
-      type
+  async code(module: string, name: string, type: string) {
+    const template = type === 'variable' ? 'pointer' : 'intercept'
+    const vars = { 
+      module: basename(module),
+      name
     }
-    this.isCopyCodeActive = true
+
+    const { data } = await Axios.get(`/template/${template}`)
+    const code = render(data, vars)
+    this.$bus.$emit('openTab', 'CodeRunner', 'New Hook Template', {
+      file: '',
+      code
+    })
   }
 
   async load() {
@@ -282,15 +271,13 @@ export default class ModuleInfo extends Base {
   }
 
   clickable(entry: Import | Export | Symbol) {
-    const PREFIX = 'OBJC_CLASS_$_'
-    if (entry.name.startsWith(PREFIX) && entry.type === 'variable') return true
+    if (isClass(entry.name) && entry.type === 'variable') return true
     if (entry.type === 'function') return true
   }
 
   view(entry: Import | Export | Symbol) {
-    const PREFIX = 'OBJC_CLASS_$_'
-    if (entry.name.startsWith(PREFIX) && entry.type === 'variable') {
-      const name = entry.name.substring(PREFIX.length)
+    if (isClass(entry.name) && entry.type === 'variable') {
+      const name = className(entry.name)
       this.$bus.$emit('openTab', 'ClassInfo', 'Class: ' + name, { name })
     } else if (entry.type === 'function') {
       const addr = entry.address
