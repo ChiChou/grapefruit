@@ -20,7 +20,7 @@ export function hook(mod: string | null, symbol: string, signature: Signature) {
   const listener = Interceptor.attach(p, {
     onEnter(args) {
       const time = now()
-      const pretty = signature.args.map((type, i) => readable(signature.args[i], args[i]))
+      const pretty = signature.args.map((type, i) => readable(type, args[i]))
       const backtrace = Thread.backtrace(this.context, Backtracer.ACCURATE)
         .map(DebugSymbol.fromAddress).filter(e => e.name)
       
