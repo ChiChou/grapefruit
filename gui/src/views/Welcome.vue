@@ -72,6 +72,12 @@ import { io } from 'socket.io-client'
 import Icon from '../components/Icon.vue'
 import Loading from '../components/Loading.vue'
 
+interface Device {
+  name: string;
+  removable: boolean;
+  id: string;
+}
+
 @Component({
   components: {
     Icon,
@@ -81,7 +87,7 @@ import Loading from '../components/Loading.vue'
 export default class Welcome extends Vue {
   version = 'N/A'
   node = 'N/A'
-  devices = []
+  devices: Device[] = []
   loading = false
 
   mounted() {
