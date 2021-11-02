@@ -44,35 +44,10 @@ Default URL for the web UI is `http://localhost:31337`
 
 At this moment, grapefruit has no authentication. It's possible to use it to inject arbitrary code to your iPhone for anyone that has the access to the web UI. Please limit it to `localhost` as much as possible. Contribution welcomed.
 
-## For Development
-
-Git clone:
-
-`git clone --recurse-submodules https://github.com/ChiChou/Grapefruit`
-
-Install dependencies:
-
-* tmux (or Windows Terminal on Windows)
-
-Install npm packages:
-
-`npm install`
-
-Start development server:
-
-`npm run dev`
-
-Default webpack url is `http://localhost:8080`
-
-## Troubleshooting
-
-* [How do I decide which version of nodejs to use?](https://github.com/ChiChou/Grapefruit/wiki/How-do-I-decide-which-version-of-nodejs-to-use%3F)
-* [Frida CRITICAL: No such interface re.frida.HostSession*](https://github.com/ChiChou/Grapefruit/wiki/Frida-CRITICAL:-No-such-interface-re.frida.HostSession*)
+* [Development Setup](https://github.com/ChiChou/grapefruit/wiki/Development-Setup)
+* [Troubleshooting](https://github.com/ChiChou/grapefruit/wiki/Trouble-Shooting)
+* [Roadmap](https://github.com/ChiChou/Grapefruit/projects/1)
 
 ## Discord Group
 
 If you have experienced anything wrong or want to suggest new features, please join my Discord channel! https://discord.gg/pwutZNx
-
-## Roadmap
-
-https://github.com/ChiChou/Grapefruit/projects/1
