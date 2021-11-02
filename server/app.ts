@@ -46,6 +46,9 @@ router
       version: require('frida/package.json').version,
       node: process.version,
       list: devices.filter(dev => {
+        if (dev.id === 'local' || dev.id === 'socket')
+          return false
+
         if (unique.has(dev.id))
           return false
 
