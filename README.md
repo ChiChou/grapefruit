@@ -13,7 +13,7 @@
 
 ### Dependencies
 
-Grapefruit requires [node.js](https://nodejs.org/) to be installed. If you can't install the frida-node dependency, please check out the troubleshooting section to [choose another version of NodeJS](https://github.com/ChiChou/Grapefruit/wiki/How-do-I-decide-which-version-of-nodejs-to-use%3F).
+Grapefruit requires [Node.js](https://nodejs.org/) to be installed. If you can't install the frida-node dependency, please check out the troubleshooting section to [choose another version of Node.js](https://github.com/ChiChou/Grapefruit/wiki/How-do-I-decide-which-version-of-nodejs-to-use%3F).
 
 Setup frida on your iOS device: https://www.frida.re/docs/ios/
 
