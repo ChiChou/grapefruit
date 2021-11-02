@@ -330,6 +330,12 @@ export default class Workspace extends Vue {
       .on('console', (level: string, text: string) => {
         this.log(level, text)
       })
+      .on('exception', (msg: string) => {
+        // socket.io bug workaround
+        if (msg === 'invalid parameter type' && this.device && this.bundle) {
+          location.reload()
+        }
+      })
   }
 
   disconnected(extra: string) {

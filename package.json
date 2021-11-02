@@ -17,7 +17,7 @@
     "koa-send": "^5.0.0",
     "plist": "^3.0.1",
     "reflect-metadata": "^0.1.13",
-    "socket.io": "^4.1.2"
+    "socket.io": "^4.3.1"
   },
   "scripts": {
     "postinstall": "node scripts/install.js",
@@ -47,6 +47,5 @@
   "bugs": {
     "url": "https://github.com/ChiChou/Grapefruit/issues"
   },
-  "homepage": "https://github.com/ChiChou/Grapefruit#readme",
-  "devDependencies": {}
+  "homepage": "https://github.com/ChiChou/Grapefruit#readme"
 }
