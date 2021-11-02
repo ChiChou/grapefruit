@@ -1,7 +1,7 @@
 <template>
   <div class="device-info">
     <header class="content">
-      <h1 v-if="lockdown">{{ info.name }} {{ info.os.version }}</h1>
+      <h1 v-if="info">{{ info.name }} {{ info.os.version }}</h1>
       <h1 v-else>{{ shortened }}</h1>
     </header>
 
@@ -29,7 +29,7 @@
       </div>
     </section>
 
-    <footer v-if="lockdown">
+    <footer v-if="info">
       <p>
         Arch: {{ info.arch }}
         Version: {{ info.os.version }}
@@ -52,17 +52,31 @@ interface Failure {
   stack?: string;
 }
 
+interface App {
+  identifier: string;
+  name: string;
+}
+
+interface Info {
+  name?: string;
+  arch?: string;
+  os: {
+    version?: string;
+  };
+  platform?: string;
+  access?: string;
+}
+
 @Component({
   components: {
     Loading
   }
 })
 export default class Device extends Vue {
-  info = {}
-  apps = []
+  info: Info | null = null
+  apps: App[] = []
   device = ''
   loading = false
-  lockdown = false
   screen = true
   error: Failure = {}
 
@@ -75,21 +89,14 @@ export default class Device extends Vue {
     const { device } = route.params
 
     this.device = device
-    this.info = {}
+    this.info = null
     this.apps = []
     this.loading = true
-    this.lockdown = false
     this.error = {}
 
     Axios.get(`/device/${device}/info`)
-      .then(({ data }) => {
-        this.info = data
-        this.lockdown = true
-      })
-      .catch(() => {
-        this.info = {}
-        this.lockdown = false
-      })
+      .then(({ data }) => this.info = data)
+      .catch(() => this.info = null)
       .then(() => Axios.get(`/device/${device}/apps`))
       .then(({ data }) => {
         this.apps = data
