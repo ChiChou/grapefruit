@@ -11,6 +11,8 @@ import { RPC, WSEvent, Context, RpcResponse, Options } from './wsrpc.d'
 
 const ctx: Context = {}
 
+export type Handler = (...args: any[]) => void;
+
 class Lazy {
   chain: string[] = []
   ready = false
@@ -84,8 +86,6 @@ function wrap(socket: Socket): RPC {
   return p
 }
 
-export type Handler = (...args: any[]) => void;
-
 class WS {
   private _ready = false
   private _pending: Set<Handler> = new Set()
@@ -130,7 +130,7 @@ class WS {
   }
 }
 
-function install(V: typeof Vue, opt: Options) {
+function install(V: typeof Vue, opt: Options): void {
   const { router } = opt
   const needs = (route: Route) => 'device' in route.params && 'bundle' in route.params
   router.afterEach((to, from) => {

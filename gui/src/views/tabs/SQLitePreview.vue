@@ -132,7 +132,7 @@ export default class SQLitePreview extends Preview {
     } catch (e) {
       this.$buefy.toast.open({
         type: 'is-danger',
-        message: `Unexpected error: <br>${htmlescape(e)}`
+        message: `Unexpected error: <br>${htmlescape('' + e)}`
       })
     } finally {
       this.loading = false
@@ -161,11 +161,11 @@ export default class SQLitePreview extends Preview {
       this.storedSQL = sql
       this.msg = 'query successfully executed'
     } catch (e) {
-      this.msg = e.toString()
+      this.msg = (e as Error).toString()
       this.failed = true
       this.$buefy.toast.open({
         type: 'is-danger',
-        message: `Unexpected error: <br>${htmlescape(e)}`
+        message: `Unexpected error: <br>${htmlescape(this.msg)}`
       })
     } finally {
       this.loading = false
