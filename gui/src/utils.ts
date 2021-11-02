@@ -111,6 +111,6 @@ export function className(name: string): string {
   throw new Error(`${name} is not an Objective-C class`)
 }
 
-export function render(template: string, vars: { [key: string]: string }) {
+export function render(template: string, vars: { [key: string]: string }): string {
   return template.replace(/\{\{ (\w+) \}\}/g, (substr, token) => vars[token])
 }
