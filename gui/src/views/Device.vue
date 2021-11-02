@@ -10,7 +10,10 @@
         <ul>
           <li :key="app.identifier" v-for="app in apps">
             <router-link :to="{ name: 'General', params: { device, bundle: app.identifier }}">
-              <img :src="`/api/device/${device}/icon/${app.identifier}`" width="180" height="180">
+              <img
+                class="lazy"
+                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+                :data-src="`/api/device/${device}/icon/${app.identifier}`" width="180" height="180">
               <h2>{{ app.name }}</h2>
               <p>{{ app.identifier }}</p>
             </router-link>
@@ -80,8 +83,23 @@ export default class Device extends Vue {
   screen = true
   error: Failure = {}
 
+  observer = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+      console.log(entry)
+      if (!entry.isIntersecting) return
+
+      const img = entry.target as HTMLImageElement
+      img.setAttribute('src', img.dataset.src!)
+      img.classList.remove('lazy')
+      observer.unobserve(img)
+    })
+  })
+
   get shortened() {
-    return this.device.substring(0, 8) + '...'
+    if (this.device.length > 6)
+      return this.device.substring(0, 8) + '...'
+    else
+      return this.device
   }
 
   @Watch('$route', { immediate: true })
@@ -99,10 +117,14 @@ export default class Device extends Vue {
       .catch(() => this.info = null)
       .then(() => Axios.get(`/device/${device}/apps`))
       .then(({ data }) => {
+        document.querySelectorAll('img.lazy').forEach(e => this.observer.unobserve(e))
         this.apps = data
+        this.$nextTick(() =>
+          document.querySelectorAll('img.lazy').forEach(e => this.observer.observe(e)))
+
         if (!data.length) {
           this.error.title = 'Unable to retrieve apps from this device'
-        }
+        }        
       })
       .catch(e => {
         [this.error.title, this.error.stack] = e.response.data.split('\n', 1)
