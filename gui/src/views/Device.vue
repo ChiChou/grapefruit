@@ -85,7 +85,6 @@ export default class Device extends Vue {
 
   observer = new IntersectionObserver((entries, observer) => {
     entries.forEach(entry => {
-      console.log(entry)
       if (!entry.isIntersecting) return
 
       const img = entry.target as HTMLImageElement
