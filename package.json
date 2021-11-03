@@ -29,6 +29,7 @@
   "files": [
     "server/bin",
     "server/dist",
+    "server/templates",
     "gui/dist",
     "scripts",
     "agent/system-wide",
