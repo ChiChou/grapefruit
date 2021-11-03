@@ -21,7 +21,6 @@ import RPC from './wsrpc'
 import Bus from './bus'
 import router from './router'
 import store from './store'
-import { humanFileSize } from './utils'
 
 axios.defaults.baseURL = '/api'
 axios.interceptors.response.use(response => response, error => {
@@ -41,7 +40,6 @@ Vue.use(VueVirtualScroller)
 Vue.use(VueMenu)
 Vue.use(RPC, { router })
 Vue.use(Bus)
-Vue.filter('filesize', humanFileSize)
 
 new Vue({
   router,

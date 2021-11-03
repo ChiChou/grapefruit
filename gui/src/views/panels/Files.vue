@@ -15,9 +15,9 @@
       <section class="detail" v-if="selected">
         <p class="path">{{ selected.path }}</p>
         <p>
-          {{ selected.attribute.permission | perm }}
+          {{ perm(selected.attribute.permission) }}
           {{ selected.attribute.owner }}:{{ selected.attribute.group }}
-          {{ selected.attribute.size | filesize }}
+          {{ readableSize(selected.attribute.size) }}
         </p>
 
         <p>{{ selected.attribute.type }}</p>
@@ -34,15 +34,11 @@
 import { Component, Vue } from 'vue-property-decorator'
 import FileTree from '../../components/FileTree.vue'
 import { Finder } from '../../../interfaces'
+import { humanFileSize } from '@/utils'
 
 @Component({
   components: {
     FileTree
-  },
-  filters: {
-    perm(val: number) {
-      return val.toString(8)
-    }
   }
 })
 export default class ClassInfo extends Vue {
@@ -53,6 +49,14 @@ export default class ClassInfo extends Vue {
 
   get root() {
     return ['home', 'bundle'][this.index]
+  }
+
+  get perm() {
+    return (val: number) => val.toString(8)
+  }
+
+  get readableSize() {
+    return (val: number) => humanFileSize(val)
   }
 
   mounted() {

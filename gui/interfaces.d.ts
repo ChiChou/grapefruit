@@ -15,7 +15,7 @@ export module Finder {
     type: 'directory' | 'file';
     name: string;
     path: string;
-    attribute: object;
+    attribute: Attribute;
   }
 }
 
