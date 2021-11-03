@@ -68,7 +68,7 @@ export default class FileTree extends Vue {
   item!: Finder.Item
 
   @Prop({ default: 0 })
-  depth?: number
+  depth!: number
 
   @Prop({ required: true })
   root!: string
@@ -150,8 +150,8 @@ export default class FileTree extends Vue {
   }
 
   async download() {
-    const session = await this.$rpc.fs.download(this.item.path)
-    location.replace(`/api/download/${session}`)
+    const token = await this.$rpc.fs.download(this.item.path)
+    location.replace(`/api/download/${token}`)
   }
 
   // remove file
