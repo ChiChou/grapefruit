@@ -41,7 +41,7 @@ import { humanFileSize } from '@/utils'
     FileTree
   }
 })
-export default class ClassInfo extends Vue {
+export default class Files extends Vue {
   index = 0
   loading = false
   selected?: Finder.Item | null = null
