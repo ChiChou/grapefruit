@@ -39,8 +39,8 @@ export class ExDevice {
 
   async launch(bundle: string): Promise<Session> {
     const pid = await this.device.spawn(bundle)
-    const session = await this.device.attach(pid)
     await this.device.resume(pid)
+    const session = await this.device.attach(pid)
     return session
   }
 
