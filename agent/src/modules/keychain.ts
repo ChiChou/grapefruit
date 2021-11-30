@@ -77,63 +77,21 @@ const kSecClasses = [
   C.kSecClassInternetPassword
 ]
 
-function dumpACL(entry: ObjC.Object): string {
-  if (!entry.containsKey_(C.kSecAttrAccessControl))
-    return ''
-
-  const constraints = Security.SecAccessControlGetConstraints(
-    entry.objectForKey_(C.kSecAttrAccessControl)) as NativePointer
-
-  if (constraints.isNull())
-    return ''
-
-  const { NSDictionary, NSData } = ObjC.classes
-  class Visitor {
-    constructor(public node: ObjC.Object) { }
-
-    visit(node: ObjC.Object): string {
-      if (node.isKindOfClass_(NSDictionary))
-        return [...this.expand(node)].join(';')
-      if ((CF.CFGetTypeID(node) as NativePointer).equals(CF.CFBooleanGetTypeID() as NativePointer))
-        // if (node.isKindOfClass_(NSNumber))
-        return node.boolValue().toString()
-      if (node.isKindOfClass_(NSData))
-        return '<>'
-      return node.toString()
-    }
-
-    *expand(node: ObjC.Object) {
-      const enumerator = node.keyEnumerator()
-      let key
-      while ((key = enumerator.nextObject())) {
-        let value = node.objectForKey_(key)
-        yield `${key}(${this.visit(value)})`
-      }
-    }
-
-    toString() {
-      return 'ak;' + this.visit(this.node)
-    }
+function readableAccount(val?: ObjC.Object) {
+  if (val instanceof ObjC.Object && val.isKindOfClass_(ObjC.classes.NSData)) {
+    const str = ObjC.classes.NSString.alloc().initWithData_encoding_(val, 4)
+    if (str) return str.toString()
+    return str
   }
-
-  // SecAccessControlCopyDescription
-  const accessControls = new ObjC.Object(constraints)
-  return new Visitor(accessControls).toString()
+  return `${val}`
 }
 
-/* eslint no-unused-vars: 0 */
-// const SecAccessControlCreateFlags = {
-const
-  kSecAccessControlUserPresence = new UInt64(1 << 0),
-  kSecAccessControlBiometryAny = new UInt64(1 << 1),
-  kSecAccessControlBiometryCurrentSet = new UInt64(1 << 3),
-  kSecAccessControlDevicePasscode = new UInt64(1 << 4),
-  kSecAccessControlWatch = new UInt64(1 << 5),
-  kSecAccessControlOr = new UInt64(1 << 14),
-  kSecAccessControlAnd = new UInt64(1 << 15),
-  kSecAccessControlPrivateKeyUsage = new UInt64(1 << 30),
-  kSecAccessControlApplicationPassword = new UInt64('2147483648')
-// }
+function encodeData(val?: ObjC.Object) {
+  if (val instanceof ObjC.Object && val.isKindOfClass_(ObjC.classes.NSData)) {
+    return val.base64EncodedStringWithOptions_(0).toString()
+  }
+  return null
+}
 
 export function list(withfaceId = false): object[] {
   const kCFBooleanTrue = ObjC.classes.__NSCFBoolean.numberWithBool_(true)
@@ -183,7 +141,8 @@ export function list(withfaceId = false): object[] {
       const item = arr.objectAtIndex_(i)
       const readable: { [key: string]: any } = {
         clazz: constantLookup(className!),
-        accessControl: dumpACL(item),
+        // todo: bugfix
+        // accessControl: dumpACL(item),
         accessibleAttribute: constantLookup(item.objectForKey_(C.kSecAttrAccessible))
       }
 
@@ -191,20 +150,8 @@ export function list(withfaceId = false): object[] {
         readable[key] = valueOf(item.objectForKey_(attr))
       }
 
-      const account = item.objectForKey_(C.kSecAttrAccount)
-      if (account) {
-        readable['account'] = (
-          account.isKindOfClass_(ObjC.classes.NSData) ?
-            ObjC.classes.NSString.alloc().initWithData_encoding_(account, 4) :
-            account
-          ).toString()
-      }
-
-      const data = item.objectForKey_(C.kSecValueData)
-      if (data) {
-        readable['raw'] = data.base64EncodedStringWithOptions_(0).toString()
-      }
-
+      readable['account'] = readableAccount(item.objectForKey_(C.kSecAttrAccount))
+      readable['raw'] = encodeData(item.objectForKey_(C.kSecValueData))
       result.push(readable)
     }
   }
