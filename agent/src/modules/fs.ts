@@ -75,7 +75,8 @@ export function resolve(root: string, path = '') {
     throw new Error('Invalid root')
   }
 
-  return prefix.toString().replace(/\/$/, '') + '/' + path.replace(/^\//, '')
+  return prefix.toString().replace(/\/$/, '') + 
+    (typeof path === 'string' ? '/' + path.replace(/^\//, '') : '')
 }
 
 export function ls(root: string, path = '') {
