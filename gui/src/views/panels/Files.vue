@@ -12,28 +12,15 @@
       <section class="tree">
         <FileTree :loading.sync="loading" :root="root" cwd="/" :depth="0" :item="{ type: 'directory', name: root }" />
       </section>
-      <section class="detail" v-if="selected">
-        <p class="path">{{ selected.path }}</p>
-        <p>
-          {{ perm(selected.attribute.permission) }}
-          {{ selected.attribute.owner }}:{{ selected.attribute.group }}
-          {{ readableSize(selected.attribute.size) }}
-        </p>
-
-        <p>{{ selected.attribute.type }}</p>
-
-        <p>Created: {{ selected.attribute.creation }}</p>
-        <p>Modified: {{ selected.attribute.modification }}</p>
-        <p>Protection: {{ selected.attribute.protection }}</p>
-      </section>
     </main>
   </aside>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+import { Component, Vue, Watch } from 'vue-property-decorator'
 import FileTree from '../../components/FileTree.vue'
 import { Finder } from '../../../interfaces'
+import { FinderModule } from '@/store/modules/finder'
 import { humanFileSize } from '@/utils'
 
 @Component({
@@ -51,12 +38,14 @@ export default class Files extends Vue {
     return ['home', 'bundle'][this.index]
   }
 
-  get perm() {
-    return (val: number) => val.toString(8)
-  }
-
-  get readableSize() {
-    return (val: number) => humanFileSize(val)
+  @Watch('index')
+  onRootChanged(val: number) {
+    this.$bus.$emit('switchTab', 'Finder')
+    if (val === 0) {
+      FinderModule.goHome()
+    } else {
+      FinderModule.goApp()
+    }
   }
 
   mounted() {
