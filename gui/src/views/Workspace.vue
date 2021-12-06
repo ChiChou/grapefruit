@@ -68,8 +68,8 @@ import GoldenLayout, { Container, ContentItem, ComponentConfig } from 'golden-la
 
 import MenuBar from './MenuBar.vue'
 import SidePanel from '../views/SidePanel.vue'
-import Console from '../components/Console.vue'
 import Frame from '../views/tabs/Frame.vue'
+import Console from '../components/Console.vue'
 
 import { Route } from 'vue-router'
 import { Terminal } from 'xterm'
@@ -153,6 +153,11 @@ export default class Workspace extends Vue {
             type: 'component',
             componentName: 'subview',
             componentState: { title: 'Mitigations and Entitlements', component: 'CheckSec' }
+          }, {
+            type: 'component',
+            componentName: 'subview',
+            isClosable: false,
+            componentState: { title: 'Finder', component: 'Finder' }
           }]
         }]
       }]

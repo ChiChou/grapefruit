@@ -23,7 +23,7 @@ function successful(block: ErrCallback) {
   return result
 }
 
-export function readdir(path: string, max=500): File[] {
+function readdir(path: string, max = 500, folderOnly = false): File[] {
   const list = successful(pError =>
     NSFileManager.defaultManager().contentsOfDirectoryAtPath_error_(path, pError))
 
@@ -38,13 +38,14 @@ export function readdir(path: string, max=500): File[] {
     NSFileManager.defaultManager().fileExistsAtPath_isDirectory_(absolute, pIsDir)
     const isFile = pIsDir.readPointer().isNull()
 
+    if (isFile && folderOnly) continue
     if (isFile && filename.toString().match(/^frida-([a-zA-z0-9]+)\.dylib$/)) continue
     if (j++ > max) break
 
     let attribute = {} as Attributes
     try {
       attribute = attrs(absolute);
-    } catch(e) {
+    } catch (e) {
       console.warn(`Eror: unable to get attribute of ${absolute}`)
       console.warn(`Reason: ${e}`)
     }
@@ -68,13 +69,14 @@ export function resolve(root: string, path = '') {
     prefix = NSTemporaryDirectory()
   } else if (root === 'home' || root === '~') {
     prefix = NSHomeDirectory()
-  } else if (root === 'bundle') {
+  } else if (root === 'bundle' || root === '!') {
     prefix = NSBundle.mainBundle().bundlePath()
   } else {
     throw new Error('Invalid root')
   }
 
-  return prefix.toString().replace(/\/$/, '') + '/' + path.replace(/^\//, '')
+  return prefix.toString().replace(/\/$/, '') + 
+    (typeof path === 'string' ? '/' + path.replace(/^\//, '') : '')
 }
 
 export function ls(root: string, path = '') {
@@ -82,6 +84,14 @@ export function ls(root: string, path = '') {
   return {
     cwd,
     items: readdir(cwd)
+  }
+}
+
+export function subdirs(root: string, path = '') {
+  const cwd = resolve(root, path)
+  return {
+    cwd,
+    items: readdir(cwd, 500, true)
   }
 }
 

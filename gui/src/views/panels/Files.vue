@@ -12,40 +12,23 @@
       <section class="tree">
         <FileTree :loading.sync="loading" :root="root" cwd="/" :depth="0" :item="{ type: 'directory', name: root }" />
       </section>
-      <section class="detail" v-if="selected">
-        <p class="path">{{ selected.path }}</p>
-        <p>
-          {{ selected.attribute.permission | perm }}
-          {{ selected.attribute.owner }}:{{ selected.attribute.group }}
-          {{ selected.attribute.size | filesize }}
-        </p>
-
-        <p>{{ selected.attribute.type }}</p>
-
-        <p>Created: {{ selected.attribute.creation }}</p>
-        <p>Modified: {{ selected.attribute.modification }}</p>
-        <p>Protection: {{ selected.attribute.protection }}</p>
-      </section>
     </main>
   </aside>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+import { Component, Vue, Watch } from 'vue-property-decorator'
 import FileTree from '../../components/FileTree.vue'
 import { Finder } from '../../../interfaces'
+import { FinderModule } from '@/store/modules/finder'
+import { humanFileSize } from '@/utils'
 
 @Component({
   components: {
     FileTree
-  },
-  filters: {
-    perm(val: number) {
-      return val.toString(8)
-    }
   }
 })
-export default class ClassInfo extends Vue {
+export default class Files extends Vue {
   index = 0
   loading = false
   selected?: Finder.Item | null = null
@@ -53,6 +36,16 @@ export default class ClassInfo extends Vue {
 
   get root() {
     return ['home', 'bundle'][this.index]
+  }
+
+  @Watch('index')
+  onRootChanged(val: number) {
+    this.$bus.$emit('switchTab', 'Finder')
+    if (val === 0) {
+      FinderModule.goHome()
+    } else {
+      FinderModule.goApp()
+    }
   }
 
   mounted() {

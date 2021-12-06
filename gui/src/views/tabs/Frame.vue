@@ -16,6 +16,7 @@
 
 <script lang="ts">
 import CheckSec from './CheckSec.vue'
+import Finder from './Finder.vue'
 import UIDump from './UIDump.vue'
 import Info from './Info.vue'
 import Url from './URL.vue'
@@ -53,6 +54,7 @@ import { Container } from 'golden-layout'
     KeyChain,
     Cookies,
     UserDefaults,
+    Finder,
     CheckSec,
     UIDump,
     Info,

@@ -42,6 +42,7 @@
 </template>
 
 <script lang="ts">
+import { FinderModule } from '@/store/modules/finder'
 import { Prop, Component, Watch, Vue } from 'vue-property-decorator'
 import { Finder } from '../../interfaces'
 import { htmlescape, icon, filetype } from '../utils'
@@ -68,7 +69,7 @@ export default class FileTree extends Vue {
   item!: Finder.Item
 
   @Prop({ default: 0 })
-  depth?: number
+  depth!: number
 
   @Prop({ required: true })
   root!: string
@@ -88,6 +89,9 @@ export default class FileTree extends Vue {
   select() {
     this.selected = true
     this.$parent.$emit('select', this)
+
+    this.$bus.$emit('switchTab', 'Finder')
+    FinderModule.cd(this.cwd)
   }
 
   dismiss() {
@@ -114,8 +118,6 @@ export default class FileTree extends Vue {
   dblclick() {
     if (this.isDir) {
       this.expanded = !this.expanded
-    } else {
-      this.open()
     }
   }
 
@@ -129,29 +131,6 @@ export default class FileTree extends Vue {
 
   drop() {
     this.dropping = false
-  }
-
-  open() {
-    const t = filetype(this.item.name)
-    const mapping: {[key: string]: string} = {
-      audio: 'MediaPreview',
-      video: 'MediaPreview',
-      json: 'DictPreview',
-      plist: 'DictPreview',
-      image: 'ImagePreview',
-      pdf: 'PDFPreview',
-      text: 'TextPreview',
-      cookiejar: 'Cookies',
-      database: 'SQLitePreview'
-      // todo: hex:
-    }
-    const viewer = mapping[t] || 'UnknownPreview'
-    this.$bus.$emit('openTab', viewer, `Preview - ${this.item.name}`, { path: this.item.path })
-  }
-
-  async download() {
-    const session = await this.$rpc.fs.download(this.item.path)
-    location.replace(`/api/download/${session}`)
   }
 
   // remove file
@@ -176,7 +155,7 @@ export default class FileTree extends Vue {
           })
           return
         }
-        this.$buefy.toast.open(`${path} was deleted`)
+        this.$buefy.toast.open(`${path} has been deleted`)
         this.expanded = false
         if (this.$parent instanceof FileTree) this.$parent.ls()
       }
@@ -221,7 +200,7 @@ export default class FileTree extends Vue {
   async ls() {
     this.loading = true
     try {
-      const { items } = await this.$rpc.fs.ls(this.root, this.cwd)
+      const { items } = await this.$rpc.fs.subdirs(this.root, this.cwd)
       this.children = items.sort((a: Finder.Item, b: Finder.Item) => a.type.localeCompare(b.type))
     } finally {
       this.loading = false
