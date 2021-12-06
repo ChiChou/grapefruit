@@ -153,11 +153,6 @@ export default class Workspace extends Vue {
             type: 'component',
             componentName: 'subview',
             componentState: { title: 'Mitigations and Entitlements', component: 'CheckSec' }
-          }, {
-            type: 'component',
-            componentName: 'subview',
-            isClosable: false,
-            componentState: { title: 'Finder', component: 'Finder' }
           }]
         }]
       }]

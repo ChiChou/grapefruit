@@ -40,7 +40,7 @@ export default class Files extends Vue {
 
   @Watch('index')
   onRootChanged(val: number) {
-    this.$bus.$emit('switchTab', 'Finder')
+    this.$bus.$emit('switchTab', 'Finder', 'Finder')
     if (val === 0) {
       FinderModule.goHome()
     } else {

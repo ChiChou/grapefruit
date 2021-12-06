@@ -80,7 +80,7 @@ export default class Info extends Base {
     } else {
       throw new Error('invalid destination: ' + dest)
     }
-    this.$bus.$emit('switchTab', 'Finder')
+    this.$bus.$emit('switchTab', 'Finder', 'Finder')
   }
 
   async load() {

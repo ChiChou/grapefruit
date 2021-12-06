@@ -90,7 +90,7 @@ export default class FileTree extends Vue {
     this.selected = true
     this.$parent.$emit('select', this)
 
-    this.$bus.$emit('switchTab', 'Finder')
+    this.$bus.$emit('switchTab', 'Finder', 'Finder')
     FinderModule.cd(this.cwd)
   }
 
