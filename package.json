@@ -1,6 +1,6 @@
 {
   "name": "igf",
-  "version": "0.10.6",
+  "version": "0.11.0",
   "description": "Runtime Application Instruments for iOS",
   "main": "index.js",
   "dependencies": {
