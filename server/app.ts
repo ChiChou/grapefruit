@@ -156,7 +156,8 @@ router
       ctx.status = 400
       return
     }
-    ctx.body = fs.createReadStream(path.join(__dirname, 'templates', `${name}.js`))
+    const folder = process.env.NODE_ENV === 'development' ? '.' : '..'
+    ctx.body = fs.createReadStream(path.join(__dirname, folder, 'templates', `${name}.js`))
   })
 
 app
