@@ -10,7 +10,7 @@
 
     <main>
       <section class="tree">
-        <FileTree :loading.sync="loading" :root="root" cwd="/" :depth="0" :item="{ type: 'directory', name: root }" />
+        <FolderTree :loading.sync="loading" :root="root" cwd="/" :depth="0" :item="{ type: 'directory', name: root }" />
       </section>
     </main>
   </aside>
@@ -18,20 +18,20 @@
 
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator'
-import FileTree from '../../components/FileTree.vue'
+import FolderTree from '@/components/FolderTree.vue'
 import { Finder } from '../../../interfaces'
 import { FinderModule } from '@/store/modules/finder'
 
 @Component({
   components: {
-    FileTree
+    FolderTree
   }
 })
 export default class Files extends Vue {
   index = 0
   loading = false
   selected?: Finder.Item | null = null
-  highlight?: FileTree | null = null
+  highlight?: FolderTree | null = null
 
   get root() {
     return ['home', 'bundle'][this.index]
@@ -48,7 +48,7 @@ export default class Files extends Vue {
   }
 
   mounted() {
-    this.$on('select', (el: FileTree) => {
+    this.$on('select', (el: FolderTree) => {
       if (this.highlight && this.highlight !== el) {
         this.highlight.dismiss()
       }

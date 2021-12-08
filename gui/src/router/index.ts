@@ -6,7 +6,7 @@ import Welcome from '../views/Welcome.vue'
 
 import DeviceView from '../views/Device.vue'
 
-import Files from '../views/panels/Files.vue'
+import Files from '../views/panels/Folders.vue'
 import ClassDump from '../views/panels/ClassDump.vue'
 import General from '../views/panels/General.vue'
 import Hook from '../views/panels/Hook.vue'
