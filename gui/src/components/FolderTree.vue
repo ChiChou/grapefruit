@@ -43,8 +43,8 @@
 <script lang="ts">
 import { FinderModule } from '@/store/modules/finder'
 import { Prop, Component, Watch, Vue } from 'vue-property-decorator'
-import { Finder } from '../../interfaces'
-import { htmlescape } from '../utils'
+import { Finder } from '@/interfaces'
+import { htmlescape } from '@/utils'
 
 @Component({ name: 'FileTree' })
 export default class FileTree extends Vue {

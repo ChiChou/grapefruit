@@ -19,7 +19,7 @@
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator'
 import FolderTree from '@/components/FolderTree.vue'
-import { Finder } from '../../../interfaces'
+import { Finder } from '@/interfaces'
 import { FinderModule } from '@/store/modules/finder'
 
 @Component({
