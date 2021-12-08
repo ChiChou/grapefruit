@@ -45,7 +45,7 @@
 import { FinderModule } from '@/store/modules/finder'
 import { Prop, Component, Watch, Vue } from 'vue-property-decorator'
 import { Finder } from '../../interfaces'
-import { htmlescape, icon, filetype } from '../utils'
+import { htmlescape } from '../utils'
 
 @Component({ name: 'FileTree' })
 export default class FileTree extends Vue {
@@ -78,12 +78,7 @@ export default class FileTree extends Vue {
   cwd!: string
 
   get icon() {
-    if (this.isDir) return this.expanded ? 'folder-open-outline' : 'folder-outline'
-    return icon(this.item.name)
-  }
-
-  get isDir() {
-    return this.item.type === 'directory'
+    return this.expanded ? 'folder-open-outline' : 'folder-outline'
   }
 
   select() {

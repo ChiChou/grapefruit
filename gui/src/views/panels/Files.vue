@@ -21,7 +21,6 @@ import { Component, Vue, Watch } from 'vue-property-decorator'
 import FileTree from '../../components/FileTree.vue'
 import { Finder } from '../../../interfaces'
 import { FinderModule } from '@/store/modules/finder'
-import { humanFileSize } from '@/utils'
 
 @Component({
   components: {
