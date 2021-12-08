@@ -86,7 +86,7 @@
         <nav class="file-op">
           <b-field>
             <p class="control" v-if="selected.type === 'file'">
-              <b-button @click="download(selected)" icon-left="open-in-new" />
+              <b-button @click="open(selected)" icon-left="open-in-new" />
             </p>
             <p class="control" v-if="selected.type === 'file'">
               <b-button @click="download(selected)" icon-left="download" />
