@@ -5,6 +5,33 @@
     </h1>
     <themed-menu class="menu">
       <hsc-menu-bar>
+        <hsc-menu-bar-item label="General">
+          <hsc-menu-item label="Basic" @click="go('Info', 'Basic Information')"/>
+          <hsc-menu-item label="CheckSec" @click="go('CheckSec', 'Binary Protection & Entitlements')"/>
+          <hsc-menu-item label="URL Schemes" @click="go('Url', 'URL Schemes')"/>
+          <hsc-menu-separator />
+          <hsc-menu-item label="Cookies" @click="go('Cookies')"/>
+          <hsc-menu-item label="KeyChain" @click="go('KeyChain')"/>
+          <hsc-menu-item label="NSUserDefaults" @click="go('UserDefaults', 'NSUserDefaults')"/>
+          <hsc-menu-separator />
+          <hsc-menu-item label="UIDump" @click="open('UIDump', `UI Dump - ${new Date().toLocaleString()}`)"/>
+          <hsc-menu-separator />
+          <hsc-menu-item label="GPS Simulator" @click="go('GeoLocation', `GeoLocation Simulator`)"/>
+        </hsc-menu-bar-item>
+        <hsc-menu-bar-item label="Finder">
+          <hsc-menu-item label="Home" @click="finder('home')"/>
+          <hsc-menu-item label="Bundle" @click="finder('bundle')"/>
+        </hsc-menu-bar-item>
+        <hsc-menu-bar-item label="View">
+          <hsc-menu-item label="Process Modules" @click="redirect({ name: 'Modules' })"/>
+          <hsc-menu-item label="Runtime Classes" @click="redirect({ name: 'Classes' })"/>
+          <hsc-menu-separator />
+          <hsc-menu-item label="Search API" @click="redirect({ name: 'Api Resolver' })"/>
+          <hsc-menu-separator />
+          <hsc-menu-item label="Open REPL" @click="redirect({ name: 'REPL' })"/>
+          <hsc-menu-separator />
+          <hsc-menu-item label="WebViews and JavascriptCore Instances" @click="redirect({ name: 'webviews' })"/>
+        </hsc-menu-bar-item>
         <hsc-menu-bar-item label="Session">
           <hsc-menu-item label="Reload" @click="reload" />
           <hsc-menu-item label="Detach" @click="detach" />
@@ -63,6 +90,9 @@ import pkg from '../../../package.json'
 import Axios from 'axios'
 import { StyleFactory } from '@hscmap/vue-menu'
 import { Component, Vue } from 'vue-property-decorator'
+import router from '@/router'
+import { FinderModule } from '@/store/modules/finder'
+import { RawLocation } from 'vue-router'
 
 @Component({
   components: {
@@ -94,6 +124,31 @@ import { Component, Vue } from 'vue-property-decorator'
 export default class MenuBar extends Vue {
   isAboutDialogActive = false
   version = pkg.version
+
+  redirect(url: RawLocation) {
+    router.push(url).catch((_) => {})
+  }
+
+  finder(dest: string) {
+    this.redirect({ name: 'Files' })
+
+    if (dest === 'home') {
+      FinderModule.goHome()
+    } else if (dest === 'bundle') {
+      FinderModule.goApp()
+    } else {
+      throw new Error('invalid destination: ' + dest)
+    }
+    this.$bus.$emit('switchTab', 'Finder', 'Finder')
+  }
+
+  open(component: string, title?: string, props?: object) {
+    this.$bus.$emit('openTab', component, title || component, props)
+  }
+
+  go(component: string, title?: string, props?: object) {
+    this.$bus.$emit('switchTab', component, title || component, props)
+  }
 
   external(url: string) {
     window.open(url, '_blank')
