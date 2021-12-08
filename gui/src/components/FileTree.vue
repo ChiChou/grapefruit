@@ -7,11 +7,10 @@
       :class="{ selected }"
       @click.prevent.stop="select"
     >
-      <a v-if="isDir" @click="expanded = !expanded" class="trigger">
+      <a @click="expanded = !expanded" class="trigger">
         <b-icon v-if="loading" icon="loading" size="is-small" custom-class="mdi-spin" />
         <b-icon v-else :icon="icon" />
       </a>
-      <b-icon v-else :icon="icon" />
       <span class="name" @dblclick="dblclick">{{ item.name }}</span>
       <span class="extra">
         <span v-if="root === 'home'">
