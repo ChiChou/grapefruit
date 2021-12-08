@@ -2,10 +2,10 @@
   <aside class="menu">
     <p class="menu-label">General</p>
     <ul class="menu-list">
-      <li @click="go('Info', 'Basic Information')">
+      <li @click="go('Info')">
         <b-icon icon="information-outline" />Basic
       </li>
-      <li @click="go('CheckSec', 'Binary Protection & Entitlements')">
+      <li @click="go('CheckSec')">
         <b-icon icon="briefcase-check" />CheckSec
       </li>
       <li @click="go('Url', 'URL Schemes')">
@@ -21,21 +21,21 @@
       <li @click="go('KeyChain')">
         <b-icon icon="folder-key-outline" />KeyChain
       </li>
-      <li @click="go('UserDefaults', 'NSUserDefaults')">
+      <li @click="go('UserDefaults')">
         <b-icon icon="card-bulleted-outline" />NSUserDefaults
       </li>
     </ul>
 
     <p class="menu-label">Inspector</p>
     <ul class="menu-list">
-      <li @click="open('UIDump', `UI Dump - ${new Date().toLocaleString()}`)">
+      <li @click="open('UIDump')">
         <b-icon icon="magnify-scan" />UI Dump
       </li>
     </ul>
 
     <p class="menu-label">Simulate</p>
     <ul class="menu-list">
-      <li @click="go('GeoLocation', `GeoLocation Simulator`)">
+      <li @click="go('GeoLocation')">
         <b-icon icon="earth" />GPS
       </li>
     </ul>

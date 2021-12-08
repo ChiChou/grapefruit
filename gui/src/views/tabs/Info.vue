@@ -51,7 +51,7 @@
 import router from '@/router'
 import { FinderModule } from '@/store/modules/finder'
 import { Component } from 'vue-property-decorator'
-import DataField from '../../components/DataField.vue'
+import DataField from '@/components/DataField.vue'
 import Base from './Base.vue'
 
 @Component({
@@ -64,6 +64,7 @@ export default class Info extends Base {
   icon?: string = ''
 
   mounted() {
+    this.title = 'Basic Information'
     this.loading = true
     this.load().finally(() => {
       this.loading = false

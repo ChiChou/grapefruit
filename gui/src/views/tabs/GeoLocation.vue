@@ -19,6 +19,10 @@ export default class GeoLocation extends Base {
     }
   }
 
+  mounted() {
+    this.title = 'GeoLocation Simulator'
+  }
+
   created() {
     window.addEventListener('message', this.onmessage)
   }

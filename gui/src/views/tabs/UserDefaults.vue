@@ -17,6 +17,7 @@ export default class CookieTab extends Base {
   value = {}
 
   mounted() {
+    this.title = 'NSUserDefaults'
     this.load()
   }
 

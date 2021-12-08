@@ -52,6 +52,7 @@ export default class UISnapShot extends Base {
   }
 
   mounted() {
+    this.title = `UI Dump - ${new Date().toLocaleString()}`
     this.loading = true
     this.$rpc.ui.dump().then((root: object) => {
       this.root = root

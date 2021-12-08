@@ -6,17 +6,17 @@
     <themed-menu class="menu">
       <hsc-menu-bar>
         <hsc-menu-bar-item label="General">
-          <hsc-menu-item label="Basic" @click="go('Info', 'Basic Information')"/>
-          <hsc-menu-item label="CheckSec" @click="go('CheckSec', 'Binary Protection & Entitlements')"/>
+          <hsc-menu-item label="Basic" @click="go('Info')"/>
+          <hsc-menu-item label="CheckSec" @click="go('CheckSec')"/>
           <hsc-menu-item label="URL Schemes" @click="go('Url', 'URL Schemes')"/>
           <hsc-menu-separator />
           <hsc-menu-item label="Cookies" @click="go('Cookies')"/>
           <hsc-menu-item label="KeyChain" @click="go('KeyChain')"/>
-          <hsc-menu-item label="NSUserDefaults" @click="go('UserDefaults', 'NSUserDefaults')"/>
+          <hsc-menu-item label="NSUserDefaults" @click="go('UserDefaults')"/>
           <hsc-menu-separator />
-          <hsc-menu-item label="UIDump" @click="open('UIDump', `UI Dump - ${new Date().toLocaleString()}`)"/>
+          <hsc-menu-item label="UIDump" @click="open('UIDump')"/>
           <hsc-menu-separator />
-          <hsc-menu-item label="GPS Simulator" @click="go('GeoLocation', `GeoLocation Simulator`)"/>
+          <hsc-menu-item label="GPS Simulator" @click="go('GeoLocation')"/>
         </hsc-menu-bar-item>
         <hsc-menu-bar-item label="Finder">
           <hsc-menu-item label="Home" @click="finder('home')"/>

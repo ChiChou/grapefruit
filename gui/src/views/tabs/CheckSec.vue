@@ -52,6 +52,7 @@ export default class CheckSec extends Base {
   info = {}
 
   mounted() {
+    this.title = 'Binary Protection & Entitlements'
     this.loading = true
     this.load().finally(() => {
       this.loading = false
