@@ -111,9 +111,7 @@ export default class FileTree extends Vue {
   }
 
   dblclick() {
-    if (this.isDir) {
-      this.expanded = !this.expanded
-    }
+    this.expanded = !this.expanded
   }
 
   dragover() {
