@@ -41,8 +41,9 @@ import CodeRunner from './CodeRunner.vue'
 import WebViewDetail from './WebViewDetail.vue'
 import JSCDetail from './JSCDetail.vue'
 import GeoLocation from './GeoLocation.vue'
+import Privacy from './Privacy.vue'
 
-import Loading from '../../components/Loading.vue'
+import Loading from '@/components/Loading.vue'
 
 import { Component, Vue, Prop } from 'vue-property-decorator'
 import { Container } from 'golden-layout'
@@ -76,7 +77,8 @@ import { Container } from 'golden-layout'
     CodeRunner,
     WebViewDetail,
     JSCDetail,
-    GeoLocation
+    GeoLocation,
+    Privacy
   }
 })
 export default class Frame extends Vue {

@@ -42,7 +42,7 @@
 import * as monaco from 'monaco-editor'
 
 import { Component } from 'vue-property-decorator'
-import { rem2px, htmlescape } from '../../utils'
+import { rem2px, htmlescape } from '@/utils'
 import Preview from './Preview.vue'
 
 // eslint-disable-next-line quotes

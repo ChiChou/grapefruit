@@ -27,7 +27,7 @@
 import { Prop, Component, Vue } from 'vue-property-decorator'
 import Base from './Base.vue'
 import { CreateElement } from 'vue'
-import { tokenize } from '../../utils'
+import { tokenize } from '@/utils'
 
 type Insn = ArmInstruction | Arm64Instruction;
 

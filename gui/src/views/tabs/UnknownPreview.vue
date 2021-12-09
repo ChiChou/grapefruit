@@ -35,7 +35,7 @@
 
 import { Component } from 'vue-property-decorator'
 import Preview from './Preview.vue'
-import { rem2px } from '../../utils'
+import { rem2px } from '@/utils'
 
 @Component
 export default class UnknownPreview extends Preview {

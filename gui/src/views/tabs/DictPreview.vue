@@ -7,8 +7,8 @@
 <script lang="ts">
 import { Component } from 'vue-property-decorator'
 import Preview from './Preview.vue'
-import DataField from '../../components/DataField.vue'
-import { extname } from '../../utils'
+import DataField from '@/components/DataField.vue'
+import { extname } from '@/utils'
 
 @Component({
   components: {

@@ -12,7 +12,7 @@
 import { CreateElement } from 'vue'
 import { Component, Vue, Prop } from 'vue-property-decorator'
 
-import $bus from '../bus'
+import $bus from '@/bus'
 
 interface NSObject {
   type?: 'instance' | 'block' | 'class' | 'dict' | 'array' | 'function';

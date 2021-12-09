@@ -21,9 +21,9 @@
 <script lang="ts">
 import * as monaco from 'monaco-editor'
 import { Component, Prop, Watch } from 'vue-property-decorator'
-import { rem2px } from '../../utils'
+import { rem2px } from '@/utils'
 import Base from './Base.vue'
-import JSValue from '../../components/JSValue.vue'
+import JSValue from '@/components/JSValue.vue'
 
 const WEBVIEW_JS = 'tabs.webview.javaascript'
 

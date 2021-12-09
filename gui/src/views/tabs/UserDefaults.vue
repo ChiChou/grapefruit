@@ -6,7 +6,7 @@
 <script lang="ts">
 import { Component } from 'vue-property-decorator'
 import Base from './Base.vue'
-import DataField from '../../components/DataField.vue'
+import DataField from '@/components/DataField.vue'
 
 @Component({
   components: {

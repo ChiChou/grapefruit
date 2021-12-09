@@ -25,7 +25,7 @@
 <script lang="ts">
 import { Component } from 'vue-property-decorator'
 import Base from './Base.vue'
-import UIViewNode from '../../components/UIViewNode.vue'
+import UIViewNode from '@/components/UIViewNode.vue'
 
 @Component({
   components: {

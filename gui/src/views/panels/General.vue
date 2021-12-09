@@ -31,6 +31,9 @@
       <li @click="open('UIDump')">
         <b-icon icon="magnify-scan" />UI Dump
       </li>
+      <li @click="open('Privacy')">
+        <b-icon icon="magnify-scan" />Privacy
+      </li>
     </ul>
 
     <p class="menu-label">Simulate</p>

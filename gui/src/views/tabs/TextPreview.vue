@@ -10,7 +10,7 @@ import * as monaco from 'monaco-editor'
 
 import { Component, Prop } from 'vue-property-decorator'
 import InlinePreview from './InlinePreview.vue'
-import { extname, rem2px } from '../../utils'
+import { extname, rem2px } from '@/utils'
 
 const decoder = new TextDecoder()
 

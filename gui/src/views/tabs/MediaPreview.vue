@@ -11,7 +11,7 @@
 <script lang="ts">
 import { Component } from 'vue-property-decorator'
 import Preview from './Preview.vue'
-import { filetype } from '../../utils'
+import { filetype } from '@/utils'
 
 @Component
 export default class MediaPreview extends Preview {

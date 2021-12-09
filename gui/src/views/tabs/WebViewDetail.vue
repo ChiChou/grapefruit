@@ -31,9 +31,9 @@
 
 <script lang="ts">
 import * as monaco from 'monaco-editor'
-import DataField from '../../components/DataField.vue'
+import DataField from '@/components/DataField.vue'
 import { Component, Prop } from 'vue-property-decorator'
-import { rem2px } from '../../utils'
+import { rem2px } from '@/utils'
 import Base from './Base.vue'
 
 const WEBVIEW_JS = 'tabs.webview.javaascript'

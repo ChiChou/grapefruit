@@ -32,8 +32,8 @@
 <script lang="ts">
 import { Component, Vue, Prop } from 'vue-property-decorator'
 import { CreateElement } from 'vue'
-import { tokenize } from '../utils'
-import $bus from '../bus'
+import { tokenize } from '@/utils'
+import $bus from '@/bus'
 
 type Frame = [number, number, number, number]
 

@@ -32,9 +32,9 @@
 import Axios from 'axios'
 import * as monaco from 'monaco-editor'
 import { Component, Prop } from 'vue-property-decorator'
-import { extname, rem2px } from '../../utils'
+import { extname, rem2px } from '@/utils'
 
-import DataField from '../../components/DataField.vue'
+import DataField from '@/components/DataField.vue'
 import Base from './Base.vue'
 
 interface Pair {

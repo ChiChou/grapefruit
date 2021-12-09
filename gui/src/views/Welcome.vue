@@ -69,8 +69,8 @@ import { Component, Vue } from 'vue-property-decorator'
 import Axios from 'axios'
 import { io } from 'socket.io-client'
 
-import Icon from '../components/Icon.vue'
-import Loading from '../components/Loading.vue'
+import Icon from '@/components/Icon.vue'
+import Loading from '@/components/Loading.vue'
 
 interface Device {
   name: string;

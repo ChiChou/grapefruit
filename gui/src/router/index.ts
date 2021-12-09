@@ -1,19 +1,19 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 
-import Workspace from '../views/Workspace.vue'
-import Welcome from '../views/Welcome.vue'
+import Workspace from '@/views/Workspace.vue'
+import Welcome from '@/views/Welcome.vue'
 
-import DeviceView from '../views/Device.vue'
+import DeviceView from '@/views/Device.vue'
 
-import Files from '../views/panels/Folders.vue'
-import ClassDump from '../views/panels/ClassDump.vue'
-import General from '../views/panels/General.vue'
-import Hook from '../views/panels/Hook.vue'
-import REPL from '../views/panels/REPL.vue'
-import Modules from '../views/panels/Modules.vue'
-import ApiResolver from '../views/panels/ApiResolver.vue'
-import WebViews from '../views/panels/WebViews.vue'
+import Files from '@/views/panels/Folders.vue'
+import ClassDump from '@/views/panels/ClassDump.vue'
+import General from '@/views/panels/General.vue'
+import Hook from '@/views/panels/Hook.vue'
+import REPL from '@/views/panels/REPL.vue'
+import Modules from '@/views/panels/Modules.vue'
+import ApiResolver from '@/views/panels/ApiResolver.vue'
+import WebViews from '@/views/panels/WebViews.vue'
 
 Vue.use(VueRouter)
 

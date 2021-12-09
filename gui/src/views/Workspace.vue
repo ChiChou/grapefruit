@@ -67,9 +67,9 @@ import colors, { StyleFunction } from 'ansi-colors'
 import GoldenLayout, { Container, ContentItem, ComponentConfig } from 'golden-layout'
 
 import MenuBar from './MenuBar.vue'
-import SidePanel from '../views/SidePanel.vue'
-import Frame from '../views/tabs/Frame.vue'
-import Console from '../components/Console.vue'
+import SidePanel from '@/views/SidePanel.vue'
+import Frame from '@/views/tabs/Frame.vue'
+import Console from '@/components/Console.vue'
 
 import { Route } from 'vue-router'
 import { Terminal } from 'xterm'

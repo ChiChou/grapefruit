@@ -37,7 +37,7 @@
 
 <script lang="ts">
 import { Component } from 'vue-property-decorator'
-import DataField from '../../components/DataField.vue'
+import DataField from '@/components/DataField.vue'
 import Base from './Base.vue'
 
 @Component({
