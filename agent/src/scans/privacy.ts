@@ -1,37 +1,37 @@
 const groups = {
-  bluetooth: [
+  Bluetooth: [
     'NSBluetoothAlwaysUsageDescription',
     'NSBluetoothPeripheralUsageDescription', // deperecated
   ],
-  calendar: [
+  Calendar: [
     'NSCalendarsUsageDescription',
     'NSRemindersUsageDescription',
   ],
-  camera: [
+  Camera: [
     'NSCameraUsageDescription',
   ],
-  mic: [
+  Microphone: [
     'NSMicrophoneUsageDescription',
   ],
-  contacts: [
+  Contacts: [
     'NSContactsUsageDescription',
   ],
-  bio: [
+  Biometrics: [
     'NSFaceIDUsageDescription',
   ],
-  gameCenter: [
+  GameCenter: [
     'NSGKFriendListUsageDescription',
   ],
-  health: [
+  Health: [
     'NSHealthClinicalHealthRecordsShareUsageDescription',
     'NSHealthShareUsageDescription',
     'NSHealthUpdateUsageDescription',
     'NSHealthRequiredReadAuthorizationTypeIdentifiers',
   ],
-  home: [
+  Home: [
     'NSHomeKitUsageDescription',
   ],
-  location: [
+  Location: [
     'NSLocationAlwaysAndWhenInUseUsageDescription',
     'NSLocationUsageDescription',
     'NSLocationWhenInUseUsageDescription',
@@ -40,41 +40,41 @@ const groups = {
     'NSWidgetWantsLocation',
     'NSLocationDefaultAccuracyReduced',
   ],
-  music: [
+  Music: [
     'NSAppleMusicUsageDescription',
   ],
-  motion: [
+  Motion: [
     'NSMotionUsageDescription',
     'NSFallDetectionUsageDescription',
   ],
-  network: [
+  Network: [
     'NSLocalNetworkUsageDescription',
     'NSNearbyInteractionUsageDescription',
     'NSNearbyInteractionAllowOnceUsageDescription'
   ],
-  nfc: [
+  NFC: [
     'NFCReaderUsageDescription',
   ],
-  photos: [
+  Photos: [
     'NSPhotoLibraryAddUsageDescription',
     'NSPhotoLibraryUsageDescription',
   ],
-  tracking: [
+  Tracking: [
     'NSUserTrackingUsageDescription',
   ],
-  sensor: [
+  Sensor: [
     'NSSensorKitUsageDescription',
   ],
-  siri: [
+  Siri: [
     'NSSiriUsageDescription'
   ],
-  speech: [
+  Speech: [
     'NSSpeechRecognitionUsageDescription'
   ],
-  tv: [
+  TV: [
     'NSVideoSubscriberAccountUsageDescription'
   ],
-  wifi: [
+  WiFi: [
     'UIRequiresPersistentWiFi'
   ]
 }
