@@ -15,6 +15,7 @@
           <hsc-menu-item label="NSUserDefaults" @click="go('UserDefaults')"/>
           <hsc-menu-separator />
           <hsc-menu-item label="UIDump" @click="open('UIDump')"/>
+          <hsc-menu-item label="Privacy" @click="go('Privacy')"/>
           <hsc-menu-separator />
           <hsc-menu-item label="GPS Simulator" @click="go('GeoLocation')"/>
         </hsc-menu-bar-item>

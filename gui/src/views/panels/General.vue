@@ -31,8 +31,8 @@
       <li @click="open('UIDump')">
         <b-icon icon="magnify-scan" />UI Dump
       </li>
-      <li @click="open('Privacy')">
-        <b-icon icon="magnify-scan" />Privacy
+      <li @click="go('Privacy')">
+        <b-icon icon="lock" />Privacy
       </li>
     </ul>
 
