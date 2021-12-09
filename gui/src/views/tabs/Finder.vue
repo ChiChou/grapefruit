@@ -106,7 +106,7 @@
 
 <script lang="ts">
 import { Component, Watch } from 'vue-property-decorator'
-import { Finder } from 'interfaces'
+import { Finder } from '@/interfaces'
 import { FinderModule } from '@/store/modules/finder'
 import { filetype, htmlescape, humanFileSize, icon } from '@/utils'
 import { Root } from '@/store/types'
