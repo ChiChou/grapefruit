@@ -63,7 +63,7 @@ export default class Privacy extends BaseTab {
       Photos: 'image',
       Tracking: 'google-analytics',
       Sensor: 'smoke-detector-alert',
-      Siri: 'record-voice-over',
+      Siri: 'account-voice',
       Speech: 'settings-voice',
       TV: 'tv',
       WiFi: 'wifi',

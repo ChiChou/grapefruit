@@ -29,9 +29,9 @@
           <hsc-menu-separator />
           <hsc-menu-item label="Search API" @click="redirect({ name: 'Api Resolver' })"/>
           <hsc-menu-separator />
-          <hsc-menu-item label="Open REPL" @click="redirect({ name: 'REPL' })"/>
+          <hsc-menu-item label="REPL" @click="redirect({ name: 'REPL' })"/>
           <hsc-menu-separator />
-          <hsc-menu-item label="WebViews and JavascriptCore Instances" @click="redirect({ name: 'webviews' })"/>
+          <hsc-menu-item label="WebViews and JavascriptCore Instances" @click="redirect({ name: 'WebViews' })"/>
         </hsc-menu-bar-item>
         <hsc-menu-bar-item label="Session">
           <hsc-menu-item label="Reload" @click="reload" />
