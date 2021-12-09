@@ -14,7 +14,7 @@
               {{ key }}
             </b-tag>
             <b-tag size="is-large">
-              <a target="_blank" :href="'https://developer.apple.com/documentation/bundleresources/information_property_list' + key">
+              <a target="_blank" :href="'https://developer.apple.com/documentation/bundleresources/information_property_list/' + key">
                 <b-icon icon="launch"/>
               </a>
             </b-tag>        
