@@ -31,7 +31,7 @@
           <hsc-menu-separator />
           <hsc-menu-item label="REPL" @click="redirect({ name: 'REPL' })"/>
           <hsc-menu-separator />
-          <hsc-menu-item label="WebViews and JavascriptCore Instances" @click="redirect({ name: 'WebViews' })"/>
+          <hsc-menu-item label="WebViews and JavascriptCore" @click="redirect({ name: 'WebViews' })"/>
         </hsc-menu-bar-item>
         <hsc-menu-bar-item label="Session">
           <hsc-menu-item label="Reload" @click="reload" />
@@ -57,9 +57,10 @@
         </hsc-menu-bar-item> -->
         <hsc-menu-bar-item label="Help">
           <hsc-menu-item label="About" @click="isAboutDialogActive = true" />
-          <hsc-menu-separator />
           <hsc-menu-item label="GitHub Repo" @click="external('https://github.com/chichou/grapefruit')" />
+          <hsc-menu-separator />
           <hsc-menu-item label="Support Me on Patreon" @click="external('https://www.patreon.com/codecolorist')" />
+          <hsc-menu-item label="Donate on PayPal" @click="external('https://www.paypal.com/paypalme/codecolorist')" />
           <!-- <hsc-menu-separator />
         <hsc-menu-item label="Check NPM Updates" @click="update()" /> -->
         </hsc-menu-bar-item>
