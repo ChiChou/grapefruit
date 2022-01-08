@@ -21,7 +21,8 @@ module.exports = {
     'space-before-function-paren': [
       'error',
       'never'
-    ]
+    ],
+    "generator-star-spacing": ["error", {"before": false, "after": true}]
   },
 
   'extends': [
