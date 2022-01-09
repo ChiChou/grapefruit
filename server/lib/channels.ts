@@ -158,7 +158,13 @@ export default class Channels {
       })
 
       socket.on('removescript', async (uuid: string, ack: Function) => {
-        repl.remove(uuid)
+        try {
+          repl.remove(uuid)
+        } catch(e) {
+          console.error(e)
+          ack(false)
+          return
+        }
         ack(true)
       })
 
