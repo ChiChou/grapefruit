@@ -24,10 +24,10 @@
                 <code>{{ imp.address }}</code>
                 <span class="symbol-name">{{ imp.demangled || imp.name }}</span>
                 <b-field class="actions">
-                  <!-- todo -->
-                  <!-- <p class="control">
-                    <b-button icon-left="hook" />
-                  </p> -->
+                  <p class="control">
+                    <b-button icon-left="hook"
+                      @click="hook(imp)"/>
+                  </p>
                   <p class="control">
                     <b-button icon-left="code-tags"
                       @click="code(group.path, imp.name, imp.type)" />
@@ -52,6 +52,8 @@
         </b-field>
         <ul>
           <li class="symbol" v-for="(exp, index) in exps.list" :key="index">
+            <b-checkbox v-if="clickable(exp)" v-model="selectedExports"
+              :native-value="index" @click.native="onSelectExports($event, index)" />
             <b-icon :icon="exp.type" />
             <code>{{ exp.address }}</code>
             <b-field class="actions">
@@ -74,6 +76,10 @@
           </li>
         </ul>
         <p v-if="exps.count > 200">Showing 200 items of {{ exps.count }}</p>
+        <div class="batch-hook-toolbar" v-if="selectedExports.length">
+          <b-button icon-left="hook" @click="batchHook">
+            Hook {{ selectedExports.length }} functions</b-button>
+        </div>
       </b-tab-item>
       <b-tab-item label="Symbols">
         <b-field>
@@ -110,58 +116,11 @@
 // eslint-disable-next-line
 /// <reference path="../../frida.shim.d.ts" />
 
-import Axios from 'axios'
 import debounce from 'lodash.debounce'
 import { Component, Prop } from 'vue-property-decorator'
-import { basename, className, isClass, render } from '@/utils';
+import { className, isClass } from '@/utils'
+import { Group, Exports, Export, Symbols, Import, render, HookInfo, pointer } from '@/hook-templates'
 import Base from './Base.vue'
-
-type SymbolKind = 'function' | 'variable' | 'class';
-
-interface Import {
-  address: string;
-  name: string;
-  demangled: string;
-  type: SymbolKind;
-}
-
-interface Group {
-  path: string;
-  imps: Import[];
-  expanded: boolean;
-  loading: boolean;
-}
-
-interface Export {
-  name: string;
-  address: string;
-  type: SymbolKind;
-  demangled?: string;
-}
-
-interface Exports {
-  count: number;
-  list: Export[];
-}
-
-interface Symbol {
-  name: string;
-  demangled?: string;
-  global: boolean;
-  address: string;
-  type?: SymbolKind;
-}
-
-interface Symbols {
-  count: number;
-  list: Symbol[];
-}
-
-interface CodeSample {
-  name: string;
-  module: string;
-  type: string;
-}
 
 @Component({
   watch: {
@@ -184,16 +143,35 @@ export default class ModuleInfo extends Base {
   activeTab = 0
   tabLoading = [false, false, false, false]
 
+  selectedExports: number[] = []
+  lastSelectedExport: number | null = null
+
   keywordOfExport = ''
   keywordOfSymbol = ''
 
   expandAllLoading = false
 
-  isCopyCodeActive = false
-  codeTemplate: CodeSample = {
-    module: '',
-    name: '',
-    type: ''
+  onSelectExports(event: MouseEvent, index: number) {
+    setTimeout(() => {
+      const lastIndex = this.lastSelectedExport
+      this.lastSelectedExport = index
+      if (event.shiftKey && lastIndex !== null && index !== lastIndex) {
+        const subset = []
+        const left = Math.min(index, lastIndex)
+        const right = Math.max(index, lastIndex) + 1
+        for (let i = left; i < right; i++) {
+          subset.push(i)
+        }
+
+        if (this.selectedExports.includes(lastIndex)) {
+          const union = new Set([...this.selectedExports, ...subset])
+          this.selectedExports = [...union] as number[]
+        } else {
+          const toDelete = new Set(subset)
+          this.selectedExports = this.selectedExports.filter(val => !toDelete.has(val))
+        }
+      }
+    }, 0)
   }
 
   async loadExported(keyword: string) {
@@ -205,14 +183,17 @@ export default class ModuleInfo extends Base {
   }
 
   async code(module: string, name: string, type: string) {
-    const template = type === 'variable' ? 'pointer' : 'intercept'
-    const vars = { 
-      module: basename(module),
-      name
+    let code: string | null = null
+    if (type === 'variable') {
+      code = pointer(module, name)
+    } else if (type === 'function') {
+      code = render('c', [{ module, name }])
     }
 
-    const { data } = await Axios.get(`/template/${template}`)
-    const code = render(data, vars)
+    if (!code) {
+      throw new RangeError(`unexpected arg type: ${type}`)
+    }
+
     this.$bus.$emit('openTab', 'CodeRunner', 'New Hook Template', {
       file: '',
       code
@@ -271,18 +252,37 @@ export default class ModuleInfo extends Base {
   }
 
   clickable(entry: Import | Export | Symbol) {
-    if (isClass(entry.name) && entry.type === 'variable') return true
-    if (entry.type === 'function') return true
+    if ('name' in entry && isClass(entry.name) && entry.type === 'variable')
+      return true
+
+    if ('type' in entry && entry.type === 'function')
+      return true
   }
 
   view(entry: Import | Export | Symbol) {
-    if (isClass(entry.name) && entry.type === 'variable') {
+    if ('name' in entry && isClass(entry.name) && entry.type === 'variable') {
       const name = className(entry.name)
       this.$bus.$emit('openTab', 'ClassInfo', 'Class: ' + name, { name })
-    } else if (entry.type === 'function') {
+    } else if ('type' in entry && entry.type === 'function') {
       const addr = entry.address
       this.$bus.$emit('openTab', 'Disasm', 'Disasm @' + addr, { addr })
     }
+  }
+
+  batchHook() {
+    const code = render('c', 
+      this.selectedExports.map(i => {
+        const exp = this.exps.list[i]
+        return {
+          module: this.module.name,
+          name: exp.name
+        }
+      })
+    )
+    this.$bus.$emit('openTab', 'CodeRunner', 'New Hook Template', {
+      file: '',
+      code
+    })
   }
 
   hook(entry: Import | Export | Symbol) {
@@ -325,6 +325,13 @@ export default class ModuleInfo extends Base {
 
   .actions {
     float: right;
+  }
+
+  .batch-hook-toolbar {
+    position: sticky;
+    bottom: 10px;
+    display: inline-block;
+    margin-left: 0px;
   }
 }
 </style>
