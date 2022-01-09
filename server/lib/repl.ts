@@ -40,6 +40,7 @@ export default class REPL extends EventEmitter {
 
     script.logHandler = (level, text) => {
       this.emit('console', uuid, level, text)
+      console.log(`[user script][${level}]${text}`)
     };
 
     script.message.connect((message, data) => {
