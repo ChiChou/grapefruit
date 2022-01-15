@@ -52,7 +52,7 @@
         </b-field>
         <ul>
           <li class="symbol" v-for="(exp, index) in exps.list" :key="index">
-            <b-checkbox v-if="clickable(exp)" v-model="selectedExports"
+            <b-checkbox :disabled="!clickable(exp)" v-model="selectedExports"
               :native-value="index" @click.native="onSelectExports($event, index)" />
             <b-icon :icon="exp.type" />
             <code>{{ exp.address }}</code>
@@ -160,7 +160,9 @@ export default class ModuleInfo extends Base {
         const left = Math.min(index, lastIndex)
         const right = Math.max(index, lastIndex) + 1
         for (let i = left; i < right; i++) {
-          subset.push(i)
+          if (this.clickable(this.exps.list[i])) {
+            subset.push(i)
+          }
         }
 
         if (this.selectedExports.includes(lastIndex)) {
