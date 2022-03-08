@@ -12,19 +12,11 @@
           <b-button icon-left="stop" @click="stop">Stop</b-button>
         </p>
         <p class="control">
-          <b-button icon-left="broom" @click="clear">Clear Console</b-button>
+          <b-button icon-left="download" @click="download">Download</b-button>
         </p>
       </b-field>
     </header>
     <main><div class="editor" ref="container"></div></main>
-    <footer class="output content">
-      <ol type="1" class="messages">
-        <li v-for="(log, i) in logs" :key="i">
-          <p><code>{{ log.source }}</code></p>
-          <p><data-field class="plist dark" :depth="0" :field="{ value: log.result }" /></p>
-        </li>
-      </ol>
-    </footer>
   </div>
 </template>
 
@@ -36,17 +28,6 @@ import { extname, rem2px } from '@/utils'
 
 import DataField from '@/components/DataField.vue'
 import Base from './Base.vue'
-
-interface Pair {
-  source: string;
-  result: string;
-}
-
-function truncate(text: string) {
-  const LEN = 64
-  const shorten = text.length > LEN ? text.substring(0, LEN) + '...' : text
-  return shorten
-}
 
 @Component({
   components: {
@@ -63,8 +44,6 @@ export default class CodeRunner extends Base {
   code!: string
 
   path = ''
-
-  logs: Pair[] = []
 
   uuid: string = ''
 
@@ -126,10 +105,6 @@ export default class CodeRunner extends Base {
       })
   }
 
-  clear() {
-    this.logs = []
-  }
-
   save() {
     if (!this.editor) return
 
@@ -167,14 +142,21 @@ export default class CodeRunner extends Base {
     this.uuid = uuid
     const src = this.editor.getValue()
     const result = await this.$ws.send('userscript', src, uuid)
-    this.logs.push({
-      source: truncate(src),
-      result: result.value
-    })
+    const source = await monaco.editor.colorize(src.trim(), 'javascript', {})
 
-    if (this.logs.length > 10) {
-      this.logs.shift()
-    }
+    // todo: Output.vue
+  }
+
+  download() {
+    if (!this.editor) return
+    const src = this.editor.getValue()
+    const blob = new Blob([src], {type: 'text/javascript'})
+    const elem = window.document.createElement('a')
+    elem.href = window.URL.createObjectURL(blob)
+    elem.download = this.path || 'snippet.js'
+    document.body.appendChild(elem)
+    elem.click()
+    document.body.removeChild(elem)
   }
 
   stop() {
@@ -208,11 +190,6 @@ main {
 .editor {
   height: 100%;
   width: 100%;
-}
-
-footer {
-  height: 40%;
-  overflow: auto;
 }
 
 </style>
