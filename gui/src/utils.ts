@@ -1,4 +1,4 @@
-export function * tokenize(text: string, delimiters: string): IterableIterator<string> {
+export function* tokenize(text: string, delimiters: string): IterableIterator<string> {
   let left = 0
   for (let i = 0; i < text.length; i++) {
     const ch = text.charAt(i)
