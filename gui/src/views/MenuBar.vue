@@ -70,7 +70,7 @@
     <b-modal :active.sync="isAboutDialogActive" :width="480" scroll="keep">
       <div class="card has-text-centered">
         <div class="card-image">
-          <img src="../assets/logo.svg" alt="Grapefruit" class="image" width="300" style="margin: 40px auto" />
+          <img src="../assets/logo.svg" alt="Grapefruit" class="image" width="300" height="60" style="margin: 40px auto" />
         </div>
         <div class="card-content">
           <h2>Grapefruit @{{ version }}</h2>
