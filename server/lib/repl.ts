@@ -113,7 +113,7 @@ export default class REPL extends EventEmitter {
 
     const script = this.scripts.get(uuid)
     this.scripts.delete(uuid)
-    script.unload()
+    await script.unload()
   }
 
   public async destroy(): Promise<void> {
