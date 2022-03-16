@@ -25,6 +25,8 @@ import Axios from 'axios'
 import * as monaco from 'monaco-editor'
 import { Component, Prop } from 'vue-property-decorator'
 import { extname, rem2px } from '@/utils'
+import { ConsoleModule } from '@/store/modules/console'
+import { ContentType, IconType } from '@/store/types'
 
 import DataField from '@/components/DataField.vue'
 import Base from './Base.vue'
@@ -144,7 +146,18 @@ export default class CodeRunner extends Base {
     const result = await this.$ws.send('userscript', src, uuid)
     const source = await monaco.editor.colorize(src.trim(), 'javascript', {})
 
-    // todo: Output.vue
+    ConsoleModule.log({
+      type: ContentType.HTML,
+      icon: IconType.In,
+      content: source
+    })
+
+    ConsoleModule.log({
+      icon: IconType.Out,
+      content: result
+    })
+
+    this.$bus.$emit('switchTab', 'Output', 'Output')
   }
 
   download() {
