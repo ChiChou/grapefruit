@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="split">
     <header class="toolbar">
       <b-checkbox v-model="autoScroll">Auto Scroll</b-checkbox>
     </header>
@@ -117,7 +117,7 @@ pre {
   padding: 0;
 }
 
-.container {
+.split {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -151,7 +151,7 @@ li.log-item {
     }
   }
 
-  code {
+  time, code {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
