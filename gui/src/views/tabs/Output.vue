@@ -1,7 +1,24 @@
 <template>
   <div class="split">
     <header class="toolbar">
-      <b-checkbox v-model="autoScroll">Auto Scroll</b-checkbox>
+      <b-field>
+        <p class="control">
+          <b-checkbox-button v-model="autoScroll" type="is-info">
+            <b-icon icon="chevron-triple-down" />
+            <span>Auto Scroll</span>
+          </b-checkbox-button>
+        </p>
+        <p class="control">
+          <b-button icon-left="delete-forever" @click="clear">Clear</b-button>
+        </p>
+        <p class="control">
+          <b-select icon="counter" v-model="limit">
+            <option>100</option>
+            <option>200</option>
+            <option>300</option>
+          </b-select>
+        </p>
+      </b-field>
     </header>
     <main class="output" ref="logs">
       <RecycleScroller
@@ -41,9 +58,21 @@ export default class Output extends Vue {
 
   selected = -1
   autoScroll = true
+  
+  get limit() {
+    return ConsoleModule.limit
+  }
+
+  set limit(val: number) {
+    ConsoleModule.setLimit(val)
+  }
 
   get logs() {
     return ConsoleModule.logs
+  }
+
+  clear() {
+    ConsoleModule.clear()
   }
 
   levelString(index: number) {
