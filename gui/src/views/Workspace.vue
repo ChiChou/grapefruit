@@ -145,7 +145,7 @@ export default class Workspace extends Vue {
             type: 'component',
             componentName: 'subview',
             isClosable: false,
-            componentState: { title: 'Console', component: 'Output' }
+            componentState: { title: 'Output', component: 'Output' }
           }]
         }, {
           type: 'stack',
