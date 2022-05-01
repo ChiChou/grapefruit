@@ -8,7 +8,7 @@ const env = Object.assign({}, process.env, { NODE_ENV: 'development' })
 
 function* tasks() {
   const spec = {
-    gui: ['run', 'serve'],
+    guiv3: ['run', 'dev'],
     agent: ['run', 'watch'],
     server: ['run', 'dev']
   };
