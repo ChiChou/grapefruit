@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useLoadingBar, useThemeVars } from 'naive-ui'
+import { useLoadingBar } from 'naive-ui'
 import axios from '@/plugins/axios'
 
 interface Device {
@@ -11,6 +11,7 @@ interface Device {
 
 const version = ref('N/A')
 const node = ref('N/A')
+const loading = ref(false)
 const devices = ref([] as Device[])
 
 onMounted(() => {
@@ -18,10 +19,10 @@ onMounted(() => {
 })
 
 const loadingBar = useLoadingBar()
-const theme = useThemeVars()
 
 function refresh() {
   loadingBar.start()
+  loading.value = true
   axios.get('/devices')
     .then(({ data }) => {
       devices.value = data.list
@@ -32,6 +33,14 @@ function refresh() {
     .catch(e => {
       loadingBar.error()
     })
+    .finally(() => {
+      loading.value = false
+    })
+}
+
+function switchDarkMode(val: boolean) {
+  const emit = defineEmits<{(e: 'theme', isDark: boolean): void}>()
+  emit('theme', val)
 }
 
 </script>
@@ -43,6 +52,9 @@ function refresh() {
         <a href="/" class="logo">
           <img src="../assets/logo.svg" alt="Grapefruit" width="160" id="logo" />
         </a>
+        <!-- <n-space>
+          <n-switch @update:value="switchDarkMode" />
+        </n-space> -->
       </header>
 
       <p>
@@ -57,6 +69,8 @@ function refresh() {
           v-for="(dev, i) in devices"
           :to="{ name: 'Apps', params: { device: dev.id } }">
           {{ dev.name }}</router-link>
+
+        <span v-if="devices.length === 0">No iPhone detected</span>
       </nav>
 
       <n-divider />
@@ -64,8 +78,6 @@ function refresh() {
       <nav>
         <a target="_blank" href="https://github.com/chichou/grapefruit">GitHub</a>
         <a target="_blank" href="https://discord.com/invite/pwutZNx">Discord</a>
-        <a target="_blank" href="https://www.patreon.com/codecolorist">Support by Patron</a>
-        <a target="_blank" href="https://paypal.me/codecolorist">Support by Paypal</a>
       </nav>
 
       <n-divider />
@@ -93,9 +105,16 @@ aside {
     text-decoration: none;
     display: block;
     padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: background-color 0.2s ease-in-out;
+
+    &.is-active {
+      color: var(--highlight-text);
+      background-color: var(--highlight-background);
+    }
 
     &:hover {
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--highlight-background);
     }
   }
 }

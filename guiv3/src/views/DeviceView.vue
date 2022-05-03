@@ -48,8 +48,6 @@ async function refresh(dev: string) {
     .then(({ data }) => {
       apps.value = data
 
-      console.log(data)
-
       document.querySelectorAll('img.lazy').forEach(e => observer.unobserve(e))
       nextTick(() =>
         document.querySelectorAll('img.lazy').forEach(e => observer.observe(e)))
@@ -139,7 +137,8 @@ ul {
       transition: background-color 0.2s ease-in-out;
 
       &:hover {
-        background-color: #2a2a2a;
+        color: var(--highlight-text);
+        background-color: var(--highlight-background);
       }
     }
 
