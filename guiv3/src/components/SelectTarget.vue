@@ -64,7 +64,7 @@ function switchDarkMode(val: boolean) {
 
       <n-divider />
 
-      <nav>
+      <nav class="devices">
         <router-link 
           v-for="(dev, i) in devices"
           :to="{ name: 'Apps', params: { device: dev.id } }">
@@ -100,11 +100,14 @@ aside {
   width: 280px;
   padding: 40px;
 
+
   nav a {
-    color: inherit;
     text-decoration: none;
     display: block;
     padding: 0.5rem 1rem;
+  }
+
+  nav.devices a {
     border-radius: 4px;
     transition: background-color 0.2s ease-in-out;
 
@@ -114,6 +117,7 @@ aside {
     }
 
     &:hover {
+      color: var(--highlight-text);
       background: var(--highlight-background);
     }
   }

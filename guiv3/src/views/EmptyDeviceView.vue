@@ -31,9 +31,5 @@
   h2 {
     font-weight: 100;
   }
-
-  a {
-    color: inherit;
-  }
 }
 </style>

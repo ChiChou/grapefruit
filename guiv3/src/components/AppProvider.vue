@@ -55,10 +55,31 @@ onMounted(() => {
 :root {
   --highlight-background: #f7f7f7;
   --highlight-color: #000;
+  
+  --n-link-text-color: rgb(51, 54, 57);
+  --n-link-text-color-hover: #36ad6a;
+  --n-link-text-color-active: #18a058;
+  --n-link-text-color-pressed: #0c7a43;
+
+  a {
+    color: var(--n-link-text-color);
+    &:hover, &:focus {
+      color: var(--n-link-text-color-hover);
+    }
+
+    &:active {
+      color: var(--n-link-text-color-pressed);
+    }
+  }
 }
 
-:root[data-theme="dark"] {
+[data-theme="dark"] {
   --highlight-background: #1abc9c;
   --highlight-text: #fff;
+
+  --n-link-text-color: rgba(255, 255, 255, 0.82);
+  --n-link-text-color-hover: #7fe7c4;
+  --n-link-text-color-active: #63e2b7;
+  --n-link-text-color-pressed: #5acea7;
 }
 </style>

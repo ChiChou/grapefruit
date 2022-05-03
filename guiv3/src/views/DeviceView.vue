@@ -126,7 +126,6 @@ ul {
     list-style: none;
 
     a {
-      color: inherit;
       font-weight: 100;
       text-decoration: none;
       text-align: center;
