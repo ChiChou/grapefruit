@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import SelectTarget from '@/components/SelectTarget.vue'
 import DeviceView from '@/views/DeviceView.vue'
 import WorkspaceView from '@/views/WorkspaceView.vue'
+import EmptyDeviceView from '@/views/EmptyDeviceView.vue'
 
 import GeneralTab from '@/views/tabs/GeneralTab.vue'
 
@@ -12,6 +13,9 @@ const routes = [
     name: 'Welcome',
     component: SelectTarget,
     children: [{
+      path: '',
+      component: EmptyDeviceView,
+    }, {
       path: 'apps/:device',
       component: DeviceView,
       name: 'Apps'
