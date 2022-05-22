@@ -110,6 +110,8 @@ aside {
   nav.devices a {
     border-radius: 4px;
     transition: background-color 0.2s ease-in-out;
+    margin-top: 2px;
+    margin-bottom: 2px;
 
     &.is-active {
       color: var(--highlight-text);
@@ -118,7 +120,7 @@ aside {
 
     &:hover {
       color: var(--highlight-text);
-      background: var(--highlight-background);
+      background: var(--n-link-text-color-hover);
     }
   }
 }
