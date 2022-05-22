@@ -24,6 +24,7 @@ interface Info {
 const apps = ref([] as App[])
 const info = ref(null as Info | null)
 const device = ref('')
+const error = ref('')
 
 const shortened = computed(() => {
   const { value } = device
@@ -42,6 +43,7 @@ async function refresh(dev: string) {
   if (typeof dev !== 'string') throw new Error('invalid route')
 
   device.value = dev
+  error.value = ''
 
   loadingBar.start()
   axios.get(`device/${dev}/apps`)
@@ -51,15 +53,12 @@ async function refresh(dev: string) {
       document.querySelectorAll('img.lazy').forEach(e => observer.unobserve(e))
       nextTick(() =>
         document.querySelectorAll('img.lazy').forEach(e => observer.observe(e)))
-
-      // if (!data.length) {
-      //   this.error.title = 'Unable to retrieve apps from this device'
-      // }
-
       loadingBar.finish()
     })
-    .catch(() => {
+    .catch((ex) => {
       loadingBar.error()
+      console.error('Failed to get apps', ex.response)
+      error.value = `Unable to retrieve apps from this device: ${ex.response.data}`
     })
 }
 
@@ -103,6 +102,10 @@ watch(() => route.params.device, async newDevice => {
       </li>
     </ul>
   </div>
+
+  <n-alert title="Error" type="error" v-if="error">
+    {{ error }}
+  </n-alert>
 
   <footer v-if="info">
     <p>
