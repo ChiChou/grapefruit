@@ -18,6 +18,10 @@ import {
   RefreshOutlined,
   ListAltOutlined,
   JavascriptOutlined,
+  StopFilled,
+  ViewColumnOutlined,
+  ViewQuiltSharp,
+  ViewModuleSharp,
   HomeSharp,
 } from '@vicons/material'
 
@@ -119,6 +123,7 @@ const menuOptions: MenuOption[] = [
   {
     label: 'View',
     key: 'view',
+    icon: renderIcon(ViewColumnOutlined),
     children: [
       {
         label: 'Frameworks',
@@ -163,12 +168,14 @@ const menuOptions: MenuOption[] = [
       {
         label: 'Kill',
         key: 'kill',
+        icon: renderIcon(StopFilled),
       },
     ]
   },
   {
     label: 'Layout',
     key: 'layout',
+    icon: renderIcon(ViewQuiltSharp),
     children: [
       {
         label: 'Reset',
@@ -265,7 +272,7 @@ function handleSelect() {
 
 <template>
   <n-dropdown placement="right-start" trigger="click" size="small" :options="menuOptions" @select="handleSelect">
-    <n-button>
+    <n-button block :bordered="false">
       <template #icon>
         <n-icon :component="MenuFilled"></n-icon>
       </template>

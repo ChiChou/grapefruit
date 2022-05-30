@@ -1,0 +1,39 @@
+:root {
+  --splitter-size: 4px;
+  --splitter-hover-size: 6px;
+  --splitter-color: #ccc;
+  --highlight-color: rgb(0, 122,204);
+}
+
+[data-theme="dark"] {
+  --splitter-color: #222;
+  --highlight-color: rgb(0, 122,204);
+}
+
+.splitpanes__pane {}
+
+.splitpanes--vertical>.splitpanes__splitter {
+  min-width: var(--splitter-size);
+
+  &:hover {
+    min-width: var(--splitter-hover-size);
+  }
+}
+
+.splitpanes--horizontal>.splitpanes__splitter {
+  min-height: var(--splitter-size);
+
+  &:hover {
+    min-height: var(--splitter-hover-size);
+  }
+}
+
+.splitpanes--vertical>.splitpanes__splitter, 
+.splitpanes--horizontal>.splitpanes__splitter {
+  background: var(--splitter-color);
+  transition: .4s ease-in-out background-color;
+
+  &:hover {
+    background: var(--highlight-color);
+  }
+}
