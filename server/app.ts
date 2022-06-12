@@ -25,6 +25,7 @@ import { AddressInfo } from 'net'
 import { concat } from './lib/workspace'
 import { Scope } from 'frida/dist/device'
 
+const ISDEBUG = process.env.NODE_ENV === 'development'
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 Buffer.prototype.toJSON = function () {
@@ -42,19 +43,30 @@ router
     const unique = new Set()
     const devices = await mgr.enumerateDevices()
 
+    const list = devices.filter(dev => {
+      if (dev.id === 'local' || dev.id === 'socket')
+        return false
+
+      if (unique.has(dev.id))
+        return false
+
+      unique.add(dev.id)
+      return true
+    }).map(wrap).map(d => d.valueOf())
+
+    if (ISDEBUG) {
+      list.push({
+        name: 'Mock Device',
+        id: 'mock',
+        type: 'remote',
+        removable: false
+      })
+    }
+
     ctx.body = {
       version: require('frida/package.json').version,
       node: process.version,
-      list: devices.filter(dev => {
-        if (dev.id === 'local' || dev.id === 'socket')
-          return false
-
-        if (unique.has(dev.id))
-          return false
-
-        unique.add(dev.id)
-        return true
-      }).map(wrap).map(d => d.valueOf())
+      list
     }
   })
   .get('/device/:device/apps', async (ctx) => {
@@ -156,7 +168,7 @@ router
       ctx.status = 400
       return
     }
-    const folder = process.env.NODE_ENV === 'development' ? '.' : '..'
+    const folder = ISDEBUG ? '.' : '..'
     ctx.body = fs.createReadStream(path.join(__dirname, folder, 'templates', `${name}.js`))
   })
 
@@ -166,7 +178,7 @@ app
     try {
       await next()
     } catch (e) {
-      if (process.env.NODE_ENV === 'development') {
+      if (ISDEBUG) {
         ctx.status = 500
         ctx.body = e.stack
       } else {
@@ -175,7 +187,7 @@ app
     }
   })
 
-if (process.env.NODE_ENV === 'development') {
+if (ISDEBUG) {
   app
     .use(KoaJSON({
       pretty: true
