@@ -37,6 +37,20 @@ const router = new Router({ prefix: '/api' })
 
 const mgr = frida.getDeviceManager()
 
+if (ISDEBUG) {
+  router
+    .get('/device/mock/apps', (ctx) => {
+      ctx.body = new Array(5).fill({
+        name: "Example",
+        pid: 0,
+        identifier: "com.example.mock"
+      })
+    })
+    .get('/device/mock/icon/com.example.mock', (ctx) => {
+      const folder = ISDEBUG ? '.' : '..'
+      ctx.body = fs.createReadStream(path.join(__dirname, folder, 'templates', `mockicon.png`))
+    })
+}
 
 router
   .get('/devices', async (ctx) => {
