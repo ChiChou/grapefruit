@@ -6,26 +6,62 @@ import 'splitpanes/dist/splitpanes.css'
 import '@/skin/splitpane.scss'
 
 import SidePanel from './SidePanel.vue'
+import StatusBar from './StatusBar.vue'
+
+const SIDEBAR_WIDTH_KEY = 'sidebar-width'
+const sideWidth = ref(20)
+const TERM_HEIGHT_KEY = 'term-height'
+const termHeight = ref(30)
+
+function restoreLayout() {
+  // remember the layout
+  const width = localStorage.getItem(SIDEBAR_WIDTH_KEY)
+  if (width) {
+    const val = parseFloat(width)
+    if (!Number.isNaN(val)) {
+      sideWidth.value = val
+    }
+  }
+
+  const height = localStorage.getItem(TERM_HEIGHT_KEY)
+  if (height) {
+    const val = parseFloat(height)
+    if (!Number.isNaN(val)) {
+      termHeight.value = val
+    }
+  }
+}
+
+type SizeData = {
+  min: number
+  max: number
+  size: number
+}
+
+function saveLayout(data: SizeData[]) {
+  localStorage.setItem(SIDEBAR_WIDTH_KEY, sideWidth.value.toString())
+  localStorage.setItem(TERM_HEIGHT_KEY, termHeight.value.toString())
+}
 
 onMounted(() => {
-
+  restoreLayout()
 })
-
 
 </script>
 
 <template>
-  <splitpanes style="flex: 1" class="pane-full">
-    <pane min-size="20" size="20">
+  <splitpanes style="flex: 1" class="pane-full" @resize="sideWidth = $event[0].size" @resized="saveLayout">
+    <pane min-size="20" :size="sideWidth" max-size="80">
       <SidePanel></SidePanel>
     </pane>
     <pane>
-      <splitpanes horizontal>
+      <splitpanes horizontal @resize="termHeight = $event[1].size" @resized="saveLayout">
         <pane></pane>
-        <pane size="30"></pane>
+        <pane :size="termHeight" max-size="100">{{ termHeight }}</pane>
       </splitpanes>
     </pane>
   </splitpanes>
+  <statusbar></statusbar>
 </template>
 
 <style lang="scss">
