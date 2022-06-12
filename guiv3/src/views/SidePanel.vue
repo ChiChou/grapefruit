@@ -13,54 +13,27 @@ import {
   Braces
 } from '@vicons/tabler'
 
+import router from '@/router'
 
-import REPLTab from './tabs/REPLTab.vue'
-import JSCTab from './tabs/JSCTab.vue'
-import ModulesTab from './tabs/ModulesTab.vue'
-import GeneralTab from './tabs/GeneralTab.vue'
-import FinderTab from './tabs/FinderTab.vue'
-import ClassesTab from './tabs/ClassesTab.vue'
-
-type TabOption = {
-  label: string;
-  icon: Comp;
-  page: Comp;
+const icons: {[key: string]: Comp } = {
+  'general': AutoAwesomeMosaicSharp,
+  'classes': Braces,
+  'modules': ViewModuleSharp,
+  'repl': TerminalSharp,
+  'finder': FolderSharp,
+  'jsc': ExploreRound,
 }
 
-const tabs: TabOption[] = [
-  {
-    label: 'General',
-    icon: AutoAwesomeMosaicSharp,
-    page: GeneralTab,
-  },
-  {
-    label: 'Classes',
-    icon: Braces,
-    page: ClassesTab,
-  },
-  {
-    label: 'Modules',
-    icon: ViewModuleSharp,
-    page: ModulesTab,
-  },
-  {
-    label: 'Terminal',
-    icon: TerminalSharp,
-    page: REPLTab,
-  },
-  {
-    label: 'Finder',
-    icon: FolderSharp,
-    page: FinderTab,
-  },
-  {
-    label: 'JavaScriptCore',
-    icon: ExploreRound,
-    page: JSCTab,
+const routes = router.getRoutes()
+const parent = routes.find(r => r.name === 'Workspace')
+const tabs = parent?.children.map(r => {
+  return {
+    name: r.name,
+    icon: icons[r.path],
+    label: r.name,
+    path: r.path
   }
-]
-
-const index = ref(0)
+})
 
 </script>
 
@@ -69,17 +42,17 @@ const index = ref(0)
     <nav class="side-nav">
       <MainMenu></MainMenu>
 
-      <n-popover trigger="hover" v-for="(tab, i) in tabs" placement="right">
+      <n-popover trigger="hover" v-for="(tab) in tabs" placement="right">
         <template #trigger>
-          <a @click="index = i" :class="{ active: index === i }">
+          <router-link :to="tab.path">
             <n-icon :component="tab.icon" :size="32"></n-icon>
-          </a>
+          </router-link>
         </template>
         <span>{{ tab.label }}</span>
       </n-popover>
     </nav>
     <aside class="sidebar">
-      <component :is="tabs[index].page"></component>
+      <router-view></router-view>
     </aside>
   </div>
 </template>
@@ -121,7 +94,7 @@ const index = ref(0)
       border-left: 2px solid transparent;
       border-right: 2px solid transparent;
 
-      &.active {
+      &.is-active {
         border-left-color: var(--nav-active);
       }
     }
