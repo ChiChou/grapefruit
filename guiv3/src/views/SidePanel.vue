@@ -85,14 +85,26 @@ const index = ref(0)
 </template>
 
 <style lang="scss">
+:root {
+  --sidebar-background: #eee;
+  --sidebar-nav-background: #fefefe;
+  --nav-active: #303030;
+}
+
+[data-theme="dark"] {
+  --sidebar-background: #181818;
+  --sidebar-nav-background: #212121;
+  --nav-active: #bcbcbc;
+}
+
 .side-navigator {
   display: flex;
   flex: 1;
   height: 100%;
 
   nav.side-nav {
-    width: 60px;
-    background: #212121;
+    width: 72px;
+    background: var(--sidebar-nav-background);
 
     .n-radio-group__splitor {
       display: none;
@@ -101,21 +113,22 @@ const index = ref(0)
     a {
       display: flex;
       cursor: pointer;
-      width: 64x;
+      width: 68px;
       height: 60px;
       align-items: center;
       justify-content: center;
 
       border-left: 2px solid transparent;
+      border-right: 2px solid transparent;
 
       &.active {
-        border-left-color: var(--highlight-background);
+        border-left-color: var(--nav-active);
       }
     }
   }
 
   aside.sidebar {
-    background-color: #181818;
+    background-color: var(--sidebar-background);
     flex: 1;
   }
 }
