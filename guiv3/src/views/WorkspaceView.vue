@@ -58,7 +58,7 @@ onMounted(() => {
       <pane>
         <splitpanes horizontal @resize="termHeight = $event[1].size" @resized="saveLayout">
           <pane></pane>
-          <pane :size="termHeight" max-size="100">{{ termHeight }}</pane>
+          <pane :size="termHeight" max-size="100"></pane>
         </splitpanes>
       </pane>
     </splitpanes>
