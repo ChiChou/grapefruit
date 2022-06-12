@@ -50,23 +50,27 @@ onMounted(() => {
 </script>
 
 <template>
-  <splitpanes style="flex: 1" class="pane-full" @resize="sideWidth = $event[0].size" @resized="saveLayout">
-    <pane min-size="20" :size="sideWidth" max-size="80">
-      <SidePanel></SidePanel>
-    </pane>
-    <pane>
-      <splitpanes horizontal @resize="termHeight = $event[1].size" @resized="saveLayout">
-        <pane></pane>
-        <pane :size="termHeight" max-size="100">{{ termHeight }}</pane>
-      </splitpanes>
-    </pane>
-  </splitpanes>
-  <statusbar></statusbar>
+  <div class="pane-full">
+    <splitpanes style="flex: 1" @resize="sideWidth = $event[0].size" @resized="saveLayout">
+      <pane min-size="20" :size="sideWidth" max-size="80">
+        <SidePanel></SidePanel>
+      </pane>
+      <pane>
+        <splitpanes horizontal @resize="termHeight = $event[1].size" @resized="saveLayout">
+          <pane></pane>
+          <pane :size="termHeight" max-size="100">{{ termHeight }}</pane>
+        </splitpanes>
+      </pane>
+    </splitpanes>
+    <StatusBar />
+  </div>
 </template>
 
 <style lang="scss">
 .pane-full {
   height: 100vh;
   width: 100vw;
+  display: flex;
+  flex-direction: column;
 }
 </style>
