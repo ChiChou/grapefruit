@@ -120,7 +120,7 @@ aside {
 
     &:hover {
       color: var(--highlight-text);
-      background: var(--n-link-text-color-hover);
+      background: var(--hover-background);
     }
   }
 }

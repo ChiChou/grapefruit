@@ -61,6 +61,8 @@ onMounted(() => {
   --n-link-text-color-active: #18a058;
   --n-link-text-color-pressed: #0c7a43;
 
+  --hover-background: #f7f7f7;
+
   a {
     color: var(--n-link-text-color);
     &:hover, &:focus {
@@ -81,5 +83,7 @@ onMounted(() => {
   --n-link-text-color-hover: #7fe7c4;
   --n-link-text-color-active: #63e2b7;
   --n-link-text-color-pressed: #5acea7;
+
+  --hover-background: #36ad6a;
 }
 </style>
