@@ -159,7 +159,14 @@ const menuOptions: MenuOption[] = [
         icon: renderIcon(RefreshOutlined),
       },
       {
-        label: 'Detach',
+        label: () =>
+          h(
+            'a',
+            {
+              href: '/',
+            },
+            'Detach'
+          ),
         key: 'detach'
       },
       {
@@ -264,7 +271,7 @@ const menuOptions: MenuOption[] = [
 
 const activeKey = ref(null)
 
-function handleSelect() {
+function handleSelect(key: string) {
 
 }
 
