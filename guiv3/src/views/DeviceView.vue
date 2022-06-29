@@ -56,6 +56,7 @@ async function refresh(dev: string) {
       loadingBar.finish()
     })
     .catch((ex) => {
+      apps.value = []
       loadingBar.error()
       console.error('Failed to get apps', ex.response)
       error.value = `Unable to retrieve apps from this device: ${ex.response.data}`
