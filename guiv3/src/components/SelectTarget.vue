@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useLoadingBar } from 'naive-ui'
+import { io } from 'socket.io-client'
+
 import axios from '@/plugins/axios'
 
 interface Device {
@@ -14,7 +16,9 @@ const node = ref('N/A')
 const loading = ref(false)
 const devices = ref([] as Device[])
 
-onMounted(() => {
+onMounted(() => {  
+  const socket = io('/devices', { transports: ['websocket'] })
+  socket.on('deviceChanged', refresh)
   refresh()
 })
 
