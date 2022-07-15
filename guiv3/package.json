@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@types/node": "^17.0.23",
+    "@types/splitpanes": "^2.2.1",
     "@vicons/material": "^0.12.0",
     "@vitejs/plugin-vue": "^2.3.0",
     "sass": "^1.50.0",
