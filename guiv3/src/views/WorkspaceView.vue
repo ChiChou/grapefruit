@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, provide } from 'vue'
 
 import { Splitpanes, Pane } from 'splitpanes'
+import { useRoute } from 'vue-router'
 import 'splitpanes/dist/splitpanes.css'
 import '@/skin/splitpane.scss'
 
 import SidePanel from './SidePanel.vue'
 import StatusBar from './StatusBar.vue'
+import * as regulation from '@/regulation'
+import { useRPC } from '@/wsrpc'
+import { io } from 'socket.io-client'
 
 const SIDEBAR_WIDTH_KEY = 'sidebar-width'
 const sideWidth = ref(20)
@@ -46,6 +50,22 @@ function saveLayout(data: SizeData[]) {
 onMounted(() => {
   restoreLayout()
 })
+
+const route = useRoute()
+const { device, bundle } = route.params
+if (typeof device !== 'string' || typeof bundle !== 'string') {
+  throw new Error('invalid params')
+}
+
+if (regulation.check(bundle)) {
+  // todo: GUI
+  throw new Error('According to local regulations, Grapefruit is not working on current app')
+}
+
+const socket = io('/session', { query: { device, bundle }, transports: ['websocket'] })
+
+provide('ws', socket)
+provide('rpc', useRPC(socket))
 
 </script>
 
