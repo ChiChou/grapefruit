@@ -76,7 +76,7 @@ onMounted(() => {
 }
 
 [data-theme="dark"] {
-  --highlight-background: #1abc9c;
+  --highlight-background: #282828;
   --highlight-text: #fff;
 
   --n-link-text-color: rgba(255, 255, 255, 0.82);
@@ -84,6 +84,6 @@ onMounted(() => {
   --n-link-text-color-active: #63e2b7;
   --n-link-text-color-pressed: #5acea7;
 
-  --hover-background: #36ad6a;
+  --hover-background: #1abc9c;
 }
 </style>
