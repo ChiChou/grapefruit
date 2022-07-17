@@ -1,6 +1,6 @@
 <template>
   <n-space>
-    <n-switch @update:value="switchDarkMode" v-model:value="darkModeStore.dark">
+    <n-switch @update:value="switchDarkMode" v-model:value="isDark">
       <template #icon>
         <n-icon :component="LightModeOutlined" />
       </template>
@@ -15,11 +15,13 @@
 </template>
 
 <script lang="ts" setup>
+import { inject } from 'vue'
 import { LightModeOutlined } from '@vicons/material'
-import { useDarkModeStore } from '@/stores/darkmode'
+import { DARK } from '@/types'
 
-const darkModeStore = useDarkModeStore()
+const isDark = inject(DARK)
+
 function switchDarkMode(val: boolean) {
-  darkModeStore.off(val)
+  isDark!.value = val
 }
 </script>

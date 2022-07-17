@@ -12,33 +12,49 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, provide, ref } from 'vue';
+import { onMounted, provide, ref, watch } from 'vue'
 import { darkTheme } from 'naive-ui'
-import { BuiltInGlobalTheme } from 'naive-ui/lib/themes/interface';
-import { useDarkModeStore } from '@/stores/darkmode';
+import { BuiltInGlobalTheme } from 'naive-ui/lib/themes/interface'
+import { DARK } from '@/types'
+
+const PRESIST_KEY = 'theme'
+const MEDIA_QUERY = '(prefers-color-scheme: dark)'
 
 const theme = ref(null as BuiltInGlobalTheme | null)
-const darkModeStore = useDarkModeStore()
+const isDark = ref(init())
 
 window
-  .matchMedia('(prefers-color-scheme: dark)')
+  .matchMedia(MEDIA_QUERY)
   .addEventListener('change', (e) => {
-    darkModeStore.off(e.matches)
+    isDark.value = e.matches
   })
 
-darkModeStore.$subscribe((mutation, state) => apply(state.dark))
-
 function apply(dark: boolean) {
+  const { dataset } = document.documentElement
   if (dark) {
     theme.value = darkTheme
-    document.documentElement.dataset.theme = 'dark'
+    dataset.theme = 'dark'
   } else {
     theme.value = null
-    document.documentElement.dataset.theme = undefined
-  }  
+    dataset.theme = 'light'
+  }
+
+  localStorage.setItem(PRESIST_KEY, dataset.theme)
 }
 
-onMounted(() => apply(darkModeStore.dark))
+function init() {
+  const v = localStorage.getItem(PRESIST_KEY)
+  if (v === 'light') {
+    return false
+  } else if (v === 'dark') {
+    return true
+  }
+  return window.matchMedia(MEDIA_QUERY).matches
+}
+
+provide(DARK, isDark)
+watch(isDark, (val) => apply(val))
+onMounted(() => apply(isDark.value))
 
 </script>
 
