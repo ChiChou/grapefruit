@@ -1,5 +1,5 @@
 <template>
-  <n-config-provider :theme="theme" :class="{ dark: theme === darkTheme}" @theme="onThemeChanged">
+  <n-config-provider :theme="theme" :class="{ dark: theme === darkTheme}">
     <n-loading-bar-provider>
       <n-message-provider>
         <n-dialog-provider>
@@ -12,42 +12,33 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, provide, ref } from 'vue';
 import { darkTheme } from 'naive-ui'
 import { BuiltInGlobalTheme } from 'naive-ui/lib/themes/interface';
+import { useDarkModeStore } from '@/stores/darkmode';
 
 const theme = ref(null as BuiltInGlobalTheme | null)
+const darkModeStore = useDarkModeStore()
 
-function lightsOff(isDark: boolean) {
-  if (isDark) {
+window
+  .matchMedia('(prefers-color-scheme: dark)')
+  .addEventListener('change', (e) => {
+    darkModeStore.off(e.matches)
+  })
+
+darkModeStore.$subscribe((mutation, state) => apply(state.dark))
+
+function apply(dark: boolean) {
+  if (dark) {
     theme.value = darkTheme
     document.documentElement.dataset.theme = 'dark'
   } else {
     theme.value = null
     document.documentElement.dataset.theme = undefined
-  }
+  }  
 }
 
-window
-  .matchMedia('(prefers-color-scheme: dark)')
-  .addEventListener('change', (e) => {
-    lightsOff(e.matches)
-  })
-
-function onThemeChanged(isDark: boolean) {
-  lightsOff(isDark)
-  if (isDark) localStorage.setItem('theme', 'dark')
-}
-
-onMounted(() => {
-  const pref = localStorage.getItem('theme')
-  if (pref === null) {
-    // use system theme
-    lightsOff(window.matchMedia('(prefers-color-scheme: dark)').matches)
-  } else {
-    lightsOff(pref === 'dark')
-  }
-})
+onMounted(() => apply(darkModeStore.dark))
 
 </script>
 

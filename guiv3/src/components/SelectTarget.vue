@@ -5,6 +5,8 @@ import { io } from 'socket.io-client'
 
 import axios from '@/plugins/axios'
 
+import DarkMode from '@/components/DarkMode.vue'
+
 interface Device {
   name: string;
   removable: boolean;
@@ -16,7 +18,7 @@ const node = ref('N/A')
 const loading = ref(false)
 const devices = ref([] as Device[])
 
-onMounted(() => {  
+onMounted(() => {
   const socket = io('/devices', { transports: ['websocket'] })
   socket.on('deviceChanged', refresh)
   refresh()
@@ -42,11 +44,6 @@ function refresh() {
     })
 }
 
-function switchDarkMode(val: boolean) {
-  const emit = defineEmits<{(e: 'theme', isDark: boolean): void}>()
-  emit('theme', val)
-}
-
 </script>
 
 <template>
@@ -56,9 +53,8 @@ function switchDarkMode(val: boolean) {
         <a href="/" class="logo">
           <img src="../assets/logo.svg" alt="Grapefruit" width="160" id="logo" />
         </a>
-        <!-- <n-space>
-          <n-switch @update:value="switchDarkMode" />
-        </n-space> -->
+
+      <dark-mode />
       </header>
 
       <p>
@@ -69,9 +65,7 @@ function switchDarkMode(val: boolean) {
       <n-divider />
 
       <nav class="devices">
-        <router-link 
-          v-for="(dev, i) in devices"
-          :to="{ name: 'Apps', params: { device: dev.id } }">
+        <router-link v-for="(dev, i) in devices" :to="{ name: 'Apps', params: { device: dev.id } }">
           {{ dev.name }}</router-link>
 
         <span v-if="devices.length === 0">No iPhone detected</span>
