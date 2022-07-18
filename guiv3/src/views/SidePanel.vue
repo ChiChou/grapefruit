@@ -52,7 +52,7 @@ const tabs = parent?.children.map(r => {
       </n-popover>
     </nav>
     <aside class="sidebar">
-      <router-view></router-view>
+      <router-view name="SideBar"></router-view>
     </aside>
   </div>
 </template>

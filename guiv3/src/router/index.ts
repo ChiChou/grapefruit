@@ -34,32 +34,44 @@ const routes = [
       {
         path: 'general',
         name: 'General',
-        component: GeneralTab
+        components: {
+          SideBar: GeneralTab
+        }
       },
       {
         path: 'classes',
         name: 'Classes',
-        component: ClassesTab
+        components: {
+          SideBar: ClassesTab
+        }
       },
       {
         path: 'modules',
         name: 'Modules',
-        component: ModulesTab
+        components: {
+          SideBar: ModulesTab
+        }
       },
       {
         path: 'repl',
         name: 'REPL',
-        component: REPLTab
+        components: {
+          SideBar: REPLTab
+        }
       },
       {
         path: 'finder',
         name: 'Finder',
-        component: FinderTab
+        components: {
+          SideBar: FinderTab
+        }
       },
       {
         path: 'jsc',
         name: 'JavaScriptCore',
-        component: JSCTab
+        components: {
+          SideBar: JSCTab
+        }
       },
     ]
   }
