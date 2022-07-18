@@ -8,6 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vicons/fluent": "^0.12.0",
     "@vicons/tabler": "^0.12.0",
     "axios": "^0.26.1",
     "naive-ui": "^2.27.0",
