@@ -72,14 +72,11 @@ provide('rpc', useRPC(socket))
 <template>
   <div class="pane-full">
     <splitpanes style="flex: 1" @resize="sideWidth = $event[0].size" @resized="saveLayout">
-      <pane min-size="20" :size="sideWidth" max-size="80">
+      <pane min-size="10" :size="sideWidth" max-size="80">
         <SidePanel></SidePanel>
       </pane>
       <pane>
-        <splitpanes horizontal @resize="termHeight = $event[1].size" @resized="saveLayout">
-          <pane></pane>
-          <pane :size="termHeight" max-size="100"></pane>
-        </splitpanes>
+        <router-view name="MainTab"></router-view>
       </pane>
     </splitpanes>
     <StatusBar />
