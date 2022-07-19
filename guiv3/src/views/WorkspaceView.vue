@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, provide } from 'vue'
+import { ref, onMounted, provide, onBeforeUnmount } from 'vue'
 
 import { Splitpanes, Pane } from 'splitpanes'
 import { useRoute } from 'vue-router'
@@ -11,6 +11,7 @@ import StatusBar from './StatusBar.vue'
 import * as regulation from '@/regulation'
 import { useRPC } from '@/wsrpc'
 import { io } from 'socket.io-client'
+import { RPC, STATUS, WS } from '@/types'
 
 const SIDEBAR_WIDTH_KEY = 'sidebar-width'
 const sideWidth = ref(20)
@@ -63,10 +64,25 @@ if (regulation.check(bundle)) {
 }
 
 const socket = io('/session', { query: { device, bundle }, transports: ['websocket'] })
+const status = ref('connecting')
 
-provide('ws', socket)
-provide('rpc', useRPC(socket))
+provide(WS, socket)
+provide(RPC, useRPC(socket))
+provide(STATUS, status)
 
+function onDisconnect() {
+  // todo: Dialog
+  status.value = 'disconnected'
+}
+
+socket
+  .on('ready', () => {
+    status.value = 'connected'
+  })
+  .on('detached', onDisconnect)
+  .on('destroyed', onDisconnect)
+
+onBeforeUnmount(() => socket.close())
 </script>
 
 <template>
