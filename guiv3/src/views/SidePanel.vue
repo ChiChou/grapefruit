@@ -59,7 +59,7 @@ const tabs = parent?.children.map(r => {
 
 <style lang="scss">
 :root {
-  --sidebar-background: #eee;
+  --sidebar-background: #f3f3f3;
   --sidebar-nav-background: #fefefe;
   --nav-active: #303030;
 }
@@ -103,6 +103,45 @@ const tabs = parent?.children.map(r => {
   aside.sidebar {
     background-color: var(--sidebar-background);
     flex: 1;
+  }
+}
+
+
+
+aside.menu {
+  padding: 1rem;
+
+  .menu-label {
+    margin: 0;
+    font-size: 0.75rem;
+  }
+
+  ul {
+    padding-left: 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    li {
+      .n-icon {
+        margin-right: 0.5rem;
+      }
+
+      a {
+        text-decoration: none;
+        display: block;
+        padding: 0.25rem;
+        border-radius: 2px;
+
+        &:hover {
+          background: rgba(0, 0, 0, 0.1);
+        }
+      }
+
+      display: block;
+      font-size: 1rem;
+      list-style: none;
+    }
   }
 }
 </style>
