@@ -11,7 +11,7 @@ function main() {
     return
   }
  
-  for (let child of ['gui', 'server', 'agent']) {
+  for (let child of ['guiv3', 'server', 'agent']) {
     const cwd = path.join(__dirname, '..', child)
     cp.execSync('npm i', { cwd, stdio: 'inherit' })
   }
