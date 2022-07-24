@@ -61,15 +61,6 @@ const tabs: TabOption[] = [
   }
 ]
 
-const icons: {[key: string]: Comp } = {
-  'general': AutoAwesomeMosaicSharp,
-  'classes': Braces,
-  'modules': ViewModuleSharp,
-  'repl': TerminalSharp,
-  'finder': FolderSharp,
-  'jsc': ExploreRound,
-}
-
 const KEY = 'ACTIVE_TAB'
 const index = inject(ACTIVE_SIDEBAR)!
 
