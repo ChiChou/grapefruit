@@ -11,7 +11,7 @@ import StatusBar from './StatusBar.vue'
 import * as regulation from '@/regulation'
 import { useRPC } from '@/wsrpc'
 import { io } from 'socket.io-client'
-import { SESSION_DETACH, RPC, STATUS, WS } from '@/types'
+import { SESSION_DETACH, RPC, STATUS, WS, ACTIVE_SIDEBAR } from '@/types'
 
 const SIDEBAR_WIDTH_KEY = 'sidebar-width'
 const sideWidth = ref(20)
@@ -94,6 +94,10 @@ function detach() {
 provide(SESSION_DETACH, detach)
 
 onBeforeUnmount(() => socket.close())
+
+const activeSidebar = ref(0)
+provide(ACTIVE_SIDEBAR, activeSidebar)
+
 </script>
 
 <template>

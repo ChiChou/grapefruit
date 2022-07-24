@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import MainMenu from '@/components/MainMenu.vue'
-import { Component as Comp, h, ref } from 'vue'
+
+import REPLTab from './tabs/REPLTab.vue'
+import JSCTab from './tabs/JSCTab.vue'
+import ModulesTab from './tabs/ModulesTab.vue'
+import GeneralTab from './tabs/GeneralTab.vue'
+import FinderTab from './tabs/FinderTab.vue'
+import ClassesTab from './tabs/ClassesTab.vue'
+
+import { Component as Comp, h, inject, onMounted, ref } from 'vue'
 import {
   AutoAwesomeMosaicSharp,
   FolderSharp,
@@ -12,8 +20,46 @@ import {
 import {
   Braces
 } from '@vicons/tabler'
+import { ACTIVE_SIDEBAR } from '@/types'
 
-import router from '@/router'
+type TabOption = {
+  label: string;
+  icon: Comp;
+  page: Comp;
+}
+
+const tabs: TabOption[] = [
+  {
+    label: 'General',
+    icon: AutoAwesomeMosaicSharp,
+    page: GeneralTab,
+  },
+  {
+    label: 'Classes',
+    icon: Braces,
+    page: ClassesTab,
+  },
+  {
+    label: 'Modules',
+    icon: ViewModuleSharp,
+    page: ModulesTab,
+  },
+  {
+    label: 'Terminal',
+    icon: TerminalSharp,
+    page: REPLTab,
+  },
+  {
+    label: 'Finder',
+    icon: FolderSharp,
+    page: FinderTab,
+  },
+  {
+    label: 'JavaScriptCore',
+    icon: ExploreRound,
+    page: JSCTab,
+  }
+]
 
 const icons: {[key: string]: Comp } = {
   'general': AutoAwesomeMosaicSharp,
@@ -24,16 +70,18 @@ const icons: {[key: string]: Comp } = {
   'jsc': ExploreRound,
 }
 
-const routes = router.getRoutes()
-const parent = routes.find(r => r.name === 'Workspace')
-const tabs = parent?.children.map(r => {
-  return {
-    name: r.name,
-    icon: icons[r.path],
-    label: r.name,
-    path: r.path
-  }
+const KEY = 'ACTIVE_TAB'
+const index = inject(ACTIVE_SIDEBAR)!
+
+onMounted(() => {
+  const i = parseInt(sessionStorage.getItem(KEY) || '0')
+  index.value = i
 })
+
+function select(i: number) {
+  index.value = i
+  sessionStorage.setItem(KEY, i.toString())
+}
 
 </script>
 
@@ -42,17 +90,17 @@ const tabs = parent?.children.map(r => {
     <nav class="side-nav">
       <MainMenu></MainMenu>
 
-      <n-popover trigger="hover" v-for="(tab) in tabs" placement="right">
+      <n-popover trigger="hover" v-for="(tab, i) in tabs" placement="right">
         <template #trigger>
-          <router-link :to="tab.path">
+          <a @click="select(i)" :class="{ 'is-active': index === i }">
             <n-icon :component="tab.icon" :size="32"></n-icon>
-          </router-link>
+          </a>
         </template>
         <span>{{ tab.label }}</span>
       </n-popover>
     </nav>
     <aside class="sidebar">
-      <router-view name="SideBar"></router-view>
+      <component :is="tabs[index].page"></component>
     </aside>
   </div>
 </template>

@@ -5,13 +5,6 @@ import DeviceView from '@/views/DeviceView.vue'
 import WorkspaceView from '@/views/WorkspaceView.vue'
 import EmptyDeviceView from '@/views/EmptyDeviceView.vue'
 
-import GeneralTab from '@/views/tabs/GeneralTab.vue'
-import REPLTab from '@/views/tabs/REPLTab.vue'
-import JSCTab from '@/views/tabs/JSCTab.vue'
-import ModulesTab from '@/views/tabs/ModulesTab.vue'
-import FinderTab from '@/views/tabs/FinderTab.vue'
-import ClassesTab from '@/views/tabs/ClassesTab.vue'
-
 const routes = [
   {
     path: '/',
@@ -31,48 +24,7 @@ const routes = [
     name: 'Workspace',
     component: WorkspaceView,
     children: [
-      {
-        path: 'general',
-        name: 'General',
-        components: {
-          SideBar: GeneralTab
-        }
-      },
-      {
-        path: 'classes',
-        name: 'Classes',
-        components: {
-          SideBar: ClassesTab
-        }
-      },
-      {
-        path: 'modules',
-        name: 'Modules',
-        components: {
-          SideBar: ModulesTab
-        }
-      },
-      {
-        path: 'repl',
-        name: 'REPL',
-        components: {
-          SideBar: REPLTab
-        }
-      },
-      {
-        path: 'finder',
-        name: 'Finder',
-        components: {
-          SideBar: FinderTab
-        }
-      },
-      {
-        path: 'jsc',
-        name: 'JavaScriptCore',
-        components: {
-          SideBar: JSCTab
-        }
-      },
+
     ]
   }
 ]
