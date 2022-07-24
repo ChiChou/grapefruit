@@ -107,7 +107,7 @@ provide(ACTIVE_SIDEBAR, activeSidebar)
         <SidePanel></SidePanel>
       </pane>
       <pane>
-        <router-view name="MainTab"></router-view>
+        <router-view></router-view>
       </pane>
     </splitpanes>
     <StatusBar />

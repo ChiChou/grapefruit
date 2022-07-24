@@ -5,6 +5,8 @@ import DeviceView from '@/views/DeviceView.vue'
 import WorkspaceView from '@/views/WorkspaceView.vue'
 import EmptyDeviceView from '@/views/EmptyDeviceView.vue'
 
+import GetStarted from '@/views/pages/GetStarted.vue'
+
 const routes = [
   {
     path: '/',
@@ -24,7 +26,11 @@ const routes = [
     name: 'Workspace',
     component: WorkspaceView,
     children: [
-
+      {
+        path: '',
+        component: GetStarted,
+        name: 'GetStarted'
+      }
     ]
   }
 ]
