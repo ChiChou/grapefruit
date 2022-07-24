@@ -3,17 +3,17 @@
     <p class="menu-label">General</p>
     <ul class="menu-list">
       <li>
-        <router-link to="general">
+        <router-link :to="{ name: 'basic' }">
           <n-icon :component="InfoOutlined" />Basic
         </router-link>
       </li>
       <li>
-        <router-link to="general">
+        <router-link :to="{ name: 'basic' }">
           <n-icon :component="SecurityFilled" />CheckSec
         </router-link>
       </li>
       <li>
-        <router-link to="general">
+        <router-link :to="{ name: 'basic' }">
           <n-icon :component="LinkRound" />URL Schemes
         </router-link>
       </li>
@@ -22,17 +22,17 @@
     <p class="menu-label">Storage</p>
     <ul class="menu-list">
       <li>
-        <router-link to="general">
+        <router-link :to="{ name: 'basic' }">
           <n-icon :component="CookieOutlined" />Cookies
         </router-link>
       </li>
       <li>
-        <router-link to="general">
+        <router-link :to="{ name: 'basic' }">
           <n-icon :component="KeyFilled" />KeyChain
         </router-link>
       </li>
       <li>
-        <router-link to="general">
+        <router-link :to="{ name: 'basic' }">
           <n-icon :component="RoomPreferencesOutlined" />NSUserDefaults
         </router-link>
       </li>
@@ -41,12 +41,12 @@
     <p class="menu-label">Inspector</p>
     <ul class="menu-list">
       <li>
-        <router-link to="general">
+        <router-link :to="{ name: 'basic' }">
           <n-icon :component="CursorHover16Regular" />UI Dump
         </router-link>
       </li>
       <li>
-        <router-link to="general">
+        <router-link :to="{ name: 'basic' }">
           <n-icon :component="PrivacyTipOutlined" />Privacy
         </router-link>
       </li>
@@ -55,7 +55,7 @@
     <p class="menu-label">Simulate</p>
     <ul class="menu-list">
       <li>
-        <router-link to="general">
+        <router-link :to="{ name: 'basic' }">
           <n-icon :component="MapPin" />GPS
         </router-link>
       </li>

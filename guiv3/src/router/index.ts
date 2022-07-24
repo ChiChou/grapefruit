@@ -6,11 +6,12 @@ import WorkspaceView from '@/views/WorkspaceView.vue'
 import EmptyDeviceView from '@/views/EmptyDeviceView.vue'
 
 import GetStarted from '@/views/pages/GetStarted.vue'
+import BasicInfo from '@/views/pages/BasicInfo.vue'
 
 const routes = [
   {
     path: '/',
-    name: 'Welcome',
+    name: 'select',
     component: SelectTarget,
     children: [{
       path: '',
@@ -18,7 +19,7 @@ const routes = [
     }, {
       path: 'apps/:device',
       component: DeviceView,
-      name: 'Apps'
+      name: 'apps'
     }]
   },
   {
@@ -30,6 +31,11 @@ const routes = [
         path: '',
         component: GetStarted,
         name: 'GetStarted'
+      }, 
+      {
+        name: 'basic',
+        component: BasicInfo,
+        path: 'basic'
       }
     ]
   }

@@ -65,7 +65,7 @@ function refresh() {
       <n-divider />
 
       <nav class="devices">
-        <router-link v-for="(dev, i) in devices" :to="{ name: 'Apps', params: { device: dev.id } }">
+        <router-link v-for="(dev, i) in devices" :to="{ name: 'apps', params: { device: dev.id } }">
           {{ dev.name }}</router-link>
 
         <span v-if="devices.length === 0">No iPhone detected</span>
