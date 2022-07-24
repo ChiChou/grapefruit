@@ -269,8 +269,6 @@ const menuOptions: MenuOption[] = [
   }
 ]
 
-const activeKey = ref(null)
-
 function handleSelect(key: string) {
 
 }
