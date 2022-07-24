@@ -24,8 +24,7 @@
 import DarkMode from '@/components/DarkMode.vue'
 import { inject } from 'vue'
 import { PlugDisconnected24Regular } from '@vicons/fluent'
-import { STATUS, WS } from '@/types';
-import { useRoute, useRouter } from 'vue-router';
+import { STATUS, WS, SESSION_DETACH } from '@/types'
 
 const status = inject(STATUS)
 const options = [
@@ -42,16 +41,7 @@ const options = [
 ]
 
 const socket = inject(WS)
-const route = useRoute()
-const router = useRouter()
-
-function detach() {
-  const { device } = route.params
-  router.push({
-    name: 'Apps',
-    params: { device }
-  })
-}
+const detach = inject(SESSION_DETACH)!
 
 function onSelectSessionMenu(key: string) {
   if (key === 'reload') {

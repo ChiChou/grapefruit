@@ -2,7 +2,7 @@
 import { ref, onMounted, provide, onBeforeUnmount } from 'vue'
 
 import { Splitpanes, Pane } from 'splitpanes'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import 'splitpanes/dist/splitpanes.css'
 import '@/skin/splitpane.scss'
 
@@ -11,7 +11,7 @@ import StatusBar from './StatusBar.vue'
 import * as regulation from '@/regulation'
 import { useRPC } from '@/wsrpc'
 import { io } from 'socket.io-client'
-import { RPC, STATUS, WS } from '@/types'
+import { SESSION_DETACH, RPC, STATUS, WS } from '@/types'
 
 const SIDEBAR_WIDTH_KEY = 'sidebar-width'
 const sideWidth = ref(20)
@@ -53,6 +53,7 @@ onMounted(() => {
 })
 
 const route = useRoute()
+const router = useRouter()
 const { device, bundle } = route.params
 if (typeof device !== 'string' || typeof bundle !== 'string') {
   throw new Error('invalid params')
@@ -81,6 +82,16 @@ socket
   })
   .on('detached', onDisconnect)
   .on('destroyed', onDisconnect)
+
+function detach() {
+  const { device } = route.params
+  router.push({
+    name: 'Apps',
+    params: { device }
+  })
+}
+
+provide(SESSION_DETACH, detach)
 
 onBeforeUnmount(() => socket.close())
 </script>

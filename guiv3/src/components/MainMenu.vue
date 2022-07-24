@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Component, h, ref } from 'vue'
+import { Component, h, inject } from 'vue'
 import { NIcon } from 'naive-ui'
 import {
   AppsOutlined,
@@ -7,7 +7,6 @@ import {
   InfoOutlined,
   SecurityFilled,
   LinkFilled,
-  HelpCenterOutlined,
   CookieOutlined,
   KeyRound,
   SettingsOutlined,
@@ -21,11 +20,22 @@ import {
   StopFilled,
   ViewColumnOutlined,
   ViewQuiltSharp,
-  ViewModuleSharp,
   HomeSharp,
+  LinkOffSharp,
 } from '@vicons/material'
 
+import {
+  Help,
+  PlugConnected,
+  BrandGithub,
+  BrandDiscord,
+  BrandTwitter,
+  BrandPatreon,
+  BrandPaypal,
+} from '@vicons/tabler'
+
 import type { MenuOption } from 'naive-ui'
+import { SESSION_DETACH, WS } from '@/types'
 
 function renderIcon(icon: Component) {
   return () => h(NIcon, null, { default: () => h(icon) })
@@ -152,6 +162,7 @@ const menuOptions: MenuOption[] = [
   {
     label: 'Session',
     key: 'session',
+    icon: renderIcon(PlugConnected),
     children: [
       {
         label: 'Reload',
@@ -159,15 +170,9 @@ const menuOptions: MenuOption[] = [
         icon: renderIcon(RefreshOutlined),
       },
       {
-        label: () =>
-          h(
-            'a',
-            {
-              href: '/',
-            },
-            'Detach'
-          ),
-        key: 'detach'
+        label: 'Detach',
+        key: 'detach',
+        icon: renderIcon(LinkOffSharp),
       },
       {
         type: 'divider',
@@ -193,7 +198,7 @@ const menuOptions: MenuOption[] = [
   {
     label: 'Help',
     key: 'help',
-    icon: renderIcon(HelpCenterOutlined),
+    icon: renderIcon(Help),
     children: [
       {
         label: 'About',
@@ -213,6 +218,7 @@ const menuOptions: MenuOption[] = [
             },
             'GitHub'
           ),
+        icon: renderIcon(BrandGithub),
       },
       {
         label: () =>
@@ -225,6 +231,7 @@ const menuOptions: MenuOption[] = [
             },
             'Discord'
           ),
+        icon: renderIcon(BrandDiscord),
       },
       {
         label: () =>
@@ -237,6 +244,7 @@ const menuOptions: MenuOption[] = [
             },
             'Twitter'
           ),
+        icon: renderIcon(BrandTwitter),
       },
       {
         type: 'divider'
@@ -252,6 +260,7 @@ const menuOptions: MenuOption[] = [
             },
             'Become a Patreon'
           ),
+        icon: renderIcon(BrandPatreon),
       },
       {
         label: () =>
@@ -264,13 +273,24 @@ const menuOptions: MenuOption[] = [
             },
             'Donate on PayPal'
           ),
+        icon: renderIcon(BrandPaypal),
       }
     ]
   }
 ]
 
-function handleSelect(key: string) {
+const detach = inject(SESSION_DETACH)!
+const socket = inject(WS)
 
+function handleSelect(key: string) {
+  if (key === 'detach') {
+    detach()
+  } else if (key === 'kill') {
+    socket?.emit('kill')
+    detach()
+  } else if (key === 'reload') {
+    location.reload()
+  }
 }
 
 </script>
