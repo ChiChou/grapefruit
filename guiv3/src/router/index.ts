@@ -24,13 +24,13 @@ const routes = [
   },
   {
     path: '/workspace/:device/:bundle',
-    name: 'Workspace',
+    name: 'workspace',
     component: WorkspaceView,
     children: [
       {
         path: '',
         component: GetStarted,
-        name: 'GetStarted'
+        name: 'get-started'
       }, 
       {
         name: 'basic',
