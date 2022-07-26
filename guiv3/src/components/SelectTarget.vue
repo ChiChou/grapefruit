@@ -125,5 +125,6 @@ aside {
 
 .apps {
   flex: 1;
+  margin-right: 1rem;
 }
 </style>
