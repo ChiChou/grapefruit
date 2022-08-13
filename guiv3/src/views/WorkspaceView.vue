@@ -86,7 +86,7 @@ socket
 function detach() {
   const { device } = route.params
   router.push({
-    name: 'Apps',
+    name: 'apps',
     params: { device }
   })
 }
