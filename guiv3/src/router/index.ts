@@ -25,19 +25,7 @@ const routes = [
   {
     path: '/workspace/:device/:bundle',
     name: 'workspace',
-    component: WorkspaceView,
-    children: [
-      {
-        path: '',
-        component: GetStarted,
-        name: 'get-started'
-      }, 
-      {
-        name: 'basic',
-        component: BasicInfo,
-        path: 'basic'
-      }
-    ]
+    component: WorkspaceView
   }
 ]
 

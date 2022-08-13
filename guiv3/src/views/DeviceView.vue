@@ -93,7 +93,7 @@ watch(() => route.params.device, async newDevice => {
   <div class="apps" v-if="apps.length">
     <ul>
       <li :key="app.identifier" v-for="app in apps">
-        <router-link :to="{ name: 'get-started', params: { device, bundle: app.identifier } }">
+        <router-link :to="{ name: 'workspace', params: { device, bundle: app.identifier } }">
           <img class="lazy"
             src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
             :data-src="`/api/device/${device}/icon/${app.identifier}`" width="180" height="180">
