@@ -8,3 +8,5 @@ export const WS = Symbol('ws') as InjectionKey<Socket>
 export const STATUS = Symbol('status') as InjectionKey<Ref<string>>
 export const RPC = Symbol('rpc') as InjectionKey<WSRPC>
 export const SESSION_DETACH = Symbol('detach') as InjectionKey<() => void>
+export const SPACE_WIDTH = Symbol('space_width') as InjectionKey<Ref<number>>
+export const SPACE_HEIGHT = Symbol('space_height') as InjectionKey<Ref<number>>

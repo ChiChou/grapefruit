@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, provide, onBeforeUnmount } from 'vue'
+import { ref, onMounted, provide, onBeforeUnmount, ComponentPublicInstance, onUnmounted } from 'vue'
 
 import { Splitpanes, Pane } from 'splitpanes'
 import { useRoute, useRouter } from 'vue-router'
@@ -8,15 +8,17 @@ import '@/skin/splitpane.scss'
 
 import SidePanel from './SidePanel.vue'
 import StatusBar from './StatusBar.vue'
+import Layout from '@/components/Layout.vue'
 import * as regulation from '@/regulation'
 import { useRPC } from '@/wsrpc'
 import { io } from 'socket.io-client'
-import { SESSION_DETACH, RPC, STATUS, WS, ACTIVE_SIDEBAR } from '@/types'
+import { SESSION_DETACH, RPC, STATUS, WS, ACTIVE_SIDEBAR, SPACE_WIDTH, SPACE_HEIGHT } from '@/types'
 
 const SIDEBAR_WIDTH_KEY = 'sidebar-width'
 const sideWidth = ref(20)
 const TERM_HEIGHT_KEY = 'term-height'
 const termHeight = ref(30)
+const el = ref<ComponentPublicInstance>()
 
 function restoreLayout() {
   // remember the layout
@@ -43,13 +45,24 @@ type SizeData = {
   size: number
 }
 
-function saveLayout(data: SizeData[]) {
+function onResize() {
   localStorage.setItem(SIDEBAR_WIDTH_KEY, sideWidth.value.toString())
   localStorage.setItem(TERM_HEIGHT_KEY, termHeight.value.toString())
+
+  if (el && el.value) {
+    const div = el.value.$el as HTMLDivElement
+    spaceWidth.value = div.clientWidth
+    spaceHeight.value = div.clientHeight
+  }
 }
 
 onMounted(() => {
   restoreLayout()
+  window.addEventListener('resize', onResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', onResize)
 })
 
 const route = useRoute()
@@ -70,6 +83,12 @@ const status = ref('connecting')
 provide(WS, socket)
 provide(RPC, useRPC(socket))
 provide(STATUS, status)
+
+const spaceWidth = ref(0)
+const spaceHeight = ref(0)
+
+provide(SPACE_WIDTH, spaceWidth)
+provide(SPACE_HEIGHT, spaceHeight)
 
 function onDisconnect() {
   // todo: Dialog
@@ -102,12 +121,12 @@ provide(ACTIVE_SIDEBAR, activeSidebar)
 
 <template>
   <div class="pane-full">
-    <splitpanes style="flex: 1" @resize="sideWidth = $event[0].size" @resized="saveLayout">
+    <splitpanes style="flex: 1" @resize="sideWidth = $event[0].size" @resized="onResize">
       <pane min-size="10" :size="sideWidth" max-size="80">
         <SidePanel></SidePanel>
       </pane>
       <pane>
-        <router-view></router-view>
+        <layout ref="el" style="width: 100%; height: 100%"></layout>
       </pane>
     </splitpanes>
     <StatusBar />
