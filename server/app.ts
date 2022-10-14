@@ -280,7 +280,7 @@ async function main(): Promise<void> {
 
   program
     .name('igf')
-    .option('-h, --host <string>', 'hostname', '127.0.0.1')
+    .option('-h, --host <string>', 'hostname', 'localhost')
     .option('-p, --port <number>', 'port of the server side', (val) => parseInt(val, 10), 31337)
 
   program.parse(process.argv)
