@@ -45,9 +45,13 @@ type SizeData = {
   size: number
 }
 
-function onResize() {
+function saveLayout() {
   localStorage.setItem(SIDEBAR_WIDTH_KEY, sideWidth.value.toString())
   localStorage.setItem(TERM_HEIGHT_KEY, termHeight.value.toString())
+}
+
+function resizing(data: SizeData[]) {
+  sideWidth.value = data[0]?.size
 
   if (el && el.value) {
     const div = el.value.$el as HTMLDivElement
@@ -56,13 +60,15 @@ function onResize() {
   }
 }
 
+const onWindowResize = () => resizing([])
+
 onMounted(() => {
   restoreLayout()
-  window.addEventListener('resize', onResize)
+  window.addEventListener('resize', onWindowResize)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', onResize)
+  window.removeEventListener('resize', onWindowResize)
 })
 
 const route = useRoute()
@@ -121,7 +127,7 @@ provide(ACTIVE_SIDEBAR, activeSidebar)
 
 <template>
   <div class="pane-full">
-    <splitpanes style="flex: 1" @resize="sideWidth = $event[0].size" @resized="onResize">
+    <splitpanes style="flex: 1" @resize="resizing($event)" @resized="saveLayout">
       <pane min-size="10" :size="sideWidth" max-size="80">
         <SidePanel></SidePanel>
       </pane>
