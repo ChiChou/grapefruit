@@ -51,7 +51,9 @@ function saveLayout() {
 }
 
 function resizing(data: SizeData[]) {
-  sideWidth.value = data[0]?.size
+  if (data.length) {
+    sideWidth.value = data[0].size
+  }
 
   if (el && el.value) {
     const div = el.value.$el as HTMLDivElement
@@ -65,6 +67,7 @@ const onWindowResize = () => resizing([])
 onMounted(() => {
   restoreLayout()
   window.addEventListener('resize', onWindowResize)
+  requestAnimationFrame(() => resizing([]))
 })
 
 onUnmounted(() => {
