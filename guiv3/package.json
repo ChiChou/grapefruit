@@ -27,6 +27,6 @@
     "vite": "^3.1.8",
     "vite-plugin-rewrite-all": "^1.0.0",
     "vue-router": "^4.0.14",
-    "vue-tsc": "^0.29.8"
+    "vue-tsc": "^1.0.7"
   }
 }
