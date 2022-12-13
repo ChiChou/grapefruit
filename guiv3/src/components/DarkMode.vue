@@ -21,7 +21,7 @@ import { DARK } from '@/types'
 
 const isDark = inject(DARK)
 
-const icon = computed(() => isDark.value ? DarkModeOutlined : LightModeOutlined)
+const icon = computed(() => isDark?.value ? DarkModeOutlined : LightModeOutlined)
 
 function switchDarkMode(val: boolean) {
   isDark!.value = val
