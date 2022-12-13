@@ -6,7 +6,6 @@ export const isDocumentReady = () => isClient && document.readyState === 'comple
 
 export function useDocumentReady(func: () => void) {
   onMounted(() => {
-    console.log(isDocumentReady())
     if (isDocumentReady()) func()
     else
       document.addEventListener('readystatechange', () => isDocumentReady() && func(), {
