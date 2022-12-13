@@ -15,28 +15,22 @@ import { io } from 'socket.io-client'
 import { SESSION_DETACH, RPC, STATUS, WS, ACTIVE_SIDEBAR, SPACE_WIDTH, SPACE_HEIGHT } from '@/types'
 
 const SIDEBAR_WIDTH_KEY = 'sidebar-width'
-const sideWidth = ref(20)
+const sideWidth = ref(getInt(SIDEBAR_WIDTH_KEY, 20))
 const TERM_HEIGHT_KEY = 'term-height'
-const termHeight = ref(30)
+const termHeight = ref(getInt(TERM_HEIGHT_KEY, 30))
 const el = ref<ComponentPublicInstance>()
 
-function restoreLayout() {
-  // remember the layout
-  const width = localStorage.getItem(SIDEBAR_WIDTH_KEY)
-  if (width) {
-    const val = parseFloat(width)
+function getInt(key: string, def: number) {
+  const str = localStorage.getItem(key)
+  if (str) {
+    const val = parseFloat(str)
     if (!Number.isNaN(val)) {
-      sideWidth.value = val
+      console.log('val=', val)
+      return val
     }
   }
-
-  const height = localStorage.getItem(TERM_HEIGHT_KEY)
-  if (height) {
-    const val = parseFloat(height)
-    if (!Number.isNaN(val)) {
-      termHeight.value = val
-    }
-  }
+  console.log('default=', def)
+  return def
 }
 
 type SizeData = {
@@ -65,9 +59,8 @@ function resizing(data: SizeData[]) {
 const onWindowResize = () => resizing([])
 
 onMounted(() => {
-  restoreLayout()
   window.addEventListener('resize', onWindowResize)
-  requestAnimationFrame(() => resizing([]))
+  requestAnimationFrame(onWindowResize)
 })
 
 onUnmounted(() => {
@@ -130,7 +123,7 @@ provide(ACTIVE_SIDEBAR, activeSidebar)
 
 <template>
   <div class="pane-full">
-    <splitpanes style="flex: 1" @resize="resizing($event)" @resized="saveLayout">
+    <splitpanes class="split-pane-container" @resize="resizing($event)" @resized="saveLayout">
       <pane min-size="10" :size="sideWidth" max-size="80">
         <SidePanel></SidePanel>
       </pane>
@@ -149,5 +142,9 @@ provide(ACTIVE_SIDEBAR, activeSidebar)
   display: flex;
   overflow: hidden;
   flex-direction: column;
+}
+
+.splitpanes--vertical .splitpanes__pane {
+  transition: none !important;
 }
 </style>
