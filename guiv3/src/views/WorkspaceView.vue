@@ -147,4 +147,8 @@ provide(ACTIVE_SIDEBAR, activeSidebar)
 .splitpanes--vertical .splitpanes__pane {
   transition: none !important;
 }
+
+.splitpanes__splitter {
+  transition: 0.2s ease-in-out background-color !important;
+}
 </style>
