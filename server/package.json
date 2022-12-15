@@ -52,9 +52,11 @@
     "mobile",
     "security",
     "instruments",
-    "reverse",
-    "engineering"
+    "re"
   ],
   "author": "CodeColorist",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "frida": "^16.0.8"
+  }
 }
