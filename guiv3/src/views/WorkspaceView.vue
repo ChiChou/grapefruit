@@ -25,11 +25,9 @@ function getInt(key: string, def: number) {
   if (str) {
     const val = parseFloat(str)
     if (!Number.isNaN(val)) {
-      console.log('val=', val)
       return val
     }
   }
-  console.log('default=', def)
   return def
 }
 
