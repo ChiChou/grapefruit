@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import MainMenu from '@/components/MainMenu.vue'
 
-import REPLTab from './tabs/REPLTab.vue'
-import JSCTab from './tabs/JSCTab.vue'
-import ModulesTab from './tabs/ModulesTab.vue'
-import GeneralTab from './tabs/GeneralTab.vue'
-import FinderTab from './tabs/FinderTab.vue'
-import ClassesTab from './tabs/ClassesTab.vue'
+import REPLTab from './panels/REPLTab.vue'
+import JSCTab from './panels/JSCTab.vue'
+import ModulesTab from './panels/ModulesTab.vue'
+import GeneralTab from './panels/GeneralTab.vue'
+import FinderTab from './panels/FinderTab.vue'
+import ClassesTab from './panels/ClassesTab.vue'
 
 import { Component as Comp, h, inject, onMounted, ref } from 'vue'
 import {
