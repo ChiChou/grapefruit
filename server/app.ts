@@ -24,6 +24,7 @@ import { program } from 'commander'
 import { AddressInfo } from 'net'
 import { concat } from './lib/workspace'
 import { Scope } from 'frida/dist/device'
+import { simulators, apps as simApps } from './lib/simctl'
 
 const ISDEBUG = process.env.NODE_ENV === 'development'
 
@@ -83,11 +84,20 @@ router
       list
     }
   })
+  .get('/simulators', async (ctx) => {
+    ctx.body = process.platform === 'darwin' ?
+      await simulators() :
+      []
+  })
   .get('/device/:device/apps', async (ctx) => {
     const id = ctx.params.device
     const dev = await tryGetDevice(id)
     const apps = await dev.enumerateApplications()
     ctx.body = apps.map(serialize.app)
+  })
+  .get('/sim/:udid/apps', async (ctx) => {
+    const { udid } = ctx.params
+    ctx.body = await simApps(udid)
   })
   .get('/device/:device/icon/:bundle', async (ctx) => {
     const id = ctx.params.device
@@ -182,7 +192,7 @@ router
       ctx.status = 400
       return
     }
-    const folder = ISDEBUG ? '.' : '..'
+    const folder = process.env.NODE_ENV === 'development' ? '.' : '..'
     ctx.body = fs.createReadStream(path.join(__dirname, folder, 'templates', `${name}.js`))
   })
 
@@ -192,7 +202,7 @@ app
     try {
       await next()
     } catch (e) {
-      if (ISDEBUG) {
+      if (process.env.NODE_ENV === 'development') {
         ctx.status = 500
         ctx.body = e.stack
       } else {
@@ -201,7 +211,7 @@ app
     }
   })
 
-if (ISDEBUG) {
+if (process.env.NODE_ENV === 'development') {
   app
     .use(KoaJSON({
       pretty: true
