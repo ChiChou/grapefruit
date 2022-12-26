@@ -14,12 +14,10 @@ export function device(dev: Device): object {
 }
 
 export function app(app: Application): object {
-  const { name, parameters, identifier, pid } = app
-  const ico = parameters.icons?.pop()
+  const { name, identifier, pid } = app
   return {
     name,
     pid,
     identifier,
-    icon: ico ? icon(ico) : undefined,
   }
 }
