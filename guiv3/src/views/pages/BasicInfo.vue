@@ -1,3 +1,15 @@
 <template>
-  <h1>Basic</h1>
+  <div>{{ info }}</div>
 </template>
+
+<script lang="ts" setup>
+import { inject, onMounted, ref } from 'vue'
+import { RPC } from '@/types'
+
+const rpc = inject(RPC)!
+const info = ref({})
+
+onMounted(async () => {
+  info.value = await rpc.info.info()
+})
+</script>

@@ -8,19 +8,22 @@
 </template>
 
 <script lang="ts">
+import { LayoutConfig } from "golden-layout"
+import { defineComponent, inject, shallowRef, computed, watch, ref } from "vue"
+import { DARK, SPACE_WIDTH, SPACE_HEIGHT, REGISTER_TAB_HANDLER } from "@/types"
 import { useGoldenLayout } from "@/plugins/golden-layout"
-import { defineComponent, h, inject, shallowRef, computed, watch, ref } from "vue"
-import { DARK, SPACE_WIDTH, SPACE_HEIGHT } from "@/types"
 
 import "golden-layout/dist/css/goldenlayout-base.css"
 
 import lightThemeUrl from "golden-layout/dist/css/themes/goldenlayout-light-theme.css?url"
 import darkThemeUrl from "golden-layout/dist/css/themes/goldenlayout-dark-theme.css?url"
 
-const Test = defineComponent({ render: () => h('span', 'It works!') });
+import BasicInfo from '@/views/pages/BasicInfo.vue'
+import GetStarted from '@/views/pages/GetStarted.vue'
 
-const components = { Test, /* other components */ };
+const components = { GetStarted, BasicInfo }
 
+const KEY_LAYOUT = 'LAYOUT_SETTING'
 
 export default defineComponent({
   components,
@@ -63,11 +66,8 @@ export default defineComponent({
         content: [
           {
             type: "component",
-            componentType: "Test",
-          },
-          {
-            type: "component",
-            componentType: "Test",
+            componentType: "GetStarted",
+            title: 'Get Started'
           },
         ],
       },
@@ -78,6 +78,42 @@ export default defineComponent({
         showPopoutIcon: false,
         showMaximiseIcon: false,
       }
+    })
+
+    const register = inject(REGISTER_TAB_HANDLER)!
+
+    watch(layout, (l) => {
+      if (!l) return
+
+      const val = localStorage.getItem(KEY_LAYOUT)
+      if (val) {
+        try {
+          l.loadLayout(LayoutConfig.fromResolved(JSON.parse(val)))
+        } catch(_) {
+          console.error(_)
+        }
+      }
+
+      l.on('stateChanged', () => 
+        localStorage.setItem(KEY_LAYOUT, JSON.stringify(l.saveLayout())))
+
+      register((componentType: string, title: string, state: any, createNew?: boolean) => {
+        if (!createNew) {
+          const tab = l.findFirstComponentItemById(componentType)
+          if (tab) {
+            tab.parentItem.setActiveComponentItem(tab, true, true)
+          } else {
+            l.addItem({
+              id: componentType,
+              title,
+              type: 'component',
+              componentType
+            })
+          }
+        } else {
+          l.addComponent(componentType, state, title)
+        }
+      })
     })
 
     watch(spaceWidth, (width) => {

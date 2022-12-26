@@ -2,63 +2,27 @@
   <aside class="menu">
     <p class="menu-label">General</p>
     <ul class="menu-list">
-      <li>
-        <router-link :to="{ name: 'workspace' }">
-          <n-icon :component="InfoOutlined" />Basic
-        </router-link>
-      </li>
-      <li>
-        <router-link :to="{ name: 'workspace' }">
-          <n-icon :component="SecurityFilled" />CheckSec
-        </router-link>
-      </li>
-      <li>
-        <router-link :to="{ name: 'workspace' }">
-          <n-icon :component="LinkRound" />URL Schemes
-        </router-link>
-      </li>
+      <li><a @click="go('BasicInfo', 'Basic')"><n-icon :component="InfoOutlined" />Basic</a></li>
+      <li><a @click="go('CheckSec', 'CheckSec')"><n-icon :component="SecurityFilled" />CheckSec</a></li>
+      <li><a @click="go('URLPage', 'URL Tester')"><n-icon :component="LinkRound" />URL Schemes</a></li>      
     </ul>
 
     <p class="menu-label">Storage</p>
     <ul class="menu-list">
-      <li>
-        <router-link :to="{ name: 'workspace' }">
-          <n-icon :component="CookieOutlined" />Cookies
-        </router-link>
-      </li>
-      <li>
-        <router-link :to="{ name: 'workspace' }">
-          <n-icon :component="KeyFilled" />KeyChain
-        </router-link>
-      </li>
-      <li>
-        <router-link :to="{ name: 'workspace' }">
-          <n-icon :component="RoomPreferencesOutlined" />NSUserDefaults
-        </router-link>
-      </li>
+      <li><a @click="go('BasicInfo', 'Cookies')"><n-icon :component="CookieOutlined" />Cookies</a></li>
+      <li><a @click="go('BasicInfo', 'KeyChain')"><n-icon :component="KeyFilled" />KeyChain</a></li>
+      <li><a @click="go('BasicInfo', 'User Preferences')"><n-icon :component="RoomPreferencesOutlined" />NSUserDefaults</a></li>
     </ul>
 
     <p class="menu-label">Inspector</p>
     <ul class="menu-list">
-      <li>
-        <router-link :to="{ name: 'workspace' }">
-          <n-icon :component="CursorHover16Regular" />UI Dump
-        </router-link>
-      </li>
-      <li>
-        <router-link :to="{ name: 'workspace' }">
-          <n-icon :component="PrivacyTipOutlined" />Privacy
-        </router-link>
-      </li>
+      <li><a @click="go('BasicInfo')"><n-icon :component="CursorHover16Regular" />UI Dump</a></li>
+      <li><a @click="go('BasicInfo')"><n-icon :component="PrivacyTipOutlined" />Privacy</a></li>
     </ul>
 
     <p class="menu-label">Simulate</p>
     <ul class="menu-list">
-      <li>
-        <router-link :to="{ name: 'workspace' }">
-          <n-icon :component="MapPin" />GPS
-        </router-link>
-      </li>
+      <li><a @click="go('BasicInfo')"><n-icon :component="MapPin" />GPS</a></li>
     </ul>
   </aside>
 </template>
@@ -81,4 +45,20 @@ import {
 import {
   CursorHover16Regular
 } from '@vicons/fluent'
+
+import { inject } from 'vue'
+import { CREATE_TAB } from '@/types'
+
+const createTab = inject(CREATE_TAB)!
+
+function go(tab: string, title: string='', state?: any) {
+  createTab(tab, title, state, false);
+}
+
 </script>
+
+<style scoped>
+.menu-list a {
+  cursor: pointer;
+}
+</style>
