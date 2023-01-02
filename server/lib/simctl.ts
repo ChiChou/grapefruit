@@ -25,6 +25,8 @@ interface App {
   CFBundleDisplayName: string;
   CFBundleExecutable: string;
   CFBundleIdentifier: string;
+  CFBundleName: string;
+  CFBundleVersion: string;
   DataContainer: string;
   Path: string;
   GroupContainers: { [groupID: string]: string };
@@ -54,14 +56,11 @@ function runAndParseJSON(cmd: string) {
   })
 }
 
-const knownUDIDCache = new Set()
-
 function* available(result: ListResult) {
   for (const [runtimeId, models] of Object.entries(result.devices)) {
     for (const model of models) {
       if (model.isAvailable && model.state === 'Booted') {
         const { deviceTypeIdentifier, state, name, udid } = model
-        knownUDIDCache.add(udid)
         yield { deviceTypeIdentifier, state, name, udid }
       }
     }
@@ -72,14 +71,22 @@ export async function simulators(): Promise<Simulator[]> {
   if (process.platform != 'darwin') return Promise.resolve([])
 
   const result = (await runAndParseJSON('xcrun simctl list devices --json')) as ListResult
-  knownUDIDCache.clear()
   return [...available(result)]
 }
 
-export async function apps(udid: string): Promise<Apps> {
-  if (process.platform != 'darwin') return Promise.resolve({})
+export async function apps(udid: string): Promise<App[]> {
+  if (process.platform != 'darwin') return Promise.resolve([])
+  if (!/^[a-f\d-]+$/i.test(udid)) return Promise.reject(new Error(`invalid udid`))
 
-  const sanitized = knownUDIDCache.has(udid) ? udid : 'booted'
-  const cmd = `xcrun simctl listapps ${sanitized} | plutil -convert json -r -o - -- -`
-  return runAndParseJSON(cmd) as Promise<Apps>
+  const cmd = `xcrun simctl listapps ${udid} | plutil -convert json -r -o - -- -`
+  const apps = await runAndParseJSON(cmd) as Apps
+  const result = []
+  for (const [bundle, app] of Object.entries(apps)) {
+    if (app.ApplicationType === 'User') {
+      const { CFBundleDisplayName, CFBundleExecutable, CFBundleIdentifier, CFBundleName, CFBundleVersion } = app
+      result.push({ CFBundleDisplayName, CFBundleExecutable, CFBundleIdentifier, CFBundleName, CFBundleVersion })
+    }
+  }
+
+  return result
 }
