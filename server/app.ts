@@ -85,9 +85,7 @@ router
     }
   })
   .get('/simulators', async (ctx) => {
-    ctx.body = process.platform === 'darwin' ?
-      await simulators() :
-      []
+    ctx.body = await simulators()
   })
   .get('/device/:device/apps', async (ctx) => {
     const id = ctx.params.device

@@ -1,9 +1,10 @@
 import { AppNotFoundError, EarlyInstrumentError, DeviceNotFoundError, InvalidDeviceError, VersionMismatchError } from './error'
-import { Device, Session, enumerateDevices, getUsbDevice, getDevice } from 'frida'
+import { Device, Session, enumerateDevices, getUsbDevice, getDevice, getLocalDevice } from 'frida'
 import { retry } from './utils'
 
 import * as serialize from './serialize'
 import { DeviceType } from 'frida/dist/device'
+import { launch, SimulatorInfo, simulators } from './simctl'
 
 export async function match(prefix: string): Promise<Device> {
   const list = await enumerateDevices()
@@ -13,7 +14,7 @@ export async function match(prefix: string): Promise<Device> {
 }
 
 export class ExDevice {
-  constructor(public device: Device) {}
+  constructor(public device: Device) { }
 
   async start(bundle: string): Promise<Session> {
     const apps = await this.device.enumerateApplications({ identifiers: [bundle] })
@@ -31,12 +32,6 @@ export class ExDevice {
     return this.launch(bundle)
   }
 
-  async open(bundle: string, url: string): Promise<number> {
-    const pid = await this.device.spawn([bundle], { url })
-    await this.device.resume(pid)
-    return pid
-  }
-
   async launch(bundle: string): Promise<Session> {
     const pid = await this.device.spawn(bundle)
     const session = await this.device.attach(pid)
@@ -49,7 +44,7 @@ export class ExDevice {
     return list.map(serialize.app)
   }
 
-  valueOf(): object {
+  valueOf(): serialize.DeviceInfo {
     return serialize.device(this.device)
   }
 
@@ -61,8 +56,35 @@ export class ExDevice {
   }
 }
 
+export class Simulator extends ExDevice {
+  constructor(public device: Device, public info: SimulatorInfo) {
+    super(device)
+  }
+
+  async start(bundle: string): Promise<Session> {
+    const pid = await launch(this.info.udid, bundle)
+    return this.device.attach(pid)
+  }
+
+  valueOf(): serialize.DeviceInfo {
+    const val = super.valueOf()
+    const { udid, name } = this.info
+    return Object.assign(val, {
+      udid,
+      name
+    })
+  }
+}
+
 export function wrap(device: Device): ExDevice {
   return new ExDevice(device)
+}
+
+export async function getSimulator(id: string): Promise<Simulator> {
+  const sims = await simulators()
+  const sim = sims.find(s => s.udid == id)
+  if (!sim) return Promise.reject(new Error(`Simulator ${id} not found`))
+  return Promise.resolve(new Simulator(await getLocalDevice(), sim))
 }
 
 export function tryGetDevice(id: string): Promise<Device> {

@@ -1,9 +1,9 @@
 import cp from 'child_process'
 
-type State = 'Shutdown' | 'Booted'
+type SimulatorState = 'Shutdown' | 'Booted'
 type AppType = 'User' | 'System'
 
-interface Model {
+interface RuntimeInfo {
   availabilityError?: string;
   dataPath: string;
   dataPathSize: number;
@@ -11,15 +11,15 @@ interface Model {
   udid: string;
   isAvailable: boolean;
   deviceTypeIdentifier: string;
-  state: State;
+  state: SimulatorState;
   name: string;
 }
 
 interface ListResult {
-  devices: { [name: string]: Model[] };
+  devices: { [name: string]: RuntimeInfo[] };
 }
 
-interface App {
+interface SimAppInfo {
   ApplicationType: AppType;
   Bundle: string;
   CFBundleDisplayName: string;
@@ -33,27 +33,14 @@ interface App {
 }
 
 interface Apps {
-  [bundle: string]: App
+  [bundle: string]: SimAppInfo
 }
 
-interface Simulator {
+export interface SimulatorInfo {
   deviceTypeIdentifier: string;
-  state: State;
+  state: SimulatorState;
   name: string;
   udid: string;
-}
-
-function runAndParseJSON(cmd: string) {
-  return new Promise((resolve, reject) => {
-    cp.exec(cmd, (err, stdout, stderr) => {
-      if (err) {
-        console.error(err)
-        reject(err)
-      } else {
-        resolve(JSON.parse(stdout))
-      }
-    })
-  })
 }
 
 function* available(result: ListResult) {
@@ -67,19 +54,57 @@ function* available(result: ListResult) {
   }
 }
 
-export async function simulators(): Promise<Simulator[]> {
+export async function simulators(): Promise<SimulatorInfo[]> {
   if (process.platform != 'darwin') return Promise.resolve([])
 
-  const result = (await runAndParseJSON('xcrun simctl list devices --json')) as ListResult
+  const result: ListResult = await new Promise((resolve, reject) => {
+    cp.execFile('/usr/bin/xcrun', ['simctl', 'list', 'devices', '--json'], (err, stdout, stderr) => {
+      if (err) {
+        process.stderr.write(stderr)
+        console.error(err)
+        reject(err)
+      } else {
+        resolve(JSON.parse(stdout))
+      }
+    })
+  })
+
   return [...available(result)]
 }
 
-export async function apps(udid: string): Promise<App[]> {
+export async function launch(udid: string, bundle: string): Promise<number> {
+  return new Promise((resolve, reject) => {
+    cp.execFile('/usr/bin/xcrun', ['simctl', 'launch', udid, bundle], (err, stdout, stderr) => {
+      if (err)
+        reject(err)
+
+      const pid = parseInt(stdout.substring(`${bundle}: `.length), 10)
+      resolve(pid)
+    })
+  })
+}
+
+export async function apps(udid: string): Promise<SimAppInfo[]> {
   if (process.platform != 'darwin') return Promise.resolve([])
   if (!/^[a-f\d-]+$/i.test(udid)) return Promise.reject(new Error(`invalid udid`))
 
-  const cmd = `xcrun simctl listapps ${udid} | plutil -convert json -r -o - -- -`
-  const apps = await runAndParseJSON(cmd) as Apps
+  const simctl = cp.spawn('/usr/bin/xcrun', ['simctl', 'listapps', udid])
+  const plutil = cp.spawn('/usr/bin/plutil', ['-convert', 'json', '-r', '-o', '-', '--', '-'])
+
+  const apps = await new Promise<Apps>((resolve, reject) => {
+    const chunks = []
+    plutil.stdout.on('data', chunk => chunks.push(chunk))
+    plutil
+      .once('exit', (code, sig) => {
+        if (code !== 0)
+          reject(new Error(`process exited with code ${code}`))
+        else
+          resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')))
+      })
+      .once('error', reject)
+    simctl.stdout.pipe(plutil.stdin)
+  })
+
   const result = []
   for (const [bundle, app] of Object.entries(apps)) {
     if (app.ApplicationType === 'User') {

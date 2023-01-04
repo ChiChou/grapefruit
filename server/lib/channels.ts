@@ -5,7 +5,7 @@ import http from 'http'
 import { Server, Namespace } from 'socket.io'
 import REPL from './repl'
 import * as transfer from './transfer'
-import { wrap, tryGetDevice } from './device'
+import { wrap, tryGetDevice, getSimulator } from './device'
 import { connect, proxy } from './rpc'
 
 import { MessageType } from 'frida/dist/script'
@@ -42,7 +42,7 @@ export default class Channels {
     mgr.changed.connect(this.changedSignal)
 
     this.session.on('connection', async (socket) => {
-      const { device, bundle } = socket.handshake.query
+      const { device, bundle, sim } = socket.handshake.query
       let dev: frida.Device, session: frida.Session
 
       if (typeof device !== 'string' || typeof bundle !== 'string') {
@@ -52,8 +52,14 @@ export default class Channels {
       }
 
       try {
-        dev = await tryGetDevice(device)
-        session = await wrap(dev).start(bundle)
+        if (sim) {
+          const simulator = await getSimulator(sim as string)
+          dev = await frida.getLocalDevice()
+          session = await simulator.start(bundle)
+        } else {
+          dev = await tryGetDevice(device)
+          session = await wrap(dev).start(bundle)
+        }
       } catch (e) {
         socket.emit('exception', e.toString())
         socket.disconnect()
