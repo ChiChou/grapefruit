@@ -11,7 +11,7 @@
     <ul class="menu-list">
       <li><a @click="go('BasicInfo', 'Cookies')"><n-icon :component="CookieOutlined" />Cookies</a></li>
       <li><a @click="go('BasicInfo', 'KeyChain')"><n-icon :component="KeyFilled" />KeyChain</a></li>
-      <li><a @click="go('BasicInfo', 'User Preferences')"><n-icon :component="RoomPreferencesOutlined" />NSUserDefaults</a></li>
+      <li><a @click="go('BasicInfo', 'UserDefaults')"><n-icon :component="RoomPreferencesOutlined" />NSUserDefaults</a></li>
     </ul>
 
     <p class="menu-label">Inspector</p>

@@ -15,7 +15,7 @@ export function useDocumentReady(func: () => void) {
 }
 
 export function useGoldenLayout(
-  createComponent: (type: string, container: HTMLElement) => ComponentContainer.Component,
+  createComponent: (type: string, container: HTMLElement, state?: any) => ComponentContainer.Component,
   destroyComponent: (container: HTMLElement) => void,
   config?: LayoutConfig
 ) {
@@ -28,9 +28,9 @@ export function useGoldenLayout(
     const goldenLayout = new GoldenLayout(element.value)
 
     goldenLayout.bindComponentEvent = (container, itemConfig) => {
-      const { componentType } = itemConfig
+      const { componentType, componentState } = itemConfig
       if (typeof componentType !== 'string') throw new Error('Invalid component type.')
-      const component = createComponent(componentType, container.element)
+      const component = createComponent(componentType, container.element, componentState)
       return {
         component,
         virtual: false,

@@ -1,14 +1,14 @@
 <template>
   <div ref="element" style="width: 100%; height: 100%">
     <link :href="css" rel="stylesheet" />
-    <teleport v-for="{ id, type, element } in componentInstances" :key="id" :to="element">
-      <component :is="type"></component>
+    <teleport v-for="{ id, type, element, state } in componentInstances" :key="id" :to="element">
+      <component :is="type" :state="state"></component>
     </teleport>
   </div>
 </template>
 
 <script lang="ts">
-import { LayoutConfig } from "golden-layout"
+import { LayoutConfig, RootItemConfig } from "golden-layout"
 import { defineComponent, inject, shallowRef, computed, watch, ref } from "vue"
 import { DARK, SPACE_WIDTH, SPACE_HEIGHT, REGISTER_TAB_HANDLER } from "@/types"
 import { useGoldenLayout } from "@/plugins/golden-layout"
@@ -32,6 +32,7 @@ export default defineComponent({
       id: number;
       type: string;
       element: HTMLElement;
+      state: any;
     }
 
     let instanceId = 0
@@ -42,7 +43,7 @@ export default defineComponent({
     const spaceHeight = inject(SPACE_HEIGHT, ref(0))
     const css = computed(() => isDark?.value ? darkThemeUrl : lightThemeUrl)
 
-    const createComponent = (type: string, element: HTMLElement) => {
+    const createComponent = (type: string, element: HTMLElement, state?: any) => {
       if (!componentTypes.has(type)) {
         throw new Error(`Component not found: '${type}'`)
       }
@@ -51,6 +52,7 @@ export default defineComponent({
         id: instanceId,
         type,
         element,
+        state,
       })
     }
 
@@ -60,17 +62,34 @@ export default defineComponent({
       )
     }
 
+    let root: RootItemConfig = {
+      type: "column",
+      content: [
+        {
+          type: "component",
+          componentType: "GetStarted",
+          title: 'Get Started'
+        },
+      ],
+    }
+
+    const val = localStorage.getItem(KEY_LAYOUT)
+    if (val) {
+      let savedRoot
+      try {
+        savedRoot = LayoutConfig.fromResolved(JSON.parse(val)).root
+      } catch(e) {
+        console.error(e)
+      }
+
+      if (savedRoot) {
+        root = savedRoot as RootItemConfig
+      }
+    }
+
     const { element, layout } = useGoldenLayout(createComponent, destroyComponent, {
-      root: {
-        type: "column",
-        content: [
-          {
-            type: "component",
-            componentType: "GetStarted",
-            title: 'Get Started'
-          },
-        ],
-      },
+      root,
+      // do not load following settings from localStorage
       dimensions: {
         headerHeight: 32,        
       },
@@ -85,17 +104,7 @@ export default defineComponent({
     watch(layout, (l) => {
       if (!l) return
 
-      const val = localStorage.getItem(KEY_LAYOUT)
-      if (val) {
-        try {
-          l.loadLayout(LayoutConfig.fromResolved(JSON.parse(val)))
-        } catch(_) {
-          console.error(_)
-        }
-      }
-
-      l.on('stateChanged', () => 
-        localStorage.setItem(KEY_LAYOUT, JSON.stringify(l.saveLayout())))
+      l.on('stateChanged', () => localStorage.setItem(KEY_LAYOUT, JSON.stringify(l.saveLayout())))
 
       register((componentType: string, title: string, state: any, createNew?: boolean) => {
         if (!createNew) {
@@ -107,7 +116,8 @@ export default defineComponent({
               id: componentType,
               title,
               type: 'component',
-              componentType
+              componentType,
+              componentState: { id: componentType }
             })
           }
         } else {
