@@ -80,6 +80,8 @@ function refresh() {
 
       <n-divider />
 
+      <p class="label">Physical Devices</p>
+
       <nav class="devices">
         <router-link v-for="(dev, i) in devices" :to="{ name: 'apps', params: { device: dev.id } }">
           {{ dev.name }}</router-link>
@@ -88,6 +90,8 @@ function refresh() {
       </nav>
 
       <n-divider />
+
+      <p class="label">Simulators</p>
 
       <nav class="simulators">
         <router-link v-for="(sim, i) in simulators" :to="{ name: 'simapps', params: { sim: sim.udid } }">
@@ -123,6 +127,10 @@ aside {
   width: 280px;
   padding: 40px;
 
+  p.label {
+    font-size: .75rem;
+    opacity: .75;
+  }
 
   nav a {
     text-decoration: none;
