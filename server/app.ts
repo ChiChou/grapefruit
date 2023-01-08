@@ -211,6 +211,7 @@ app
     try {
       await next()
     } catch (e) {
+      console.error(e)
       if (process.env.NODE_ENV === 'development') {
         ctx.status = 500
         ctx.body = e.stack
