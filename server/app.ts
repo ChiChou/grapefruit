@@ -24,7 +24,7 @@ import { program } from 'commander'
 import { AddressInfo } from 'net'
 import { concat } from './lib/workspace'
 import { Scope } from 'frida/dist/device'
-import { simulators, apps as simApps } from './lib/simctl'
+import { simulators, apps as simApps, icon } from './lib/simctl'
 
 const ISDEBUG = process.env.NODE_ENV === 'development'
 
@@ -38,6 +38,11 @@ const router = new Router({ prefix: '/api' })
 
 const mgr = frida.getDeviceManager()
 
+function res(...components) {
+  const folder = ISDEBUG ? '.' : '..'
+  return path.join(__dirname, folder, 'templates', ...components)
+}
+
 if (ISDEBUG) {
   router
     .get('/device/mock/apps', (ctx) => {
@@ -48,8 +53,7 @@ if (ISDEBUG) {
       })
     })
     .get('/device/mock/icon/com.example.mock', (ctx) => {
-      const folder = ISDEBUG ? '.' : '..'
-      ctx.body = fs.createReadStream(path.join(__dirname, folder, 'templates', `mockicon.png`))
+      ctx.body = fs.createReadStream(res('mockicon.png'))
     })
 }
 
@@ -73,8 +77,9 @@ router
       list.push({
         name: 'Mock Device',
         id: 'mock',
-        type: 'remote',
-        removable: false
+        type: frida.DeviceType.Remote,
+        removable: false,
+        icon: null
       })
     }
 
@@ -96,6 +101,12 @@ router
   .get('/sim/:udid/apps', async (ctx) => {
     const { udid } = ctx.params
     ctx.body = await simApps(udid)
+  })
+  .get('/sim/:udid/icon/:bundle', async (ctx) => {
+    const { udid, bundle } = ctx.params
+    const iconPath = await icon(udid, bundle).catch(e => res('app.png'))
+    ctx.type = 'image/png'
+    ctx.body = fs.createReadStream(iconPath)
   })
   .get('/device/:device/icon/:bundle', async (ctx) => {
     const id = ctx.params.device
