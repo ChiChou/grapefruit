@@ -38,7 +38,7 @@ const router = new Router({ prefix: '/api' })
 
 const mgr = frida.getDeviceManager()
 
-function res(...components) {
+function res(...components: string[]) {
   const folder = ISDEBUG ? '.' : '..'
   return path.join(__dirname, folder, 'templates', ...components)
 }
