@@ -3,48 +3,7 @@ import path from 'path'
 import fs from 'fs'
 import os from 'os'
 
-type SimulatorState = 'Shutdown' | 'Booted'
-type AppType = 'User' | 'System'
-
-interface RuntimeInfo {
-  availabilityError?: string;
-  dataPath: string;
-  dataPathSize: number;
-  logPath: string;
-  udid: string;
-  isAvailable: boolean;
-  deviceTypeIdentifier: string;
-  state: SimulatorState;
-  name: string;
-}
-
-interface ListResult {
-  devices: { [name: string]: RuntimeInfo[] };
-}
-
-interface SimAppInfo {
-  ApplicationType: AppType;
-  Bundle: string;
-  CFBundleDisplayName: string;
-  CFBundleExecutable: string;
-  CFBundleIdentifier: string;
-  CFBundleName: string;
-  CFBundleVersion: string;
-  DataContainer: string;
-  Path: string;
-  GroupContainers: { [groupID: string]: string };
-}
-
-interface Apps {
-  [bundle: string]: SimAppInfo
-}
-
-export interface SimulatorInfo {
-  deviceTypeIdentifier: string;
-  state: SimulatorState;
-  name: string;
-  udid: string;
-}
+import { Apps, ListResult, SimAppInfo, SimulatorInfo } from '../api/sim'
 
 function* available(result: ListResult) {
   for (const [runtimeId, models] of Object.entries(result.devices)) {
