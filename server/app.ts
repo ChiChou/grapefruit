@@ -46,11 +46,11 @@ function res(...components) {
 if (ISDEBUG) {
   router
     .get('/device/mock/apps', (ctx) => {
-      ctx.body = new Array(5).fill({
+      ctx.body = [{
         name: "Example",
         pid: 0,
         identifier: "com.example.mock"
-      })
+      }]
     })
     .get('/device/mock/icon/com.example.mock', (ctx) => {
       ctx.body = fs.createReadStream(res('mockicon.png'))
