@@ -65,19 +65,28 @@ onUnmounted(() => {
   window.removeEventListener('resize', onWindowResize)
 })
 
+const isSimulator = () => route.name === 'simulator'
+const isDevice = () => route.name === 'workspace'
+
 const route = useRoute()
 const router = useRouter()
-const { device, bundle } = route.params
-if (typeof device !== 'string' || typeof bundle !== 'string') {
-  throw new Error('invalid params')
+const { device, bundle, sim } = route.params
+
+// todo: GUI
+if (typeof bundle !== 'string') {
+  throw new Error('invalid bundle id')
+}
+
+if ((isSimulator() && typeof sim !== 'string')
+  || (isDevice() && typeof device !== 'string')) {
+    throw new Error('invalid param')
 }
 
 if (regulation.check(bundle)) {
-  // todo: GUI
   throw new Error('According to local regulations, Grapefruit is not working on current app')
 }
 
-const socket = io('/session', { query: { device, bundle }, transports: ['websocket'] })
+const socket = io('/session', { query: { mode: route.name, device, bundle, sim }, transports: ['websocket'] })
 const status = ref('connecting')
 
 provide(WS, socket)
@@ -103,11 +112,19 @@ socket
   .on('destroyed', onDisconnect)
 
 function detach() {
-  const { device } = route.params
-  router.push({
-    name: 'apps',
-    params: { device }
-  })
+  if (isSimulator()) {
+    const { sim } = route.params
+    router.push({
+      name: 'simapps',
+      params: { sim }
+    })
+  } else if (isDevice()) {
+    const { device } = route.params
+    router.push({
+      name: 'apps',
+      params: { device }
+    })
+  }
 }
 
 provide(SESSION_DETACH, detach)

@@ -42,25 +42,24 @@ export default class Channels {
     mgr.changed.connect(this.changedSignal)
 
     this.session.on('connection', async (socket) => {
-      const { device, bundle, sim } = socket.handshake.query
+      const { device, bundle, sim, mode } = socket.handshake.query
       let dev: frida.Device, session: frida.Session
 
-      if (typeof device !== 'string' || typeof bundle !== 'string') {
-        socket.emit('exception', 'invalid parameter type')
-        socket.disconnect()
-        return
-      }
-
       try {
-        if (sim) {
+        if (typeof bundle !== 'string') {
+          throw new Error(`invalid bundle name: ${bundle}`)
+        } else if (mode === 'simulator' && typeof sim === 'string') {
           const simulator = await getSimulator(sim as string)
           dev = await frida.getLocalDevice()
           session = await simulator.start(bundle)
-        } else {
+        } else if (mode === 'device' && typeof device === 'string') {
           dev = await tryGetDevice(device)
           session = await wrap(dev).start(bundle)
+        } else {
+          throw new Error('invalid parameters')
         }
       } catch (e) {
+        console.error(e)
         socket.emit('exception', e.toString())
         socket.disconnect()
         return
@@ -122,10 +121,11 @@ export default class Channels {
           agent.post({ type: 'dispose' })
           await session.detach()
           // eslint-disable-next-line no-empty
-        } catch (e) {
+        } catch (_) {
 
         }
       }).on('kill', async () => {
+        console.log('on kill')
         session.detach().catch()
         await dev.kill(pid)
         socket.disconnect()

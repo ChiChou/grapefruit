@@ -2,11 +2,9 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import SelectTarget from '@/components/SelectTarget.vue'
 import DeviceView from '@/views/DeviceView.vue'
+import SimulatorView from '@/views/SimulatorView.vue'
 import WorkspaceView from '@/views/WorkspaceView.vue'
 import EmptyDeviceView from '@/views/EmptyDeviceView.vue'
-
-import GetStarted from '@/views/pages/GetStarted.vue'
-import BasicInfo from '@/views/pages/BasicInfo.vue'
 
 const routes = [
   {
@@ -20,11 +18,20 @@ const routes = [
       path: 'apps/:device',
       component: DeviceView,
       name: 'apps'
+    }, {
+      path: 'simulator/:sim/apps',
+      component: SimulatorView,
+      name: 'simapps'
     }]
   },
   {
     path: '/workspace/:device/:bundle',
     name: 'workspace',
+    component: WorkspaceView
+  },
+  {
+    path: '/simulator/workspace/:sim/:bundle',
+    name: 'simulator',
     component: WorkspaceView
   }
 ]

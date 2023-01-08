@@ -7,24 +7,40 @@ import axios from '@/plugins/axios'
 
 import DarkMode from '@/components/DarkMode.vue'
 
-interface Device {
+interface DeviceInfo {
   name: string;
   removable: boolean;
   id: string;
 }
 
+interface SimulatorInfo {
+  deviceTypeIdentifier: string;
+  state: SimulatorState;
+  name: string;
+  udid: string;
+}
+
+type SimulatorState = 'Shutdown' | 'Booted'
+type AppType = 'User' | 'System'
+
 const version = ref('N/A')
 const node = ref('N/A')
 const loading = ref(false)
-const devices = ref([] as Device[])
+const devices = ref([] as DeviceInfo[])
+const simulators = ref([] as SimulatorInfo[])
 
 onMounted(() => {
   const socket = io('/devices', { transports: ['websocket'] })
   socket.on('deviceChanged', refresh)
   refresh()
+  reloadSimulators()
 })
 
 const loadingBar = useLoadingBar()
+
+function reloadSimulators() {
+  axios.get('/simulators').then(({ data }) => { simulators.value = data })
+}
 
 function refresh() {
   loadingBar.start()
@@ -73,6 +89,15 @@ function refresh() {
 
       <n-divider />
 
+      <nav class="simulators">
+        <router-link v-for="(sim, i) in simulators" :to="{ name: 'simapps', params: { sim: sim.udid } }">
+          {{ sim.name }}</router-link>
+
+        <span v-if="simulators.length === 0">No simulator running</span>
+      </nav>
+
+      <n-divider />
+
       <nav>
         <a target="_blank" href="https://github.com/chichou/grapefruit">GitHub</a>
         <a target="_blank" href="https://discord.com/invite/pwutZNx">Discord</a>
@@ -105,20 +130,22 @@ aside {
     padding: 0.5rem 1rem;
   }
 
-  nav.devices a {
-    border-radius: 4px;
-    transition: background-color 0.2s ease-in-out;
-    margin-top: 2px;
-    margin-bottom: 2px;
+  nav.devices, nav.simulators {
+    a {
+      border-radius: 4px;
+      transition: background-color 0.2s ease-in-out;
+      margin-top: 2px;
+      margin-bottom: 2px;
 
-    &.is-active {
-      color: var(--highlight-text);
-      background-color: var(--highlight-background);
-    }
+      &.is-active {
+        color: var(--highlight-text);
+        background-color: var(--highlight-background);
+      }
 
-    &:hover {
-      color: var(--highlight-text);
-      background: var(--hover-background);
+      &:hover {
+        color: var(--highlight-text);
+        background: var(--hover-background);
+      }
     }
   }
 }
