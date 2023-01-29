@@ -14,24 +14,25 @@ const routes = [
     children: [{
       path: '',
       component: EmptyDeviceView,
+      name: 'welcome',
     }, {
-      path: 'apps/:device',
+      path: 'device/:udid/apps',
       component: DeviceView,
       name: 'apps'
     }, {
-      path: 'simulator/:sim/apps',
-      component: SimulatorView,
+      path: 'simulator/:udid/apps',
+      component: DeviceView,
       name: 'simapps'
     }]
   },
   {
-    path: '/workspace/:device/:bundle',
-    name: 'workspace',
+    path: '/workspace/device/:udid/:bundle',
+    name: 'app',
     component: WorkspaceView
   },
   {
-    path: '/simulator/workspace/:sim/:bundle',
-    name: 'simulator',
+    path: '/workspace/simulator/:udid/:bundle',
+    name: 'simapp',
     component: WorkspaceView
   }
 ]

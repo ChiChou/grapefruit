@@ -42,21 +42,27 @@ export default class Channels {
     mgr.changed.connect(this.changedSignal)
 
     this.session.on('connection', async (socket) => {
-      const { device, bundle, sim, mode } = socket.handshake.query
+      const { bundle, udid, mode } = socket.handshake.query
       let dev: frida.Device, session: frida.Session
 
       try {
         if (typeof bundle !== 'string') {
           throw new Error(`invalid bundle name: ${bundle}`)
-        } else if (mode === 'simulator' && typeof sim === 'string') {
-          const simulator = await getSimulator(sim as string)
+        }
+
+        if (typeof udid !== 'string') {
+          throw new Error('invalid udid')
+        }
+
+        if (mode === 'simulator') {
+          const simulator = await getSimulator(udid)
           dev = await frida.getLocalDevice()
           session = await simulator.start(bundle)
-        } else if (mode === 'device' && typeof device === 'string') {
-          dev = await tryGetDevice(device)
+        } else if (mode === 'device' ) {
+          dev = await tryGetDevice(udid)
           session = await wrap(dev).start(bundle)
         } else {
-          throw new Error('invalid parameters')
+          throw new Error('invalid mode')
         }
       } catch (e) {
         console.error(e)

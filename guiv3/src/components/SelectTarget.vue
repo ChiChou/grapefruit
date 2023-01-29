@@ -83,18 +83,18 @@ function refresh() {
       <p class="label">Physical Devices</p>
 
       <nav class="devices">
-        <router-link v-for="(dev, i) in devices" :to="{ name: 'apps', params: { device: dev.id } }">
+        <router-link v-for="(dev, i) in devices" :to="{ name: 'apps', params: { udid: dev.id } }">
           {{ dev.name }}</router-link>
 
         <span v-if="devices.length === 0">No iPhone detected</span>
       </nav>
 
       <n-divider />
-
+      
       <p class="label">Simulators</p>
 
       <nav class="simulators">
-        <router-link v-for="(sim, i) in simulators" :to="{ name: 'simapps', params: { sim: sim.udid } }">
+        <router-link v-for="(sim, i) in simulators" :to="{ name: 'simapps', params: { udid: sim.udid } }">
           {{ sim.name }}</router-link>
 
         <span v-if="simulators.length === 0">No simulator running</span>

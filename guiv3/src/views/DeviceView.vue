@@ -1,33 +1,22 @@
 <script setup lang="ts">
 import axios from '@/plugins/axios'
-import { computed } from '@vue/reactivity';
+import { computed } from '@vue/reactivity'
 
 import { useLoadingBar } from 'naive-ui'
 import { ref, onMounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 
-interface App {
-  identifier: string;
-  name: string;
-}
-
-interface Info {
-  name?: string;
-  arch?: string;
-  os: {
-    version?: string;
-  };
-  platform?: string;
-  access?: string;
-}
+import { SimAppInfo } from '@backend/sim'
+import { App, Info } from '@backend/dev'
 
 const apps = ref([] as App[])
+const simapps = ref([] as SimAppInfo[])
 const info = ref(null as Info | null)
-const device = ref('')
+const udid = ref('')
 const error = ref('')
 
 const shortened = computed(() => {
-  const { value } = device
+  const { value } = udid
   if (value) return ''
 
   if (value.length > 6)
@@ -39,16 +28,26 @@ const shortened = computed(() => {
 const route = useRoute()
 const loadingBar = useLoadingBar()
 
-async function refresh(dev: string) {
-  if (typeof dev !== 'string') throw new Error('invalid route')
+const isSimulator = () => route.name === 'simapps'
+const isDevice = () => route.name === 'apps'
 
-  device.value = dev
+async function refresh(id: string) {
+  if (typeof id !== 'string') throw new Error('invalid route')
+
+  udid.value = id
   error.value = ''
 
   loadingBar.start()
-  axios.get(`device/${dev}/apps`)
+  simapps.value = apps.value = []
+
+  const prefix = isSimulator() ? 'sim' : 'device'
+  axios.get(`${prefix}/${id}/apps`)
     .then(({ data }) => {
-      apps.value = data
+      if (isSimulator()) {
+        simapps.value = data
+      } else {
+        apps.value = data
+      }
 
       document.querySelectorAll('img.lazy').forEach(e => observer.unobserve(e))
       nextTick(() =>
@@ -56,7 +55,7 @@ async function refresh(dev: string) {
       loadingBar.finish()
     })
     .catch((ex) => {
-      apps.value = []
+      simapps.value = apps.value = []       
       loadingBar.error()
       console.error('Failed to get apps', ex.response)
       error.value = `Unable to retrieve apps from this device: ${ex.response.data}`
@@ -75,11 +74,11 @@ const observer = new IntersectionObserver((entries, observer) => {
 })
 
 onMounted(() => {
-  refresh(route.params.device as string)
+  refresh(route.params.udid as string)
 })
 
-watch(() => route.params.device, async newDevice => {
-  refresh(newDevice as string)
+watch(() => route.params.udid, async newValue => {
+  refresh(newValue as string)
 })
 
 </script>
@@ -90,15 +89,27 @@ watch(() => route.params.device, async newDevice => {
     <h1 v-else>{{ shortened }}</h1>
   </header>
 
-  <div class="apps" v-if="apps.length">
-    <ul>
+  <div class="apps">
+    <ul v-if="apps.length && isDevice()">
       <li :key="app.identifier" v-for="app in apps">
-        <router-link :to="{ name: 'workspace', params: { device, bundle: app.identifier } }">
+        <router-link :to="{ name: 'app', params: { udid, bundle: app.identifier } }">
           <img class="lazy"
             src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
-            :data-src="`/api/device/${device}/icon/${app.identifier}`" width="180" height="180">
+            :data-src="`/api/device/${udid}/icon/${app.identifier}`" width="180" height="180">
           <h2>{{ app.name }}</h2>
           <p>{{ app.identifier }}</p>
+        </router-link>
+      </li>
+    </ul>
+
+    <ul v-if="simapps.length && isSimulator()">
+      <li :key="app.CFBundleIdentifier" v-for="app in simapps">
+        <router-link :to="{ name: 'simapp', params: { udid, bundle: app.CFBundleIdentifier } }">
+          <img class="lazy"
+            src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+            :data-src="`/api/sim/${udid}/icon/${app.CFBundleIdentifier}`" width="180" height="180">
+          <h2>{{ app.CFBundleDisplayName }}</h2>
+          <p>{{ app.CFBundleIdentifier }}</p>
         </router-link>
       </li>
     </ul>

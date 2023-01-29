@@ -3,16 +3,21 @@ import { ref, onMounted, provide, onBeforeUnmount, ComponentPublicInstance, onUn
 
 import { Splitpanes, Pane } from 'splitpanes'
 import { useRoute, useRouter } from 'vue-router'
+import { io } from 'socket.io-client'
 import 'splitpanes/dist/splitpanes.css'
 import '@/skin/splitpane.scss'
 
 import SidePanel from './SidePanel.vue'
 import StatusBar from './StatusBar.vue'
 import Layout from '@/components/Layout.vue'
-import * as regulation from '@/regulation'
+
 import { useRPC } from '@/wsrpc'
-import { io } from 'socket.io-client'
 import { SESSION_DETACH, RPC, STATUS, WS, ACTIVE_SIDEBAR, SPACE_WIDTH, SPACE_HEIGHT } from '@/types'
+
+import * as regulation from '@/regulation'
+
+const isSimulator = () => route.name === 'simapp'
+const isDevice = () => route.name === 'app'
 
 const SIDEBAR_WIDTH_KEY = 'sidebar-width'
 const sideWidth = ref(getInt(SIDEBAR_WIDTH_KEY, 20))
@@ -65,28 +70,24 @@ onUnmounted(() => {
   window.removeEventListener('resize', onWindowResize)
 })
 
-const isSimulator = () => route.name === 'simulator'
-const isDevice = () => route.name === 'workspace'
-
 const route = useRoute()
 const router = useRouter()
-const { device, bundle, sim } = route.params
+const { udid, bundle } = route.params
 
 // todo: GUI
 if (typeof bundle !== 'string') {
   throw new Error('invalid bundle id')
 }
 
-if ((isSimulator() && typeof sim !== 'string')
-  || (isDevice() && typeof device !== 'string')) {
-    throw new Error('invalid param')
+if (typeof udid !== 'string') {
+  throw new Error('invalid device udid')
 }
 
 if (regulation.check(bundle)) {
   throw new Error('According to local regulations, Grapefruit is not working on current app')
 }
 
-const socket = io('/session', { query: { mode: route.name, device, bundle, sim }, transports: ['websocket'] })
+const socket = io('/session', { query: { mode: isSimulator() ? 'simulator' : 'device', udid, bundle }, transports: ['websocket'] })
 const status = ref('connecting')
 
 provide(WS, socket)
