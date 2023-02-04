@@ -5,6 +5,8 @@ import os from 'os'
 
 import { Apps, ListResult, SimAppInfo, SimulatorInfo } from '../api/sim'
 
+const OPT = { timeout: 3000 }
+
 function* available(result: ListResult) {
   for (const [runtimeId, models] of Object.entries(result.devices)) {
     for (const model of models) {
@@ -20,7 +22,7 @@ export async function simulators(): Promise<SimulatorInfo[]> {
   if (process.platform != 'darwin') return Promise.resolve([])
 
   const result: ListResult = await new Promise((resolve, reject) => {
-    cp.execFile('/usr/bin/xcrun', ['simctl', 'list', 'devices', '--json'], (err, stdout, stderr) => {
+    cp.execFile('/usr/bin/xcrun', ['simctl', 'list', 'devices', '--json'], OPT, (err, stdout, stderr) => {
       if (err) {
         process.stderr.write(stderr)
         console.error(err)
@@ -36,7 +38,7 @@ export async function simulators(): Promise<SimulatorInfo[]> {
 
 export async function launch(udid: string, bundle: string): Promise<number> {
   return new Promise((resolve, reject) => {
-    cp.execFile('/usr/bin/xcrun', ['simctl', 'launch', udid, bundle], (err, stdout, stderr) => {
+    cp.execFile('/usr/bin/xcrun', ['simctl', 'launch', udid, bundle], OPT, (err, stdout, stderr) => {
       if (err) {
         reject(err)
       } else {
@@ -66,6 +68,12 @@ async function appsInternal(udid: string): Promise<Apps> {
       })
       .once('error', reject)
     simctl.stdout.pipe(plutil.stdin)
+
+    setTimeout(() => {
+      reject(new Error('execution timed out'))
+      plutil.kill()
+      simctl.kill()
+    }, 3000)
   })
 }
 
@@ -83,7 +91,7 @@ export async function apps(udid: string): Promise<SimAppInfo[]> {
 async function iconFromApp(root: string) {
   const plist = path.join(root, 'Info.plist')
   const iconName = await new Promise((resolve, reject) => {
-    cp.execFile('/usr/bin/plutil', ['-convert', 'json', '-o', '-', plist], (err, stdout, stderr) => {
+    cp.execFile('/usr/bin/plutil', ['-convert', 'json', '-o', '-', plist], OPT, (err, stdout, stderr) => {
       if (err) {
         reject(err)
       } else {
