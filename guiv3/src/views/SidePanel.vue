@@ -8,7 +8,7 @@ import GeneralTab from './panels/GeneralTab.vue'
 import FinderTab from './panels/FinderTab.vue'
 import ClassesTab from './panels/ClassesTab.vue'
 
-import { Component as Comp, h, inject, onMounted, ref } from 'vue'
+import { Component as Comp, inject, onMounted } from 'vue'
 import {
   AutoAwesomeMosaicSharp,
   FolderSharp,
