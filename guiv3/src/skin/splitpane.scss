@@ -1,19 +1,27 @@
 :root {
   --splitter-size: 4px;
-  --splitter-hover-size: 6px;
+  --splitter-hover-size: 4px;
   --splitter-color: #eee;
   --highlight-color: #999;
 }
 
 [data-theme="dark"] {
   --splitter-color: #222;
-  --highlight-color: rgb(0, 122,204);
+  --highlight-color: rgb(0, 122, 204);
 }
 
-.splitpanes__pane {}
+.splitpanes--horizontal .splitpanes__pane,
+.splitpanes--vertical .splitpanes__pane {
+  transition: none;
+}
+
+.splitpanes__splitter {
+  transition: 0.2s ease-in-out background-color;
+}
 
 .splitpanes--vertical>.splitpanes__splitter {
   min-width: var(--splitter-size);
+  cursor: ew-resize;
 
   &:hover {
     min-width: var(--splitter-hover-size);
@@ -28,7 +36,7 @@
   }
 }
 
-.splitpanes--vertical>.splitpanes__splitter, 
+.splitpanes--vertical>.splitpanes__splitter,
 .splitpanes--horizontal>.splitpanes__splitter {
   background: var(--splitter-color);
   transition: .4s ease-in-out background-color;
