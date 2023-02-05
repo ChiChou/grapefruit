@@ -2,7 +2,7 @@ import { Device, Session, enumerateDevices, getUsbDevice, getDevice, getLocalDev
 import { DeviceType } from 'frida/dist/device'
 
 import * as serialize from './serialize'
-import { launch, simulators } from './simctl'
+import { findRunning, launch, simulators } from './simctl'
 import { SimulatorInfo } from '../api/sim'
 import { AppNotFoundError, EarlyInstrumentError, DeviceNotFoundError, InvalidDeviceError, VersionMismatchError } from './error'
 
@@ -62,7 +62,12 @@ export class Simulator extends ExDevice {
   }
 
   async start(bundle: string): Promise<Session> {
-    const pid = await launch(this.info.udid, bundle)
+    let pid: number
+    try {
+      pid = await findRunning(this.info.udid, bundle)
+    } catch(_) {
+      pid = await launch(this.info.udid, bundle)
+    }
     return this.device.attach(pid)
   }
 

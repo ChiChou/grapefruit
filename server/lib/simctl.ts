@@ -1,11 +1,14 @@
-import cp from 'child_process'
+import cp, { execFile } from 'child_process'
 import path from 'path'
 import fs from 'fs'
 import os from 'os'
 
+import { promisify } from 'util'
 import { Apps, ListResult, SimAppInfo, SimulatorInfo } from '../api/sim'
 
 const OPT = { timeout: 3000 }
+
+const exec = promisify(cp.execFile)
 
 function* available(result: ListResult) {
   for (const [runtimeId, models] of Object.entries(result.devices)) {
@@ -21,32 +24,26 @@ function* available(result: ListResult) {
 export async function simulators(): Promise<SimulatorInfo[]> {
   if (process.platform != 'darwin') return Promise.resolve([])
 
-  const result: ListResult = await new Promise((resolve, reject) => {
-    cp.execFile('/usr/bin/xcrun', ['simctl', 'list', 'devices', '--json'], OPT, (err, stdout, stderr) => {
-      if (err) {
-        process.stderr.write(stderr)
-        console.error(err)
-        reject(err)
-      } else {
-        resolve(JSON.parse(stdout))
-      }
-    })
-  })
-
+  const { stdout } = await exec('/usr/bin/xcrun', ['simctl', 'list', 'devices', '--json'], OPT)
+  const result: ListResult = JSON.parse(stdout)
   return [...available(result)]
 }
 
 export async function launch(udid: string, bundle: string): Promise<number> {
-  return new Promise((resolve, reject) => {
-    cp.execFile('/usr/bin/xcrun', ['simctl', 'launch', udid, bundle], OPT, (err, stdout, stderr) => {
-      if (err) {
-        reject(err)
-      } else {
-        const pid = parseInt(stdout.substring(`${bundle}: `.length), 10)
-        resolve(pid)
-      }
-    })
-  })
+  const { stdout } = await exec('/usr/bin/xcrun', ['simctl', 'launch', udid, bundle], OPT)
+  return parseInt(stdout.substring(`${bundle}: `.length), 10)
+}
+
+export async function findRunning(udid: string, bundle: string): Promise<number> {
+  const { stdout } = await exec('/usr/bin/xcrun', ['simctl', 'spawn', udid, 'launchctl', 'list'], OPT)
+  for (const line of stdout.split(os.EOL)) {
+    const [pid, status, label] = line.split('\t')
+    if (label.startsWith(`UIKitApplication:${bundle}`)) {
+      return parseInt(pid, 10)
+    }
+  }
+
+  return Promise.reject(new Error(`${bundle} is not running`))
 }
 
 async function appsInternal(udid: string): Promise<Apps> {
