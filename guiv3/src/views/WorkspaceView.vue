@@ -60,17 +60,6 @@ function resizing(data: SizeData[]) {
   }
 }
 
-const onWindowResize = () => resizing([])
-
-onMounted(() => {
-  window.addEventListener('resize', onWindowResize)
-  requestAnimationFrame(onWindowResize)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', onWindowResize)
-})
-
 const route = useRoute()
 const router = useRouter()
 const { udid, bundle } = route.params
@@ -101,6 +90,17 @@ const spaceHeight = ref(0)
 provide(SPACE_WIDTH, spaceWidth)
 provide(SPACE_HEIGHT, spaceHeight)
 
+const onWindowResize = () => resizing([])
+
+onMounted(() => {
+  window.addEventListener('resize', onWindowResize)
+  requestAnimationFrame(onWindowResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', onWindowResize)
+})
+
 function onDisconnect() {
   // todo: Dialog
   status.value = 'disconnected'
@@ -112,6 +112,16 @@ socket
   })
   .on('detached', onDisconnect)
   .on('destroyed', onDisconnect)
+  .on('exception', (msg) => {
+    // a workaround for a strange socket.io bug
+    // when first redirected to this page, socket.io does not send query params at all
+    // probably we have another socket instance (for listening device events) before
+    if (`${msg}` === 'Error: invalid bundle name: undefined' && typeof route.params.bundle === 'string') {
+      location.reload()
+    } else {
+      // todo: UI
+    }
+  })
 
 function detach() {
   if (isSimulator()) {

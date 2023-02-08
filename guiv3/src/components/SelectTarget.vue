@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useLoadingBar } from 'naive-ui'
 import { io } from 'socket.io-client'
 
@@ -29,12 +29,15 @@ const loading = ref(false)
 const devices = ref([] as DeviceInfo[])
 const simulators = ref([] as SimulatorInfo[])
 
+const socket = io('/devices', { transports: ['websocket'] })
+
 onMounted(() => {
-  const socket = io('/devices', { transports: ['websocket'] })
   socket.on('deviceChanged', refresh)
   refresh()
   reloadSimulators()
 })
+
+onUnmounted(() => socket.close())
 
 const loadingBar = useLoadingBar()
 
