@@ -1,8 +1,17 @@
 import { ComponentContainer, GoldenLayout, LayoutConfig } from 'golden-layout'
 import { onMounted, ref, shallowRef } from 'vue'
 
+import tabManager from './tab-manager'
+
 export const isClient = typeof window !== 'undefined'
 export const isDocumentReady = () => isClient && document.readyState === 'complete' && document.body != null
+
+interface TabState {
+  id: string,
+  [key: string]: string
+}
+
+type StateOpt = {[key: string]: string} | null
 
 export function useDocumentReady(func: () => void) {
   onMounted(() => {
@@ -15,7 +24,7 @@ export function useDocumentReady(func: () => void) {
 }
 
 export function useGoldenLayout(
-  createComponent: (type: string, container: HTMLElement, state?: any) => ComponentContainer.Component,
+  createComponent: (type: string, tabId: string, container: HTMLElement, state?: any) => ComponentContainer.Component,
   destroyComponent: (container: HTMLElement) => void,
   config?: LayoutConfig
 ) {
@@ -29,8 +38,9 @@ export function useGoldenLayout(
 
     goldenLayout.bindComponentEvent = (container, itemConfig) => {
       const { componentType, componentState } = itemConfig
+      const tabId = (componentState as TabState).id
       if (typeof componentType !== 'string') throw new Error('Invalid component type.')
-      const component = createComponent(componentType, container.element, componentState)
+      const component = createComponent(componentType, tabId, container.element, componentState)
       return {
         component,
         virtual: false,
@@ -46,6 +56,32 @@ export function useGoldenLayout(
     layout.value = goldenLayout as any
 
     initialized.value = true
+
+    // listen for tab creation
+    let counter = 0
+    tabManager.listen((componentType: string, state: StateOpt, title?: string, createNew?: boolean) => {
+      let tabId: string
+
+      if (!createNew) {
+        const tab = goldenLayout.findFirstComponentItemById(componentType)
+        tabId = componentType
+        if (tab) {
+          tab.parentItem.setActiveComponentItem(tab, true, true)
+          return
+        }
+      } else {
+        tabId = `${componentType}${counter++}`
+      }
+
+      const componentState = Object.assign({ tabId }, state)
+      goldenLayout.addItem({
+        id: tabId,
+        title,
+        type: 'component',
+        componentType,
+        componentState
+      })
+    })
   })
 
   return { element, initialized, layout }

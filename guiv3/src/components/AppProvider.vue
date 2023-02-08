@@ -17,7 +17,7 @@
 import { onMounted, provide, ref, watch } from 'vue'
 import { darkTheme } from 'naive-ui'
 import { BuiltInGlobalTheme } from 'naive-ui/lib/themes/interface'
-import { DARK, CREATE_TAB, REGISTER_TAB_HANDLER, TabHandler } from '@/types'
+import { DARK } from '@/types'
 
 const PRESIST_KEY = 'theme'
 const MEDIA_QUERY = '(prefers-color-scheme: dark)'
@@ -58,21 +58,21 @@ provide(DARK, isDark)
 watch(isDark, (val) => apply(val))
 onMounted(() => apply(isDark.value))
 
-const tabHandler = ref<TabHandler>()
-const pendingTabs: [string, string, any, boolean][] = []
+// const tabHandler = ref<TabHandler>()
+// const pendingTabs: [string, string, any, boolean][] = []
 
-provide(CREATE_TAB, (tab: string, title: string = '', state: any = {}, newTab: boolean = false) => {
-  if (tabHandler.value) {
-    tabHandler.value(tab, title, state, newTab)
-  } else {
-    pendingTabs.push([tab, title, state, newTab])
-  }
-})
+// provide(CREATE_TAB, (tab: string, title: string = '', state: any = {}, newTab: boolean = false) => {
+//   if (tabHandler.value) {
+//     tabHandler.value(tab, title, state, newTab)
+//   } else {
+//     pendingTabs.push([tab, title, state, newTab])
+//   }
+// })
 
-provide(REGISTER_TAB_HANDLER, (handler: TabHandler) => {
-  tabHandler.value = handler
-  pendingTabs.forEach((tuple) => handler.apply(null, tuple))
-})
+// provide(REGISTER_TAB_HANDLER, (handler: TabHandler) => {
+//   tabHandler.value = handler
+//   pendingTabs.forEach((tuple) => handler.apply(null, tuple))
+// })
 
 </script>
 

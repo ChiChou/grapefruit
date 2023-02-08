@@ -1,6 +1,7 @@
 import { Socket } from 'socket.io-client'
 import type { InjectionKey, Ref } from 'vue'
 import { RPC as WSRPC } from './wsrpc'
+import tabMgr from '@/plugins/tab-manager'
 
 // WorkspaceView
 export const ACTIVE_SIDEBAR = Symbol('sidebar') as InjectionKey<Ref<number>>
@@ -15,6 +16,6 @@ export const SESSION_DETACH = Symbol('detach') as InjectionKey<() => void>
 export const SPACE_WIDTH = Symbol('spaceWidth') as InjectionKey<Ref<number>>
 export const SPACE_HEIGHT = Symbol('spaceHeight') as InjectionKey<Ref<number>>
 
-export type TabHandler = (name: string, title: string, state: any, newTab?: boolean) => void
-export const CREATE_TAB = Symbol('createTab') as InjectionKey<TabHandler>
-export const REGISTER_TAB_HANDLER = Symbol('registerTabHandler') as InjectionKey<(handler: TabHandler) => void>
+// tab manager
+export const TAB_EMITTER = Symbol('tabEmitter') as InjectionKey<typeof tabMgr>
+export const SET_TAB_TITLE = Symbol('setTabTitle') as InjectionKey<(id: string, title: string) => void>

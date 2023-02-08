@@ -7,12 +7,13 @@ import { io } from 'socket.io-client'
 import 'splitpanes/dist/splitpanes.css'
 import '@/skin/splitpane.scss'
 
+import tabMgr from '@/plugins/tab-manager'
 import SidePanel from './SidePanel.vue'
 import StatusBar from './StatusBar.vue'
 import Layout from '@/components/Layout.vue'
 
 import { useRPC } from '@/wsrpc'
-import { SESSION_DETACH, RPC, STATUS, WS, ACTIVE_SIDEBAR, SPACE_WIDTH, SPACE_HEIGHT } from '@/types'
+import { SESSION_DETACH, RPC, STATUS, WS, ACTIVE_SIDEBAR, SPACE_WIDTH, SPACE_HEIGHT, TAB_EMITTER } from '@/types'
 
 import * as regulation from '@/regulation'
 
@@ -134,6 +135,8 @@ onBeforeUnmount(() => socket.close())
 
 const activeSidebar = ref(0)
 provide(ACTIVE_SIDEBAR, activeSidebar)
+
+provide(TAB_EMITTER, tabMgr)
 
 </script>
 

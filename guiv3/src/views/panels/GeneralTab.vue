@@ -2,16 +2,16 @@
   <aside class="menu">
     <p class="menu-label">General</p>
     <ul class="menu-list">
-      <li><a @click="go('BasicInfo', 'Basic')"><n-icon :component="InfoOutlined" />Basic</a></li>
-      <li><a @click="go('CheckSec', 'CheckSec')"><n-icon :component="SecurityFilled" />CheckSec</a></li>
-      <li><a @click="go('URLPage', 'URL Tester')"><n-icon :component="LinkRound" />URL Schemes</a></li>      
+      <li><a @click="go('BasicInfo')"><n-icon :component="InfoOutlined" />Basic</a></li>
+      <li><a @click="go('BasicInfo')"><n-icon :component="SecurityFilled" />CheckSec</a></li>
+      <li><a @click="go('BasicInfo')"><n-icon :component="LinkRound" />URL Schemes</a></li>      
     </ul>
 
     <p class="menu-label">Storage</p>
     <ul class="menu-list">
-      <li><a @click="go('BasicInfo', 'Cookies')"><n-icon :component="CookieOutlined" />Cookies</a></li>
-      <li><a @click="go('BasicInfo', 'KeyChain')"><n-icon :component="KeyFilled" />KeyChain</a></li>
-      <li><a @click="go('BasicInfo', 'UserDefaults')"><n-icon :component="RoomPreferencesOutlined" />NSUserDefaults</a></li>
+      <li><a @click="go('BasicInfo')"><n-icon :component="CookieOutlined" />Cookies</a></li>
+      <li><a @click="go('BasicInfo')"><n-icon :component="KeyFilled" />KeyChain</a></li>
+      <li><a @click="go('BasicInfo')"><n-icon :component="RoomPreferencesOutlined" />NSUserDefaults</a></li>
     </ul>
 
     <p class="menu-label">Inspector</p>
@@ -47,13 +47,10 @@ import {
 } from '@vicons/fluent'
 
 import { inject } from 'vue'
-import { CREATE_TAB } from '@/types'
+import { TAB_EMITTER } from '@/types'
 
-const createTab = inject(CREATE_TAB)!
-
-function go(tab: string, title: string='', state?: any) {
-  createTab(tab, title, state, false);
-}
+const tabMgr = inject(TAB_EMITTER)!
+const go = tabMgr.go.bind(tabMgr)
 
 </script>
 

@@ -1,16 +1,16 @@
 <template>
   <div ref="element" style="width: 100%; height: 100%">
     <link :href="css" rel="stylesheet" />
-    <teleport v-for="{ id, type, element, state } in componentInstances" :key="id" :to="element">
-      <component :is="type" :state="state"></component>
+    <teleport v-for="{ id, type, element, state, tabId } in componentInstances" :key="id" :to="element">
+      <component :is="type" :state="state" :tabId="tabId"></component>
     </teleport>
   </div>
 </template>
 
 <script lang="ts">
 import { LayoutConfig, RootItemConfig } from "golden-layout"
-import { defineComponent, inject, shallowRef, computed, watch, ref } from "vue"
-import { DARK, SPACE_WIDTH, SPACE_HEIGHT, REGISTER_TAB_HANDLER } from "@/types"
+import { defineComponent, inject, shallowRef, computed, watch, ref, onUnmounted, provide } from "vue"
+import { DARK, SPACE_WIDTH, SPACE_HEIGHT, SET_TAB_TITLE } from "@/types"
 import { useGoldenLayout } from "@/plugins/golden-layout"
 
 import "golden-layout/dist/css/goldenlayout-base.css"
@@ -20,6 +20,7 @@ import darkThemeUrl from "golden-layout/dist/css/themes/goldenlayout-dark-theme.
 
 import BasicInfo from '@/views/pages/BasicInfo.vue'
 import GetStarted from '@/views/pages/GetStarted.vue'
+import tabManager from "@/plugins/tab-manager"
 
 const components = { GetStarted, BasicInfo }
 
@@ -30,6 +31,7 @@ export default defineComponent({
   setup() {
     interface ComponentInstance {
       id: number;
+      tabId: string;
       type: string;
       element: HTMLElement;
       state: any;
@@ -38,18 +40,19 @@ export default defineComponent({
     let instanceId = 0
     const componentTypes = new Set(Object.keys(components))
     const componentInstances = shallowRef<ComponentInstance[]>([])
-    const isDark = inject(DARK)
     const spaceWidth = inject(SPACE_WIDTH, ref(0))
     const spaceHeight = inject(SPACE_HEIGHT, ref(0))
+    const isDark = inject(DARK)
     const css = computed(() => isDark?.value ? darkThemeUrl : lightThemeUrl)
 
-    const createComponent = (type: string, element: HTMLElement, state?: any) => {
+    const createComponent = (type: string, tabId: string, element: HTMLElement, state?: any) => {
       if (!componentTypes.has(type)) {
         throw new Error(`Component not found: '${type}'`)
       }
       ++instanceId
       componentInstances.value = componentInstances.value.concat({
         id: instanceId,
+        tabId,
         type,
         element,
         state,
@@ -99,31 +102,8 @@ export default defineComponent({
       }
     })
 
-    const register = inject(REGISTER_TAB_HANDLER)!
-
-    watch(layout, (l) => {
-      if (!l) return
-
-      l.on('stateChanged', () => localStorage.setItem(KEY_LAYOUT, JSON.stringify(l.saveLayout())))
-
-      register((componentType: string, title: string, state: any, createNew?: boolean) => {
-        if (!createNew) {
-          const tab = l.findFirstComponentItemById(componentType)
-          if (tab) {
-            tab.parentItem.setActiveComponentItem(tab, true, true)
-          } else {
-            l.addItem({
-              id: componentType,
-              title,
-              type: 'component',
-              componentType,
-              componentState: { id: componentType }
-            })
-          }
-        } else {
-          l.addComponent(componentType, state, title)
-        }
-      })
+    provide(SET_TAB_TITLE, (id: string, title: string) => {
+      layout.value?.findFirstComponentItemById(id)?.setTitle(title)
     })
 
     watch(spaceWidth, (width) => {
@@ -133,6 +113,8 @@ export default defineComponent({
     watch(spaceHeight, (height) => {
       layout.value?.setSize(spaceWidth.value, height)
     })
+
+    onUnmounted(() => tabManager.unload())
 
     return { element, componentInstances, css }
   },
