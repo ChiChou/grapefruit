@@ -3,6 +3,9 @@ import type { InjectionKey, Ref } from 'vue'
 import { RPC as WSRPC } from './wsrpc'
 import tabMgr from '@/plugins/tab-manager'
 
+export type PlistNode = {[key: string]: PlistValue}
+export type PlistValue = PlistNode | string | number | boolean | PlistNode[]
+
 // WorkspaceView
 export const ACTIVE_SIDEBAR = Symbol('sidebar') as InjectionKey<Ref<number>>
 export const DARK = Symbol('dark') as InjectionKey<Ref<boolean>>

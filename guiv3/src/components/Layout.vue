@@ -134,4 +134,8 @@ export default defineComponent({
 .lm_header .lm_tab .lm_close_tab {
   top: 8px !important;
 }
+
+.lm_content {
+  overflow: auto;
+}
 </style>

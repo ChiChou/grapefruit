@@ -7,3 +7,12 @@ import AppProvider from '@/components/AppProvider.vue'
     <router-view></router-view>
   </app-provider>
 </template>
+
+<style lang="scss">
+/* tree view */
+.plist {
+  .n-tree-node-content__prefix, .n-tree-node-content__text {
+    flex: 1;
+  }
+}
+</style>
