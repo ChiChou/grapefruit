@@ -84,7 +84,7 @@ function select(i: number) {
       <n-popover trigger="hover" v-for="(tab, i) in tabs" placement="right">
         <template #trigger>
           <a @click="select(i)" :class="{ 'is-active': index === i }">
-            <n-icon :component="tab.icon" :size="32"></n-icon>
+            <n-icon :component="tab.icon" :size="24"></n-icon>
           </a>
         </template>
         <span>{{ tab.label }}</span>
@@ -115,7 +115,6 @@ function select(i: number) {
   height: 100%;
 
   nav.side-nav {
-    width: 72px;
     background: var(--sidebar-nav-background);
 
     .n-radio-group__splitor {
@@ -125,13 +124,15 @@ function select(i: number) {
     a {
       display: flex;
       cursor: pointer;
-      width: 68px;
-      height: 60px;
+      margin-top: 2px;
+      margin-bottom: 2px;
+      width: 56px;
+      height: 56px;
       align-items: center;
       justify-content: center;
 
-      border-left: 2px solid transparent;
-      border-right: 2px solid transparent;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
 
       &.is-active {
         border-left-color: var(--nav-active);
