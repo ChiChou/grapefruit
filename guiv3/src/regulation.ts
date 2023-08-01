@@ -5,18 +5,6 @@ export function check(bundle: string): boolean {
     return false
   }
 
-  const rules = [
-    'com.alibaba.',
-    'com.alipay.',
-    'com.tencent.',
-    'com.ss.'
-  ]
-
-  for (const rule of rules) {
-    if (bundle.startsWith(rule)) {
-      return true
-    }
-  }
-
-  return false
+  const regex = /^com\.(alibaba|alipay|tencent|ss)\./;
+  return regex.test(bundle);
 }
