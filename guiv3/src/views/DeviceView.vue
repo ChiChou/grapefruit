@@ -156,6 +156,11 @@ ul {
       }
     }
 
+    h2, p {
+      text-overflow: ellipsis;
+      overflow-x: hidden;
+    }
+
     h2 {
       font-weight: 100;
       margin-bottom: 0;
