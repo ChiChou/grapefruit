@@ -10,7 +10,7 @@ import ClassesTab from './panels/ClassesTab.vue'
 
 import { Component as Comp, inject, onMounted } from 'vue'
 import {
-  AutoAwesomeMosaicSharp,
+  HomeSharp,
   FolderSharp,
   ExploreRound,
   ViewModuleSharp,
@@ -31,8 +31,13 @@ type TabOption = {
 const tabs: TabOption[] = [
   {
     label: 'General',
-    icon: AutoAwesomeMosaicSharp,
+    icon: HomeSharp,
     page: GeneralTab,
+  },
+    {
+    label: 'Modules',
+    icon: ViewModuleSharp,
+    page: ModulesTab,
   },
   {
     label: 'Classes',
@@ -40,19 +45,14 @@ const tabs: TabOption[] = [
     page: ClassesTab,
   },
   {
-    label: 'Modules',
-    icon: ViewModuleSharp,
-    page: ModulesTab,
+    label: 'Finder',
+    icon: FolderSharp,
+    page: FinderTab,
   },
   {
     label: 'Terminal',
     icon: TerminalSharp,
     page: REPLTab,
-  },
-  {
-    label: 'Finder',
-    icon: FolderSharp,
-    page: FinderTab,
   },
   {
     label: 'JavaScriptCore',
