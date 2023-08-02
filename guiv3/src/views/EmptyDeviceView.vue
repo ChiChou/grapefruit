@@ -16,7 +16,7 @@
       <h2>Support this project</h2>
       <p>This project is open source and free to use.
         If you want to support, <br> you can
-        <a target="blank" href="https://www.patreon.com/codecolorist">become a Patreon</a>,
+        <a target="blank" href="https://github.com/sponsors/ChiChou">sponsor me on GitHub</a>,
         or <a target="blank" href="https://www.paypal.com/paypalme/codecolorist">buy me a coffee on Paypal</a>
       </p>
     </section>
