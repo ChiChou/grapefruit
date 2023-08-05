@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useLoadingBar } from 'naive-ui'
 import { io } from 'socket.io-client'
 
@@ -37,7 +37,7 @@ onMounted(() => {
   reloadSimulators()
 })
 
-onUnmounted(() => socket.close())
+onBeforeUnmount(() => socket.close())
 
 const loadingBar = useLoadingBar()
 
