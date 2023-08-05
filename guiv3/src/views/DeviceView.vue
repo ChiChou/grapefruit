@@ -92,25 +92,25 @@ watch(() => route.params.udid, async newValue => {
   <div class="apps">
     <ul v-if="apps.length && isDevice()">
       <li :key="app.identifier" v-for="app in apps">
-        <router-link :to="{ name: 'app', params: { udid, bundle: app.identifier } }">
+        <a :href="$router.resolve({ name: 'app', params: { udid, bundle: app.identifier } }).href">
           <img class="lazy"
             src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
             :data-src="`/api/device/${udid}/icon/${app.identifier}`" width="180" height="180">
           <h2>{{ app.name }}</h2>
           <p>{{ app.identifier }}</p>
-        </router-link>
+        </a>
       </li>
     </ul>
 
     <ul v-if="simapps.length && isSimulator()">
       <li :key="app.CFBundleIdentifier" v-for="app in simapps">
-        <router-link :to="{ name: 'simapp', params: { udid, bundle: app.CFBundleIdentifier } }">
+        <a :href="$router.resolve({ name: 'simapp', params: { udid, bundle: app.CFBundleIdentifier } }).href">
           <img class="lazy"
             src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
             :data-src="`/api/sim/${udid}/icon/${app.CFBundleIdentifier}`" width="180" height="180">
           <h2>{{ app.CFBundleDisplayName }}</h2>
           <p>{{ app.CFBundleIdentifier }}</p>
-        </router-link>
+        </a>
       </li>
     </ul>
   </div>

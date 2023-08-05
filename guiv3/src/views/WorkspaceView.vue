@@ -69,6 +69,8 @@ if (typeof bundle !== 'string') {
   throw new Error('invalid bundle id')
 }
 
+document.title = `${bundle} - Grapefruit`
+
 if (typeof udid !== 'string') {
   throw new Error('invalid device udid')
 }
@@ -113,14 +115,7 @@ socket
   .on('detached', onDisconnect)
   .on('destroyed', onDisconnect)
   .on('exception', (msg) => {
-    // a workaround for a strange socket.io bug
-    // when first redirected to this page, socket.io does not send query params at all
-    // probably we have another socket instance (for listening device events) before
-    if (`${msg}` === 'Error: invalid bundle name: undefined' && typeof route.params.bundle === 'string') {
-      location.reload()
-    } else {
-      // todo: UI
-    }
+
   })
 
 function detach() {
