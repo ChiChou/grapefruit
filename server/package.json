@@ -58,8 +58,5 @@
     "re"
   ],
   "author": "CodeColorist",
-  "license": "MIT",
-  "dependencies": {
-    "frida": "^16.0.8"
-  }
+  "license": "MIT"
 }

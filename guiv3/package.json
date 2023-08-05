@@ -13,7 +13,7 @@
     "axios": "^0.26.1",
     "golden-layout": "^2.6.0",
     "naive-ui": "^2.27.0",
-    "socket.io-client": "^4.5.1",
+    "socket.io-client": "^4.7.2",
     "splitpanes": "^3.1.1",
     "vue": "^3.2.25"
   },
