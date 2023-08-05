@@ -296,7 +296,7 @@ function handleSelect(key: string) {
 </script>
 
 <template>
-  <n-dropdown placement="right-start" trigger="click" size="small" :options="menuOptions" @select="handleSelect">
+  <n-dropdown placement="right-start" trigger="click" size="small" :animated="false" :options="menuOptions" @select="handleSelect">
     <n-button block :bordered="false">
       <template #icon>
         <n-icon :component="MenuFilled"></n-icon>
