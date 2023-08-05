@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import SelectTarget from '@/components/SelectTarget.vue'
 import DeviceView from '@/views/DeviceView.vue'
-import SimulatorView from '@/views/SimulatorView.vue'
 import WorkspaceView from '@/views/WorkspaceView.vue'
 import EmptyDeviceView from '@/views/EmptyDeviceView.vue'
 
@@ -11,6 +10,9 @@ const routes = [
     path: '/',
     name: 'select',
     component: SelectTarget,
+    meta: {
+      title: 'Select Target'
+    },
     children: [{
       path: '',
       component: EmptyDeviceView,
@@ -41,6 +43,12 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   linkActiveClass: 'is-active',
   routes
+})
+
+router.beforeEach((to, from, next) => {
+  const { title } = to.meta
+  document.title = typeof title === 'string' ? title : 'Grapefruit'
+  next();
 })
 
 export default router
