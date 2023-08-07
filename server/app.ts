@@ -62,8 +62,9 @@ router
     const unique = new Set()
     const devices = await mgr.enumerateDevices()
 
+    const ignore = new Set(['local', 'socket', 'barebone'])
     const list = devices.filter(dev => {
-      if (dev.id === 'local' || dev.id === 'socket')
+      if (ignore.has(dev.id))
         return false
 
       if (unique.has(dev.id))
