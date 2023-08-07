@@ -4,7 +4,7 @@
   "description": "Runtime Application Instruments for iOS",
   "main": "index.js",
   "dependencies": {
-    "@types/frida-gum": "^16.2.0",
+    "@types/frida-gum": "^18.4.1",
     "bplist-creator": "0.0.8",
     "bplist-parser": "^0.2.0",
     "commander": "^6.0.0",
@@ -23,8 +23,7 @@
     "postinstall": "node scripts/install.js",
     "postuninstall": "node server/dist/scripts/cleanup.js",
     "prepublishOnly": "node scripts/prepublish.js",
-    "dev": "node scripts/dev.js",
-    "test": "node scripts/test.js"
+    "dev": "node scripts/dev.js"
   },
   "files": [
     "server/bin",
