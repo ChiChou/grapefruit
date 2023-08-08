@@ -1,7 +1,6 @@
 import { Socket } from 'socket.io-client'
 import type { InjectionKey, Ref } from 'vue'
-import { RPC as WSRPC } from './wsrpc'
-import tabMgr from '@/plugins/tab-manager'
+import { manager as tabMgr } from '@/plugins/tab-manager'
 
 export type PlistNode = {[key: string]: PlistValue}
 export type PlistValue = PlistNode | string | number | boolean | PlistNode[]

@@ -20,7 +20,7 @@ import darkThemeUrl from "golden-layout/dist/css/themes/goldenlayout-dark-theme.
 
 import BasicInfo from '@/views/pages/BasicInfo.vue'
 import GetStarted from '@/views/pages/GetStarted.vue'
-import tabManager from "@/plugins/tab-manager"
+import { manager as tabManager } from "@/plugins/tab-manager"
 
 const components = { GetStarted, BasicInfo }
 

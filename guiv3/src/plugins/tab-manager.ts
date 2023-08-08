@@ -1,3 +1,6 @@
+import { inject, provide } from 'vue';
+import { SET_TAB_TITLE, RPC, TAB_EMITTER } from '@/types';
+
 type Listener = (componentType: string, state: any, title?: string, createNew?: boolean) => void
 
 class TabManager {
@@ -49,4 +52,34 @@ class TabManager {
   }
 }
 
-export default new TabManager()
+export const manager = new TabManager()
+
+provide(TAB_EMITTER, manager)
+
+export function useTabNavigator() {
+  const go = manager.go.bind(manager)
+  const create = manager.create.bind(manager)
+  const listen = manager.listen.bind(manager)
+
+  return {
+    go,
+    create,
+    listen,
+  }
+}
+
+export const tabProps = {
+  tabId: String,
+  id: Number,
+  state: Object,
+}
+
+export function useTabCommons() {
+  const rpc = inject(RPC)!;
+  const setTitle = inject(SET_TAB_TITLE)!;
+
+  return {
+    rpc,
+    setTitle,
+  }
+}

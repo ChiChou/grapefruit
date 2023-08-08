@@ -46,11 +46,9 @@ import {
   CursorHover16Regular
 } from '@vicons/fluent'
 
-import { inject } from 'vue'
-import { TAB_EMITTER } from '@/types'
+import { useTabNavigator } from '@/plugins/tab-manager'
 
-const tabMgr = inject(TAB_EMITTER)!
-const go = tabMgr.go.bind(tabMgr)
+const { go } = useTabNavigator()
 
 </script>
 

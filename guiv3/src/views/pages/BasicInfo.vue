@@ -44,7 +44,7 @@
 <script lang="ts" setup>
 import { onMounted, Ref, ref } from 'vue'
 import { PlistNode } from '@/types'
-import { useTabCommons } from './composables'
+import { useTabCommons, tabProps } from '@/plugins/tab-manager'
 
 import PlistView from '@/components/PlistView.vue'
 
@@ -73,8 +73,8 @@ interface Info {
 const info: Ref<null | Info> = ref(null)
 const icon = ref('')
 
-const { setTitle, rpc, tabProps } = useTabCommons();
 const props = defineProps(tabProps);
+const { setTitle, rpc } = useTabCommons();
 
 async function load() {
   info.value = await rpc.info.info()
