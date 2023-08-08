@@ -1,6 +1,6 @@
 import { Socket } from 'socket.io-client'
 import type { InjectionKey, Ref } from 'vue'
-import { manager as tabMgr } from '@/plugins/tab-manager'
+import { manager as tabMgr } from '@/plugins/tab'
 
 export type PlistNode = {[key: string]: PlistValue}
 export type PlistValue = PlistNode | string | number | boolean | PlistNode[]

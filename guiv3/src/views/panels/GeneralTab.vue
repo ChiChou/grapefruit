@@ -46,7 +46,7 @@ import {
   CursorHover16Regular
 } from '@vicons/fluent'
 
-import { useTabNavigator } from '@/plugins/tab-manager'
+import { useTabNavigator } from '@/plugins/tab'
 
 const { go } = useTabNavigator()
 

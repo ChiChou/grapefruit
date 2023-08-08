@@ -20,7 +20,7 @@ import darkThemeUrl from "golden-layout/dist/css/themes/goldenlayout-dark-theme.
 
 import BasicInfo from '@/views/pages/BasicInfo.vue'
 import GetStarted from '@/views/pages/GetStarted.vue'
-import { manager as tabManager } from "@/plugins/tab-manager"
+import { manager as tabManager } from "@/plugins/tab"
 
 const components = { GetStarted, BasicInfo }
 
@@ -138,4 +138,4 @@ export default defineComponent({
 .lm_content {
   overflow: auto;
 }
-</style>
+</style>@/plugins/tab

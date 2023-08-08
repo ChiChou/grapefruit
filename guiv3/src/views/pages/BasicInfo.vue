@@ -44,7 +44,7 @@
 <script lang="ts" setup>
 import { onMounted, Ref, ref } from 'vue'
 import { PlistNode } from '@/types'
-import { useTabCommons, tabProps } from '@/plugins/tab-manager'
+import { useTabCommons, tabProps } from '@/plugins/tab'
 
 import PlistView from '@/components/PlistView.vue'
 
@@ -117,4 +117,4 @@ dl.paths {
     font-family: monospace;
   }
 }
-</style>
+</style>@/plugins/tab

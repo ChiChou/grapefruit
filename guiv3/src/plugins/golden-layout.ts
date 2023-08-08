@@ -1,7 +1,7 @@
 import { ComponentContainer, GoldenLayout, LayoutConfig } from 'golden-layout'
 import { onMounted, ref, shallowRef } from 'vue'
 
-import { manager as tabManager } from './tab-manager'
+import { manager as tabManager } from './tab'
 
 export const isClient = typeof window !== 'undefined'
 export const isDocumentReady = () => isClient && document.readyState === 'complete' && document.body != null
