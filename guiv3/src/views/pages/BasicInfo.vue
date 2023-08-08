@@ -42,9 +42,9 @@
 </template>
 
 <script lang="ts" setup>
-import { inject, onMounted, Ref, ref } from 'vue'
-import { PlistNode, RPC, SET_TAB_TITLE } from '@/types'
-import { pageProps } from './composables'
+import { onMounted, Ref, ref } from 'vue'
+import { PlistNode } from '@/types'
+import { useTabCommons } from './composables'
 
 import PlistView from '@/components/PlistView.vue'
 
@@ -70,12 +70,11 @@ interface Info {
   json: InfoDict;
 }
 
-const rpc = inject(RPC)!
 const info: Ref<null | Info> = ref(null)
 const icon = ref('')
 
-const props = defineProps(pageProps)
-const setTitle = inject(SET_TAB_TITLE)!
+const { setTitle, rpc, tabProps } = useTabCommons();
+const props = defineProps(tabProps);
 
 async function load() {
   info.value = await rpc.info.info()
