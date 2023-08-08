@@ -1,4 +1,4 @@
-import c from '../../gen/macho.c'
+import c from '../../gen/macho.c.js'
 
 interface Section {
   name?: string;
@@ -13,7 +13,7 @@ function maps() {
   const vmmap: Section[] = []
 
   for (const mod of Process.enumerateModules()) {
-    const cb = new NativeCallback((sectname: NativePointer, base: NativeArgumentValue, top: NativeArgumentValue) => {
+    const cb = new NativeCallback((sectname: NativePointer, base: number | Int64, top: number | Int64) => {
       const name = sectname.readCString()?.slice(0, 16)
       const floor = ptr(base.toString())
       const ceil = ptr(top.toString())

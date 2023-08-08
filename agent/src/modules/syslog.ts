@@ -1,4 +1,4 @@
-import { pipe, dup2, close, fcntl } from '../lib/libc'
+import { pipe, dup2, close, fcntl } from '../lib/libc.js'
 
 
 // sys/fcntl.h

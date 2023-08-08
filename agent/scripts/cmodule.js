@@ -1,11 +1,14 @@
 #!/usr/bin/env node
-const fs = require('fs').promises;
-const path = require('path');
+import { promises as fs } from 'fs';
+import { join, parse } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 // cmodule preprocessor
 async function c() {
-  const folder = path.join(__dirname, '..', 'src', 'c');
-  const output = path.join(__dirname, '..', 'gen');
+  const folder = join(__dirname, '..', 'src', 'c');
+  const output = join(__dirname, '..', 'gen');
   const files = await fs.readdir(folder);
   try {
     await fs.stat(output);
@@ -13,10 +16,10 @@ async function c() {
     fs.mkdir(output);
   }
   
-  for (let file of files.filter(file => path.parse(file).ext === '.c')) {
-    const raw = await fs.readFile(path.join(folder, file));
+  for (let file of files.filter(file => parse(file).ext === '.c')) {
+    const raw = await fs.readFile(join(folder, file));
     const str = JSON.stringify(raw.toString('utf8'));
-    const abs = path.join(output, `${file}.ts`);
+    const abs = join(output, `${file}.ts`);
     await fs.writeFile(abs, 'export default ' + str);
   }
 }

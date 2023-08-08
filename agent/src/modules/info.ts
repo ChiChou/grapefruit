@@ -1,5 +1,5 @@
-import { valueOf } from '../lib/dict'
-import { NSTemporaryDirectory, NSHomeDirectory } from '../lib/foundation'
+import { valueOf } from '../lib/dict.js'
+import { NSTemporaryDirectory, NSHomeDirectory } from '../lib/foundation.js'
 
 type Info = { [key: string]: any }
 

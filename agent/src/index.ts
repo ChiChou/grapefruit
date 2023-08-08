@@ -1,11 +1,11 @@
-import './ready'
-import './polyfill'
+import './ready.js'
+import './polyfill.js'
 // import './observers/http'
 
-import { init as enableLifeCycleHook } from './observers/lifecycle'
+import { init as enableLifeCycleHook } from './observers/lifecycle.js'
 
-import { interfaces, invoke, register } from './rpc'
-import modules from './modules/index'
+import { interfaces, invoke, register } from './rpc.js'
+import modules from './modules/index.js'
 
 rpc.exports = {
   interfaces,

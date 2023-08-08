@@ -1,7 +1,7 @@
-import { NSHomeDirectory, NSTemporaryDirectory, attrs, Attributes } from '../lib/foundation'
-import { open } from '../lib/libc'
-import { valueOf } from '../lib/dict'
-import uuid from '../lib/uuid'
+import { NSHomeDirectory, NSTemporaryDirectory, attrs, Attributes } from '../lib/foundation.js'
+import { open } from '../lib/libc.js'
+import { valueOf } from '../lib/dict.js'
+import uuid from '../lib/uuid.js'
 
 const { NSBundle, NSFileManager, NSString, NSDictionary } = ObjC.classes
 

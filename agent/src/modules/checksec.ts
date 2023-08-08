@@ -1,5 +1,5 @@
-import { dictFromBytes } from '../lib/dict'
-import { encryptionInfo, pie } from '../lib/macho'
+import { dictFromBytes } from '../lib/dict.js'
+import { encryptionInfo, pie } from '../lib/macho.js'
 
 
 export default function checksec() {
@@ -34,7 +34,7 @@ export default function checksec() {
   const SIZE_OF_CSHEADER = 8
   const ERANGE = 34
   const csheader = Memory.alloc(SIZE_OF_CSHEADER)
-  const { value, errno } = csops(Process.id, CS_OPS_ENTITLEMENTS_BLOB, csheader, SIZE_OF_CSHEADER) as UnixSystemFunctionResult
+  const { value, errno } = csops(Process.id, CS_OPS_ENTITLEMENTS_BLOB, csheader, SIZE_OF_CSHEADER) as UnixSystemFunctionResult<number>
   if (value === -1 && errno === ERANGE) {
     const length = ntohl(csheader.add(4).readU32())
     const content = Memory.alloc(length)

@@ -1,12 +1,15 @@
-import CF from '../api/CoreFoundation'
-import Security from '../api/Security'
-
-import { CFSTR } from '../lib/foundation'
-import { valueOf } from '../lib/dict'
+import { CFSTR } from '../lib/foundation.js'
+import { valueOf } from '../lib/dict.js'
 
 for (const mod of ['Foundation', 'CoreFoundation', 'Security']) {
   Module.ensureInitialized(mod)
 }
+
+const SecItemCopyMatching = new NativeFunction(Module.findExportByName('Security', 'SecItemCopyMatching')!, 'int', ['pointer', 'pointer'])
+const SecItemAdd = new NativeFunction(Module.findExportByName('Security', 'SecItemAdd')!, 'int', ['pointer', 'pointer'])
+const SecItemUpdate = new NativeFunction(Module.findExportByName('Security', 'SecItemUpdate')!, 'int', ['pointer', 'pointer'])
+const SecItemDelete = new NativeFunction(Module.findExportByName('Security', 'SecItemDelete')!, 'int', ['pointer'])
+const SecAccessControlCreateWithFlags = new NativeFunction(Module.findExportByName('Security', 'SecAccessControlCreateWithFlags')!, 'pointer', ['pointer', 'pointer', 'int', 'pointer'])
 
 const constants = [
   'kSecReturnAttributes',
@@ -132,8 +135,8 @@ export function list(withfaceId = false): object[] {
     query.setObject_forKey_(clazz, C.kSecClass)
 
     const p = Memory.alloc(Process.pointerSize)
-    const status = Security.SecItemCopyMatching(query, p) as NativePointer
-    if (!status.isNull())
+    const status = SecItemCopyMatching(query, p)
+    if (status !== 0)
       continue
 
     const arr = new ObjC.Object(p.readPointer())
@@ -164,6 +167,6 @@ export function clear() {
   for (const clazz of kSecClasses) {
     query.setObject_forKey_(clazz, C.kSecClass)
   }
-  Security.SecItemDelete(query)
+  SecItemDelete(query)
   return true
 }

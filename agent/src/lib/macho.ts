@@ -1,7 +1,7 @@
-import c from '../../gen/macho.c'
+import c from '../../gen/macho.c.js'
 
 type EncryptInfoTuple = [NativePointer, number, number, number, number]
-const EncryptInfoTuple = ['pointer', 'uint32', 'uint32', 'uint32', 'uint32']
+const EncryptInfoTuple: NativeFunctionReturnType = ['pointer', 'uint32', 'uint32', 'uint32', 'uint32']
 
 interface EncryptInfo {
   ptr: NativePointer;

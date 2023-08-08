@@ -1,5 +1,5 @@
 const CLLocationDegrees = (Process.pointerSize === 4) ? 'float' : 'double';
-const CLLocationCoordinate2D = [CLLocationDegrees, CLLocationDegrees];
+const CLLocationCoordinate2D: NativeFunctionReturnType = [CLLocationDegrees, CLLocationDegrees];
 
 let listeners: InvocationListener[] = []
 const hooked: Set<string> = new Set()

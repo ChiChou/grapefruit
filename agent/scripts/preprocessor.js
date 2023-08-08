@@ -1,30 +1,33 @@
 #!/usr/bin/env node
 
-const fs = require('fs').promises;
-const path = require('path');
-const os = require('os');
+import { fileURLToPath } from 'url';
+import { promises as fs } from 'fs';
+import { join, parse } from 'path';
+import { EOL } from 'os';
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 // rpc modules
 async function rpc() {
-  const folder = path.join(__dirname, '..', 'src', 'modules');
+  const folder = join(__dirname, '..', 'src', 'modules');
   const files = await fs.readdir(folder);
-  const index = path.join(folder, 'index.ts');
+  const index = join(folder, 'index.ts');
 
   function* gen() {
     const registry = files
       .filter(name => name !== 'index.ts')
-      .map(path.parse)
+      .map(parse)
       .filter(e => e.ext === '.ts')
       .map(e => e.name)
 
     for (let name of registry) {
-      yield `import * as ${name} from './${name}'`;
+      yield `import * as ${name} from './${name}.js'`;
     }
     yield ''
     yield `export default { ${registry.join(', ')} }`
   }
 
-  await fs.writeFile(index, [...gen()].join(os.EOL));
+  await fs.writeFile(index, [...gen()].join(EOL));
 }
 
 rpc();
