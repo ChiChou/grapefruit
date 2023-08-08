@@ -1,10 +1,12 @@
-const cp = require('child_process');
-const path = require('path');
-const { platform } = require('os');
+import { execSync, spawn, spawnSync } from 'child_process';
+import { join } from 'path';
+import { platform } from 'os';
+import { fileURLToPath } from 'url';
 
-const isWin = platform() === 'win32'
+const isWin = platform() === 'win32';
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
-const env = Object.assign({}, process.env, { NODE_ENV: 'development' })
+const env = Object.assign({}, process.env, { NODE_ENV: 'development' });
 
 function* tasks() {
   const spec = {
@@ -13,15 +15,15 @@ function* tasks() {
     server: ['run', 'dev']
   };
 
-  for (let [name, args] of Object.entries(spec)) {
-    const cwd = path.join(__dirname, '..', name);
+  for (const [name, args] of Object.entries(spec)) {
+    const cwd = join(__dirname, '..', name);
     yield [args, cwd];
   }
 }
 
 function tryRun(cmd) {
   try {
-    return cp.execSync(cmd).toString().trim();
+    return execSync(cmd).toString().trim();
   } catch (_) {
 
   }
@@ -49,9 +51,9 @@ function run() {
   }
 
   const children = []
-  for (let [args, cwd] of tasks()) {
+  for (const [args, cwd] of tasks()) {
     const [bin, argv] = platformize('npm', args);
-    const p = cp.spawn(bin, argv, { stdio: 'inherit', cwd, env });
+    const p = spawn(bin, argv, { stdio: 'inherit', cwd, env });
     p.on('disconnect', handler);
   }
 
@@ -60,7 +62,7 @@ function run() {
 
 function tmux() {
   const argv = ['new-session'];
-  for (let [args, cwd] of tasks()) {
+  for (const [args, cwd] of tasks()) {
     argv.push('-c', cwd, 'npm');
     argv.push(...args);
     argv.push(';', 'split-window', '-h')
@@ -71,18 +73,18 @@ function tmux() {
   // C-a space
   argv.push('next-layout');
 
-  cp.spawnSync('tmux', argv, { stdio: 'inherit', env });
+  spawnSync('tmux', argv, { stdio: 'inherit', env });
 }
 
 function wt() {
   const argv = [];
-  for (let [args, cwd] of tasks()) {
+  for (const [args, cwd] of tasks()) {
     argv.push('-d', cwd, 'cmd', '/c', 'npm')
     argv.push(...args)
     argv.push(';', 'new-tab')
   }
   argv.push('cmd', '-c', 'echo OK')
-  cp.spawn('wt', argv, { env })
+  spawn('wt', argv, { env })
   process.exit() // detach
 }
 
