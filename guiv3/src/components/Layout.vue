@@ -138,4 +138,16 @@ export default defineComponent({
 .lm_content {
   overflow: auto;
 }
-</style>@/plugins/tab
+
+:root {
+  --active-tab-background: #e7e7e7;
+}
+
+[data-theme="dark"] {
+  --active-tab-background: #171717;
+}
+
+.lm_header .lm_tab.lm_active.lm_focused {
+  background: var(--active-tab-background) !important;
+}
+</style>

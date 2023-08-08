@@ -54,8 +54,6 @@ class TabManager {
 
 export const manager = new TabManager()
 
-provide(TAB_EMITTER, manager)
-
 export function useTabNavigator() {
   const go = manager.go.bind(manager)
   const create = manager.create.bind(manager)
