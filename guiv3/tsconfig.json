@@ -13,8 +13,7 @@
     "lib": ["esnext", "dom"],
     "types": ["naive-ui/volar"],
     "paths": {
-      "@/*": ["./src/*"],
-      "@backend/*": ["../server/api/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],

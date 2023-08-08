@@ -6,8 +6,8 @@ import { useLoadingBar } from 'naive-ui'
 import { ref, onMounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 
-import { SimAppInfo } from '@backend/sim'
-import { App, Info } from '@backend/dev'
+import { SimAppInfo } from '@/../../server/api/sim'
+import { App, Info } from '@/../../server/api/dev'
 
 const apps = ref([] as App[])
 const simapps = ref([] as SimAppInfo[])
