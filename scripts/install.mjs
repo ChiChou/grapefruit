@@ -1,6 +1,9 @@
-import { execSync } from 'child_process'
-import { accessSync, constants } from 'fs'
-import { join } from 'path'
+import { execSync } from 'child_process';
+import { accessSync, constants } from 'fs';
+import { join } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 function main() {
   try {
