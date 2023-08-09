@@ -49,4 +49,4 @@ export function dispose() {
   signalHandler = null
 }
 
-Script.bindWeak(this, dispose)
+Script.bindWeak(globalThis, dispose)

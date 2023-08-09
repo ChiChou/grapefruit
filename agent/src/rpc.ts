@@ -8,7 +8,7 @@ export function register(func: Function, name?: string) {
   exported.set(key, func)
 }
 
-export function invoke(name: string, args=[]) {
+export function invoke(name: string, args: any[] = []) {
   const method = exported.get(name)
   if (!method)
     throw new Error(`method "${name}" not found`)
