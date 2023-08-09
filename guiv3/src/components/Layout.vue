@@ -14,6 +14,7 @@ import { DARK, SPACE_WIDTH, SPACE_HEIGHT, SET_TAB_TITLE } from "@/types"
 import { useGoldenLayout } from "@/plugins/golden-layout"
 
 import "golden-layout/dist/css/goldenlayout-base.css"
+import '@/skin/layout.scss'
 
 import lightThemeUrl from "golden-layout/dist/css/themes/goldenlayout-light-theme.css?url"
 import darkThemeUrl from "golden-layout/dist/css/themes/goldenlayout-dark-theme.css?url"

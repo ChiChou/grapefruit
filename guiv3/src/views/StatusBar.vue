@@ -16,12 +16,10 @@
         </n-button>
       </n-dropdown>
     </div>
-    <div class="status-dark-mode-control"><dark-mode /></div>
   </footer>
 </template>
 
 <script lang="ts" setup>
-import DarkMode from '@/components/DarkMode.vue'
 import { inject } from 'vue'
 import { PlugDisconnected24Regular } from '@vicons/fluent'
 import { STATUS, WS, SESSION_DETACH } from '@/types'
@@ -71,10 +69,6 @@ function onSelectSessionMenu(key: string) {
   > div:not(:first-of-type) {
     margin-left: 1rem;
   }
-}
-
-.status-dark-mode-control {
-  justify-content: flex-end;
 }
 
 .connection-state {

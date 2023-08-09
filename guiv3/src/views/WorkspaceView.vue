@@ -9,6 +9,7 @@ import '@/skin/splitpane.scss'
 
 import SidePanel from './SidePanel.vue'
 import StatusBar from './StatusBar.vue'
+import DarkMode from '@/components/DarkMode.vue'
 import Layout from '@/components/Layout.vue'
 
 import { useRPC } from '@/wsrpc'
@@ -143,11 +144,22 @@ provide(ACTIVE_SIDEBAR, activeSidebar)
 
 provide(TAB_EMITTER, manager)
 
+function rick() {
+  window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ', '_blank')
+}
+
 </script>
 
 <template>
   <div class="pane-full">
-    <splitpanes class="split-pane-container" @resize="resizing($event)" @resized="saveLayout">
+    <header class="workspace-header">
+      <a href="#" class="logo" @dblclick="rick">
+        <img src="../assets/grapefruit.svg" alt="Grapefruit" width="24" height="24" id="logo" />
+      </a>
+      <dark-mode />
+    </header>
+    <main class="workspace-main-container">
+      <splitpanes class="split-pane-container" @resize="resizing($event)" @resized="saveLayout">
       <pane min-size="10" :size="sideWidth" max-size="80">
         <SidePanel></SidePanel>
       </pane>
@@ -155,11 +167,40 @@ provide(TAB_EMITTER, manager)
         <layout ref="el" style="width: 100%; height: 100%"></layout>
       </pane>
     </splitpanes>
+    </main>
     <StatusBar />
   </div>
 </template>
 
 <style lang="scss">
+:root {
+  --n-workspace-header-height: 40px;
+  --workspace-header-background: #2b2b2b;
+}
+
+[data-theme="dark"] {
+  --workspace-header-background: #1f1f1f;
+}
+
+.workspace-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--n-workspace-header-height);
+  background-color: var(--workspace-header-background);
+
+  > a {
+    height: 24px;
+    display: block;
+    width: 24px;
+    padding: 8px 20px;
+  }
+}
+
+.workspace-main-container {
+  flex: 1;
+}
+
 .pane-full {
   height: 100vh;
   width: 100vw;
@@ -167,5 +208,4 @@ provide(TAB_EMITTER, manager)
   overflow: hidden;
   flex-direction: column;
 }
-
 </style>
