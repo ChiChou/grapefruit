@@ -1,23 +1,33 @@
-import { execSync } from 'child_process';
-import { accessSync, constants } from 'fs';
+import { spawn } from 'child_process';
+import { promises as fsp } from 'fs';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
-function main() {
+async function main() {
   try {
-    accessSync('.gitignore', constants.F_OK)
+    await fsp.access('.gitignore', fs.constants.F_OK);
   } catch(_) {
     // production
-    execSync('node server/dist/scripts/migrate.js')
     return
   }
- 
-  for (let child of ['guiv3', 'server', 'agent']) {
-    const cwd = join(__dirname, '..', child)
-    execSync('npm i', { cwd, stdio: 'inherit' })
-  }
+
+  const tasks = ['guiv3', 'server', 'agent'].map(child => {
+    const cwd = join(__dirname, '..', child);
+    return new Promise((resolve, reject) => {
+      const child = spawn('npm', ['i'], { cwd, stdio: 'inherit' });
+      child.on('close', code => {
+        if (code !== 0) {
+          reject(new Error(`child process exited with code ${code}`));
+        } else {
+          resolve();
+        }
+      })
+    })
+  })
+
+  return Promise.all(tasks);
 }
 
 main()
