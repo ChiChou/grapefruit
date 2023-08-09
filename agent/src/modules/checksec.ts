@@ -1,4 +1,4 @@
-import { dictFromBytes } from '../lib/dict.js'
+import { fromBytes } from '../lib/dict.js'
 import { encryptionInfo, pie } from '../lib/macho.js'
 
 
@@ -39,7 +39,7 @@ export default function checksec() {
     const length = ntohl(csheader.add(4).readU32())
     const content = Memory.alloc(length)
     if (csops(Process.id, CS_OPS_ENTITLEMENTS_BLOB, content, length).value === 0) {
-      result.entitlements = dictFromBytes(
+      result.entitlements = fromBytes(
         content.add(SIZE_OF_CSHEADER), length - SIZE_OF_CSHEADER
       )
     }

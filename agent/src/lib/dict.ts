@@ -8,9 +8,9 @@ export function valueOf(value: ObjC.Object): any {
   if (value.isKindOfClass_(__NSCFBoolean))
     return value.boolValue()
   if (value.isKindOfClass_(NSArray))
-    return arrayFromNSArray(value)
+    return toArray(value)
   if (value.isKindOfClass_(NSDictionary))
-    return dictFromNSDict(value)
+    return toDict(value)
   if (value.isKindOfClass_(NSNumber))
     return parseFloat(value.toString())
   return value.toString()
@@ -18,8 +18,8 @@ export function valueOf(value: ObjC.Object): any {
 
 type Dictionary = { [key: string]: any }
 
-export function dictFromNSDict(nsDict: ObjC.Object): Dictionary {
-  const jsDict: { [key: string]: any } = {}
+export function toDict(nsDict: ObjC.Object): Dictionary {
+  const jsDict: Dictionary = {}
   const keys = nsDict.allKeys()
   const count = keys.count()
   for (let i = 0; i < count; i++) {
@@ -32,7 +32,7 @@ export function dictFromNSDict(nsDict: ObjC.Object): Dictionary {
 }
 
 
-export function dictFromBytes(address: NativePointer, size: number): Dictionary {
+export function fromBytes(address: NativePointer, size: number): Dictionary {
   const { NSData, NSPropertyListSerialization } = ObjC.classes
   const format = Memory.alloc(Process.pointerSize)
   const err = Memory.alloc(Process.pointerSize).writePointer(NULL)
@@ -48,11 +48,11 @@ export function dictFromBytes(address: NativePointer, size: number): Dictionary 
   if (!desc.isNull())
     throw new Error(new ObjC.Object(desc).toString())
 
-  return dictFromNSDict(dict)
+  return toDict(dict)
 }
 
 
-export function arrayFromNSArray(original: ObjC.Object, limit: number = Infinity): object[] {
+export function toArray(original: ObjC.Object, limit: number = Infinity): any[] {
   const arr = []
   const count = original.count()
   const len = Number.isNaN(limit) ? Math.min(count, limit) : count
