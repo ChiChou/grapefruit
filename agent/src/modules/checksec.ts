@@ -1,18 +1,20 @@
-import { fromBytes } from '../lib/dict.js'
-import { encryptionInfo, pie } from '../lib/macho.js'
+import { fromBytes } from '../lib/dict.js';
+import { encryptionInfo, pie } from '../lib/macho.js';
+import { CheckSecFlags, Entitlements } from '../types.js';
 
+export function flags(): CheckSecFlags {
+  const [main, ] = Process.enumerateModules()
+  const uniqueNames =  new Set(main.enumerateImports().map(({ name }) => name))
 
-export default function checksec() {
-  const [main] = Process.enumerateModules()
-  const imports = new Set(main.enumerateImports().map(i => i.name))
-  const result = {
+  return {
     pie: pie(main),
-    encrypted: !encryptionInfo(main).ptr.isNull(),
-    canary: imports.has('__stack_chk_guard'),
-    arc: imports.has('objc_release'),
-    entitlements: {}
+    arc: uniqueNames.has('objc_release'),
+    canary: uniqueNames.has('__stack_chk_guard'),
+    encrypted: encryptionInfo(main)?.size > 0
   }
+}
 
+export function entitlements(): Entitlements {
   const CS_OPS_ENTITLEMENTS_BLOB = 7
   const csops = new SystemFunction(
     Module.findExportByName('libsystem_kernel.dylib', 'csops')!,
@@ -34,16 +36,15 @@ export default function checksec() {
   const SIZE_OF_CSHEADER = 8
   const ERANGE = 34
   const csheader = Memory.alloc(SIZE_OF_CSHEADER)
-  const { value, errno } = csops(Process.id, CS_OPS_ENTITLEMENTS_BLOB, csheader, SIZE_OF_CSHEADER) as UnixSystemFunctionResult<number>
+  const result = csops(Process.id, CS_OPS_ENTITLEMENTS_BLOB, csheader, SIZE_OF_CSHEADER)
+  const { value, errno } = result as UnixSystemFunctionResult<number>
   if (value === -1 && errno === ERANGE) {
     const length = ntohl(csheader.add(4).readU32())
     const content = Memory.alloc(length)
     if (csops(Process.id, CS_OPS_ENTITLEMENTS_BLOB, content, length).value === 0) {
-      result.entitlements = fromBytes(
-        content.add(SIZE_OF_CSHEADER), length - SIZE_OF_CSHEADER
-      )
+      return fromBytes(content.add(SIZE_OF_CSHEADER), length - SIZE_OF_CSHEADER) as Entitlements
     }
   }
 
-  return result
+  return {}
 }
