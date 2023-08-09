@@ -19,6 +19,24 @@
         <n-avatar v-if="icon.length" :src="icon" />
       </template>
       <template #footer>
+        <div v-if="flags" class="checksec">
+          <n-tag :bordered="false" :type="flags.pie ? 'success' : 'error'" :disabled="!flags.pie">
+            PIE
+          </n-tag>
+
+          <n-tag :bordered="false" :type="flags.arc ? 'success' : 'warning'" :disabled="!flags.arc">
+            ARC
+          </n-tag>
+
+          <n-tag :bordered="false" :type="flags.canary ? 'success' : 'error'" :disabled="!flags.canary">
+            Canary
+          </n-tag>
+
+          <n-tag :bordered="false" type="info" :disabled="!flags.encrypted">
+            Encrypted
+          </n-tag>
+        </div>
+
         <dl @click.capture="onSelectText" class="paths">
           <dt>Container</dt>
           <dd>{{ basics.home }}</dd>
@@ -36,12 +54,10 @@
 
 <script lang="ts" setup>
 import { onMounted, Ref, ref } from 'vue'
-import { BasicInfo } from '@/../../agent/src/types'
+import { BasicInfo, CheckSecFlags } from '@/../../agent/src/types'
 import { useTabCommons, tabProps } from '@/plugins/tab'
 import { useRoute } from 'vue-router';
 
-
-const basics: Ref<BasicInfo | null> = ref(null)
 
 const route = useRoute()
 const { udid, bundle } = route.params as { udid: string, bundle: string }
@@ -50,8 +66,12 @@ const icon = `/api/${route.name === 'app' ? 'device' : 'sim'}/${udid}/icon/${bun
 const props = defineProps(tabProps);
 const { entitle, rpc } = useTabCommons(props.tabId!);
 
+const basics: Ref<BasicInfo | null> = ref(null)
+const flags: Ref<CheckSecFlags | null> = ref(null)
+
 async function load() {
   basics.value = await rpc.info.basics()
+  flags.value = await rpc.checksec.flags()
 }
 
 function onSelectText(e: MouseEvent) {
@@ -74,6 +94,9 @@ onMounted(() => {
 <style lang="scss" scoped>
 main {
   padding: 1rem;
+}
+.checksec .n-tag {
+  margin-right: .5rem;
 }
 
 dl.paths {
