@@ -72,12 +72,15 @@ export const tabProps = {
   state: Object,
 }
 
-export function useTabCommons() {
+export function useTabCommons(tabId: string) {
   const rpc = inject(RPC)!;
-  const setTitle = inject(SET_TAB_TITLE)!;
+  const updateTitle = inject(SET_TAB_TITLE)!;
+  const entitle = (title: string) => {
+    updateTitle(tabId, title)
+  }
 
   return {
     rpc,
-    setTitle,
+    entitle,
   }
 }

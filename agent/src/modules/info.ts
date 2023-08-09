@@ -1,81 +1,96 @@
-import { valueOf } from '../lib/dict.js'
+import { toArray, valueOf } from '../lib/dict.js'
 import { NSTemporaryDirectory, NSHomeDirectory } from '../lib/foundation.js'
 
-type Info = { [key: string]: any }
+import { BasicInfo, URLScheme } from '../types.js'
 
-export function icon(): ArrayBuffer {
-  const { NSBundle, UIImage } = ObjC.classes
-  const UIImagePNGRepresentation = new NativeFunction(
-    Module.findExportByName('UIKit', 'UIImagePNGRepresentation')!,
-    'pointer',
-    ['pointer']
-  )
+export function basics(): BasicInfo {
+  const main = ObjC.classes.NSBundle.mainBundle();
+  const dict = main.infoDictionary();
 
-  const fail = new ArrayBuffer(0)
-  const dict = NSBundle.mainBundle().infoDictionary()
-  const icons = dict.objectForKey_('CFBundleIcons')
-  if (!icons) return fail
-  const primary = icons.objectForKey_('CFBundlePrimaryIcon')
-  if (!primary) return fail
-  const files = primary.objectForKey_('CFBundleIconFiles')
-  if (!files) return fail
-  const name = files.lastObject()
-  if (!name) return fail
-  const img = UIImage.imageNamed_(name)
-  if (!img) return fail
-  const data = UIImagePNGRepresentation(img) as NativePointer
-  if (data.isNull()) return fail
-  const nsdata = new ObjC.Object(data)
-  return ptr(nsdata.bytes()).readByteArray(nsdata.length())!
-}
-
-export function info(): Info {
-  const mainBundle = ObjC.classes.NSBundle.mainBundle()
-  const json = valueOf(mainBundle.infoDictionary())
-  const result: Info = {
-    tmp: NSTemporaryDirectory(),
-    home: NSHomeDirectory(),
-    json,
-    urls: []
-  }
+  // collect bundle information
+  const tmp = NSTemporaryDirectory()
+  const home = NSHomeDirectory()
 
   const BUNDLE_ATTR_MAPPING = {
     id: 'bundleIdentifier',
-    bundle: 'bundlePath',
-    binary: 'executablePath'
+    path: 'bundlePath',
+    main: 'executablePath'
   }
 
+  type MainBundleKeys = keyof typeof BUNDLE_ATTR_MAPPING
+  type MainBundleDict = Record<MainBundleKeys, string>
+
+  const partial: Partial<MainBundleDict> = {}
   for (const [key, method] of Object.entries(BUNDLE_ATTR_MAPPING))
-    result[key] = mainBundle[method]().toString()
+    partial[key as MainBundleKeys] = main[method]().toString() as string
 
-  if ('CFBundleURLTypes' in json) {
-    result.urls = json.CFBundleURLTypes.map((item: { [key: string]: string }) => ({
-      name: item.CFBundleURLName,
-      schemes: item.CFBundleURLSchemes,
-      role: item.CFBundleTypeRole
-    }))
-  }
-
+  // collect readable names
   const READABLE_NAME_MAPPING = {
     version: 'CFBundleVersion',
     semVer: 'CFBundleShortVersionString',
     minOS: 'MinimumOSVersion'
   }
 
-  for (const [key, label] of Object.entries(READABLE_NAME_MAPPING))
-    result[key] = json[label] || null
+  type VersionInfoKeys = keyof typeof READABLE_NAME_MAPPING
+  type VersionInfoDict = Record<VersionInfoKeys, string>
 
-  if ('CFBundleDisplayName' in json) {
-    result.name = json['CFBundleDisplayName']
-  } else if ('CFBundleName' in json) {
-    result.name = json['CFBundleName']
-  } else if ('CFBundleAlternateNames' in json) {
-    result.name = json['CFBundleAlternateNames'][0]
+  const versionInfo: Partial<VersionInfoDict> = {}
+  for (const [key, label] of Object.entries(READABLE_NAME_MAPPING)) {
+    const value = dict.objectForKey_(label)
+    versionInfo[key as VersionInfoKeys] = value?.toString() || 'N/A'
   }
 
-  return result
+  let label = 'N/A'
+  for (const key of ['CFBundleDisplayName', 'CFBundleName']) {
+    const value = dict.objectForKey_(key)
+    if (value) {
+      label = value.toString()
+      break
+    }
+  }
+
+  if (label === 'N/A') {
+    const alternatives = dict.objectForKey_('CFBundleAlternateNames')
+    if (alternatives) {
+      const value = alternatives.firstObject()
+      if (value) {
+        label = value.toString()
+      }
+    }
+  }
+
+  // collect URL schemes
+  interface RawURLScheme {
+    CFBundleURLName: string;
+    CFBundleURLSchemes: string[];
+    CFBundleTypeRole: string;
+  }
+
+  function wrapURLScheme(raw: RawURLScheme): URLScheme {
+    return {
+      name: raw.CFBundleURLName,
+      schemes: raw.CFBundleURLSchemes,
+      role: raw.CFBundleTypeRole
+    }
+  }
+
+  const urlTypes = dict.objectForKey_('CFBundleURLTypes');
+  const rawUrls: RawURLScheme[] = urlTypes ? toArray(urlTypes) : [];
+  const urls = rawUrls.map(wrapURLScheme);
+
+  return {
+    tmp,
+    home,
+    label,
+    urls,
+    ...(versionInfo as VersionInfoDict),
+    ...(partial as MainBundleDict),
+  }
 }
 
+export function plist() {
+  return valueOf(ObjC.classes.NSBundle.mainBundle().infoDictionary())
+}
 
 export function userDefaults() {
   return valueOf(ObjC.classes.NSUserDefaults.standardUserDefaults().dictionaryRepresentation())

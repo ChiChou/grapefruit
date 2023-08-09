@@ -1,22 +1,19 @@
 <template>
   <main>
-    <n-page-header :subtitle="info.json.CFBundleIdentifier" v-if="info">
+    <n-page-header :subtitle="basics.id" v-if="basics">
       <n-grid :cols="5">
         <n-gi>
-          <n-statistic label="Version" :value="info.semVer" />
+          <n-statistic label="Version" :value="basics.version" />
+        </n-gi>
+        <n-gi v-if="basics.semVer">
+          <n-statistic label="Semantic Version" :value="basics.semVer" />
         </n-gi>
         <n-gi>
-          <n-statistic label="MinimumOSVersion" :value="info.minOS" />
-        </n-gi>
-        <n-gi v-if="info.json.DTSDKBuild">
-          <n-statistic label="DTSDKBuild" :value="info.json.DTSDKBuild" />
-        </n-gi>
-        <n-gi v-if="info.json.DTPlatformVersion">
-          <n-statistic label="DTPlatformVersion" :value="info.json.DTPlatformVersion" />
+          <n-statistic label="MinimumOSVersion" :value="basics.minOS" />
         </n-gi>
       </n-grid>
       <template #title>
-        {{ info.name }}
+        {{ basics.label }}
       </template>
       <template #avatar>
         <n-avatar v-if="icon.length" :src="icon" />
@@ -24,63 +21,37 @@
       <template #footer>
         <dl @click.capture="onSelectText" class="paths">
           <dt>Container</dt>
-          <dd>{{ info.home }}</dd>
+          <dd>{{ basics.home }}</dd>
           <dt>Temporary Directory</dt>
-          <dd>{{ info.tmp }}</dd>
+          <dd>{{ basics.tmp }}</dd>
           <dt>Installation</dt>
-          <dd>{{ info.bundle }}</dd>
+          <dd>{{ basics.path }}</dd>
           <dt>Executable</dt>
-          <dd>{{ info.binary }}</dd>
+          <dd>{{ basics.main }}</dd>
         </dl>
-
-        <plist-view :root="info.json"></plist-view>
       </template>
     </n-page-header>
-
-    <!-- <pre>{{ JSON.stringify(info, null, 2) }}</pre> -->
   </main>
 </template>
 
 <script lang="ts" setup>
 import { onMounted, Ref, ref } from 'vue'
-import { PlistNode } from '@/types'
+import { BasicInfo } from '@/../../agent/src/types'
 import { useTabCommons, tabProps } from '@/plugins/tab'
+import { useRoute } from 'vue-router';
 
-import PlistView from '@/components/PlistView.vue'
 
-type InfoDict = {
-  CFBundleIdentifier?: string;
-  DTSDKBuild?: string;
-  MinimumOSVersion?: string;
-  DTPlatformVersion?: string;
-} & {
-  [key: string]: PlistNode
-}
-
-interface Info {
-  tmp: string;
-  home: string;
-  version: string;
-  semVer: string;
-  name: string;
-  minOS: string;
-  bundle: string;
-  binary: string;
-
-  json: InfoDict;
-}
-
-const info: Ref<null | Info> = ref(null)
+const basics: Ref<BasicInfo | null> = ref(null)
 
 const route = useRoute()
 const { udid, bundle } = route.params as { udid: string, bundle: string }
 const icon = `/api/${route.name === 'app' ? 'device' : 'sim'}/${udid}/icon/${bundle}`
 
 const props = defineProps(tabProps);
-const { setTitle, rpc } = useTabCommons();
+const { entitle, rpc } = useTabCommons(props.tabId!);
 
 async function load() {
-  info.value = await rpc.info.info()
+  basics.value = await rpc.info.basics()
 }
 
 function onSelectText(e: MouseEvent) {
@@ -95,7 +66,7 @@ function onSelectText(e: MouseEvent) {
 }
 
 onMounted(() => {
-  setTitle(props.tabId!, 'Basic Information')
+  entitle('Basic')
   load()
 })
 </script>
@@ -112,7 +83,6 @@ dl.paths {
 
   dd {
     margin: .5em 0;
-    font-family: monospace;
   }
 }
 </style>@/plugins/tab
