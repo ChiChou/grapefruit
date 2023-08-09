@@ -71,18 +71,16 @@ interface Info {
 }
 
 const info: Ref<null | Info> = ref(null)
-const icon = ref('')
+
+const route = useRoute()
+const { udid, bundle } = route.params as { udid: string, bundle: string }
+const icon = `/api/${route.name === 'app' ? 'device' : 'sim'}/${udid}/icon/${bundle}`
 
 const props = defineProps(tabProps);
 const { setTitle, rpc } = useTabCommons();
 
 async function load() {
   info.value = await rpc.info.info()
-
-  const data = (await rpc.info.icon()) as ArrayBuffer
-  if (!data.byteLength) return
-  const blob = new Blob([data], { type: 'image/png' })
-  icon.value = URL.createObjectURL(blob)
 }
 
 function onSelectText(e: MouseEvent) {
