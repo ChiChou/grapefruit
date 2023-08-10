@@ -9,10 +9,4 @@ import AppProvider from '@/components/AppProvider.vue'
 </template>
 
 <style lang="scss">
-/* tree view */
-.plist {
-  .n-tree-node-content__prefix, .n-tree-node-content__text {
-    flex: 1;
-  }
-}
 </style>

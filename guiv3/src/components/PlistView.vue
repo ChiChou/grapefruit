@@ -43,3 +43,14 @@ const props = defineProps({
 
 const tree = computed(() => props.root ? treeify(props.root) : [])
 </script>
+
+<style lang="scss">
+.dictkey {
+  color: #c41d7f;
+
+  &::after {
+    content: ': ';
+    color: var(--n-node-text-color);
+  }
+}
+</style>
