@@ -63,8 +63,8 @@ const route = useRoute()
 const { udid, bundle } = route.params as { udid: string, bundle: string }
 const icon = `/api/${route.name === 'app' ? 'device' : 'sim'}/${udid}/icon/${bundle}`
 
-const props = defineProps(tabProps);
-const { entitle, rpc } = useTabCommons(props.tabId!);
+const props = defineProps(tabProps)
+const { entitle, rpc } = useTabCommons(props.tabId!)
 
 const basics: Ref<BasicInfo | null> = ref(null)
 const flags: Ref<CheckSecFlags | null> = ref(null)
