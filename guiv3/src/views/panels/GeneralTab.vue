@@ -12,7 +12,7 @@
         <a @click="go('InfoPropertyList')"><n-icon :component="SearchInfo20Regular" />Info.plist</a>
       </li>
       <li>
-        <a @click="go('BasicInfo')"><n-icon :component="SecurityFilled" />Entitlements</a>
+        <a @click="go('Entitlements')"><n-icon :component="SecurityFilled" />Entitlements</a>
       </li>
     </ul>
 
