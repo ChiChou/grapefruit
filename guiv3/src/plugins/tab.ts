@@ -1,5 +1,5 @@
-import { inject, provide } from 'vue';
-import { SET_TAB_TITLE, RPC, TAB_EMITTER } from '@/types';
+import { inject } from 'vue';
+import { SET_TAB_TITLE, RPC } from '@/types';
 
 type Listener = (componentType: string, state: any, title?: string, createNew?: boolean) => void
 
@@ -73,11 +73,9 @@ export const tabProps = {
 }
 
 export function useTabCommons(tabId: string) {
-  const rpc = inject(RPC)!;
-  const updateTitle = inject(SET_TAB_TITLE)!;
-  const entitle = (title: string) => {
-    updateTitle(tabId, title)
-  }
+  const rpc = inject(RPC)!
+  const updateTitle = inject(SET_TAB_TITLE)!
+  const entitle = (title: string) => updateTitle(tabId, title)
 
   return {
     rpc,
