@@ -21,9 +21,10 @@ import darkThemeUrl from "golden-layout/dist/css/themes/goldenlayout-dark-theme.
 
 import BasicInfo from '@/views/pages/BasicInfo.vue'
 import GetStarted from '@/views/pages/GetStarted.vue'
+import InfoPropertyList from '@/views/pages/InfoPropertyList.vue'
 import { manager as tabManager } from "@/plugins/tab"
 
-const components = { GetStarted, BasicInfo }
+const components = { GetStarted, BasicInfo, InfoPropertyList }
 
 const KEY_LAYOUT = 'LAYOUT_SETTING'
 
