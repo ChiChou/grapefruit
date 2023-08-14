@@ -21,7 +21,6 @@ interface SimulatorInfo {
 }
 
 type SimulatorState = 'Shutdown' | 'Booted'
-type AppType = 'User' | 'System'
 
 const version = ref('N/A')
 const node = ref('N/A')
@@ -68,50 +67,51 @@ function refresh() {
 <template>
   <main>
     <aside>
-      <header>
-        <a href="/" class="logo">
-          <img src="../assets/logo.svg" alt="Grapefruit" width="160" id="logo" />
-        </a>
+      <div class="fixed">
+        <header>
+          <a href="/" class="logo">
+            <img src="../assets/logo.svg" alt="Grapefruit" width="160" id="logo" />
+          </a>
 
-      <dark-mode />
-      </header>
+        <dark-mode />
+        </header>
 
-      <p>
-        NodeJS {{ node }} <br />
-        node-frida {{ version }}
-      </p>
+        <p>
+          NodeJS {{ node }} <br />
+          node-frida {{ version }}
+        </p>
 
-      <n-divider />
+        <n-divider />
 
-      <p class="label">Physical Devices</p>
+        <p class="label">Physical Devices</p>
 
-      <nav class="devices">
-        <router-link v-for="(dev, i) in devices" :to="{ name: 'apps', params: { udid: dev.id } }">
-          {{ dev.name }}</router-link>
+        <nav class="devices">
+          <router-link v-for="(dev, i) in devices" :to="{ name: 'apps', params: { udid: dev.id } }">
+            {{ dev.name }}</router-link>
 
-        <span v-if="devices.length === 0">No iPhone detected</span>
-      </nav>
+          <span v-if="devices.length === 0">No iPhone detected</span>
+        </nav>
 
-      <n-divider />
-      
-      <p class="label">Simulators</p>
+        <n-divider />
+        
+        <p class="label">Simulators</p>
 
-      <nav class="simulators">
-        <router-link v-for="(sim, i) in simulators" :to="{ name: 'simapps', params: { udid: sim.udid } }">
-          {{ sim.name }}</router-link>
+        <nav class="simulators">
+          <router-link v-for="(sim, i) in simulators" :to="{ name: 'simapps', params: { udid: sim.udid } }">
+            {{ sim.name }}</router-link>
 
-        <span v-if="simulators.length === 0">No simulator running</span>
-      </nav>
+          <span v-if="simulators.length === 0">No simulator running</span>
+        </nav>
 
-      <n-divider />
+        <n-divider />
 
-      <nav>
-        <a target="_blank" href="https://github.com/chichou/grapefruit">GitHub</a>
-        <a target="_blank" href="https://discord.com/invite/pwutZNx">Discord</a>
-      </nav>
+        <nav>
+          <a target="_blank" href="https://github.com/chichou/grapefruit">GitHub</a>
+          <a target="_blank" href="https://discord.com/invite/pwutZNx">Discord</a>
+        </nav>
 
-      <n-divider />
-
+        <n-divider />
+      </div>
     </aside>
 
     <div class="apps">
@@ -127,8 +127,15 @@ main {
 }
 
 aside {
-  width: 280px;
+  --n-side-width: 280px;
+
+  width: var(--n-side-width);
   padding: 40px;
+
+  > div.fixed {
+    position: fixed;
+    width: var(--n-side-width);
+  }
 
   p.label {
     font-size: .75rem;
