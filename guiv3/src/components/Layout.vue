@@ -26,8 +26,9 @@ import GetStarted from '@/views/pages/GetStarted.vue'
 import InfoPropertyList from '@/views/pages/InfoPropertyList.vue'
 import Entitlements from '@/views/pages/Entitlements.vue'
 import UserDefaults from '@/views/pages/UserDefaults.vue'
+import CookieStorage from '@/views/pages/CookieStorage.vue'
 
-const components = { GetStarted, BasicInfo, InfoPropertyList, Entitlements, UserDefaults }
+const components = { GetStarted, BasicInfo, InfoPropertyList, Entitlements, UserDefaults, CookieStorage }
 
 export default defineComponent({
   components,

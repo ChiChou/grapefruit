@@ -18,7 +18,7 @@
 
     <p class="menu-label">Storage</p>
     <ul class="menu-list">
-      <li><a @click="go('BasicInfo')"><n-icon :component="CookieOutlined" />Cookies</a></li>
+      <li><a @click="go('CookieStorage')"><n-icon :component="CookieOutlined" />Cookies</a></li>
       <li><a @click="go('BasicInfo')"><n-icon :component="KeyFilled" />KeyChain</a></li>
       <li><a @click="go('UserDefaults')"><n-icon :component="RoomPreferencesOutlined" />NSUserDefaults</a></li>
     </ul>
