@@ -43,20 +43,6 @@ function res(...components: string[]) {
   return path.join(__dirname, folder, 'templates', ...components)
 }
 
-if (ISDEBUG) {
-  router
-    .get('/device/mock/apps', (ctx) => {
-      ctx.body = [{
-        name: "Example",
-        pid: 0,
-        identifier: "com.example.mock"
-      }]
-    })
-    .get('/device/mock/icon/com.example.mock', (ctx) => {
-      ctx.body = fs.createReadStream(res('mockicon.png'))
-    })
-}
-
 router
   .get('/devices', async (ctx) => {
     const unique = new Set()
@@ -73,16 +59,6 @@ router
       unique.add(dev.id)
       return true
     }).map(wrap).map(d => d.valueOf())
-
-    if (ISDEBUG) {
-      list.push({
-        name: 'Mock Device',
-        id: 'mock',
-        type: frida.DeviceType.Remote,
-        removable: false,
-        icon: null
-      })
-    }
 
     ctx.body = {
       version: require('frida/package.json').version,
