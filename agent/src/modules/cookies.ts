@@ -1,12 +1,37 @@
-const PROPERTIES = ['version', 'name', 'value', 'domain', 'path', 'expiresDate', 'portList', 'sameSitePolicy']
+import { toJsArray } from '../lib/dict.js';
+import { NSDictionary, NSArray, NSDate, NSObject, NSNumer, NSURL } from '../objc-types.js';
+import { Cookie, CookiePredicate } from '../types.js';
 
-type Cookie = { [key:string]: string | boolean }
-
-function shared() {
-  return ObjC.classes.NSHTTPCookieStorage.sharedHTTPCookieStorage()
+interface NSHTTPCookie extends NSObject {
+  version(): number;
+  name(): string;
+  value(): string;
+  expiresDate(): NSDate;
+  sessionOnly(): boolean;
+  domain(): string;
+  path(): string;
+  isSecure(): boolean;
+  isHTTPOnly(): boolean;
+  portList(): NSArray<NSNumer>;
+  comment(): string | null;
+  commentURL(): NSURL | null;
+  properties(): NSDictionary<string, NSObject>;
+  isSessionOnly(): boolean;
+  sameSitePolicy(): string | null;
 }
 
-function *cookies(storage: ObjC.Object) {
+interface NSHTTPCookieStorage extends NSObject {
+  cookies(): NSArray<NSHTTPCookie>;
+  setCookie_(cookie: NSHTTPCookie): void;
+  deleteCookie_(cookie: NSHTTPCookie): void;
+}
+
+
+function shared() {
+  return ObjC.classes.NSHTTPCookieStorage.sharedHTTPCookieStorage() as NSHTTPCookieStorage
+}
+
+function *iter(storage: NSHTTPCookieStorage) {
   const jar = storage.cookies()
   for (let i = 0; i < jar.count(); i++) {
     yield jar.objectAtIndex_(i)
@@ -14,58 +39,67 @@ function *cookies(storage: ObjC.Object) {
 }
 
 export function list(): Cookie[] {
-  const result = []
-  for (const cookie of cookies(shared())) {
-    const entry: Cookie = {}
-    for (const prop of PROPERTIES) {
-      const val = cookie[prop]()
-      if (val) entry[prop] = val.toString()
+  return Array.from(iter(shared())).map(cookie => {
+    const entry: Cookie = {
+      version: cookie.version(),
+      name: cookie.name().toString(),
+      value: cookie.value().toString(),
+      expiresDate: new Date(cookie.expiresDate().timeIntervalSince1970() * 1000),
+      domain: cookie.domain().toString(),
+      path: cookie.path().toString(),
+      isSecure: cookie.isSecure(),
+      isHTTPOnly: cookie.isHTTPOnly(),
+      portList: toJsArray(cookie.portList()),
+      comment: cookie.comment()?.toString(),
+      commentURL: cookie.commentURL()?.toString(),
+      isSessionOnly: cookie.isSessionOnly(),
     }
-    entry.HTTPOnly = cookie.isHTTPOnly()
-    entry.secure = cookie.isSecure()
-    entry.sessionOnly = cookie.isSessionOnly()
-    result.push(entry)
-  }
 
-  return result
+    if (cookie.respondsToSelector_(ObjC.selector('sameSitePolicy'))) {
+      entry.sameSitePolicy = cookie.sameSitePolicy()?.toString()
+    }
+
+    return entry
+  })
 }
 
-function match(predicate: Cookie): ObjC.Object | undefined {
-  const keys = ['name', 'domain', 'path', 'portList']
-  for (const cookie of cookies(shared())) {
-    if (keys.every(key => cookie[key]() + '' === predicate[key])) {
+function find(predicate: CookiePredicate): NSHTTPCookie | undefined {
+  type K = keyof CookiePredicate
+  const keys: K[] = ['name', 'domain', 'path', 'isSecure', 'isHTTPOnly', 'isSessionOnly']
+  const set = new Set(keys)
+  for (const cookie of iter(shared())) {
+    const valid = (Object.keys(predicate) as K[])
+      .filter(key => set.has(key))
+      .every(key => cookie[key]() + '' === predicate[key])
+
+    if (valid) {
       return cookie
     }
   }
 }
 
-export function write(predicate: Cookie, value: string) {
-  const cookie = match(predicate)
+export function write(predicate: CookiePredicate, value: string) {
+  const cookie = find(predicate)
+  if (!cookie) return false
+
   const storage = shared()
-  if (cookie) {
-    const mutable = cookie.properties().mutableCopy()
-    mutable.setObject_forKey_(value, 'Value')
-    const newCookie = ObjC.classes.NSHTTPCookie.cookieWithProperties_(mutable)
-    storage.setCookie_(newCookie)
-    // this comment makes no sense but it can bypass some QuickJS parser bug
-    return true
-  }
-  return false
+  const mutable = cookie.properties().mutableCopy()
+  mutable.setObject_forKey_(value, 'Value')
+  const newCookie = ObjC.classes.NSHTTPCookie.cookieWithProperties_(mutable)
+  storage.setCookie_(newCookie)
+  return true
 }
 
-export function remove(predicate: Cookie) {
-  const cookie = match(predicate)
-  console.log('found', cookie)
-  if (cookie) {
-    shared().deleteCookie_(cookie)
-    return true
-  }
-  return false
+export function remove(predicate: CookiePredicate) {
+  const cookie = find(predicate)
+  if (!cookie) return false
+  shared().deleteCookie_(cookie)
+  return true
 }
 
 export function clear() {
   const storage = shared()
-  for (const cookie of cookies(storage)) {
+  for (const cookie of iter(storage)) {
     storage.deleteCookie_(cookie)
   }
 }

@@ -27,3 +27,28 @@ export interface CheckSecFlags {
   canary: boolean;
   encrypted: boolean;
 }
+
+export type CookiePredicate = Partial<{
+  name: string;
+  domain: string;
+  path: string;
+  isSecure: boolean;
+  isHTTPOnly: boolean;
+  isSessionOnly: boolean;
+}>
+
+export interface Cookie {
+  version: number,
+  name: string,
+  value: string,
+  expiresDate: Date,
+  domain: string,
+  path: string,
+  isSecure: boolean,
+  isHTTPOnly: boolean,
+  portList: number[],
+  comment?: string,
+  commentURL?: string,
+  isSessionOnly: boolean,
+  sameSitePolicy?: string,
+}
