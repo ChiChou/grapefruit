@@ -20,7 +20,7 @@
     <ul class="menu-list">
       <li><a @click="go('BasicInfo')"><n-icon :component="CookieOutlined" />Cookies</a></li>
       <li><a @click="go('BasicInfo')"><n-icon :component="KeyFilled" />KeyChain</a></li>
-      <li><a @click="go('BasicInfo')"><n-icon :component="RoomPreferencesOutlined" />NSUserDefaults</a></li>
+      <li><a @click="go('UserDefaults')"><n-icon :component="RoomPreferencesOutlined" />NSUserDefaults</a></li>
     </ul>
 
     <p class="menu-label">Inspector</p>

@@ -93,5 +93,7 @@ export function plist() {
 }
 
 export function userDefaults() {
+  // todo: return schema
+  // todo: edit user defaults
   return valueOf(ObjC.classes.NSUserDefaults.standardUserDefaults().dictionaryRepresentation())
 }

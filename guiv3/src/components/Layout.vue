@@ -25,8 +25,9 @@ import BasicInfo from '@/views/pages/BasicInfo.vue'
 import GetStarted from '@/views/pages/GetStarted.vue'
 import InfoPropertyList from '@/views/pages/InfoPropertyList.vue'
 import Entitlements from '@/views/pages/Entitlements.vue'
+import UserDefaults from '@/views/pages/UserDefaults.vue'
 
-const components = { GetStarted, BasicInfo, InfoPropertyList, Entitlements }
+const components = { GetStarted, BasicInfo, InfoPropertyList, Entitlements, UserDefaults }
 
 export default defineComponent({
   components,
