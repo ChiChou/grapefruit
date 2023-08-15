@@ -28,6 +28,8 @@ export interface CheckSecFlags {
   encrypted: boolean;
 }
 
+// Cookie
+
 export type CookiePredicate = Partial<{
   name: string;
   domain: string;
@@ -51,4 +53,24 @@ export interface Cookie {
   commentURL?: string,
   isSessionOnly: boolean,
   sameSitePolicy?: string,
+}
+
+// UI Dump
+
+export type Point = [number, number];
+export type Size = [number, number];
+export type Frame = [Point, Size];
+
+export interface UIDelegate {
+  name?: string;
+  description?: string;
+}
+
+export interface UIDumpNode {
+  clazz: string;
+  description?: string;
+  children?: UIDumpNode[];
+  frame?: Frame;
+  preview?: ArrayBuffer;
+  delegate?: UIDelegate;
 }

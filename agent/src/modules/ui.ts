@@ -1,22 +1,5 @@
 import { performOnMainThread } from '../lib/dispatch.js'
-
-type Point = [number, number];
-type Size = [number, number];
-type Frame = [Point, Size];
-
-interface Delegate {
-  name?: string;
-  description?: string;
-}
-
-interface Node {
-  clazz: string;
-  description?: string;
-  children?: Node[];
-  frame?: Frame;
-  preview?: ArrayBuffer;
-  delegate?: Delegate;
-}
+import { UIDumpNode, UIDelegate, Frame } from '../types.js';
 
 const CGFloat = (Process.pointerSize === 4) ? 'float' : 'double'
 const CGSize: NativeFunctionArgumentType = [CGFloat, CGFloat];
@@ -33,16 +16,16 @@ const UIGraphicsEndImageContext = new NativeFunction(
 const UIImagePNGRepresentation = new NativeFunction(
   Module.findExportByName('UIKit', 'UIImagePNGRepresentation')!, 'pointer', ['pointer']);
 
-export function dump(includingPreview: false): Promise<Node | null> {
+export function dump(includingPreview: false): Promise<UIDumpNode | null> {
   const { UIWindow } = ObjC.classes
   const win = UIWindow.keyWindow()
-  const recursive = (view: ObjC.Object): Node | null => {
+  const recursive = (view: ObjC.Object): UIDumpNode | null => {
     if (!view) return null
 
     const clazz = view.$className
     const description = view.description().toString()
     const subviews = view.subviews()
-    const delegate: Delegate = {}
+    const delegate: UIDelegate = {}
     if (typeof view.delegate === 'function') {
       const instance = view.delegate() as ObjC.Object
       if (instance) {
@@ -52,7 +35,9 @@ export function dump(includingPreview: false): Promise<Node | null> {
     }
 
     const frame = view.superview()?.convertRect_toView_(view.frame(), NULL) as Frame
-    const children: Node[] = []
+    if (!frame) return null
+
+    const children: UIDumpNode[] = []
 
     let preview = undefined
     if (includingPreview) {
@@ -84,7 +69,7 @@ export function dump(includingPreview: false): Promise<Node | null> {
     }
   }
 
-  return performOnMainThread(() => recursive(win))
+  return performOnMainThread(() => recursive(win)) as Promise<UIDumpNode | null>
 }
 
 let overlay: ObjC.Object
