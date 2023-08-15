@@ -1,6 +1,6 @@
 <template>
   <div v-if="cookies">
-    <n-data-table :columns="columns" :data="cookies" :pagination="false" :bordered="false" />
+    <n-data-table :columns="columns" :data="cookies" :pagination="false" :bordered="false" :loading="loading" />
   </div>
 </template>
 
@@ -14,6 +14,7 @@ import { Cookie } from '@/../../agent/src/types'
 
 const props = defineProps(tabProps)
 const { entitle, rpc } = useTabCommons(props.tabId!)
+const loading = ref(false)
 
 const cookies: Ref<Cookie[] | null> = ref(null)
 
@@ -45,7 +46,6 @@ const createColumns = ({
       title: 'Secure',
       key: 'isSecure',
       render(row) {
-        // todo: checkbox
         return h(NCheckbox, {
           checked: row.isSecure,
           disabled: true
@@ -78,7 +78,9 @@ const columns = createColumns({
 })
 
 onMounted(async () => {
+  loading.value = true
   cookies.value = await rpc.cookies.list() as Cookie[]
+  loading.value = false
 })
 
 </script>
