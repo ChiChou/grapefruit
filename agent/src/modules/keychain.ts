@@ -11,6 +11,73 @@ const SecItemUpdate = new NativeFunction(Module.findExportByName('Security', 'Se
 const SecItemDelete = new NativeFunction(Module.findExportByName('Security', 'SecItemDelete')!, 'int', ['pointer'])
 const SecAccessControlCreateWithFlags = new NativeFunction(Module.findExportByName('Security', 'SecAccessControlCreateWithFlags')!, 'pointer', ['pointer', 'pointer', 'int', 'pointer'])
 
+namespace KeyChain {
+  // https://developer.apple.com/documentation/security/keychain_services/keychain_items/item_attribute_keys_and_values#2882540
+
+  interface AttributeKeys {
+    kSecAttrService: NativePointer,
+    kSecAttrAccount: NativePointer,
+    kSecAttrGeneric: NativePointer,
+    kSecAttrSecurityDomain: NativePointer,
+    kSecAttrServer: NativePointer,
+    kSecAttrProtocol: NativePointer,
+    kSecAttrAuthenticationType: NativePointer,
+    kSecAttrPort: NativePointer,
+    kSecAttrPath: NativePointer,
+  }
+  
+  interface ItemResultKeys {
+    kSecReturnData: NativePointer,
+    kSecReturnAttributes: NativePointer,
+    kSecReturnRef: NativePointer,
+    kSecReturnPersistentRef: NativePointer,
+  }
+  
+  interface ItemValueTypeKeys {
+    kSecValueData: NativePointer,
+    kSecValueRef: NativePointer,
+    kSecValuePersistentRef: NativePointer,
+  }
+  
+  interface ItemSearchMatchingKeys {
+    kSecMatchPolicy: NativePointer,
+    kSecMatchItemList: NativePointer,
+    kSecMatchSearchList: NativePointer,
+    kSecMatchIssuers: NativePointer,
+    kSecMatchEmailAddressIfPresent: NativePointer,
+    kSecMatchSubjectContains: NativePointer,
+    kSecMatchSubjectStartsWith: NativePointer,
+    kSecMatchSubjectEndsWith: NativePointer,
+    kSecMatchSubjectWholeString: NativePointer,
+    kSecMatchCaseInsensitive: NativePointer,
+    kSecMatchDiacriticInsensitive: NativePointer,
+    kSecMatchWidthInsensitive: NativePointer,
+    kSecMatchTrustedOnly: NativePointer,
+    kSecMatchValidOnDate: NativePointer,
+    kSecMatchLimit: NativePointer,
+  }
+  
+  interface MatchLimitKeys {
+    kSecMatchLimitOne: NativePointer,
+    kSecMatchLimitAll: NativePointer,
+  }
+
+  interface AddictionalItemSearchKeys {
+    kSecUseItemList: NativePointer,
+    kSecUseKeychain: NativePointer,
+    kSecUseOperationPrompt: NativePointer, // deprecated
+    kSecUseNoAuthenticationUI: NativePointer, // deprecated
+    kSecUseAuthenticationContext: NativePointer,
+    kSecUseAuthenticationUI: NativePointer,
+  }
+
+  interface UIAuthenticationValues {
+    kSecUseAuthenticationUIAllow: NativePointer, // deperecated
+    kSecUseAuthenticationUIFail: NativePointer, // deprecated
+    kSecUseAuthenticationUISkip: NativePointer,
+  }
+}
+
 const constants = [
   'kSecReturnAttributes',
   'kSecReturnData',
@@ -96,10 +163,10 @@ function encodeData(val?: ObjC.Object) {
   return null
 }
 
-export function list(withfaceId = false): object[] {
-  const kCFBooleanTrue = ObjC.classes.__NSCFBoolean.numberWithBool_(true)
-  const result: object[] = []
+const kCFBooleanTrue = ObjC.classes.__NSCFBoolean.numberWithBool_(true)
 
+export function list(withfaceId = false): object[] {
+  const result: object[] = []
   const query = ObjC.classes.NSMutableDictionary.alloc().init()
   query.setObject_forKey_(kCFBooleanTrue, C.kSecReturnAttributes)
   query.setObject_forKey_(kCFBooleanTrue, C.kSecReturnData)
