@@ -1,12 +1,17 @@
 import { inject } from 'vue';
 import { SET_TAB_TITLE, RPC } from '@/types';
 
-type Listener = (componentType: string, state: any, title?: string, createNew?: boolean) => void
+type Listener = (componentType: string, state: TabState, title?: string, createNew?: boolean) => void
+
+export interface TabState {
+  tabId: string,
+  [key: string]: string | number | boolean | object,
+}
 
 class TabManager {
   #listener: Listener | null = null
   #ready = false
-  #pendingTabs: [string, string, any, boolean][] = []
+  #pendingTabs: [string, TabState, string, boolean][] = []
 
   /**
    * singleton tab, should not support parameter
@@ -14,14 +19,14 @@ class TabManager {
    * @param title initial title
    */
   go(component: string, title?: string) {
-    this.#tab(component, {}, title, false)
+    this.#tab(component, { tabId: component }, title, false)
   }
 
-  create(component: string, state?: any, title?: string) {
+  create(component: string, state: TabState, title?: string) {
     this.#tab(component, state, title, true)
   }
 
-  #tab(component: string, state?: any, title?: string, newTab?: boolean) {
+  #tab(component: string, state: TabState, title?: string, newTab?: boolean) {
     const t = title || ''
     if (!this.#ready) {
       this.#pendingTabs.push([component, state, t, Boolean(newTab)])
@@ -31,17 +36,11 @@ class TabManager {
   }
 
   listen(fn: Listener) {
-    if (this.#listener) {
-      throw new Error(`Listener already defined. This method should only be used once.
-        Did you forget to call unload()?`)
-    }
-
+    this.#listener = fn
     this.#pendingTabs.forEach(tuple => {
       const [component, state, title, newTab] = tuple
-      this.#tab(component, title, state, newTab)
+      this.#tab(component, state, title, newTab)
     })
-
-    this.#listener = fn
     this.#ready = true
   }
 

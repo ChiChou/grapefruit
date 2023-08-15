@@ -8,8 +8,8 @@
 </template>
 
 <script lang="ts">
-import { LayoutConfig, RootItemConfig } from "golden-layout"
-import { defineComponent, inject, shallowRef, computed, watch, ref, onUnmounted, provide } from "vue"
+import { RootItemConfig } from "golden-layout"
+import { defineComponent, inject, shallowRef, computed, watch, ref, provide } from "vue"
 import { DARK, SPACE_WIDTH, SPACE_HEIGHT, SET_TAB_TITLE } from "@/types"
 import { useGoldenLayout } from "@/plugins/golden-layout"
 
@@ -19,16 +19,14 @@ import '@/skin/layout.scss'
 import lightThemeUrl from "golden-layout/dist/css/themes/goldenlayout-light-theme.css?url"
 import darkThemeUrl from "golden-layout/dist/css/themes/goldenlayout-dark-theme.css?url"
 
+import { TabState } from "@/plugins/tab"
+
 import BasicInfo from '@/views/pages/BasicInfo.vue'
 import GetStarted from '@/views/pages/GetStarted.vue'
 import InfoPropertyList from '@/views/pages/InfoPropertyList.vue'
 import Entitlements from '@/views/pages/Entitlements.vue'
 
-import { manager as tabManager } from "@/plugins/tab"
-
 const components = { GetStarted, BasicInfo, InfoPropertyList, Entitlements }
-
-const KEY_LAYOUT = 'LAYOUT_SETTING'
 
 export default defineComponent({
   components,
@@ -38,7 +36,7 @@ export default defineComponent({
       tabId: string;
       type: string;
       element: HTMLElement;
-      state: any;
+      state: TabState;
     }
 
     let instanceId = 0
@@ -53,6 +51,7 @@ export default defineComponent({
       if (!componentTypes.has(type)) {
         throw new Error(`Component not found: '${type}'`)
       }
+
       ++instanceId
       componentInstances.value = componentInstances.value.concat({
         id: instanceId,
@@ -69,10 +68,11 @@ export default defineComponent({
       )
     }
 
-    let root: RootItemConfig = {
+    let defaultRoot: RootItemConfig = {
       type: "column",
       content: [
         {
+          id: "get-started",
           type: "component",
           componentType: "GetStarted",
           title: 'Get Started'
@@ -80,31 +80,7 @@ export default defineComponent({
       ],
     }
 
-    const val = localStorage.getItem(KEY_LAYOUT)
-    if (val) {
-      let savedRoot
-      try {
-        savedRoot = LayoutConfig.fromResolved(JSON.parse(val)).root
-      } catch(e) {
-        console.error(e)
-      }
-
-      if (savedRoot) {
-        root = savedRoot as RootItemConfig
-      }
-    }
-
-    const { element, layout } = useGoldenLayout(createComponent, destroyComponent, {
-      root,
-      // do not load following settings from localStorage
-      dimensions: {
-        headerHeight: 32,        
-      },
-      settings: {
-        showPopoutIcon: false,
-        showMaximiseIcon: false,
-      }
-    })
+    const { element, layout } = useGoldenLayout(createComponent, destroyComponent, defaultRoot)
 
     provide(SET_TAB_TITLE, (id: string, title: string) => {
       layout.value?.findFirstComponentItemById(id)?.setTitle(title)
@@ -117,8 +93,6 @@ export default defineComponent({
     watch(spaceHeight, (height) => {
       layout.value?.setSize(spaceWidth.value, height)
     })
-
-    onUnmounted(() => tabManager.unload())
 
     return { element, componentInstances, css }
   },

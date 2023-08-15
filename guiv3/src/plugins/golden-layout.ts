@@ -1,17 +1,12 @@
-import { ComponentContainer, GoldenLayout, LayoutConfig } from 'golden-layout'
+import { ComponentContainer, GoldenLayout, LayoutConfig, RootItemConfig } from 'golden-layout'
 import { onMounted, ref, shallowRef } from 'vue'
 
-import { manager as tabManager } from './tab'
+import { manager as tabManager, TabState } from './tab'
 
 export const isClient = typeof window !== 'undefined'
 export const isDocumentReady = () => isClient && document.readyState === 'complete' && document.body != null
 
-interface TabState {
-  id: string,
-  [key: string]: string
-}
-
-type StateOpt = {[key: string]: string} | null
+const KEY_LAYOUT = 'LAYOUT_SETTING'
 
 export function useDocumentReady(func: () => void) {
   onMounted(() => {
@@ -23,10 +18,40 @@ export function useDocumentReady(func: () => void) {
   })
 }
 
+function useSavedLayout(defaultRoot: RootItemConfig) {
+  let root = defaultRoot;
+
+  const val = localStorage.getItem(KEY_LAYOUT)
+  if (val) {
+    let savedRoot
+    try {
+      savedRoot = LayoutConfig.fromResolved(JSON.parse(val)).root
+    } catch(e) {
+      console.error(e)
+    }
+
+    if (savedRoot) {
+      root = savedRoot as RootItemConfig
+    }
+  }
+
+  return {
+    root,
+    // do not load following settings from localStorage
+    dimensions: {
+      headerHeight: 32,        
+    },
+    settings: {
+      showPopoutIcon: false,
+      showMaximiseIcon: false,
+    }
+  }
+}
+
 export function useGoldenLayout(
-  createComponent: (type: string, tabId: string, container: HTMLElement, state?: any) => ComponentContainer.Component,
+  createComponent: (type: string, tabId: string, container: HTMLElement, state: TabState) => ComponentContainer.Component,
   destroyComponent: (container: HTMLElement) => void,
-  config?: LayoutConfig
+  defaultRoot: RootItemConfig
 ) {
   const element = shallowRef<HTMLElement | null>(null)
   const layout = shallowRef<GoldenLayout | null>(null)
@@ -38,9 +63,10 @@ export function useGoldenLayout(
 
     goldenLayout.bindComponentEvent = (container, itemConfig) => {
       const { componentType, componentState } = itemConfig
-      const tabId = (componentState as TabState).id
+      const state = componentState as TabState
+      const { tabId } = state
       if (typeof componentType !== 'string') throw new Error('Invalid component type.')
-      const component = createComponent(componentType, tabId, container.element, componentState)
+      const component = createComponent(componentType, tabId, container.element, state)
       return {
         component,
         virtual: false,
@@ -50,7 +76,11 @@ export function useGoldenLayout(
       destroyComponent(container.element)
     }
 
-    if (config != null) goldenLayout.loadLayout(config)
+    goldenLayout.on('stateChanged', () => {
+      localStorage.setItem(KEY_LAYOUT, JSON.stringify(goldenLayout.saveLayout()))
+    })
+
+    goldenLayout.loadLayout(useSavedLayout(defaultRoot))
 
     // https://github.com/microsoft/TypeScript/issues/34933
     layout.value = goldenLayout as any
@@ -59,7 +89,7 @@ export function useGoldenLayout(
 
     // listen for tab creation
     let counter = 0
-    tabManager.listen((componentType: string, state: StateOpt, title?: string, createNew?: boolean) => {
+    tabManager.listen((componentType: string, state: TabState, title?: string, createNew?: boolean) => {
       let tabId: string
 
       if (!createNew) {
