@@ -2,11 +2,11 @@
   <main>
     <n-page-header :subtitle="basics.id" v-if="basics">
       <n-grid :cols="5">
+        <n-gi v-if="basics.semVer">
+          <n-statistic label="SemanticVersion" :value="basics.semVer" />
+        </n-gi>
         <n-gi>
           <n-statistic label="Version" :value="basics.version" />
-        </n-gi>
-        <n-gi v-if="basics.semVer">
-          <n-statistic label="Semantic Version" :value="basics.semVer" />
         </n-gi>
         <n-gi>
           <n-statistic label="MinimumOSVersion" :value="basics.minOS" />
