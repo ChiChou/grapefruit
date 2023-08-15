@@ -1,4 +1,4 @@
-import { toArray, valueOf } from '../lib/dict.js'
+import { toJsArray, valueOf } from '../lib/dict.js'
 import { NSTemporaryDirectory, NSHomeDirectory } from '../lib/foundation.js'
 
 import { BasicInfo, URLScheme } from '../types.js'
@@ -75,7 +75,7 @@ export function basics(): BasicInfo {
   }
 
   const urlTypes = dict.objectForKey_('CFBundleURLTypes');
-  const rawUrls: RawURLScheme[] = urlTypes ? toArray(urlTypes) : [];
+  const rawUrls: RawURLScheme[] = urlTypes ? toJsArray(urlTypes) : [];
   const urls = rawUrls.map(wrapURLScheme);
 
   return {

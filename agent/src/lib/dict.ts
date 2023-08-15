@@ -1,3 +1,5 @@
+import { NSArray, NSDictionary } from "../objc-types.js"
+
 /* eslint no-use-before-define: 0 */
 const NSPropertyListImmutable = 0
 
@@ -8,17 +10,17 @@ export function valueOf(value: ObjC.Object): any {
   if (value.isKindOfClass_(__NSCFBoolean))
     return value.boolValue()
   if (value.isKindOfClass_(NSArray))
-    return toArray(value)
+    return toJsArray(value as NSArray<ObjC.Object>)
   if (value.isKindOfClass_(NSDictionary))
-    return toDict(value)
+    return toJsDict(value as NSDictionary<ObjC.Object, ObjC.Object>)
   if (value.isKindOfClass_(NSNumber))
-    return parseFloat(value.toString())
+    return parseFloat(value.toString()) // might lost precision
   return value.toString()
 }
 
 type Dictionary = { [key: string]: any }
 
-export function toDict(nsDict: ObjC.Object): Dictionary {
+export function toJsDict(nsDict: NSDictionary<ObjC.Object, ObjC.Object>): Dictionary {
   const jsDict: Dictionary = {}
   const keys = nsDict.allKeys()
   const count = keys.count()
@@ -48,11 +50,11 @@ export function fromBytes(address: NativePointer, size: number): Dictionary {
   if (!desc.isNull())
     throw new Error(new ObjC.Object(desc).toString())
 
-  return toDict(dict)
+  return toJsDict(dict)
 }
 
 
-export function toArray(original: ObjC.Object, limit: number = Infinity): any[] {
+export function toJsArray(original: NSArray<ObjC.Object>, limit: number = Infinity): any[] {
   const arr = []
   const count = original.count()
   const len = Number.isNaN(limit) ? Math.min(count, limit) : count
@@ -64,14 +66,11 @@ export function toArray(original: ObjC.Object, limit: number = Infinity): any[] 
 }
 
 export function description(obj: ObjC.Object) {
-  if (!obj) return obj
+  if (!obj) return `${obj}`
   if (obj.isKindOfClass_(ObjC.classes.NSBlock))
     return `<Block ${obj.handle}, invoke=${obj.handle.add(Process.pointerSize * 2).readPointer()}>`
-  if (obj.isKindOfClass_(ObjC.classes.__NSCFBoolean)) return obj.boolValue()
   if (obj.isKindOfClass_(ObjC.classes.NSArray)) return `[Array of ${obj.count()} elements]`
   if (obj.isKindOfClass_(ObjC.classes.NSDictionary)) return `{Dictionary of ${obj.count()} entries}`
-  if (obj.isKindOfClass_(ObjC.classes.NSNumber)) return parseFloat(obj.toString())
-  if (obj.isKindOfClass_(ObjC.classes.NSString)) return obj.toString()
-  if ('isa' in obj.$ivars) return `<${obj.$className} ${obj.handle}>`
-  return `<Class ${obj}>`
+  if (obj.$handle === obj.$class.$handle) return `<Class ${obj.$className}>`
+  return `${obj}`
 }
