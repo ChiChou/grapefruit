@@ -2,7 +2,6 @@ const { NSBundle, NSString } = ObjC.classes
 const copyClassNamesForImage = new NativeFunction(
   Module.findExportByName(null, 'objc_copyClassNamesForImage')!, 'pointer', ['pointer', 'pointer']
 )
-const free = new NativeFunction(Module.findExportByName(null, 'free')!, 'void', ['pointer'])
 
 export function dump(path?: string): string[] {
   const filename = path || NSBundle.mainBundle().executablePath().toString()
@@ -16,7 +15,7 @@ export function dump(path?: string): string[] {
     const pClassName = pClasses.add(i * Process.pointerSize).readPointer()
     classes[i] = pClassName.readUtf8String()
   }
-  free(pClasses)
+  ObjC.api.free(pClasses)
   return classes
 }
 
