@@ -1,17 +1,19 @@
 import { Socket } from 'socket.io-client'
 import type { InjectionKey, Ref } from 'vue'
 import { manager as tabMgr } from '@/plugins/tab'
+import { RPC as RPCType } from '@/wsrpc'
 
 export type PlistNode = {[key: string]: PlistValue}
 export type PlistValue = PlistNode | string | number | boolean | PlistNode[]
 
 // WorkspaceView
-export const ACTIVE_SIDEBAR = Symbol('sidebar') as InjectionKey<Ref<number>>
+export const ACTIVE_SIDE_PANEL = Symbol('sidebar') as InjectionKey<Ref<number>>
+export const SIDE_PANEL_HEIGHT = Symbol('sidebarHeight') as InjectionKey<Ref<number>>
 export const DARK = Symbol('dark') as InjectionKey<Ref<boolean>>
 
 export const WS = Symbol('ws') as InjectionKey<Socket>
 export const STATUS = Symbol('status') as InjectionKey<Ref<string>>
-export const RPC = Symbol('rpc') as InjectionKey<WSRPC>
+export const RPC = Symbol('rpc') as InjectionKey<RPCType>
 export const SESSION_DETACH = Symbol('detach') as InjectionKey<() => void>
 
 // Layout

@@ -13,7 +13,7 @@ import DarkMode from '@/components/DarkMode.vue'
 import Layout from '@/components/Layout.vue'
 
 import { useRPC } from '@/wsrpc'
-import { SESSION_DETACH, RPC, STATUS, WS, ACTIVE_SIDEBAR, SPACE_WIDTH, SPACE_HEIGHT, TAB_EMITTER } from '@/types'
+import { SESSION_DETACH, RPC, STATUS, WS, ACTIVE_SIDE_PANEL, SPACE_WIDTH, SPACE_HEIGHT, TAB_EMITTER } from '@/types'
 import { manager } from '@/plugins/tab'
 
 import * as regulation from '@/regulation'
@@ -140,7 +140,7 @@ provide(SESSION_DETACH, detach)
 onBeforeUnmount(() => socket.close())
 
 const activeSidebar = ref(0)
-provide(ACTIVE_SIDEBAR, activeSidebar)
+provide(ACTIVE_SIDE_PANEL, activeSidebar)
 
 provide(TAB_EMITTER, manager)
 
@@ -199,6 +199,7 @@ function rick() {
 
 .workspace-main-container {
   flex: 1;
+  min-height: 0;
 }
 
 .pane-full {

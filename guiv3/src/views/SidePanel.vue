@@ -8,7 +8,7 @@ import GeneralTab from './panels/GeneralTab.vue'
 import FinderTab from './panels/FinderTab.vue'
 import ClassesTab from './panels/ClassesTab.vue'
 
-import { Component as Comp, inject, onMounted } from 'vue'
+import { Component as Comp, Ref, inject, onMounted, provide, ref } from 'vue'
 import {
   HomeSharp,
   FolderSharp,
@@ -20,7 +20,8 @@ import {
 import {
   Braces
 } from '@vicons/tabler'
-import { ACTIVE_SIDEBAR } from '@/types'
+import { ACTIVE_SIDE_PANEL, SIDE_PANEL_HEIGHT } from '@/types'
+import { onUnmounted } from 'vue'
 
 type TabOption = {
   label: string;
@@ -34,7 +35,7 @@ const tabs: TabOption[] = [
     icon: HomeSharp,
     page: GeneralTab,
   },
-    {
+  {
     label: 'Modules',
     icon: ViewModuleSharp,
     page: ModulesTab,
@@ -62,11 +63,25 @@ const tabs: TabOption[] = [
 ]
 
 const KEY = 'ACTIVE_TAB'
-const index = inject(ACTIVE_SIDEBAR)!
+const index = inject(ACTIVE_SIDE_PANEL)!
+
+const height = ref(0)
+provide(SIDE_PANEL_HEIGHT, height)
+
+const el = ref<HTMLElement | null>(null)
+function updateSize() {
+  const { value } = el
+  if (!value) return
+  height.value = value.clientHeight
+}
+
+const resizeObserver = new ResizeObserver(updateSize)
 
 onMounted(() => {
   const i = parseInt(sessionStorage.getItem(KEY) || '0')
   index.value = i
+  resizeObserver.observe(el.value!)
+  updateSize()
 })
 
 function select(i: number) {
@@ -90,7 +105,7 @@ function select(i: number) {
         <span>{{ tab.label }}</span>
       </n-popover>
     </nav>
-    <aside class="sidebar">
+    <aside class="side" ref="el">
       <component :is="tabs[index].page"></component>
     </aside>
   </div>
@@ -98,14 +113,14 @@ function select(i: number) {
 
 <style lang="scss">
 :root {
-  --sidebar-background: #f3f3f3;
-  --sidebar-nav-background: #fefefe;
+  --side-background: #f3f3f3;
+  --side-nav-background: #fefefe;
   --nav-active: #303030;
 }
 
 [data-theme="dark"] {
-  --sidebar-background: #181818;
-  --sidebar-nav-background: #212121;
+  --side-background: #181818;
+  --side-nav-background: #212121;
   --nav-active: #bcbcbc;
 }
 
@@ -115,7 +130,7 @@ function select(i: number) {
   height: 100%;
 
   nav.side-nav {
-    background: var(--sidebar-nav-background);
+    background: var(--side-nav-background);
 
     .n-radio-group__splitor {
       display: none;
@@ -140,13 +155,13 @@ function select(i: number) {
     }
   }
 
-  aside.sidebar {
-    background-color: var(--sidebar-background);
+  aside.side {
+    background-color: var(--side-background);
     flex: 1;
+    min-width: 0;
+    min-height: 0;
   }
 }
-
-
 
 aside.menu {
   padding: 1rem;
