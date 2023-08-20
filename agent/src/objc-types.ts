@@ -45,3 +45,7 @@ export interface NSDate extends NSObject {
 export interface NSError extends NSObject {
 
 }
+
+export interface NSData extends NSObject {
+
+}
