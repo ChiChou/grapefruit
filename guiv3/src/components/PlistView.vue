@@ -1,5 +1,7 @@
 <template>
-  <n-tree block-line :data="tree" class="plist" selectable />
+  <n-tree block-line :data="tree" class="plist" selectable 
+    expand-on-click :default-expand-all="expandAll"
+    :pattern="pattern" />
 </template>
 
 <script lang="ts" setup>
@@ -15,7 +17,7 @@ function treeify(root: PlistNode): TreeOption[] {
       return {
         key: idx++,
         label: key,
-        children: node.map((e, i) => visit(`Item ${i}`, e))
+        children: node.map((e, i) => visit(`[${i}]`, e))
       }
     }
 
@@ -38,7 +40,9 @@ function treeify(root: PlistNode): TreeOption[] {
 }
 
 const props = defineProps({
-  root: Object
+  root: Object,
+  expandAll: Boolean,
+  pattern: String,
 })
 
 const tree = computed(() => props.root ? treeify(props.root) : [])
