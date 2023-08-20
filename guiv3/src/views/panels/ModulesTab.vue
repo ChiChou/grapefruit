@@ -1,11 +1,29 @@
 <template>
-  <n-data-table size="small" :columns="columns" :data="data" :max-height="height" virtual-scroll />
+  <main>
+    <header>
+      <n-input v-model:value="pattern" placeholder="Search Modules" />
+    </header>
+    <ul class="modules">
+      <li v-for="m in filtered" :key="m.base">
+        <n-tooltip trigger="hover" placement="right">
+          <template #trigger>
+            <span>{{ m.name }}</span>
+          </template>
+          <template #default>
+            <span>{{ m.base }}</span>&nbsp;
+            <code>{{ m.path }}</code>
+          </template>
+        </n-tooltip>
+      </li>
+    </ul>
+  </main>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, Ref, inject, h } from 'vue'
+import { ref, onMounted, inject, h } from 'vue'
 import { RPC, SIDE_PANEL_HEIGHT } from '@/types'
 import { DataTableColumns } from 'naive-ui/lib/data-table';
+import { computed } from 'vue';
 
 interface Module {
   name: string;
@@ -30,21 +48,57 @@ const columns: DataTableColumns<Module> = [
 const height = inject(SIDE_PANEL_HEIGHT)!
 const data = ref<Module[]>([])
 const loading = ref(false)
+const pattern = ref('')
 
-onMounted(async () => {
+async function reload() {
   loading.value = true
   data.value = await rpc.symbol.modules()
   loading.value = false
+}
+
+onMounted(() => {
+  reload()
+})
+
+const filtered = computed(() => {
+  return pattern.value?.length ?
+    data.value.filter(m => m.name.toLowerCase().includes(pattern.value.toLowerCase())) :
+    data.value
+
 })
 
 </script>
 
-<style lang="scss">
-.modules-container {
+<style lang="scss" scoped>
+main {
+  display: flex;
+  flex-direction: column;
   height: 100%;
 }
-.modules-container code {
-  word-wrap: break-word;
-  white-space: pre-wrap;
+
+header {
+  padding: 10px;
+}
+
+ul.modules {
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  li {
+    display: block;
+    list-style: none;
+
+    span {
+      display: inline-block;
+      padding: 4px 20px;
+    }
+
+    &:hover {
+      background: rgba(0, 0, 0, .3);
+    }
+  }
 }
 </style>
