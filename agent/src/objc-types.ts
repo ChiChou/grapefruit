@@ -8,6 +8,7 @@ export interface NSNumber extends NSObject {
   intValue(): number;
 }
 
+export type _Nullable<T> = T | null;
 export type StringLike = string | NSString;
 
 export interface NSString extends NSObject {
@@ -34,7 +35,7 @@ export interface NSURL extends NSObject {
 }
 
 export interface NSDictionary<K, V> extends NSObject {
-  objectForKey_(key: K): V;
+  objectForKey_(key: K): _Nullable<V>;
   allKeys(): NSArray<K>;
   mutableCopy(): NSMutableDictionary<K, V>;
   copy(): NSDictionary<K, V>;

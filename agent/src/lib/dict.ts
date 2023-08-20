@@ -1,12 +1,12 @@
-import { NSArray, NSDictionary } from "../objc-types.js"
+import { NSArray, NSDictionary, _Nullable } from "../objc-types.js"
 
 /* eslint no-use-before-define: 0 */
 const NSPropertyListImmutable = 0
 
-export function valueOf(value: ObjC.Object): any {
+export function valueOf(value: _Nullable<ObjC.Object>): any {
+  if (!value) return null
+
   const { NSArray, NSDictionary, NSNumber, __NSCFBoolean } = ObjC.classes
-  if (value === null || typeof value !== 'object')
-    return value
   if (value.isKindOfClass_(__NSCFBoolean))
     return value.boolValue()
   if (value.isKindOfClass_(NSArray))
@@ -33,7 +33,6 @@ export function toJsDict(nsDict: NSDictionary<ObjC.Object, ObjC.Object>): Dictio
   return jsDict
 }
 
-
 export function fromBytes(address: NativePointer, size: number): Dictionary {
   const { NSData, NSPropertyListSerialization } = ObjC.classes
   const format = Memory.alloc(Process.pointerSize)
@@ -52,7 +51,6 @@ export function fromBytes(address: NativePointer, size: number): Dictionary {
 
   return toJsDict(dict)
 }
-
 
 export function toJsArray(original: NSArray<ObjC.Object>, limit: number = Infinity): any[] {
   const arr = []

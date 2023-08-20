@@ -2,7 +2,7 @@ import { NSHomeDirectory, NSTemporaryDirectory, attrs, Attributes } from '../lib
 import { open } from '../lib/libc.js'
 import { valueOf } from '../lib/dict.js'
 import uuid from '../lib/uuid.js'
-import { NSArray, NSDictionary, NSObject, NSString, StringLike } from '../objc-types.js'
+import { NSArray, NSDictionary, NSObject, NSString, StringLike, _Nullable } from '../objc-types.js'
 
 const AttributeKeyNames = [
   'NSFileCreationDate',
@@ -40,7 +40,7 @@ interface NSFileManager extends NSObject {
   moveItemAtPath_toPath_error_(src: StringLike, dst: StringLike, pError: NativePointer): boolean;
   copyItemAtPath_toPath_error_(src: StringLike, dst: StringLike, pError: NativePointer): boolean;
   createDirectoryAtPath_withIntermediateDirectories_attributes_error_(
-    path: StringLike, intermediate: boolean, attributes: NSFileAttribute, pError: NativePointer): boolean;
+    path: StringLike, intermediate: boolean, attributes: _Nullable<NSFileAttribute>, pError: NativePointer): boolean;
 }
 
 function ok<T>(block: WithNSErrorChecker<T>) {
