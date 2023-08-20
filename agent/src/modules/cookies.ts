@@ -1,6 +1,6 @@
 import { toJsArray } from '../lib/dict.js';
 import { NSDictionary, NSArray, NSDate, NSObject, NSNumber, NSURL } from '../objc-types.js';
-import { Cookie, CookiePredicate } from '../types.js';
+import { Cookie, CookiePredicate } from '../rpctypes.js';
 
 interface NSHTTPCookie extends NSObject {
   version(): number;

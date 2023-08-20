@@ -1,5 +1,5 @@
 import { performOnMainThread } from '../lib/dispatch.js'
-import { UIDumpNode, UIDelegate, Frame } from '../types.js';
+import { UIDumpNode, UIDelegate, Frame } from '../rpctypes.js';
 
 const CGFloat = (Process.pointerSize === 4) ? 'float' : 'double'
 const CGSize: NativeFunctionArgumentType = [CGFloat, CGFloat];

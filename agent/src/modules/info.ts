@@ -1,7 +1,7 @@
 import { toJsArray, valueOf } from '../lib/dict.js'
 import { NSTemporaryDirectory, NSHomeDirectory } from '../lib/foundation.js'
 
-import { BasicInfo, URLScheme } from '../types.js'
+import { BasicInfo, URLScheme } from '../rpctypes.js'
 
 export function basics(): BasicInfo {
   const main = ObjC.classes.NSBundle.mainBundle();

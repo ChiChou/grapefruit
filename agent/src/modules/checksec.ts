@@ -1,6 +1,6 @@
 import { fromBytes } from '../lib/dict.js';
 import { encryptionInfo, pie } from '../lib/macho.js';
-import { CheckSecFlags, Entitlements } from '../types.js';
+import { CheckSecFlags, Entitlements } from '../rpctypes.js';
 
 export function flags(): CheckSecFlags {
   const [main, ] = Process.enumerateModules()
