@@ -1,5 +1,5 @@
 import { toJsArray } from '../lib/dict.js';
-import { NSDictionary, NSArray, NSDate, NSObject, NSNumer, NSURL } from '../objc-types.js';
+import { NSDictionary, NSArray, NSDate, NSObject, NSNumber, NSURL } from '../objc-types.js';
 import { Cookie, CookiePredicate } from '../types.js';
 
 interface NSHTTPCookie extends NSObject {
@@ -12,7 +12,7 @@ interface NSHTTPCookie extends NSObject {
   path(): string;
   isSecure(): boolean;
   isHTTPOnly(): boolean;
-  portList(): NSArray<NSNumer>;
+  portList(): NSArray<NSNumber>;
   comment(): string | null;
   commentURL(): NSURL | null;
   properties(): NSDictionary<string, NSObject>;

@@ -4,7 +4,7 @@ export interface NSObject extends ObjC.Object {
   toString(): string;
 }
 
-export interface NSNumer extends NSObject {
+export interface NSNumber extends NSObject {
   intValue(): number;
 }
 
