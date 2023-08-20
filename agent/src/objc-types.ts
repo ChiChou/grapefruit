@@ -8,8 +8,15 @@ export interface NSNumber extends NSObject {
   intValue(): number;
 }
 
+export type StringLike = string | NSString;
+
 export interface NSString extends NSObject {
   UTF8String(): NativePointer;
+  writeToFile_atomically_encoding_error_(path: StringLike, atomically: boolean, encoding: number, error: NativePointer): boolean;
+  lastPathComponent(): NSString;
+  stringByDeletingLastPathComponent(): NSString;
+  stringByDeletingPathExtension(): NSString;
+  stringByAppendingPathComponent_(str: StringLike): NSString;
 }
 
 export interface NSArray<T> extends NSObject {

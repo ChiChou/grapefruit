@@ -2,7 +2,7 @@ import { NSHomeDirectory, NSTemporaryDirectory, attrs, Attributes } from '../lib
 import { open } from '../lib/libc.js'
 import { valueOf } from '../lib/dict.js'
 import uuid from '../lib/uuid.js'
-import { NSArray, NSDictionary, NSObject, NSString } from '../objc-types.js'
+import { NSArray, NSDictionary, NSObject, NSString, StringLike } from '../objc-types.js'
 
 const AttributeKeyNames = [
   'NSFileCreationDate',
@@ -17,8 +17,11 @@ const AttributeKeyNames = [
   'NSFileProtectionKey'
 ] as const
 
+const AttributeKeysAsNSString = AttributeKeyNames.map(
+  name => Module.findExportByName('Foundation', name)!.readPointer() as unknown as NSString)
+
 type FileAttributeKey = typeof AttributeKeyNames[number]
-type FileAttribute = Record<FileAttributeKey, NSObject>
+type NSFileAttribute = NSDictionary<FileAttributeKey, NSObject>
 
 interface File {
   type: 'file' | 'directory';
@@ -29,6 +32,17 @@ interface File {
 
 type WithNSErrorChecker<T> = (err: NativePointer) => T
 
+interface NSFileManager extends NSObject {
+  contentsOfDirectoryAtPath_error_(path: StringLike, pError: NativePointer): NSArray<NSString>;
+  fileExistsAtPath_isDirectory_(path: StringLike, pIsDir: NativePointer): boolean;
+  attributesOfItemAtPath_error_(path: StringLike, pError: NativePointer): NSFileAttribute;
+  removeItemAtPath_error_(path: StringLike, pError: NativePointer): boolean;
+  moveItemAtPath_toPath_error_(src: StringLike, dst: StringLike, pError: NativePointer): boolean;
+  copyItemAtPath_toPath_error_(src: StringLike, dst: StringLike, pError: NativePointer): boolean;
+  createDirectoryAtPath_withIntermediateDirectories_attributes_error_(
+    path: StringLike, intermediate: boolean, attributes: NSFileAttribute, pError: NativePointer): boolean;
+}
+
 function ok<T>(block: WithNSErrorChecker<T>) {
   const pError = Memory.alloc(Process.pointerSize).writePointer(NULL)
   const result = block(pError)
@@ -38,25 +52,16 @@ function ok<T>(block: WithNSErrorChecker<T>) {
   return result
 }
 
-interface NSFileManager extends NSObject {
-  contentsOfDirectoryAtPath_error_(path: string, pError: NativePointer): NSArray<NSObject>;
-  fileExistsAtPath_isDirectory_(path: string, pIsDir: NativePointer): boolean;
-  attributesOfItemAtPath_error_(path: NSString, pError: NativePointer): NSDictionary<string, NSObject>;
-  removeItemAtPath_error_(path: string, pError: NativePointer): boolean;
-  moveItemAtPath_toPath_error_(src: string, dst: string, pError: NativePointer): boolean;
-  copyItemAtPath_toPath_error_(src: string, dst: string, pError: NativePointer): boolean;
-}
-
 const fileManager = ObjC.classes.NSFileManager.defaultManager() as NSFileManager
 
 function readdir(path: string, max = 500, folderOnly = false): File[] {
-  const list = ok<NSArray<NSObject>>(pError =>
+  const list = ok(pError =>
     fileManager.contentsOfDirectoryAtPath_error_(path, pError))
 
   const pIsDir = Memory.alloc(Process.pointerSize)
   const count = list.count()
   const result = []
-  const nsPath = ObjC.classes.NSString.stringWithString_(path)
+  const nsPath = ObjC.classes.NSString.stringWithString_(path) as NSString
   for (let i = 0, j = 0; i < count; i++) {
     const filename = list.objectAtIndex_(i)
     const absolute = nsPath.stringByAppendingPathComponent_(filename)
@@ -131,9 +136,9 @@ export function plist(path: string) {
 const NSUTF8StringEncoding = 4
 
 export function write(path: string, text: string) {
-  return ok<NSString>(pError =>
+  return ok(pError =>
     ObjC.classes.NSString.stringWithString_(text)
-      .writeToFile_atomically_encoding_error_(path, NULL, NSUTF8StringEncoding, pError))
+      .writeToFile_atomically_encoding_error_(path, NULL, NSUTF8StringEncoding, pError) as boolean)
 }
 
 export function remove(path: string) {
@@ -151,7 +156,7 @@ export function copy(src: string, dst: string) {
     fileManager.copyItemAtPath_toPath_error_(src, dst, pError))
 }
 
-export async function text(path: string) {
+export function text(path: string) {
   const SIZE = 1024 * 1024 // max read size: 1MB
 
   const handle = ObjC.classes.NSFileHandle.fileHandleForReadingAtPath_(path)
@@ -159,6 +164,39 @@ export async function text(path: string) {
   const data = handle.readDataUpToLength_error_(SIZE, NULL)
   handle.closeAndReturnError_(NULL)
   return ObjC.classes.NSString.alloc().initWithData_encoding_(data, NSUTF8StringEncoding).toString()
+}
+
+export function mkdir(path: string) {
+  return ok(pError =>
+    fileManager.createDirectoryAtPath_withIntermediateDirectories_attributes_error_(
+      path, true, NULL, pError))
+}
+
+const attributeLookup = {
+  owner: 'NSFileOwnerAccountName',
+  size: 'NSFileSize',
+  creation: 'NSFileCreationDate',
+  permission: 'NSFilePosixPermissions',
+  type: 'NSFileType',
+  group: 'NSFileGroupOwnerAccountName',
+  modification: 'NSFileModificationDate',
+  protection: 'NSFileProtectionKey'
+}
+
+interface FileAttribute {
+  owner: string;
+  size: number;
+  creation: number;
+  permission: number;
+  uid: number;
+  gid: number;
+  type: string;
+}
+
+export function attributes(path: string) {
+  const dict = ok(pError => fileManager.attributesOfItemAtPath_error_(path, pError))
+
+
 }
 
 export async function download(path: string) {
