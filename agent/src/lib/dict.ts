@@ -6,7 +6,7 @@ const NSPropertyListImmutable = 0
 export function valueOf(value: _Nullable<ObjC.Object>): any {
   if (!value) return null
 
-  const { NSArray, NSDictionary, NSNumber, __NSCFBoolean } = ObjC.classes
+  const { NSArray, NSDictionary, NSNumber, __NSCFBoolean, NSDate } = ObjC.classes
   if (value.isKindOfClass_(__NSCFBoolean))
     return value.boolValue()
   if (value.isKindOfClass_(NSArray))
@@ -15,6 +15,8 @@ export function valueOf(value: _Nullable<ObjC.Object>): any {
     return toJsDict(value as NSDictionary<ObjC.Object, ObjC.Object>)
   if (value.isKindOfClass_(NSNumber))
     return parseFloat(value.toString()) // might lost precision
+  if (value.isKindOfClass_(NSDate))
+    return new Date(value.timeIntervalSince1970() * 1000)
   return value.toString()
 }
 

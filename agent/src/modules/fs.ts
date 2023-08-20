@@ -1,34 +1,32 @@
-import { NSHomeDirectory, NSTemporaryDirectory, attrs, Attributes } from '../lib/foundation.js'
+import { NSHomeDirectory, NSTemporaryDirectory } from '../lib/foundation.js'
 import { open } from '../lib/libc.js'
 import { valueOf } from '../lib/dict.js'
 import uuid from '../lib/uuid.js'
 import { NSArray, NSDictionary, NSObject, NSString, StringLike, _Nullable } from '../objc-types.js'
 
-const AttributeKeyNames = [
-  'NSFileCreationDate',
-  'NSFileGroupOwnerAccountID',
-  'NSFileGroupOwnerAccountName',
-  'NSFileModificationDate',
-  'NSFileOwnerAccountID',
-  'NSFileOwnerAccountName',
-  'NSFilePosixPermissions',
-  'NSFileSize',
-  'NSFileType',
-  'NSFileProtectionKey'
-] as const
+import { FileManager } from '../rpctypes.js'
 
-const AttributeKeysAsNSString = AttributeKeyNames.map(
-  name => Module.findExportByName('Foundation', name)!.readPointer() as unknown as NSString)
+import File = FileManager.File
+import Attributes = FileManager.Attributes
 
-type FileAttributeKey = typeof AttributeKeyNames[number]
-type NSFileAttribute = NSDictionary<FileAttributeKey, NSObject>
+const ATTR_KEYS_MAPPING = {
+  uid: 'NSFileOwnerAccountID',
+  owner: 'NSFileOwnerAccountName',
+  size: 'NSFileSize',
+  creation: 'NSFileCreationDate',
+  permission: 'NSFilePosixPermissions',
+  gid: 'NSFileGroupOwnerAccountID',
+  type: 'NSFileType',
+  group: 'NSFileGroupOwnerAccountName',
+  modification: 'NSFileModificationDate',
+  protection: 'NSFileProtectionKey'
+} as const
 
-interface File {
-  type: 'file' | 'directory';
-  name: string;
-  path: string;
-  attribute: Attributes; // todo: update to FileAttribute
-}
+const NSFileAttributeKeyValues = [...Object.values(ATTR_KEYS_MAPPING)]
+
+type AttributeKey = keyof typeof ATTR_KEYS_MAPPING
+type NSAttributeKey = typeof NSFileAttributeKeyValues[number]
+type NSFileAttribute = NSDictionary<NSAttributeKey, NSObject>
 
 type WithNSErrorChecker<T> = (err: NativePointer) => T
 
@@ -73,9 +71,9 @@ function readdir(path: string, max = 500, folderOnly = false): File[] {
     if (isFile && filename.toString().match(/^frida-([a-zA-z0-9]+)\.dylib$/)) continue
     if (j++ > max) break
 
-    let attribute = {} as Attributes
+    let attribute: Attributes | null = null
     try {
-      attribute = attrs(absolute);
+      attribute = attributes(absolute);
     } catch (e) {
       console.warn(`Eror: unable to get attribute of ${absolute}`)
       console.warn(`Reason: ${e}`)
@@ -169,34 +167,18 @@ export function text(path: string) {
 export function mkdir(path: string) {
   return ok(pError =>
     fileManager.createDirectoryAtPath_withIntermediateDirectories_attributes_error_(
-      path, true, NULL, pError))
+      path, true, null, pError))
 }
 
-const attributeLookup = {
-  owner: 'NSFileOwnerAccountName',
-  size: 'NSFileSize',
-  creation: 'NSFileCreationDate',
-  permission: 'NSFilePosixPermissions',
-  type: 'NSFileType',
-  group: 'NSFileGroupOwnerAccountName',
-  modification: 'NSFileModificationDate',
-  protection: 'NSFileProtectionKey'
-}
-
-interface FileAttribute {
-  owner: string;
-  size: number;
-  creation: number;
-  permission: number;
-  uid: number;
-  gid: number;
-  type: string;
-}
-
-export function attributes(path: string) {
+export function attributes(path: StringLike) {
   const dict = ok(pError => fileManager.attributesOfItemAtPath_error_(path, pError))
+  const result: Partial<Attributes> = {}
+  for (const [jsKey, ocKey] of Object.entries(ATTR_KEYS_MAPPING)) {
+    const value = dict.objectForKey_(ocKey)
+    result[jsKey as AttributeKey] = valueOf(value)
+  }
 
-
+  return result as Attributes
 }
 
 export async function download(path: string) {
@@ -205,8 +187,8 @@ export async function download(path: string) {
   const watermark = 10 * 1024 * 1024
   const subject = 'download'
 
-  const { size, type } = attrs(path)
-  if (type.toString() === 'NSFileTypeDirectory') {
+  const { size, type } = attributes(path)
+  if (type && type.toString() === 'NSFileTypeDirectory') {
     throw new Error(`${path} is a directory`)
   }
 

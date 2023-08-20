@@ -74,3 +74,25 @@ export interface UIDumpNode {
   preview?: ArrayBuffer;
   delegate?: UIDelegate;
 }
+
+export namespace FileManager {
+  export interface File {
+    type: 'file' | 'directory' | 'symlink';
+    name: string;
+    path: string;
+    attribute: Attributes | null;
+  }
+
+  export interface Attributes {
+    uid: number;
+    owner: string;
+    size: number;
+    creation: number;
+    permission: number;
+    gid: number;
+    type?: string;
+    group: string;
+    modification: number;
+    protection: string;
+  }
+}
