@@ -1,29 +1,30 @@
-const { NSBundle, NSString } = ObjC.classes
+const mainBundle = ObjC.classes.NSBundle.mainBundle()
+
 const copyClassNamesForImage = new NativeFunction(
   Module.findExportByName(null, 'objc_copyClassNamesForImage')!, 'pointer', ['pointer', 'pointer']
 )
 
 export function dump(path?: string): string[] {
-  const filename = path || NSBundle.mainBundle().executablePath().toString()
+  const filename = path || mainBundle.executablePath().toString()
   const image = Memory.allocUtf8String(filename)
 
   const p = Memory.alloc(Process.pointerSize).writePointer(NULL)
   const pClasses = copyClassNamesForImage(image, p) as NativePointer
   const count = p.readUInt()
-  const classes = new Array(count)
+  const classes = new Array<string>(count)
   for (let i = 0; i < count; i++) {
     const pClassName = pClasses.add(i * Process.pointerSize).readPointer()
-    classes[i] = pClassName.readUtf8String()
+    classes[i] = pClassName.readUtf8String() as string
   }
   ObjC.api.free(pClasses)
   return classes
 }
 
-const normalize = (path: string) => NSString.stringWithString_(path).stringByResolvingAndStandardizingPath().toString()
+const normalize = (path: string) => ObjC.classes.NSString.stringWithString_(path).stringByResolvingAndStandardizingPath().toString()
 const flattern = (array: any[]) => array.reduce((sum, item) => sum.concat(item), [])
 
 export function ownClasses(): string[] {
-  const bundle = normalize(NSBundle.mainBundle().bundlePath())
+  const bundle = normalize(mainBundle.bundlePath())
   const result = Process.enumerateModules()
     .filter(mod => normalize(mod.path).startsWith(bundle))
     .map(mod => dump(mod.path))
