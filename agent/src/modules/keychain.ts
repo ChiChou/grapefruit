@@ -11,6 +11,21 @@ const SecItemUpdate = new NativeFunction(Module.findExportByName('Security', 'Se
 const SecItemDelete = new NativeFunction(Module.findExportByName('Security', 'SecItemDelete')!, 'int', ['pointer'])
 const SecAccessControlCreateWithFlags = new NativeFunction(Module.findExportByName('Security', 'SecAccessControlCreateWithFlags')!, 'pointer', ['pointer', 'pointer', 'int', 'pointer'])
 
+// todo: convert code
+const AttributeKeysValues = [
+  'kSecAttrService',
+  'kSecAttrAccount',
+  'kSecAttrGeneric',
+  'kSecAttrSecurityDomain',
+  'kSecAttrServer',
+  'kSecAttrProtocol',
+  'kSecAttrAuthenticationType',
+  'kSecAttrPort',
+  'kSecAttrPath'
+] as const
+
+type AttributeKeys = typeof AttributeKeysValues[number]
+
 namespace KeyChain {
   // https://developer.apple.com/documentation/security/keychain_services/keychain_items/item_attribute_keys_and_values#2882540
 
