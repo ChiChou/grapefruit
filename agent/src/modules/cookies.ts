@@ -44,7 +44,8 @@ export function list(): Cookie[] {
       version: cookie.version(),
       name: cookie.name().toString(),
       value: cookie.value().toString(),
-      expiresDate: new Date(cookie.expiresDate().timeIntervalSince1970() * 1000),
+      expiresDate: cookie.expiresDate() ? 
+        new Date(cookie.expiresDate().timeIntervalSince1970() * 1000) : new Date(),
       domain: cookie.domain().toString(),
       path: cookie.path().toString(),
       isSecure: cookie.isSecure(),
