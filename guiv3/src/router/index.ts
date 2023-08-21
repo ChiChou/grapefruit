@@ -31,6 +31,7 @@ const routes = [
     path: '/workspace/:mode(device|simulator)/:udid/:bundle',
     name: 'workspace',
     component: WorkspaceView,
+    redirect: { name: 'general' },
     children: [{
       path: 'general',
       component: () => import('@/views/panels/GeneralTab.vue'),
@@ -46,7 +47,8 @@ const routes = [
     }, {
       path: 'finder',
       component: () => import('@/views/panels/FinderTab.vue'),
-      name: 'finder', // todo: children
+      name: 'finder',
+      redirect: { name: 'finder-home' },
       children: [{
         path: 'docs',
         component: () => import('@/views/panels/FoldersTree.vue'),
