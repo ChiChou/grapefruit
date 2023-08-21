@@ -47,6 +47,15 @@ const routes = [
       path: 'finder',
       component: () => import('@/views/panels/FinderTab.vue'),
       name: 'finder', // todo: children
+      children: [{
+        path: 'docs',
+        component: () => import('@/views/panels/FoldersTree.vue'),
+        name: 'finder-home',
+      }, {
+        path: 'bundle',
+        component: () => import('@/views/panels/FoldersTree.vue'),
+        name: 'finder-app',
+      }]
     }]
   }
 ]
