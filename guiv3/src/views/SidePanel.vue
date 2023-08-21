@@ -94,7 +94,7 @@ onMounted(() => {
 
       <n-popover trigger="hover" v-for="(tab, i) in tabs" placement="right">
         <template #trigger>
-          <router-link :to="tab.to">
+          <router-link :to="{ name: tab.to }">
             <n-icon :component="tab.icon" :size="24"></n-icon>
           </router-link>
         </template>
