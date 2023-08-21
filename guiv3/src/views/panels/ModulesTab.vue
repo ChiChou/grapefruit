@@ -10,7 +10,8 @@
             <span>{{ m.name }}</span>
           </template>
           <template #default>
-            <span>{{ m.base }}</span>&nbsp;
+            <span>{{ m.base }}</span>
+            <br />
             <code>{{ m.path }}</code>
           </template>
         </n-tooltip>
