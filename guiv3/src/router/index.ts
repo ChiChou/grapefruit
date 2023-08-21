@@ -28,13 +28,8 @@ const routes = [
     }]
   },
   {
-    path: '/workspace/device/:udid/:bundle',
-    name: 'app',
-    component: WorkspaceView
-  },
-  {
-    path: '/workspace/simulator/:udid/:bundle',
-    name: 'simapp',
+    path: '/workspace/:mode(device|simulator)/:udid/:bundle',
+    name: 'workspace',
     component: WorkspaceView
   }
 ]

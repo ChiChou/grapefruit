@@ -18,9 +18,6 @@ import { manager } from '@/plugins/tab'
 
 import * as regulation from '@/regulation'
 
-const isSimulator = () => route.name === 'simapp'
-const isDevice = () => route.name === 'app'
-
 const SIDEBAR_WIDTH_KEY = 'sidebar-width'
 const sideWidth = ref(getInt(SIDEBAR_WIDTH_KEY, 20))
 const TERM_HEIGHT_KEY = 'term-height'
@@ -64,6 +61,10 @@ function resizing(data: SizeData[]) {
 const route = useRoute()
 const router = useRouter()
 const { udid, bundle } = route.params
+const mode = route.params.mode as string
+
+const isSimulator = () => mode === 'simulator'
+const isDevice = () => mode === 'device'
 
 // todo: GUI
 if (typeof bundle !== 'string') {
@@ -80,7 +81,7 @@ if (regulation.check(bundle)) {
   throw new Error('According to local regulations, Grapefruit is not working on current app')
 }
 
-const socket = io('/session', { query: { mode: isSimulator() ? 'simulator' : 'device', udid, bundle }, transports: ['websocket'] })
+const socket = io('/session', { query: { mode, udid, bundle }, transports: ['websocket'] })
 const status = ref('connecting')
 
 provide(WS, socket)
