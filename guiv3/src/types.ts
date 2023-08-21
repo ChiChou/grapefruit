@@ -7,7 +7,6 @@ export type PlistNode = {[key: string]: PlistValue}
 export type PlistValue = PlistNode | string | number | boolean | PlistNode[]
 
 // WorkspaceView
-export const ACTIVE_SIDE_PANEL = Symbol('sidebar') as InjectionKey<Ref<number>>
 export const SIDE_PANEL_HEIGHT = Symbol('sidebarHeight') as InjectionKey<Ref<number>>
 export const DARK = Symbol('dark') as InjectionKey<Ref<boolean>>
 

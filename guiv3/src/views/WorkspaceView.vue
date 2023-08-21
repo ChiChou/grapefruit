@@ -13,7 +13,7 @@ import DarkMode from '@/components/DarkMode.vue'
 import Layout from '@/components/Layout.vue'
 
 import { useRPC } from '@/wsrpc'
-import { SESSION_DETACH, RPC, STATUS, WS, ACTIVE_SIDE_PANEL, SPACE_WIDTH, SPACE_HEIGHT, TAB_EMITTER } from '@/types'
+import { SESSION_DETACH, RPC, STATUS, WS, SPACE_WIDTH, SPACE_HEIGHT, TAB_EMITTER } from '@/types'
 import { manager } from '@/plugins/tab'
 
 import * as regulation from '@/regulation'
@@ -139,9 +139,6 @@ function detach() {
 provide(SESSION_DETACH, detach)
 
 onBeforeUnmount(() => socket.close())
-
-const activeSidebar = ref(0)
-provide(ACTIVE_SIDE_PANEL, activeSidebar)
 
 provide(TAB_EMITTER, manager)
 

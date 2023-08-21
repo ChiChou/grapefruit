@@ -30,7 +30,24 @@ const routes = [
   {
     path: '/workspace/:mode(device|simulator)/:udid/:bundle',
     name: 'workspace',
-    component: WorkspaceView
+    component: WorkspaceView,
+    children: [{
+      path: 'general',
+      component: () => import('@/views/panels/GeneralTab.vue'),
+      name: 'general',
+    }, {
+      path: 'modules',
+      component: () => import('@/views/panels/ModulesTab.vue'),
+      name: 'modules',
+    }, {
+      path: 'classes',
+      component: () => import('@/views/panels/ClassesTab.vue'),
+      name: 'classes',
+    }, {
+      path: 'finder',
+      component: () => import('@/views/panels/FinderTab.vue'),
+      name: 'finder', // todo: children
+    }]
   }
 ]
 

@@ -20,13 +20,13 @@ import {
 import {
   Braces
 } from '@vicons/tabler'
-import { ACTIVE_SIDE_PANEL, SIDE_PANEL_HEIGHT } from '@/types'
-import { onUnmounted } from 'vue'
+import { SIDE_PANEL_HEIGHT } from '@/types'
 
 type TabOption = {
   label: string;
   icon: Comp;
   page: Comp;
+  to: string;
 }
 
 const tabs: TabOption[] = [
@@ -34,36 +34,39 @@ const tabs: TabOption[] = [
     label: 'General',
     icon: HomeSharp,
     page: GeneralTab,
+    to: 'general',
   },
   {
     label: 'Modules',
     icon: ViewModuleSharp,
     page: ModulesTab,
+    to: 'modules',
   },
   {
     label: 'Classes',
     icon: Braces,
     page: ClassesTab,
+    to: 'classes',
   },
   {
     label: 'Finder',
     icon: FolderSharp,
     page: FinderTab,
+    to: 'finder',
   },
-  {
-    label: 'Terminal',
-    icon: TerminalSharp,
-    page: REPLTab,
-  },
-  {
-    label: 'JavaScriptCore',
-    icon: ExploreRound,
-    page: JSCTab,
-  }
+  // {
+  //   label: 'Terminal',
+  //   icon: TerminalSharp,
+  //   page: REPLTab,
+  //   to: 'terminal',
+  // },
+  // {
+  //   label: 'JavaScriptCore',
+  //   icon: ExploreRound,
+  //   page: JSCTab,
+  //   to: 'jsc',
+  // }
 ]
-
-const KEY = 'ACTIVE_TAB'
-const index = inject(ACTIVE_SIDE_PANEL)!
 
 const height = ref(0)
 provide(SIDE_PANEL_HEIGHT, height)
@@ -78,16 +81,9 @@ function updateSize() {
 const resizeObserver = new ResizeObserver(updateSize)
 
 onMounted(() => {
-  const i = parseInt(sessionStorage.getItem(KEY) || '0')
-  index.value = i
   resizeObserver.observe(el.value!)
   updateSize()
 })
-
-function select(i: number) {
-  index.value = i
-  sessionStorage.setItem(KEY, i.toString())
-}
 
 </script>
 
@@ -98,15 +94,15 @@ function select(i: number) {
 
       <n-popover trigger="hover" v-for="(tab, i) in tabs" placement="right">
         <template #trigger>
-          <a @click="select(i)" :class="{ 'is-active': index === i }">
+          <router-link :to="tab.to">
             <n-icon :component="tab.icon" :size="24"></n-icon>
-          </a>
+          </router-link>
         </template>
         <span>{{ tab.label }}</span>
       </n-popover>
     </nav>
     <aside class="side" ref="el">
-      <component :is="tabs[index].page"></component>
+      <router-view></router-view>
     </aside>
   </div>
 </template>
