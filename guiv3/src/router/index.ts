@@ -59,7 +59,9 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const { title } = to.meta
-  document.title = typeof title === 'string' ? title : 'Grapefruit'
+  if (typeof title === 'string' && title !== document.title) {
+    document.title = title
+  }
   next();
 })
 
