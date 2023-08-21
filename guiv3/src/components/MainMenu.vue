@@ -30,7 +30,6 @@ import {
   BrandGithub,
   BrandDiscord,
   BrandTwitter,
-  BrandPatreon,
   BrandPaypal,
 } from '@vicons/tabler'
 
@@ -254,13 +253,12 @@ const menuOptions: MenuOption[] = [
           h(
             'a',
             {
-              href: 'https://www.patreon.com/codecolorist',
+              href: 'https://github.com/sponsors/ChiChou',
               target: '_blank',
               rel: 'noopenner noreferrer'
             },
-            'Become a Patreon'
+            'Support on GitHub'
           ),
-        icon: renderIcon(BrandPatreon),
       },
       {
         label: () =>
