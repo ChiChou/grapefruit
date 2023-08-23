@@ -57,7 +57,7 @@ export function enumerate() {
   function* gen() {
     for (let i = 0; i < keys.count(); i++) {
       const key = keys.objectAtIndex_(i)
-      const value = asDict.objectForKey_(key)
+      const value = asDict.objectForKey_(key) as NSObject
 
       yield [key.toString(), {
         type: typeName(value),
