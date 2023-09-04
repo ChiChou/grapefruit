@@ -10,7 +10,7 @@ export function flags(): CheckSecFlags {
     pie: pie(main),
     arc: uniqueNames.has('objc_release'),
     canary: uniqueNames.has('__stack_chk_guard'),
-    encrypted: encryptionInfo(main)?.size > 0
+    encrypted: encryptionInfo(main)?.cryptid === 1
   }
 }
 
