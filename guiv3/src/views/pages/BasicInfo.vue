@@ -60,8 +60,8 @@ import { useRoute } from 'vue-router';
 
 
 const route = useRoute()
-const { udid, bundle } = route.params as { udid: string, bundle: string }
-const icon = `/api/${route.name === 'app' ? 'device' : 'sim'}/${udid}/icon/${bundle}`
+const { udid, bundle, mode } = route.params as { udid: string, bundle: string, mode: 'device' | 'simulator' }
+const icon = `/api/${mode}/${udid}/icon/${bundle}`
 
 const props = defineProps(tabProps)
 const { entitle, rpc } = useTabCommons(props.tabId!)
