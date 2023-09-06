@@ -3,7 +3,7 @@ import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useLoadingBar } from 'naive-ui'
 import { io } from 'socket.io-client'
 
-import axios from '@/plugins/axios'
+import * as api from '@/plugins/api'
 
 import DarkMode from '@/components/DarkMode.vue'
 
@@ -18,6 +18,12 @@ interface SimulatorInfo {
   state: SimulatorState;
   name: string;
   udid: string;
+}
+
+interface DevicesResponse {
+  list: DeviceInfo[];
+  version: string;
+  node: string;
 }
 
 type SimulatorState = 'Shutdown' | 'Booted'
@@ -41,14 +47,14 @@ onBeforeUnmount(() => socket.close())
 const loadingBar = useLoadingBar()
 
 function reloadSimulators() {
-  axios.get('/simulators').then(({ data }) => { simulators.value = data })
+  api.get<SimulatorInfo[]>('/simulators').then(data => { simulators.value = data })
 }
 
 function refresh() {
   loadingBar.start()
   loading.value = true
-  axios.get('/devices')
-    .then(({ data }) => {
+  api.get<DevicesResponse>('/devices')
+    .then( data => {
       devices.value = data.list
       version.value = data.version
       node.value = data.node

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import axios from '@/plugins/axios'
 import { computed } from '@vue/reactivity'
+import * as api from '@/plugins/api'
 
 import { useLoadingBar } from 'naive-ui'
 import { ref, onMounted, watch, nextTick } from 'vue'
@@ -41,12 +41,12 @@ async function refresh(id: string) {
   simapps.value = apps.value = []
 
   const prefix = isSimulator() ? 'sim' : 'device'
-  axios.get(`${prefix}/${id}/apps`)
-    .then(({ data }) => {
+  api.get<any[]>(`/${prefix}/${id}/apps`)
+    .then((data) => {
       if (isSimulator()) {
-        simapps.value = data
+        simapps.value = data as SimAppInfo[]
       } else {
-        apps.value = data
+        apps.value = data as App[]
       }
 
       document.querySelectorAll('img.lazy').forEach(e => observer.unobserve(e))

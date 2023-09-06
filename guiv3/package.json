@@ -10,7 +10,6 @@
   "dependencies": {
     "@vicons/fluent": "^0.12.0",
     "@vicons/tabler": "^0.12.0",
-    "axios": "^0.26.1",
     "golden-layout": "^2.6.0",
     "naive-ui": "^2.27.0",
     "socket.io-client": "^4.7.2",
