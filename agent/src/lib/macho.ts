@@ -1,5 +1,3 @@
-import c from '../../gen/macho.c.js'
-
 const MH_EXECUTE = 0x2;
 const MH_DYLIB = 0x6;
 const MH_DYLINKER = 0x7;
