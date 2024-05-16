@@ -16,6 +16,8 @@
         </n-button>
       </n-dropdown>
     </div>
+
+    <DarkMode />
   </footer>
 </template>
 
@@ -23,6 +25,8 @@
 import { inject } from 'vue'
 import { PlugDisconnected24Regular } from '@vicons/fluent'
 import { STATUS, WS, SESSION_DETACH } from '@/types'
+
+import DarkMode from '@/components/DarkMode.vue'
 
 const status = inject(STATUS)
 const options = [

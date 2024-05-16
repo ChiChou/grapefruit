@@ -85,11 +85,19 @@ onMounted(() => {
   updateSize()
 })
 
+function rick() {
+  window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ', '_blank')
+}
+
 </script>
 
 <template>
   <div class="side-navigator">
     <nav class="side-nav">
+      <a href="#" class="logo" @dblclick="rick">
+        <img src="../assets/grapefruit.svg" alt="Grapefruit" width="24" height="24" id="logo" />
+      </a>
+
       <MainMenu></MainMenu>
 
       <n-popover trigger="hover" v-for="(tab, i) in tabs" placement="right">

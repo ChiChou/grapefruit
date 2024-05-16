@@ -9,7 +9,6 @@ import '@/skin/splitpane.scss'
 
 import SidePanel from './SidePanel.vue'
 import StatusBar from './StatusBar.vue'
-import DarkMode from '@/components/DarkMode.vue'
 import Layout from '@/components/Layout.vue'
 
 import { useRPC } from '@/wsrpc'
@@ -142,20 +141,10 @@ onBeforeUnmount(() => socket.close())
 
 provide(TAB_EMITTER, manager)
 
-function rick() {
-  window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ', '_blank')
-}
-
 </script>
 
 <template>
-  <div class="pane-full">
-    <header class="workspace-header">
-      <a href="#" class="logo" @dblclick="rick">
-        <img src="../assets/grapefruit.svg" alt="Grapefruit" width="24" height="24" id="logo" />
-      </a>
-      <dark-mode />
-    </header>
+  <div class="pane-full">    
     <main class="workspace-main-container">
       <splitpanes class="split-pane-container" @resize="resizing($event)" @resized="saveLayout">
       <pane min-size="10" :size="sideWidth" max-size="80">
