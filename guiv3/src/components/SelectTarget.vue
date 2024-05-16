@@ -39,7 +39,7 @@ const socket = io('/devices', { transports: ['websocket'] })
 onMounted(() => {
   socket.on('deviceChanged', refresh)
   refresh()
-  reloadSimulators()
+  // reloadSimulators()
 })
 
 onBeforeUnmount(() => socket.close())
@@ -98,7 +98,9 @@ function refresh() {
           <span v-if="devices.length === 0">No iPhone detected</span>
         </nav>
 
-        <n-divider />
+        <!-- frida is currently broken for attaching Simulator apps -->
+        <!-- https://github.com/frida/frida/issues/2763 -->
+        <!-- <n-divider />
         
         <p class="label">Simulators</p>
 
@@ -107,7 +109,7 @@ function refresh() {
             {{ sim.name }}</router-link>
 
           <span v-if="simulators.length === 0">No simulator running</span>
-        </nav>
+        </nav> -->
 
         <n-divider />
 
