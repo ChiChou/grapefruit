@@ -18,13 +18,22 @@ import Channels from './lib/channels'
 import { wrap, tryGetDevice } from './lib/device'
 
 import { URL } from 'url'
-import { exec } from 'child_process'
 import { createServer } from 'http'
 import { program } from 'commander'
 import { AddressInfo } from 'net'
 import { concat } from './lib/workspace'
 import { Scope } from 'frida/dist/device'
 import { simulators, apps as simApps, icon } from './lib/simctl'
+
+interface StartRequestBody {
+  device: string;
+  bundle: string;
+  url: string;
+}
+
+interface AddRemoteRequestBody {
+  host: string;
+}
 
 const ISDEBUG = process.env.NODE_ENV === 'development'
 
@@ -61,6 +70,7 @@ router
     }).map(wrap).map(d => d.valueOf())
 
     ctx.body = {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       version: require('frida/package.json').version,
       node: process.version,
       list
@@ -81,6 +91,7 @@ router
   })
   .get('/sim/:udid/icon/:bundle', async (ctx) => {
     const { udid, bundle } = ctx.params
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const iconPath = await icon(udid, bundle).catch(e => res('app.png'))
     ctx.type = 'image/png'
     ctx.body = fs.createReadStream(iconPath)
@@ -122,14 +133,14 @@ router
     }
   })
   .post('/url/start', async (ctx) => {
-    const { device, bundle, url } = ctx.request.body
+    const { device, bundle, url } = ctx.request.body as StartRequestBody
     const dev = await frida.getDevice(device)
     const pid = await dev.spawn([bundle], { url })
     await dev.resume(pid)
     ctx.body = { status: 'ok', pid }
   })
   .put('/remote/add', async (ctx) => {
-    const { host } = ctx.request.body
+    const { host } = ctx.request.body as AddRemoteRequestBody
     try {
       const dev = await mgr.addRemoteDevice(host)
       ctx.body = { status: 'ok', id: dev.id }
@@ -145,25 +156,6 @@ router
     } catch (e) {
       ctx.status = 404
       ctx.body = { status: 'failed', error: e.message }
-    }
-  })
-  .get('/update', async (ctx) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const task = new Promise((resolve, reject) =>
-      exec('npm view passionfruit version', (err, stdout) =>
-        err ? reject(err) : resolve(stdout.trimRight())
-      )
-    )
-
-    const current = require('../package.json').version
-    try {
-      const latest = await task
-      ctx.body = {
-        current,
-        latest
-      }
-    } catch (err) {
-      ctx.throw(500, `failed to check update\n${err}`)
     }
   })
   .get('/types', async (ctx) => {
@@ -231,6 +223,7 @@ async function main(): Promise<void> {
   const base = concat('scripts')
   router
     .param('script', (script, ctx, next) => {
+      // eslint-disable-next-line no-useless-escape
       if (!script.match(/^[\w-_\.]+\.[jt]s$/)) {
         ctx.status = 404
         return
@@ -285,8 +278,10 @@ async function main(): Promise<void> {
   const server = createServer(app.callback())
   const channels = new Channels(server)
   channels.connect()
-  server.listen(program.port, program.host)
-  server.on('listening', () => {
+  const port = program.getOptionValue('port') as number
+  const host = program.getOptionValue('host') as string
+
+  server.listen(port, host, () => {
     const addr = server.address() as AddressInfo
     console.log(`Grapefruit running on http://${addr.address}:${addr.port}`)
   })

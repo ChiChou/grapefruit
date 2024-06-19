@@ -1,4 +1,4 @@
-import cp, { execFile } from 'child_process'
+import cp from 'child_process'
 import path from 'path'
 import fs from 'fs'
 import os from 'os'
@@ -11,6 +11,7 @@ const OPT = { timeout: 3000 }
 const exec = promisify(cp.execFile)
 
 function* available(result: ListResult) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   for (const [runtimeId, models] of Object.entries(result.devices)) {
     for (const model of models) {
       if (model.isAvailable && model.state === 'Booted') {
@@ -37,6 +38,7 @@ export async function launch(udid: string, bundle: string): Promise<number> {
 export async function findRunning(udid: string, bundle: string): Promise<number> {
   const { stdout } = await exec('/usr/bin/xcrun', ['simctl', 'spawn', udid, 'launchctl', 'list'], OPT)
   for (const line of stdout.split(os.EOL)) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [pid, status, label] = line.split('\t')
     if (label.startsWith(`UIKitApplication:${bundle}`)) {
       return parseInt(pid, 10)
@@ -57,6 +59,7 @@ async function appsInternal(udid: string): Promise<Apps> {
     const chunks = []
     plutil.stdout.on('data', chunk => chunks.push(chunk))
     plutil
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       .once('exit', (code, sig) => {
         if (code !== 0)
           reject(new Error(`process exited with code ${code}`))
@@ -76,6 +79,7 @@ async function appsInternal(udid: string): Promise<Apps> {
 
 export async function apps(udid: string): Promise<SimAppInfo[]> {
   const result = []
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   for (const [bundle, app] of Object.entries(await appsInternal(udid))) {
     if (app.ApplicationType === 'User') {
       const { CFBundleDisplayName, CFBundleExecutable, CFBundleIdentifier, CFBundleName, CFBundleVersion } = app
@@ -88,7 +92,7 @@ export async function apps(udid: string): Promise<SimAppInfo[]> {
 async function iconFromApp(root: string) {
   const plist = path.join(root, 'Info.plist')
   const iconName = await new Promise((resolve, reject) => {
-    cp.execFile('/usr/bin/plutil', ['-convert', 'json', '-o', '-', plist], OPT, (err, stdout, stderr) => {
+    cp.execFile('/usr/bin/plutil', ['-convert', 'json', '-o', '-', plist], OPT, (err, stdout) => {
       if (err) {
         reject(err)
       } else {
@@ -127,6 +131,7 @@ export async function icon(udid: string, bundle: string): Promise<string> {
       try {
         await fs.promises.access(cached, fs.constants.F_OK)
         return cached
+      // eslint-disable-next-line no-empty
       } catch(_) {
 
       }

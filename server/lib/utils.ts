@@ -7,7 +7,7 @@ export async function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-export async function retry(operation: Function, opt?: RetryOption): Promise<boolean> {
+export async function retry(operation: () => boolean, opt?: RetryOption): Promise<boolean> {
   if (typeof operation !== 'function') throw new Error('operation should be a function')
 
   const interval = opt?.interval || 200

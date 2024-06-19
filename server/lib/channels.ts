@@ -3,7 +3,7 @@ import * as frida from 'frida'
 import http from 'http'
 
 import { Server, Namespace } from 'socket.io'
-import REPL from './repl'
+import REPL, { Result } from './repl'
 import * as transfer from './transfer'
 import { wrap, tryGetDevice, getSimulator } from './device'
 import { connect, proxy } from './rpc'
@@ -11,11 +11,6 @@ import { connect, proxy } from './rpc'
 import { MessageType } from 'frida/dist/script'
 
 const mgr = frida.getDeviceManager()
-
-interface RPCPacket {
-  method: string;
-  args?: object[];
-}
 
 export default class Channels {
   socket: Server
@@ -150,6 +145,7 @@ export default class Channels {
       const repl = new REPL(session)
 
       repl
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         .on('destroyed', ({ uuid }) => {
           console.log('implement me: script destroy')
           socket.emit('userscriptdestroy')
@@ -165,11 +161,11 @@ export default class Channels {
           socket.emit('console', level, `(user script) ${text}`)
         })
 
-      socket.on('userscript', async (source: string, uuid: string, ack: Function) => {
+      socket.on('userscript', async (source: string, uuid: string, ack: (result: Result) => void) => {
         ack(await repl.eval(source, uuid))
       })
 
-      socket.on('removescript', async (uuid: string, ack: Function) => {
+      socket.on('removescript', async (uuid: string, ack: (result: boolean) => void) => {
         try {
           await repl.remove(uuid)
         } catch(e) {

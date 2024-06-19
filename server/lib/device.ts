@@ -4,7 +4,7 @@ import { DeviceType } from 'frida/dist/device'
 import * as serialize from './serialize'
 import { findRunning, launch, simulators } from './simctl'
 import { SimulatorInfo } from '../api/sim'
-import { AppNotFoundError, EarlyInstrumentError, DeviceNotFoundError, InvalidDeviceError, VersionMismatchError } from './error'
+import { AppNotFoundError, DeviceNotFoundError, InvalidDeviceError, VersionMismatchError } from './error'
 
 export async function match(prefix: string): Promise<Device> {
   const list = await enumerateDevices()

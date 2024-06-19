@@ -6,7 +6,7 @@ import path from 'path'
 
 type status = 'ok' | 'failed'
 
-interface Result {
+export interface Result {
   status: status;
   type?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
