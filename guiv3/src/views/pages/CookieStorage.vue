@@ -27,7 +27,7 @@ import { DataTableColumns } from 'naive-ui/lib/data-table'
 import { RefreshFilled, DeleteForeverFilled, EditSharp, DeleteFilled } from '@vicons/material'
 
 import { tabProps, useTabCommons } from '@/plugins/tab'
-import { Cookie } from '@/rpctypes'
+import { Cookie } from '@/rpc/modules/cookies'
 
 const props = defineProps(tabProps)
 const { entitle, rpc } = useTabCommons(props.tabId!)

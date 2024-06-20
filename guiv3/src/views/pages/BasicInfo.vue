@@ -54,7 +54,7 @@
 
 <script lang="ts" setup>
 import { onMounted, Ref, ref } from 'vue'
-import { BasicInfo, CheckSecFlags } from '@/rpctypes'
+import { BasicInfo, CheckSecFlags } from '@/rpc/modules/info'
 import { useTabCommons, tabProps } from '@/plugins/tab'
 import { useRoute } from 'vue-router';
 

@@ -1,6 +1,32 @@
 import { toJsArray } from '../lib/dict.js';
 import { NSDictionary, NSArray, NSDate, NSObject, NSNumber, NSURL } from '../objc-types.js';
-import { Cookie, CookiePredicate } from '../rpctypes.js';
+
+
+export type CookiePredicate = Partial<{
+  name: string;
+  domain: string;
+  path: string;
+  isSecure: boolean;
+  isHTTPOnly: boolean;
+  isSessionOnly: boolean;
+}>
+
+export interface Cookie {
+  version: number,
+  name: string,
+  value: string,
+  expiresDate: Date,
+  domain: string,
+  path: string,
+  isSecure: boolean,
+  isHTTPOnly: boolean,
+  portList: number[],
+  comment?: string,
+  commentURL?: string,
+  isSessionOnly: boolean,
+  sameSitePolicy?: string,
+}
+
 
 interface NSHTTPCookie extends NSObject {
   version(): number;
@@ -31,7 +57,7 @@ function shared() {
   return ObjC.classes.NSHTTPCookieStorage.sharedHTTPCookieStorage() as NSHTTPCookieStorage
 }
 
-function *iter(storage: NSHTTPCookieStorage) {
+function* iter(storage: NSHTTPCookieStorage) {
   const jar = storage.cookies()
   for (let i = 0; i < jar.count(); i++) {
     yield jar.objectAtIndex_(i)
@@ -44,7 +70,7 @@ export function list(): Cookie[] {
       version: cookie.version(),
       name: cookie.name().toString(),
       value: cookie.value().toString(),
-      expiresDate: cookie.expiresDate() ? 
+      expiresDate: cookie.expiresDate() ?
         new Date(cookie.expiresDate().timeIntervalSince1970() * 1000) : new Date(),
       domain: cookie.domain().toString(),
       path: cookie.path().toString(),

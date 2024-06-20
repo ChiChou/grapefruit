@@ -4,10 +4,26 @@ import { valueOf } from '../lib/dict.js'
 import uuid from '../lib/uuid.js'
 import { NSArray, NSDictionary, NSObject, NSString, StringLike, _Nullable } from '../objc-types.js'
 
-import { FileManager } from '../rpctypes.js'
 
-import File = FileManager.File
-import Attributes = FileManager.Attributes
+export interface Item {
+  type: 'file' | 'directory' | 'symlink';
+  name: string;
+  path: string;
+  attribute: Attributes | null;
+}
+
+export interface Attributes {
+  uid: number;
+  owner: string;
+  size: number;
+  creation: number;
+  permission: number;
+  gid: number;
+  type?: string;
+  group: string;
+  modification: number;
+  protection: string;
+}
 
 const ATTR_KEYS_MAPPING = {
   uid: 'NSFileOwnerAccountID',
@@ -52,7 +68,7 @@ function ok<T>(block: WithNSErrorChecker<T>) {
 
 const fileManager = ObjC.classes.NSFileManager.defaultManager() as NSFileManager
 
-function readdir(path: string, max = 500, folderOnly = false): File[] {
+function readdir(path: string, max = 500, folderOnly = false): Item[] {
   const list = ok(pError =>
     fileManager.contentsOfDirectoryAtPath_error_(path, pError))
 
@@ -79,7 +95,7 @@ function readdir(path: string, max = 500, folderOnly = false): File[] {
       console.warn(`Reason: ${e}`)
     }
 
-    const item: File = {
+    const item: Item = {
       type: isFile ? 'file' : 'directory',
       name: filename.toString(),
       path: absolute.toString(),

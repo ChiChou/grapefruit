@@ -1,5 +1,22 @@
 import { performOnMainThread } from '../lib/dispatch.js'
-import { UIDumpNode, UIDelegate, Frame } from '../rpctypes.js';
+
+type Point = [number, number];
+type Size = [number, number];
+type Frame = [Point, Size];
+
+interface UIDelegate {
+  name?: string;
+  description?: string;
+}
+
+export interface UIDumpNode {
+  clazz: string;
+  description?: string;
+  children?: UIDumpNode[];
+  frame?: Frame;
+  preview?: ArrayBuffer;
+  delegate?: UIDelegate;
+}
 
 const CGFloat = (Process.pointerSize === 4) ? 'float' : 'double'
 const CGSize: NativeFunctionArgumentType = [CGFloat, CGFloat];
