@@ -1,5 +1,4 @@
 import './ready.js'
-import './polyfill.js'
 // import './observers/http'
 
 import { init as enableLifeCycleHook } from './observers/lifecycle.js'
