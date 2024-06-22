@@ -20,17 +20,6 @@ export interface BasicInfo {
   urls: URLScheme[];
 }
 
-export interface Entitlements {
-  [key: string]: string | boolean | number | string[];
-}
-
-export interface CheckSecFlags {
-  pie: boolean;
-  arc: boolean;
-  canary: boolean;
-  encrypted: boolean;
-}
-
 export function basics(): BasicInfo {
   const main = ObjC.classes.NSBundle.mainBundle();
   const dict = main.infoDictionary();

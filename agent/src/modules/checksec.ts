@@ -1,6 +1,17 @@
 import { fromBytes } from '../lib/dict.js';
 import { encryptionInfo, pie } from '../lib/macho.js';
-import { CheckSecFlags, Entitlements } from '../rpctypes.js';
+
+export interface Entitlements {
+  [key: string]: string | boolean | number | string[];
+}
+
+export interface CheckSecFlags {
+  pie: boolean;
+  arc: boolean;
+  canary: boolean;
+  encrypted: boolean;
+}
+
 
 export function flags(): CheckSecFlags {
   const [main, ] = Process.enumerateModules()
