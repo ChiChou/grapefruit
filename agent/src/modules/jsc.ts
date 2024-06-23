@@ -2,14 +2,12 @@ import { get as getInstance } from '../lib/choose.js'
 import { description } from '../lib/dict.js'
 import { Arr, Dict } from '../lib/iterators.js'
 
-type JSCCollection = { [handle: string]: string }
-
 export function list() {
-  const result: JSCCollection = {}
+  const result = new Map<string, string>()
   for (const instance of ObjC.chooseSync(ObjC.classes.JSContext)) {
-    result[instance.handle.toString()] = instance.toString()
+    result.set(instance.handle.toString(), instance.toString())
   }
-  return result
+  return {...result}
 }
 
 export function get(handle: string): Promise<ObjC.Object> {
