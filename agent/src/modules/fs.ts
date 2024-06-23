@@ -1,9 +1,9 @@
 import { NSHomeDirectory, NSTemporaryDirectory } from '../lib/foundation.js'
-import { open } from '../lib/libc.js'
 import { valueOf } from '../lib/dict.js'
 import uuid from '../lib/uuid.js'
 import { NSArray, NSDictionary, NSObject, NSString, StringLike, _Nullable } from '../objc-types.js'
 
+const open = new NativeFunction(Module.findExportByName(null, 'open')!, 'int', ['pointer', 'int', 'int'])
 
 export interface Item {
   type: 'file' | 'directory' | 'symlink';

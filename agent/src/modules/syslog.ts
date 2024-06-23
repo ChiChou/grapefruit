@@ -1,5 +1,7 @@
-import { pipe, dup2, close, fcntl } from '../lib/libc.js'
-
+const close = new NativeFunction(Module.findExportByName(null, 'close')!, 'int', ['int'])
+const pipe = new NativeFunction(Module.findExportByName(null, 'pipe')!, 'int', ['pointer'])
+const dup2 = new NativeFunction(Module.findExportByName(null, 'dup2')!, 'int', ['int', 'int'])
+const fcntl = new NativeFunction(Module.findExportByName(null, 'fcntl')!, 'int', ['int', 'int', 'int'])
 
 // sys/fcntl.h
 const F_SETFL = 4
