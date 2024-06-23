@@ -1,8 +1,18 @@
-import { CFSTR } from '../lib/foundation.js'
 import { valueOf } from '../lib/dict.js'
 
 for (const mod of ['Foundation', 'CoreFoundation', 'Security']) {
   Module.ensureInitialized(mod)
+}
+
+const CFStringGetCStringPtr = new NativeFunction(
+  Module.findExportByName('CoreFoundation', 'CFStringGetCStringPtr')!, 'pointer', ['pointer', 'int']);
+const CFStringGetLength = new NativeFunction(
+  Module.findExportByName('CoreFoundation', 'CFStringGetLength')!, 'int', ['pointer']);
+
+function CFSTR(p: NativePointer) {
+  const kCFStringEncodingUTF8 = 0x08000100
+  const str = CFStringGetCStringPtr(p, kCFStringEncodingUTF8) as NativePointer
+  return str.readUtf8String(CFStringGetLength(p) as number)
 }
 
 const SecItemCopyMatching = new NativeFunction(Module.findExportByName('Security', 'SecItemCopyMatching')!, 'int', ['pointer', 'pointer'])
