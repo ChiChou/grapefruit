@@ -12,10 +12,9 @@ export interface CheckSecFlags {
   encrypted: boolean;
 }
 
-
 export function flags(): CheckSecFlags {
-  const [main, ] = Process.enumerateModules()
-  const uniqueNames =  new Set(main.enumerateImports().map(({ name }) => name))
+  const [main,] = Process.enumerateModules()
+  const uniqueNames = new Set(main.enumerateImports().map(({ name }) => name))
 
   return {
     pie: pie(main),

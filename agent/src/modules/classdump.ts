@@ -56,7 +56,7 @@ function copyIvars(clazz: ObjC.Object) {
   const { pointerSize } = Process
   const numIvarsBuf = Memory.alloc(pointerSize)
   const ivarHandles = ObjC.api.class_copyIvarList(clazz.handle, numIvarsBuf)
-  const result: { [offset: string]: string } = {}
+  const result = new Map<string, string>();
 
   try {
     const numIvars = numIvarsBuf.readUInt()
@@ -64,13 +64,13 @@ function copyIvars(clazz: ObjC.Object) {
       const handle = ivarHandles.add(i * pointerSize).readPointer()
       const name = ObjC.api.ivar_getName(handle).readUtf8String() as string
       const offset = '0x' + ObjC.api.ivar_getOffset(handle).toString(16)
-      result[offset] = name
+      result.set(offset, name)
     }
   } finally {
     ObjC.api.free(ivarHandles)
   }
 
-  return result
+  return { ...result }
 }
 
 export function hierarchy(scope: string): Tree<string> {
