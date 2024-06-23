@@ -99,15 +99,15 @@ export async function dump(handle: string) {
       const window = webview.windowScriptObject()
       const keys = window.evaluateWebScript_('Object.keys(this)')
       const count = keys.valueForKey_('length')
-      const result: {[key: string]: string} = {}
+      const result = new Map<string, string>()
       for (let i = 0; i < count; i++) {
         const key = keys.webScriptValueAtIndex_(i).toString()
         if (!jsc.objectForKeyedSubscript_(key).isObject()) continue
         const obj = window.valueForKey_(key)
         if (!obj.isKindOfClass_(ObjC.classes.WebScriptObject))
-          result[key] = `<${obj.$className} ${obj.handle}>`
+          result.set(key, `<${obj.$className} ${obj.handle}>`)
       }
-      resolve(result)
+      resolve({...result})
     })
   })
 }

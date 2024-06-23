@@ -7,7 +7,7 @@ export function list() {
   for (const instance of ObjC.chooseSync(ObjC.classes.JSContext)) {
     result.set(instance.handle.toString(), instance.toString())
   }
-  return {...result}
+  return { ...result }
 }
 
 export function get(handle: string): Promise<ObjC.Object> {
@@ -61,13 +61,13 @@ export async function dump(handle: string) {
   const jsc = await get(handle)
   const topKeys = jsc.evaluateScript_('Object.keys(this)').toArray()
   const funcClass = jsc.evaluateScript_('Function')
-  const result: { [key: string]: any } = {}
+  const result = new Map<string, any>()
   for (const key of Arr.values(topKeys)) {
     const val = jsc.objectForKeyedSubscript_(key)
     if (!val.isObject()) continue
     const obj = val.toObject()
     if (val.isInstanceOf_(funcClass)) {
-      result[key] = obj.isKindOfClass_(ObjC.classes.NSBlock) ? {
+      const funcValue = obj.isKindOfClass_(ObjC.classes.NSBlock) ? {
         type: 'block',
         handle: obj.handle,
         invoke: obj.handle.add(Process.pointerSize * 2).readPointer()
@@ -76,15 +76,17 @@ export async function dump(handle: string) {
         source: val.toString()
       }
 
+      result.set(key, funcValue)
+
       if (val.toString().includes('[native code]')) {
         console.log(obj.$className)
       }
       continue
     }
-    result[key] = serialize(obj)
+    result.set(key, serialize(obj))
     console.log(key, description(obj))
   }
-  return result
+  return { ...result }
 }
 
 export async function run(handle: string, js: string) {
