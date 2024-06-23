@@ -28,7 +28,6 @@
     "server/templates",
     "gui/dist",
     "scripts",
-    "agent/system-wide",
     "agent/dist.js",
     "agent/eval.js"
   ],
