@@ -1,4 +1,4 @@
-import { toJsArray, valueOf } from '../lib/dict.js'
+import { toJsArray, valueOf } from '../bridge/dictionary.js'
 import { NSTemporaryDirectory, NSHomeDirectory } from '../lib/foundation.js'
 
 export interface URLScheme {

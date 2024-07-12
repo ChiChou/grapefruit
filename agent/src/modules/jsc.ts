@@ -1,6 +1,8 @@
 import { get as getInstance } from '../lib/choose.js'
-import { description } from '../lib/dict.js'
-import { Arr, Dict } from '../lib/iterators.js'
+import { description } from '../bridge/dictionary.js'
+
+import { NS } from '../bridge/iterators.js'
+import { NSDictionary, NSObject } from '../bridge/foundation.js'
 
 export function list() {
   const result = new Map<string, string>()
@@ -14,7 +16,7 @@ export function get(handle: string): Promise<ObjC.Object> {
   return getInstance(ObjC.classes.JSContext, handle)
 }
 
-function serialize(obj: ObjC.Object) {
+function serialize(obj: NSObject) {
   if (!obj) return obj
   if (obj.isKindOfClass_(ObjC.classes.__NSCFBoolean)) return obj.boolValue()
   if (obj.isKindOfClass_(ObjC.classes.NSNumber)) return parseFloat(obj.toString())
@@ -28,7 +30,7 @@ function serialize(obj: ObjC.Object) {
   if (obj.isKindOfClass_(ObjC.classes.NSDictionary))
     return {
       type: 'dict',
-      keys: Dict.keys(obj),
+      keys: NS.Dictionary.keys(obj as NSDictionary<NSObject, NSObject>),
       size: obj.count()
     }
 
@@ -62,7 +64,7 @@ export async function dump(handle: string) {
   const topKeys = jsc.evaluateScript_('Object.keys(this)').toArray()
   const funcClass = jsc.evaluateScript_('Function')
   const result = new Map<string, any>()
-  for (const key of Arr.values(topKeys)) {
+  for (const key of NS.Array.values(topKeys)) {
     const val = jsc.objectForKeyedSubscript_(key)
     if (!val.isObject()) continue
     const obj = val.toObject()
@@ -76,14 +78,14 @@ export async function dump(handle: string) {
         source: val.toString()
       }
 
-      result.set(key, funcValue)
+      result.set(`${key}`, funcValue)
 
       if (val.toString().includes('[native code]')) {
         console.log(obj.$className)
       }
       continue
     }
-    result.set(key, serialize(obj))
+    result.set(`${key}`, serialize(obj))
     console.log(key, description(obj))
   }
   return { ...result }

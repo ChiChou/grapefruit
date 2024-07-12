@@ -1,5 +1,5 @@
-import { toJsArray } from '../lib/dict.js';
-import { NSDictionary, NSArray, NSDate, NSObject, NSNumber, NSURL } from '../objc-types.js';
+import { toJsArray } from '../bridge/dictionary.js';
+import { NSDictionary, NSArray, NSDate, NSObject, NSNumber, NSURL } from '../bridge/foundation.js';
 
 
 export type CookiePredicate = Partial<{

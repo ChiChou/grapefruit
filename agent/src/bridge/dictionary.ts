@@ -1,4 +1,4 @@
-import { NSArray, NSDictionary, _Nullable } from "../objc-types.js"
+import { NSArray, NSDictionary, _Nullable } from "./foundation.js"
 
 /* eslint no-use-before-define: 0 */
 const NSPropertyListImmutable = 0

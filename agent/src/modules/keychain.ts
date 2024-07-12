@@ -1,4 +1,4 @@
-import { valueOf } from '../lib/dict.js'
+import { valueOf } from '../bridge/dictionary.js'
 
 for (const mod of ['Foundation', 'CoreFoundation', 'Security']) {
   Module.ensureInitialized(mod)

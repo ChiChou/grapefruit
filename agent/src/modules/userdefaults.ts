@@ -1,5 +1,5 @@
-import { valueOf } from '../lib/dict.js'
-import { NSDictionary, NSArray, NSObject, NSNumber, NSString, NSDate, NSData } from '../objc-types.js'
+import { valueOf } from '../bridge/dictionary.js'
+import { NSDictionary, NSArray, NSObject, NSNumber, NSString, NSDate, NSData } from '../bridge/foundation.js'
 
 /**
  * A default object must be a property list—that is, an instance of (or for collections, 
