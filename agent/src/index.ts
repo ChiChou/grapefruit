@@ -2,26 +2,6 @@ import './ready.js'
 
 import { init as enableLifeCycleHook } from './observers/lifecycle.js'
 
-import { interfaces, invoke, register } from './rpc.js'
-import modules from './modules/index.js'
-
-rpc.exports = {
-  interfaces,
-  invoke,
-}
-
-function registerModules() {
-  for (const [name, submodule] of Object.entries(modules)) {
-    for (const [method, func] of Object.entries(submodule as {[key: string]: Function})) {
-      if (method === 'default')
-        register(func, name)
-      else
-        register(func, [name, func.name].join('/'))
-    }
-  }
-}
-
-setImmediate(registerModules)
 setImmediate(enableLifeCycleHook)
 
 // disable autolock
