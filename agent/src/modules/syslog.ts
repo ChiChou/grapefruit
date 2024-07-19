@@ -13,9 +13,11 @@ const SIZEOF_INT = 4; // for mac & iOS
 const subject = 'syslog'
 const fildes = Memory.alloc(SIZEOF_INT * 2)
 
-let stream: UnixInputStream
+let stream: UnixInputStream | null = null
 
 export function start() {
+  if (stream) return;
+
   pipe(fildes)
 
   const input = fildes.readInt()
@@ -28,6 +30,8 @@ export function start() {
   stream = new UnixInputStream(input)
 
   function read() {
+    if (!stream) return
+
     stream.read(4096).then((buf) => {
       if (buf.byteLength)
         send({ subject }, buf)
@@ -40,6 +44,8 @@ export function start() {
 }
 
 export function stop() {
-  if (stream)
+  if (stream) {
     stream.close()
+    stream = null
+  }
 }
