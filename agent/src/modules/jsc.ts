@@ -56,7 +56,7 @@ function findJSExport(obj: ObjC.Object) {
     if ('JSExport' in prot.protocols)
       return prot
 
-  throw new Error(`${obj} does not confirms to JSExport`)
+  throw new Error(`${obj} does not confirm to JSExport`)
 }
 
 export async function dump(handle: string) {
