@@ -1,4 +1,5 @@
 import { toJsArray, valueOf } from '../bridge/dictionary.js'
+import { NSArray, NSDictionary, NSObject, StringLike } from '../bridge/foundation.js';
 import { NSTemporaryDirectory, NSHomeDirectory } from '../lib/foundation.js'
 
 export interface URLScheme {
@@ -20,26 +21,33 @@ export interface BasicInfo {
   urls: URLScheme[];
 }
 
-export function basics(): BasicInfo {
-  const main = ObjC.classes.NSBundle.mainBundle();
-  const dict = main.infoDictionary();
-
-  // collect bundle information
-  const tmp = NSTemporaryDirectory()
-  const home = NSHomeDirectory()
-
-  const BUNDLE_ATTR_MAPPING = {
-    id: 'bundleIdentifier',
-    path: 'bundlePath',
-    main: 'executablePath'
+function getLabel(info: NSDictionary<StringLike, NSObject>) {
+  for (const key of ['CFBundleDisplayName', 'CFBundleName']) {
+    const value = info.objectForKey_(key)
+    if (value) return value.toString()
   }
 
-  type MainBundleKeys = keyof typeof BUNDLE_ATTR_MAPPING
-  type MainBundleDict = Record<MainBundleKeys, string>
+  return info.objectForKey_('CFBundleAlternateNames')?.firstObject()?.toString() || 'N/A'
+}
 
-  const partial: Partial<MainBundleDict> = {}
-  for (const [key, method] of Object.entries(BUNDLE_ATTR_MAPPING))
-    partial[key as MainBundleKeys] = main[method]().toString() as string
+// collect URL schemes
+interface RawURLScheme {
+  CFBundleURLName: string;
+  CFBundleURLSchemes: string[];
+  CFBundleTypeRole: string;
+}
+
+function wrapURLScheme(raw: RawURLScheme): URLScheme {
+  return {
+    name: raw.CFBundleURLName,
+    schemes: raw.CFBundleURLSchemes,
+    role: raw.CFBundleTypeRole
+  }
+}
+
+export function basics(): BasicInfo {
+  const main = ObjC.classes.NSBundle.mainBundle()
+  const infoDict = main.infoDictionary() as NSDictionary<StringLike, NSObject>
 
   // collect readable names
   const READABLE_NAME_MAPPING = {
@@ -51,57 +59,24 @@ export function basics(): BasicInfo {
   type VersionInfoKeys = keyof typeof READABLE_NAME_MAPPING
   type VersionInfoDict = Record<VersionInfoKeys, string>
 
-  const versionInfo: Partial<VersionInfoDict> = {}
-  for (const [key, label] of Object.entries(READABLE_NAME_MAPPING)) {
-    const value = dict.objectForKey_(label)
-    versionInfo[key as VersionInfoKeys] = value?.toString() || 'N/A'
-  }
+  const versions = Object.fromEntries(
+    Object.entries(READABLE_NAME_MAPPING).map(([key, label]) =>
+      [key, infoDict.objectForKey_(label)?.toString() || 'N/A']
+    )) as VersionInfoDict;
 
-  let label = 'N/A'
-  for (const key of ['CFBundleDisplayName', 'CFBundleName']) {
-    const value = dict.objectForKey_(key)
-    if (value) {
-      label = value.toString()
-      break
-    }
-  }
-
-  if (label === 'N/A') {
-    const alternatives = dict.objectForKey_('CFBundleAlternateNames')
-    if (alternatives) {
-      const value = alternatives.firstObject()
-      if (value) {
-        label = value.toString()
-      }
-    }
-  }
-
-  // collect URL schemes
-  interface RawURLScheme {
-    CFBundleURLName: string;
-    CFBundleURLSchemes: string[];
-    CFBundleTypeRole: string;
-  }
-
-  function wrapURLScheme(raw: RawURLScheme): URLScheme {
-    return {
-      name: raw.CFBundleURLName,
-      schemes: raw.CFBundleURLSchemes,
-      role: raw.CFBundleTypeRole
-    }
-  }
-
-  const urlTypes = dict.objectForKey_('CFBundleURLTypes');
+  const urlTypes = infoDict.objectForKey_('CFBundleURLTypes') as NSArray<NSDictionary<StringLike, NSObject>>;
   const rawUrls: RawURLScheme[] = urlTypes ? toJsArray(urlTypes) : [];
   const urls = rawUrls.map(wrapURLScheme);
 
   return {
-    tmp,
-    home,
-    label,
+    tmp: NSTemporaryDirectory(),
+    home: NSHomeDirectory(),
+    label: getLabel(infoDict),
+    id: main.bundleIdentifier(),
+    path: main.bundlePath(),
+    main: main.executablePath(),
     urls,
-    ...(versionInfo as VersionInfoDict),
-    ...(partial as MainBundleDict),
+    ...versions,
   }
 }
 
