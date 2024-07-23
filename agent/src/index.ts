@@ -1,5 +1,3 @@
-import './ready.js'
-
 import { init as enableLifeCycleHook } from './observers/lifecycle.js'
 
 setImmediate(enableLifeCycleHook)
