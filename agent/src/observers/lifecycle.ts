@@ -33,7 +33,7 @@ const Clazz = ObjC.registerClass({
   }
 })
 
-let signalHandler = Clazz.alloc().init()
+const signalHandler: ObjC.Object = Clazz.alloc().init()
 
 export function init() {
   center.addObserver_selector_name_object_(
@@ -42,11 +42,9 @@ export function init() {
     signalHandler, ObjC.selector('background'), 'UIApplicationDidEnterBackgroundNotification', NULL)
 }
 
-export function dispose() {
-  if (!signalHandler) return
+function dispose() {
   center.removeObserver_name_object_(signalHandler, 'UIApplicationWillResignActiveNotification', NULL)
   center.removeObserver_name_object_(signalHandler, 'UIApplicationDidEnterBackgroundNotification', NULL)
-  signalHandler = null
 }
 
 Script.bindWeak(globalThis, dispose)
