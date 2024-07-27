@@ -2,7 +2,12 @@ import { get as getInstance } from '../lib/choose.js'
 import { description } from '../bridge/dictionary.js'
 
 import { NS } from '../bridge/iterators.js'
-import { NSDictionary, NSObject } from '../bridge/foundation.js'
+import { NSArray, NSDictionary, NSObject, NSString, StringLike } from '../bridge/foundation.js'
+
+interface JSContext extends NSObject {
+  evaluateScript_(script: StringLike): NSObject;
+  objectForKeyedSubscript_(key: StringLike): NSObject;
+}
 
 export function list() {
   const result = new Map<string, string>()
@@ -12,8 +17,8 @@ export function list() {
   return { ...result }
 }
 
-export function get(handle: string): Promise<ObjC.Object> {
-  return getInstance(ObjC.classes.JSContext, handle)
+function get(handle: string) {
+  return getInstance(ObjC.classes.JSContext, handle) as Promise<JSContext>
 }
 
 function serialize(obj: NSObject) {
@@ -61,11 +66,11 @@ function findJSExport(obj: ObjC.Object) {
 
 export async function dump(handle: string) {
   const jsc = await get(handle)
-  const topKeys = jsc.evaluateScript_('Object.keys(this)').toArray()
+  const topKeys = jsc.evaluateScript_('Object.keys(this)').toArray() as NSArray<NSString>
   const funcClass = jsc.evaluateScript_('Function')
   const result = new Map<string, any>()
   for (const key of NS.Array.values(topKeys)) {
-    const val = jsc.objectForKeyedSubscript_(key)
+    const val = jsc.objectForKeyedSubscript_(key as NSString)
     if (!val.isObject()) continue
     const obj = val.toObject()
     if (val.isInstanceOf_(funcClass)) {
