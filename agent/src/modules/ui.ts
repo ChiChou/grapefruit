@@ -122,6 +122,4 @@ export async function dismissHighlight(): Promise<void> {
 // setTimeout(() => { dismissHighlight() }, 3000)
 // setTimeout(() => { highlight([[100,100],[375,812]]) }, 1000)
 
-export function dispose() {
-  return dismissHighlight()
-}
+Script.bindWeak(globalThis, dismissHighlight)
