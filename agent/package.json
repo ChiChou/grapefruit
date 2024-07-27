@@ -4,10 +4,8 @@
   "private": true,
   "main": "dist.js",
   "scripts": {
-    "prepare": "npm run preprocessor && npm run build",
     "build": "frida-compile src/index.ts -o dist.js",
     "watch": "npm run build -- -w",
-    "preprocessor": "node scripts/preprocessor.js",
     "types": "tsc --declaration --emitDeclarationOnly --outDir types src/modules/* --target es2019 --skipLibCheck"
   },
   "files": [
