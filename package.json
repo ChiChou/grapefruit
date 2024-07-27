@@ -19,7 +19,7 @@
   },
   "scripts": {
     "postinstall": "node scripts/install.mjs",
-    "prepublishOnly": "node scripts/prepublish.js",
+    "prepublishOnly": "node scripts/prepublish.mjs",
     "dev": "node scripts/dev.mjs"
   },
   "files": [
