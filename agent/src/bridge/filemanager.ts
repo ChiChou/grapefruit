@@ -1,4 +1,5 @@
-import { StringLike, NSObject, NSArray, NSDictionary, _Nullable, NSString, NSURL } from "./foundation";
+import { StringLike, NSObject, NSArray, NSDictionary, _Nullable, NSString, NSURL } from "./foundation.js";
+import { valueOf } from "./dictionary.js";
 
 type NSFileAttribute = NSDictionary<NSString, NSObject>
 
@@ -28,6 +29,47 @@ function throwsNSError(): (target: FileManager, propertyKey: string, descriptor:
     }
   }
 }
+
+const cf = Process.getModuleByName('CoreFoundation')
+if (!cf) throw new Error('CoreFoundation is not loaded')
+
+const foundation = Process.getModuleByName('Foundation')
+if (!foundation) throw new Error('Foundation is not loaded')
+
+const NSURL_RESOURCE_KEYS = {
+  name: 'NSURLNameKey',
+  isDir: 'NSURLIsDirectoryKey',
+  protectionKey: 'NSURLFileProtectionKey',
+  size: 'NSURLFileSizeKey',
+  isAlias: 'NSURLIsAliasFileKey',
+  creationDate: 'NSURLCreationDateKey',
+  isLink: 'NSURLIsSymbolicLinkKey',
+  isWritable: 'NSURLIsWritableKey',
+}
+
+const expectedKeys: NSArray<NSString> = ObjC.classes.NSMutableArray.new()
+for (const value of Object.values(NSURL_RESOURCE_KEYS)) {
+  const p = cf.findExportByName(value)
+  if (!p) throw new Error(`Key ${value} not found`)
+  expectedKeys.addObject_(p.readPointer())
+}
+
+const NS_FILE_ATTR_KEYS = {
+  created: 'NSFileCreationDate',
+  groupOwnerId: 'NSFileGroupOwnerAccountID',
+  groupOwnerName: 'NSFileGroupOwnerAccountName',
+  ownerId: 'NSFileOwnerAccountID',
+  ownerName: 'NSFileOwnerAccountName',
+  perm: 'NSFilePosixPermissions',
+  protection: 'NSFileProtectionKey',
+  size: 'NSFileSize',
+  type: 'NSFileType',
+}
+
+const NSFileAttributeKeyLookup = Object.fromEntries(
+  Object.entries(NS_FILE_ATTR_KEYS).map(([key, value]) =>
+    [key, new ObjC.Object(foundation.findExportByName(value)!.readPointer()) as NSString])
+)
 
 class FileManager {
   manager: NSFileManager;
@@ -63,13 +105,16 @@ class FileManager {
   }
 
   @throwsNSError()
-  mkdir(path: StringLike, intermediate=true, attributes: _Nullable<NSFileAttribute>=null) {
+  mkdir(path: StringLike, intermediate = true, attributes: _Nullable<NSFileAttribute> = null) {
     return this.manager.createDirectoryAtPath_withIntermediateDirectories_attributes_error_(path, intermediate, attributes, this.pError)
   }
 
   @throwsNSError()
   attr(path: StringLike) {
-    return this.manager.attributesOfItemAtPath_error_(path, this.pError) as NSFileAttribute
+    const dict = this.manager.attributesOfItemAtPath_error_(path, this.pError) as NSFileAttribute
+    return Object.fromEntries(
+      Object.entries(NSFileAttributeKeyLookup).map(([key, value]) => ([key, valueOf(dict.objectForKey_(value))]))
+    )
   }
 
   exists(path: StringLike) {
@@ -79,8 +124,40 @@ class FileManager {
   }
 
   @throwsNSError()
-  contentsOf(url: NSURL, keys: NSArray<NSString>, options: number) {
-    return this.manager.contentsOfDirectoryAtURL_includingPropertiesForKeys_options_error_(url, keys, options, this.pError) as NSArray<NSURL>
+  contentsOf(url: NSURL, withHidden: boolean = false) {
+    const NSDirectoryEnumerationSkipsHiddenFiles = 1 << 2
+    const opt = withHidden ? 0 : NSDirectoryEnumerationSkipsHiddenFiles
+    const result = this.manager.contentsOfDirectoryAtURL_includingPropertiesForKeys_options_error_(
+      url, expectedKeys, opt, this.pError) as NSArray<NSURL>
+
+    function convert(nsdict: NSDictionary<StringLike, NSObject>) {
+      return Object.fromEntries(
+        Object.entries(NSURL_RESOURCE_KEYS).map(
+          ([jsKey, key]) => ([jsKey, valueOf(nsdict.objectForKey_(key))]))
+      )
+    }
+
+    function* gen() {
+      const pError = Memory.alloc(Process.pointerSize).writePointer(NULL)
+      for (let i = 0; i < result.count(); i++) {
+        const url = result.objectAtIndex_(i)
+        const dict = url.resourceValuesForKeys_error_(expectedKeys, pError)
+        const err = pError.readPointer()
+        if (!err.isNull() || !dict)
+          throw new Error((`Error reading resource values for ${url}, ${new ObjC.Object(err).localizedDescription()}`))
+
+        for (const [jsKey, key] of Object.entries(NSURL_RESOURCE_KEYS)) {
+          const value = dict.objectForKey_(key)
+          if (!value) continue
+        }
+
+        yield convert(dict)
+      }
+    }
+
+    return [...gen()]
   }
 }
 
+const singleton = FileManager.get()
+export default singleton
