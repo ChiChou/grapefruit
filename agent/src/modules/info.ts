@@ -1,6 +1,6 @@
 import { toJsArray, valueOf } from '../bridge/dictionary.js'
 import { NSArray, NSDictionary, NSObject, StringLike } from '../bridge/foundation.js';
-import { NSTemporaryDirectory, NSHomeDirectory } from '../lib/foundation.js'
+import { tmp, home } from '../lib/foundation.js'
 
 export interface URLScheme {
   name: string;
@@ -69,8 +69,8 @@ export function basics(): BasicInfo {
   const urls = rawUrls.map(wrapURLScheme);
 
   return {
-    tmp: NSTemporaryDirectory(),
-    home: NSHomeDirectory(),
+    tmp: tmp(),
+    home: home(),
     label: getLabel(infoDict),
     id: main.bundleIdentifier(),
     path: main.bundlePath(),
