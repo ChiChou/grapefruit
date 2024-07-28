@@ -1,55 +1,32 @@
-const mainBundle = ObjC.classes.NSBundle.mainBundle()
-
-const copyClassNamesForImage = new NativeFunction(
-  Module.findExportByName(null, 'objc_copyClassNamesForImage')!, 'pointer', ['pointer', 'pointer']
-)
-
-export function dump(path?: string): string[] {
-  const filename = path || mainBundle.executablePath().toString()
-  const image = Memory.allocUtf8String(filename)
-
-  const p = Memory.alloc(Process.pointerSize).writePointer(NULL)
-  const pClasses = copyClassNamesForImage(image, p) as NativePointer
-  const count = p.readUInt()
-  const classes = new Array<string>(count)
-  for (let i = 0; i < count; i++) {
-    const pClassName = pClasses.add(i * Process.pointerSize).readPointer()
-    classes[i] = pClassName.readUtf8String() as string
-  }
-  ObjC.api.free(pClasses)
-  return classes
-}
-
-const normalize = (path: string) => ObjC.classes.NSString.stringWithString_(path).stringByResolvingAndStandardizingPath().toString()
-const flattern = (array: any[]) => array.reduce((sum, item) => sum.concat(item), [])
-
-export function ownClasses(): string[] {
-  const bundle = normalize(mainBundle.bundlePath())
-  const result = Process.enumerateModules()
-    .filter(mod => normalize(mod.path).startsWith(bundle))
-    .map(mod => dump(mod.path))
-  return flattern(result)
-}
-
 type Tree<T> = {
   [name: string]: Tree<T> | T;
 }
 
-export type Scope = '__global__' | '__app__' | '__main__'
+const mainBundle = ObjC.classes.NSBundle.mainBundle()
 
-export function list(scope: Scope | string[] | string): string[] {
-  if (scope === '__global__') return Object.keys(ObjC.classes)
-  else if (scope === '__app__') return ownClasses()
-  else if (scope === '__main__') return dump()
-  else if (Array.isArray(scope)) return flattern(scope.map(dump)) // list of paths
-  return dump(scope) // a module path
+const moduleMaps: { [key: string]: ModuleMap } = {
+  __global__: new ModuleMap,
+  __app__: new ModuleMap(module => module.path.startsWith(mainBundle.bundlePath().toString())),
+  __main__: new ModuleMap(module => module.path === Process.mainModule.path),
 }
 
-export function search(scope: Scope | string[] | string, keyword?: string): string[] {
-  const all = list(scope)
-  if (!keyword || !keyword.length) return all
-  const query = new RegExp(keyword/*.split('').join('.*?')*/, 'i')
-  return all.filter(name => query.test(name))
+export function list(scope: string) {
+  const ownedBy = moduleMaps.hasOwnProperty(scope) ?
+    moduleMaps[scope] :
+    new ModuleMap(module => module.path === scope)
+
+  return ObjC.enumerateLoadedClassesSync({ ownedBy })
+}
+
+export function find(keyword: string): string[] {
+  const regex = new RegExp(keyword, 'i')
+  function *gen() {
+    for (const name in ObjC.classes)
+      if (regex.test(name))
+        yield name
+  }
+
+  return [...gen()]
 }
 
 function copyIvars(clazz: ObjC.Object) {
@@ -73,11 +50,9 @@ function copyIvars(clazz: ObjC.Object) {
   return { ...result }
 }
 
-export function hierarchy(scope: string): Tree<string> {
-  const classes = list(scope)
+export function hierarchy(): Tree<string> {
   const tree: Tree<string> = {}
-  for (const name of classes) {
-    const clazz = ObjC.classes[name]
+  for (const [name, clazz] of Object.entries(ObjC.classes)) {
     const chain = [name]
 
     let parent = clazz
@@ -131,14 +106,14 @@ export function inspect(clazz: string) {
   const own = cls.$ownMethods
   const ivars = copyIvars(cls)
 
-  const prototypeChain = []
+  const proto = []
   while (cls = cls.$superClass)
-    prototypeChain.unshift(cls.$className)
+    proto.unshift(cls.$className)
 
   return {
     protocols,
     methods,
-    prototypeChain,
+    prototypeChain: proto,
     own,
     ivars,
     module
