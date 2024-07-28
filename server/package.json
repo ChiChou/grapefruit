@@ -26,7 +26,7 @@
     "lib": "lib"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --skipLibCheck",
     "dev": "nodemon",
     "lint": "eslint app.ts lib/**.ts"
   },
