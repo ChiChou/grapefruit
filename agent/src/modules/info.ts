@@ -73,9 +73,9 @@ export function basics(): BasicInfo {
     tmp: tmp(),
     home: home(),
     label: getLabel(infoDict),
-    id: main.bundleIdentifier(),
-    path: main.bundlePath(),
-    main: main.executablePath(),
+    id: main.bundleIdentifier().toString(),
+    path: main.bundlePath().toString(),
+    main: main.executablePath().toString(),
     urls,
     ...versions,
   }
