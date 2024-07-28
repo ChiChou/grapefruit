@@ -1,3 +1,5 @@
+import { defineInterface } from '../registry.js';
+
 type Tree<T> = {
   [name: string]: Tree<T> | T;
 }
@@ -119,3 +121,5 @@ export function inspect(clazz: string) {
     module
   }
 }
+
+defineInterface('classes', { list, find, hierarchy, inspect })

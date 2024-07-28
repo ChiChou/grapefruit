@@ -1,3 +1,5 @@
+import { defineInterface } from "../registry"
+
 export function open(urlStr: string) {
   const app = ObjC.classes.UIApplication.sharedApplication()
 
@@ -44,3 +46,5 @@ export function open(urlStr: string) {
 
   throw Error(`delegate not found. Please file a bug (bundle id: ${ObjC.classes.NSBundle.mainBundle()})`)
 }
+
+defineInterface('url', { open })

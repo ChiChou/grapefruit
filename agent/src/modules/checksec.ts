@@ -1,5 +1,6 @@
 import { fromBytes } from '../bridge/dictionary.js';
 import { encryptionInfo, pie } from '../lib/macho.js';
+import { defineInterface } from '../registry.js';
 
 export interface Entitlements {
   [key: string]: string | boolean | number | string[];
@@ -58,3 +59,5 @@ export function entitlements(): Entitlements {
 
   return {}
 }
+
+defineInterface('checksec', { flags, entitlements })

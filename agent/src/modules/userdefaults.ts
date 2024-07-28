@@ -1,5 +1,6 @@
 import { valueOf } from '../bridge/dictionary.js'
 import { NSDictionary, NSArray, NSObject, NSNumber, NSString, NSDate, NSData } from '../bridge/foundation.js'
+import { defineInterface } from '../registry.js'
 
 /**
  * A default object must be a property list—that is, an instance of (or for collections, 
@@ -101,3 +102,5 @@ export function remove(key: string) {
 }
 
 // @todo: shall we support value creation?
+
+defineInterface('userdefaults', { enumerate, update, remove })

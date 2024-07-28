@@ -1,6 +1,7 @@
 import { toJsArray, valueOf } from '../bridge/dictionary.js'
 import { NSArray, NSDictionary, NSObject, StringLike } from '../bridge/foundation.js';
 import { tmp, home } from '../lib/foundation.js'
+import { defineInterface } from '../registry.js'
 
 export interface URLScheme {
   name: string;
@@ -84,8 +85,7 @@ export function plist() {
   return valueOf(ObjC.classes.NSBundle.mainBundle().infoDictionary())
 }
 
-export function userDefaults() {
-  // todo: return schema
-  // todo: edit user defaults
-  return valueOf(ObjC.classes.NSUserDefaults.standardUserDefaults().dictionaryRepresentation())
-}
+defineInterface('info', {
+  basics,
+  plist,
+})

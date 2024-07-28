@@ -1,4 +1,5 @@
 import { valueOf } from '../bridge/dictionary.js'
+import { defineInterface } from '../registry.js'
 
 for (const mod of ['Foundation', 'CoreFoundation', 'Security']) {
   Module.ensureInitialized(mod)
@@ -50,20 +51,20 @@ namespace KeyChain {
     kSecAttrPort: NativePointer,
     kSecAttrPath: NativePointer,
   }
-  
+
   interface ItemResultKeys {
     kSecReturnData: NativePointer,
     kSecReturnAttributes: NativePointer,
     kSecReturnRef: NativePointer,
     kSecReturnPersistentRef: NativePointer,
   }
-  
+
   interface ItemValueTypeKeys {
     kSecValueData: NativePointer,
     kSecValueRef: NativePointer,
     kSecValuePersistentRef: NativePointer,
   }
-  
+
   interface ItemSearchMatchingKeys {
     kSecMatchPolicy: NativePointer,
     kSecMatchItemList: NativePointer,
@@ -81,7 +82,7 @@ namespace KeyChain {
     kSecMatchValidOnDate: NativePointer,
     kSecMatchLimit: NativePointer,
   }
-  
+
   interface MatchLimitKeys {
     kSecMatchLimitOne: NativePointer,
     kSecMatchLimitAll: NativePointer,
@@ -262,3 +263,5 @@ export function clear() {
   SecItemDelete(query)
   return true
 }
+
+defineInterface('keychain', { list, clear })
