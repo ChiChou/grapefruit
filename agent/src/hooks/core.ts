@@ -23,7 +23,7 @@ export function hook(mod: string | null, symbol: string, signature: Signature) {
       const pretty = signature.args.map((type, i) => readable(type, args[i]))
       const backtrace = Thread.backtrace(this.context, Backtracer.ACCURATE)
         .map(DebugSymbol.fromAddress).filter(e => e.name)
-      
+
       this.backtrace = backtrace
       send({
         subject,
@@ -66,72 +66,71 @@ export function unhook(mod: string | null, symbol: string) {
   if (!hooked.has(id)) console.warn(`${name} has not been hooked before`)
 }
 
-const swizzled = new Map<string, Map<string, InvocationListener>>()
-export function swizzle(clazz: string, sel: string, traceResult = true) {
-  if (swizzled.get(clazz)?.get(sel)) return // already hooked
-  if (!ObjC.classes[clazz]) throw new Error(`Class ${clazz} not loaded`)
-  if (!ObjC.classes[clazz][sel]) throw new Error(`method ${sel} not found in ${clazz}`)
+interface NSMethodSignature extends ObjC.Object {
+  numberOfArguments(): number;
+  getArgumentTypeAtIndex_(index: number): string;
+  methodReturnType(): string;
+}
 
-  const method = ObjC.classes[clazz][sel]
-  let onLeave: ((retval: InvocationReturnValue) => void) | undefined = undefined
-  if (traceResult) {
-    onLeave = (retVal) => {
-      const time = now()
-      let ret = retVal.toString()
-      try {
-        // this is buggy
-        ret = new ObjC.Object(retVal).toString()
-      } catch (ignored) {
-        //
-      }
-      send({
-        subject,
-        event: 'objc-return',
-        clazz,
-        sel,
-        ret,
-        time
-      })
-    }
-  }
+const swizzled = new Map<string, Map<string, InvocationListener>>()
+export function swizzle(className: string, sel: string) {
+  if (swizzled.get(className)?.get(sel)) return // already hooked
+
+  const clazz = ObjC.classes[className]
+  if (!clazz) throw new Error(`Class ${className} not loaded`)
+
+  const method = clazz[sel]
+  if (!method) throw new Error(`Method ${sel} not found in ${className}`)
 
   const listener = Interceptor.attach(method.implementation, {
     onEnter(args) {
-      const time = now()
-      const readableArgs = []
-      for (let i = 2; i < method.argumentTypes.length; i++) {
-        if (method.argumentTypes[i] === 'pointer') {
-          try {
-            const obj = new ObjC.Object(args[i]).toString()
-            readableArgs.push(obj)
-          } catch (ex) {
-            readableArgs.push(args[i])
-          }
-        } else {
-          readableArgs.push(args[i])
-        }
+      const self = new ObjC.Object(args[0])
+      const signature = self.methodSignatureForSelector_(ObjC.selector(sel))
+      const nargs = signature.numberOfArguments()
+      const formattedArgs = []
+
+      for (let i = 2; i < nargs; i++) {
+        const arg = args[i]
+        const t = signature.getArgumentTypeAtIndex_(i)
+        const wrapped = t.toString().startsWith('@') ? new ObjC.Object(arg) : arg;
+        formattedArgs.push(wrapped.toString());
       }
 
+      const time = now()
       const backtrace = Thread.backtrace(this.context, Backtracer.ACCURATE)
         .map(DebugSymbol.fromAddress).filter(e => e.name)
+
+      this.returnsObject = signature.methodReturnType().toString().startsWith('@')
 
       send({
         subject,
         event: 'objc-call',
         backtrace,
-        args: readableArgs,
-        clazz,
+        args: formattedArgs,
+        clazz: className,
         sel,
         time
       })
     },
-    onLeave
+    onLeave(retVal) {
+      const time = now()
+      const ret = this.returnsObject ? new ObjC.Object(retVal).toString() : retVal.toString()
+
+      send({
+        subject,
+        event: 'objc-return',
+        clazz: className,
+        sel,
+        ret,
+        time
+      })
+    }
   })
 
-  if (!swizzled.has(clazz)) {
-    swizzled.set(clazz, new Map([[sel, listener]]))
+  if (swizzled.has(className)) {
+    swizzled.get(className)!.set(sel, listener)
   } else {
-    swizzled.get(clazz)!.set(sel, listener)
+    swizzled.set(className, new Map([[sel, listener]]))
   }
 
   return listener
