@@ -3,7 +3,7 @@ import { join } from 'path';
 import { platform } from 'os';
 import { fileURLToPath } from 'url';
 
-const isWin = platform() === 'win32';
+const isWindows = platform() === 'win32';
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 const env = Object.assign({}, process.env, { NODE_ENV: 'development' });
@@ -27,37 +27,6 @@ function tryRun(cmd) {
   } catch (_) {
 
   }
-}
-
-function platformize(tool, args) {
-  let bin = tool;
-  let joint = args;
-  if (isWin) {
-    bin = 'cmd.exe';
-    joint = ['/c', tool, ...args];
-  }
-  return [bin, joint];
-}
-
-function run() {
-  if (isWin) {
-    console.error('Windows platform is not supported. You should manually start 3 terminals, or install Windows Terminal from Microsoft Store');
-    console.error(`It's gonna be a mess here`);
-  }
-
-  function handler() {
-    console.log('❌child process disconected');
-    process.exit();
-  }
-
-  const children = []
-  for (const [args, cwd] of tasks()) {
-    const [bin, argv] = platformize('npm', args);
-    const p = spawn(bin, argv, { stdio: 'inherit', cwd, env });
-    p.on('disconnect', handler);
-  }
-
-  process.on('SIGINT', () => children.filter(p => pid).forEach(p => p.kill()));
 }
 
 function tmux() {
@@ -88,11 +57,16 @@ function wt() {
   process.exit() // detach
 }
 
-if (isWin && tryRun('where wt')) {
-  wt()
-} else if (tryRun('which tmux')) {
-  tmux()
+if (isWindows) {
+  if (tryRun('where wt')) {
+    wt()
+  } else {
+    console.error('Windows Terminal not found. Please install it from Microsoft Store');
+  }
 } else {
-  // crappy terminal
-  run(tasks())
+  if (tryRun('which tmux')) {
+    tmux()
+  } else {
+    console.error('tmux not found. Please install it first');
+  }
 }
