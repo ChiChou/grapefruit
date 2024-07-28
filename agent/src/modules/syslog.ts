@@ -1,4 +1,4 @@
-import { defineInterface } from "../registry"
+import { defineInterface } from '../registry.js'
 
 const close = new NativeFunction(Module.findExportByName(null, 'close')!, 'int', ['int'])
 const pipe = new NativeFunction(Module.findExportByName(null, 'pipe')!, 'int', ['pointer'])

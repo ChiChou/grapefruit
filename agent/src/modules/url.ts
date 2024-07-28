@@ -1,4 +1,4 @@
-import { defineInterface } from "../registry"
+import { defineInterface } from '../registry.js'
 
 export function open(urlStr: string) {
   const app = ObjC.classes.UIApplication.sharedApplication()
