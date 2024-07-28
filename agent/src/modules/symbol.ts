@@ -1,4 +1,4 @@
-import { defineInterface } from '../registry.js'
+import { expose } from '../registry.js'
 
 const demangle = new NativeFunction(
   Module.findExportByName('libc++abi.dylib', '__cxa_demangle')!,
@@ -153,4 +153,4 @@ export function exported(name?: string, keyword?: string) {
   }
 }
 
-defineInterface('symbol', { modules, resolve, importedModules, imported, symbols, exported })
+expose('symbol', { modules, resolve, importedModules, imported, symbols, exported })

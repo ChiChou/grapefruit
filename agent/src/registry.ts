@@ -11,7 +11,7 @@ export function invoke(name: string, ...args: any[]) {
   return method(...args);
 }
 
-export function defineInterface(ns: string, iface: API) {
+export function expose(ns: string, iface: API) {
   if (map.has(ns)) throw new Error(`namespace collision: ${ns}`);
   map.set(ns, iface);
 }

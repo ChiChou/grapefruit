@@ -1,4 +1,4 @@
-import { defineInterface } from '../registry.js'
+import { expose } from '../registry.js'
 
 const close = new NativeFunction(Module.findExportByName(null, 'close')!, 'int', ['int'])
 const pipe = new NativeFunction(Module.findExportByName(null, 'pipe')!, 'int', ['pointer'])
@@ -52,4 +52,4 @@ export function stop() {
   }
 }
 
-defineInterface(subject, { start, stop })
+expose(subject, { start, stop })

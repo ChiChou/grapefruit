@@ -1,5 +1,5 @@
 import { valueOf } from '../bridge/dictionary.js'
-import { defineInterface } from '../registry.js'
+import { expose } from '../registry.js'
 
 for (const mod of ['Foundation', 'CoreFoundation', 'Security']) {
   Module.ensureInitialized(mod)
@@ -264,4 +264,4 @@ export function clear() {
   return true
 }
 
-defineInterface('keychain', { list, clear })
+expose('keychain', { list, clear })

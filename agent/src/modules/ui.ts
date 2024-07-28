@@ -1,5 +1,5 @@
 import { performOnMainThread } from '../lib/dispatch.js'
-import { defineInterface } from '../registry.js';
+import { expose } from '../registry.js';
 
 type Point = [number, number];
 type Size = [number, number];
@@ -125,7 +125,7 @@ export async function dismissHighlight(): Promise<void> {
 
 Script.bindWeak(globalThis, dismissHighlight)
 
-defineInterface('ui', {
+expose('ui', {
   dump,
   highlight,
   dismissHighlight,

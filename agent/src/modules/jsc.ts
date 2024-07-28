@@ -3,7 +3,7 @@ import { description } from '../bridge/dictionary.js'
 
 import { NS } from '../bridge/iterators.js'
 import { NSArray, NSDictionary, NSObject, NSString, StringLike } from '../bridge/foundation.js'
-import { defineInterface } from '../registry.js';
+import { expose } from '../registry.js';
 
 interface JSContext extends NSObject {
   evaluateScript_(script: StringLike): NSObject;
@@ -105,7 +105,7 @@ export async function run(handle: string, js: string) {
   return val.toString()
 }
 
-defineInterface('jsc', {
+expose('jsc', {
   list,
   dump,
   run

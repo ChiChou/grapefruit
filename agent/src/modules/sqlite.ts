@@ -1,5 +1,5 @@
 import uuid from '../lib/uuid.js'
-import { defineInterface } from '../registry.js'
+import { expose } from '../registry.js'
 
 function quote(table: string) {
   return `"${table.replace(/"/g, '')}"`
@@ -98,4 +98,4 @@ export function tables(path: string) {
   return list
 }
 
-defineInterface('sqlite', { open, query, close, dump, tables })
+expose('sqlite', { open, query, close, dump, tables })
