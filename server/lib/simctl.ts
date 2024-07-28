@@ -78,15 +78,10 @@ async function appsInternal(udid: string): Promise<Apps> {
 }
 
 export async function apps(udid: string): Promise<SimAppInfo[]> {
-  const result = []
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  for (const [bundle, app] of Object.entries(await appsInternal(udid))) {
-    if (app.ApplicationType === 'User') {
-      const { CFBundleDisplayName, CFBundleExecutable, CFBundleIdentifier, CFBundleName, CFBundleVersion } = app
-      result.push({ CFBundleDisplayName, CFBundleExecutable, CFBundleIdentifier, CFBundleName, CFBundleVersion })
-    }
-  }
-  return result
+  return Object.values(await appsInternal(udid)).filter(app => app.ApplicationType === 'User').map(app => {
+    const { CFBundleDisplayName, CFBundleExecutable, CFBundleIdentifier, CFBundleName, CFBundleVersion } = app
+    return { CFBundleDisplayName, CFBundleExecutable, CFBundleIdentifier, CFBundleName, CFBundleVersion } as SimAppInfo
+  })
 }
 
 async function iconFromApp(root: string) {
