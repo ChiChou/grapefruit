@@ -1,7 +1,10 @@
-import { execSync } from 'child_process'
-import { join } from 'path'
+import { execSync } from 'child_process';
+import { join } from 'path';
+import { fileURLToPath } from 'url';
 
-for (const child of ['gui', 'server', 'agent']) {
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
+
+for (const child of ['guiv3', 'server', 'agent']) {
   const cwd = join(__dirname, '..', child)
   execSync('npm run build', { cwd, stdio: 'inherit' })
 }
