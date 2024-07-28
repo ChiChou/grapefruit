@@ -1,16 +1,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as frida from 'frida'
 import http from 'http'
+import { readFile } from 'fs/promises'
+import { join } from 'path'
 
 import { Server, Namespace } from 'socket.io'
-import REPL, { Result } from './repl'
-import * as transfer from './transfer'
-import { wrap, tryGetDevice, getSimulator } from './device'
-import { connect, proxy } from './rpc'
-
 import { MessageType } from 'frida/dist/script'
 
+import REPL, { Result } from './repl'
+import { wrap, tryGetDevice, getSimulator } from './device'
+import * as transfer from './transfer'
+
+
 const mgr = frida.getDeviceManager()
+
+async function source() {
+  const filename = join(__dirname, '..', '..',
+    process.env.NODE_ENV === 'development' ? '.' : '..', 'agent', 'dist.js')
+  return readFile(filename, 'utf8')
+}
 
 export default class Channels {
   socket: Server
@@ -53,7 +61,7 @@ export default class Channels {
           const simulator = await getSimulator(udid)
           dev = await frida.getLocalDevice()
           session = await simulator.start(bundle)
-        } else if (mode === 'device' ) {
+        } else if (mode === 'device') {
           dev = await tryGetDevice(udid)
           session = await wrap(dev).start(bundle)
         } else {
@@ -87,7 +95,8 @@ export default class Channels {
         socket.disconnect(true)
       })
 
-      const agent = await connect(session)
+      const agent = await session.createScript(await source())
+
       agent.logHandler = (level, text): void => {
         socket.emit('console', level, text)
         console.log(`[frida ${level}]`, text)
@@ -115,7 +124,6 @@ export default class Channels {
       })
 
       await agent.load()
-      const rpc = proxy(agent)
 
       socket.on('disconnect', async () => {
         try {
@@ -132,7 +140,7 @@ export default class Channels {
         socket.disconnect()
       }).on('rpc', async (method: string, args: any[], ack) => {
         try {
-          const result = await rpc(method, ...args)
+          const result = await agent.exports.invoke(method, args)
           ack({ status: 'ok', data: result })
         } catch (err) {
           ack({ status: 'error', error: `${err.message}` })
@@ -168,7 +176,7 @@ export default class Channels {
       socket.on('removescript', async (uuid: string, ack: (result: boolean) => void) => {
         try {
           await repl.remove(uuid)
-        } catch(e) {
+        } catch (e) {
           console.error(e)
           ack(false)
           return
