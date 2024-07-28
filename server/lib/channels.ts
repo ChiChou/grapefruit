@@ -103,7 +103,7 @@ export default class Channels {
               transfer.begin(session, size, path)
             } else if (event === 'data') {
               transfer.push(session, data)
-              await agent.post({ type: 'ack' })
+              agent.post({ type: 'ack' })
             } else if (event === 'end') {
               transfer.end(session)
             }
