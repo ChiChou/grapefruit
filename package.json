@@ -6,7 +6,7 @@
   "dependencies": {
     "@types/frida-gum": "^18.7.0",
     "commander": "^12.1.0",
-    "frida": "^16.3.3",
+    "frida": "^16.4.7",
     "koa": "^2.15.3",
     "koa-bodyparser": "^4.4.1",
     "koa-json": "^2.0.2",
