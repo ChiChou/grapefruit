@@ -16,10 +16,12 @@ interface NSFileManager extends NSObject {
     url: NSURL, keys: NSArray<NSString>, options: number, pError: NativePointer): NSArray<NSURL>;
 }
 
-function throwsNSError(): (target: FileManager, propertyKey: string, descriptor: PropertyDescriptor) => void {
+function throwsNSError() {
   return function (target: FileManager, propertyKey: string, descriptor: PropertyDescriptor) {
+    type F = typeof descriptor.value
     const originalMethod = descriptor.value;
-    descriptor.value = function (...args: any[]) {
+    
+    descriptor.value = function (...args: Parameters<F>): ReturnType<F> {
       const pError = Memory.alloc(Process.pointerSize).writePointer(NULL)
       const result = originalMethod.apply(this, args.concat(pError))
       const err = pError.readPointer()
