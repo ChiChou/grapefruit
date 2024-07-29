@@ -125,14 +125,9 @@ export default class Channels {
 
       await agent.load()
 
-      socket.on('disconnect', async () => {
-        try {
-          agent.post({ type: 'dispose' })
-          await session.detach()
-          // eslint-disable-next-line no-empty
-        } catch (_) {
-
-        }
+      socket.on('disconnect', () => {
+        agent.post({ type: 'dispose' })
+        session.detach()
       }).on('kill', async () => {
         console.log('on kill')
         session.detach().catch()
