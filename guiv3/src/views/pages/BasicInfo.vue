@@ -109,4 +109,4 @@ dl.paths {
     margin: .5em 0;
   }
 }
-</style>@/plugins/tab
+</style>
