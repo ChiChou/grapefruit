@@ -14,7 +14,7 @@ export function interfaces() {
   function *gen() {
     for (const [ns, iface] of Object.entries(route)) {
       for (const method of Object.keys(iface)) {
-        yield `${ns}/${method}`;
+        yield `${ns}.${method}`;
       }
     }
   }
