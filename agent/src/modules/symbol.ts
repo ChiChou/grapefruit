@@ -1,5 +1,3 @@
-import { expose } from '../registry.js'
-
 const demangle = new NativeFunction(
   Module.findExportByName('libc++abi.dylib', '__cxa_demangle')!,
   'pointer', ['pointer', 'pointer', 'pointer', 'pointer'])
@@ -153,4 +151,3 @@ export function exported(name?: string, keyword?: string) {
   }
 }
 
-expose('symbol', { modules, resolve, importedModules, imported, symbols, exported })

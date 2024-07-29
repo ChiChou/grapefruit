@@ -1,5 +1,4 @@
 import { valueOf } from '../bridge/dictionary.js'
-import { expose } from '../registry.js'
 
 for (const mod of ['Foundation', 'CoreFoundation', 'Security']) {
   Module.ensureInitialized(mod)
@@ -263,5 +262,3 @@ export function clear() {
   SecItemDelete(query)
   return true
 }
-
-expose('keychain', { list, clear })

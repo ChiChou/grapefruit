@@ -6,7 +6,7 @@
   "scripts": {
     "build": "frida-compile src/index.ts -o dist.js",
     "watch": "npm run build -- -w",
-    "types": "tsc --declaration --emitDeclarationOnly --outDir types src/modules/* --target es2019 --skipLibCheck"
+    "types": "tsc --declaration --experimentalDecorators --emitDeclarationOnly --outDir types src/registry.ts --target es2019 --skipLibCheck"
   },
   "files": [
     "dist.js",

@@ -3,7 +3,6 @@ import { NSHomeDirectory, NSTemporaryDirectory } from '../lib/foundation.js'
 import uuid from '../lib/uuid.js'
 
 import filemgr from '../bridge/filemanager.js'
-import { expose } from '../registry.js'
 
 const open = new NativeFunction(Module.findExportByName(null, 'open')!, 'int', ['pointer', 'int', 'int'])
 
@@ -116,16 +115,3 @@ export async function download(path: string) {
 
   return session
 }
-
-expose('fs', {
-  expand,
-  ls,
-  rm,
-  cp,
-  mv,
-  attr,
-  plist,
-  text,
-  writeText,
-  download,
-})

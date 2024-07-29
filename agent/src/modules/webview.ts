@@ -1,6 +1,5 @@
 import { performOnMainThread } from "../lib/dispatch.js"
 import { get as getInstance } from '../lib/choose.js'
-import { expose } from "../registry.js"
 
 const WebViewKinds = ['UI', 'WK'] as const
 
@@ -135,5 +134,3 @@ export async function prefs(handle: string) {
 
   return result
 }
-
-expose('webview', { list, watch, run, url, navigate, dump, prefs })

@@ -1,9 +1,9 @@
 /* eslint @typescript-eslint/no-explicit-any: 0 */
 /* eslint no-useless-constructor: 0 */
 
-import { Socket } from 'socket.io-client'
-import { nextTick } from 'vue'
+// todo: rewrite this module
 
+import { Socket } from 'socket.io-client'
 
 export type RPC = {
   [key: string]: RPC;
@@ -51,7 +51,7 @@ class Lazy {
   apply(argArray: any): Promise<any> {
     let name: string, args: any
     if (this.chain.length) {
-      name = this.chain.join('/')
+      name = this.chain.join('.')
       args = argArray
     } else {
       [name, ...args] = argArray
@@ -78,51 +78,6 @@ class Lazy {
     })
   }
 }
-
-class WS {
-  private _ready = false
-  private _pending: Set<Handler> = new Set()
-
-  constructor(public socket: Socket) {
-    this.socket.on('ready', () => {
-      this._pending.forEach(cb => cb())
-      this._pending.clear()
-    })
-  }
-
-  ready() {
-    if (this._ready) return Promise.resolve(true)
-    return new Promise(resolve => this._pending.add(resolve))
-  }
-
-  on(event: WSEvent, cb: Handler) {
-    if (event === 'ready') {
-      if (this._ready) {
-        nextTick(() => cb())
-      } else {
-        this._pending.add(cb)
-      }
-    } else {
-      this.socket.on(event, cb)
-    }
-    return this
-  }
-
-  send(event: string, ...args: any[]): Promise<any> {
-    return new Promise((resolve) => this.socket.emit(event, ...args, resolve))
-  }
-
-  once(event: string, cb: Handler) {
-    this.ready().then(() => this.socket.once(event, cb))
-    return this
-  }
-
-  off(event: string, cb: Handler) {
-    this.ready().then(() => this.socket.off(event, cb))
-    return this
-  }
-}
-
 
 export function useRPC(socket: Socket): RPC {
   const lazy = new Lazy(socket)

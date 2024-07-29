@@ -1,5 +1,3 @@
-import { expose } from '../registry.js'
-
 const close = new NativeFunction(Module.findExportByName(null, 'close')!, 'int', ['int'])
 const pipe = new NativeFunction(Module.findExportByName(null, 'pipe')!, 'int', ['pointer'])
 const dup2 = new NativeFunction(Module.findExportByName(null, 'dup2')!, 'int', ['int', 'int'])
@@ -51,5 +49,3 @@ export function stop() {
     stream = null
   }
 }
-
-expose(subject, { start, stop })

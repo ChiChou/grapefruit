@@ -1,7 +1,6 @@
 import { toJsArray, valueOf } from '../bridge/dictionary.js'
 import { NSArray, NSDictionary, NSObject, StringLike } from '../bridge/foundation.js';
 import { tmp, home } from '../lib/foundation.js'
-import { expose } from '../registry.js'
 
 export interface URLScheme {
   name: string;
@@ -84,8 +83,3 @@ export function basics(): BasicInfo {
 export function plist() {
   return valueOf(ObjC.classes.NSBundle.mainBundle().infoDictionary())
 }
-
-expose('info', {
-  basics,
-  plist,
-})

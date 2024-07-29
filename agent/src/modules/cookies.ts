@@ -1,6 +1,5 @@
 import { toJsArray } from '../bridge/dictionary.js';
 import { NSDictionary, NSArray, NSDate, NSObject, NSNumber, NSURL } from '../bridge/foundation.js';
-import { expose } from '../registry.js';
 
 
 export type CookiePredicate = Partial<{
@@ -131,5 +130,3 @@ export function clear() {
     storage.deleteCookie_(cookie)
   }
 }
-
-expose('cookies', { list, write, remove, clear })

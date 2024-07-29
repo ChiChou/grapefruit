@@ -1,5 +1,3 @@
-import { expose } from '../registry.js';
-
 type Tree<T> = {
   [name: string]: Tree<T> | T;
 }
@@ -121,5 +119,3 @@ export function inspect(clazz: string) {
     module
   }
 }
-
-expose('classes', { list, find, hierarchy, inspect })

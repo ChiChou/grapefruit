@@ -1,21 +1,6 @@
 import { init as enableLifeCycleHook } from './observers/lifecycle.js'
 import { interfaces, invoke } from './registry.js'
 
-import './modules/checksec.js'
-import './modules/classdump.js'
-import './modules/cookies.js'
-import './modules/fs.js'
-import './modules/info.js'
-import './modules/jsc.js'
-import './modules/keychain.js'
-import './modules/sqlite.js'
-import './modules/symbol.js'
-import './modules/syslog.js'
-import './modules/ui.js'
-import './modules/url.js'
-import './modules/userdefaults.js'
-import './modules/webview.js'
-
 setImmediate(enableLifeCycleHook)
 
 // disable autolock
