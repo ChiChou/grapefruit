@@ -19,7 +19,7 @@ interface UserDefaultsEntry {
   value: any
 }
 
-interface UserDefaultsDict {
+export interface UserDefaultsDict {
   [key: string]: UserDefaultsEntry
 }
 
