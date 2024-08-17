@@ -3,8 +3,6 @@ import { ref, onMounted, provide, onBeforeUnmount, ComponentPublicInstance, onUn
 
 import { useRoute, useRouter } from 'vue-router'
 import { io } from 'socket.io-client'
-import 'splitpanes/dist/splitpanes.css'
-import '@/skin/splitpane.scss'
 
 import SidePanel from './SidePanel.vue'
 import StatusBar from './StatusBar.vue'
