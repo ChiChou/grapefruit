@@ -13,7 +13,7 @@ type UserDefaultsType = 'data' | 'string' | 'number' | 'date' | 'array' | 'dict'
 type UserDefaultsValue = NSString | NSData | NSNumber | NSDate |
   NSArray<UserDefaultsValue> | NSDictionary<NSString, UserDefaultsValue>
 
-interface UserDefaultsEntry {
+export interface UserDefaultsEntry {
   type: UserDefaultsType
   readable: string
   value: any
