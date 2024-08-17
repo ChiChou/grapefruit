@@ -23,7 +23,7 @@ export class ExDevice {
     if (app.pid) {
       const front = await this.device.getFrontmostApplication()
       if (front && front.pid === app.pid) {
-        return await this.device.attach(app.name)
+        return await this.device.attach(app.pid)
       } else {
         await this.device.kill(app.pid)
         return await this.launch(bundle)
