@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, provide, onBeforeUnmount, ComponentPublicInstance, onUnmounted } from 'vue'
 
-import { Splitpanes, Pane } from 'splitpanes'
 import { useRoute, useRouter } from 'vue-router'
 import { io } from 'socket.io-client'
 import 'splitpanes/dist/splitpanes.css'
@@ -17,13 +16,11 @@ import { manager } from '@/plugins/tab'
 
 import * as regulation from '@/regulation'
 
-const SIDEBAR_WIDTH_KEY = 'sidebar-width'
-const sideWidth = ref(getInt(SIDEBAR_WIDTH_KEY, 20))
-const TERM_HEIGHT_KEY = 'term-height'
-const termHeight = ref(getInt(TERM_HEIGHT_KEY, 30))
+const SPLIT_SIZE_KEY = 'split-size'
+const splitterSize = ref(getNumber(SPLIT_SIZE_KEY, .2))
 const el = ref<ComponentPublicInstance>()
 
-function getInt(key: string, def: number) {
+function getNumber(key: string, def: number) {
   const str = localStorage.getItem(key)
   if (str) {
     const val = parseFloat(str)
@@ -31,24 +28,16 @@ function getInt(key: string, def: number) {
       return val
     }
   }
+  debugger
   return def
 }
 
-type SizeData = {
-  min: number
-  max: number
-  size: number
-}
-
 function saveLayout() {
-  localStorage.setItem(SIDEBAR_WIDTH_KEY, sideWidth.value.toString())
-  localStorage.setItem(TERM_HEIGHT_KEY, termHeight.value.toString())
+  localStorage.setItem(SPLIT_SIZE_KEY, splitterSize.value.toString())
 }
 
-function resizing(data: SizeData[]) {
-  if (data.length) {
-    sideWidth.value = data[0].size
-  }
+function resizing(size: number) {  
+  splitterSize.value = size as number
 
   if (el && el.value) {
     const div = el.value.$el as HTMLDivElement
@@ -93,7 +82,7 @@ const spaceHeight = ref(0)
 provide(SPACE_WIDTH, spaceWidth)
 provide(SPACE_HEIGHT, spaceHeight)
 
-const onWindowResize = () => resizing([])
+const onWindowResize = () => resizing(splitterSize.value)
 
 onMounted(() => {
   window.addEventListener('resize', onWindowResize)
@@ -146,14 +135,14 @@ provide(TAB_EMITTER, manager)
 <template>
   <div class="pane-full">    
     <main class="workspace-main-container">
-      <splitpanes class="split-pane-container" @resize="resizing($event)" @resized="saveLayout">
-      <pane min-size="10" :size="sideWidth" max-size="80">
-        <SidePanel></SidePanel>
-      </pane>
-      <pane>
-        <layout ref="el" style="width: 100%; height: 100%"></layout>
-      </pane>
-    </splitpanes>
+      <n-split direction="horizontal" style="height: 100%" :min="'320px'" :max=".5" :size="splitterSize" @update-size="resizing" @drag-end="saveLayout()">
+        <template #1>
+          <SidePanel></SidePanel>
+        </template>
+        <template #2>
+          <layout ref="el" style="width: 100%; height: 100%"></layout>
+        </template>
+      </n-split>
     </main>
     <StatusBar />
   </div>
