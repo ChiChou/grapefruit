@@ -133,7 +133,7 @@ provide(TAB_EMITTER, manager)
 <template>
   <div class="pane-full">    
     <main class="workspace-main-container">
-      <n-split direction="horizontal" style="height: 100%" :min="'320px'" :max=".5" :size="splitterSize" @update-size="resizing" @drag-end="saveLayout()">
+      <n-split direction="horizontal" style="height: 100%" :min="'320px'" :max=".3" :size="splitterSize" @update-size="resizing" @drag-end="saveLayout()">
         <template #1>
           <SidePanel></SidePanel>
         </template>
