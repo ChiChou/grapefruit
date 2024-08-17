@@ -29,7 +29,7 @@
           </n-tag>
 
           <n-tag :bordered="false" :type="flags.canary ? 'success' : 'error'" :disabled="!flags.canary">
-            Canary
+            Stack Cookie
           </n-tag>
 
           <n-tag :bordered="false" type="info" :disabled="!flags.encrypted">
