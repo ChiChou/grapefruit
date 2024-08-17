@@ -25,11 +25,12 @@ import { ref, onMounted, Ref } from 'vue'
 import { RefreshFilled, OpenInFullSharp } from '@vicons/material'
 
 import PlistView from '@/components/PlistView.vue'
+import { Entitlements } from '@/rpc/modules/checksec';
 
 const props = defineProps(tabProps)
 const { entitle, rpc } = useTabCommons(props.tabId!)
 
-const entitlements: Ref<any> = ref(null)
+const entitlements: Ref<Entitlements> = ref({})
 entitle('Entitlements')
 
 const loading = ref(false)
