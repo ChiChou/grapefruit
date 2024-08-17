@@ -98,7 +98,7 @@ function rick() {
         <img src="../assets/grapefruit.svg" alt="Grapefruit" width="24" height="24" id="logo" />
       </a>
 
-      <MainMenu></MainMenu>
+      <!-- <MainMenu></MainMenu> -->
 
       <n-popover trigger="hover" v-for="(tab, i) in tabs" placement="right">
         <template #trigger>
