@@ -6,7 +6,7 @@
     "@types/koa-bodyparser": "^4.3.0",
     "@types/koa-router": "^7.4.0",
     "@types/mocha": "^7.0.2",
-    "@types/node": "^13.13.36",
+    "@types/node": "^13.13.52",
     "@types/plist": "^3.0.2",
     "@typescript-eslint/eslint-plugin": "^2.25.0",
     "@typescript-eslint/parser": "^2.25.0",
