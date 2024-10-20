@@ -14,6 +14,7 @@ module.exports = {
       .use(new MonacoWebpackPlugin())
   },
   devServer: {
+    host: 'localhost',
     allowedHosts: [
       '.local' // allow LAN
     ],
