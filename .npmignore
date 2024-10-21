@@ -1,0 +1,4 @@
+!server/bin
+!server/dist
+!gui/dist
+!agent/dist.js
