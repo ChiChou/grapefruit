@@ -38,6 +38,7 @@ declare module 'vue/types/vue' {
     $rpc: RPC;
     $ws: WS;
     $bus: Vue;
+    $token: string;
   }
 }
 

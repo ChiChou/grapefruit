@@ -132,10 +132,11 @@ class WS {
 
 function install(V: typeof Vue, opt: Options): void {
   const { router } = opt
-  const needs = (route: Route) => 'device' in route.params && 'bundle' in route.params
+  const isWorkspace = (route: Route) => 'device' in route.params && 'bundle' in route.params
+
   router.afterEach((to, from) => {
-    const previous = needs(from)
-    const current = needs(to)
+    const previous = isWorkspace(from)
+    const current = isWorkspace(to)
     if (!previous && current) {
       const { device, bundle } = to.params
 
@@ -151,7 +152,7 @@ function install(V: typeof Vue, opt: Options): void {
         return
       }
 
-      const socket = io('/session', { query: { device, bundle }, transports: ['websocket'] })
+      const socket = io('/session', { query: { device, bundle }, transports: ['websocket'], auth: { token: V.prototype.$token } })
 
       V.prototype.$rpc = wrap(socket)
       V.prototype.$ws = new WS(socket)

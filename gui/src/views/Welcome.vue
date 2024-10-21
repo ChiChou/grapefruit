@@ -91,7 +91,7 @@ export default class Welcome extends Vue {
   loading = false
 
   mounted() {
-    const socket = io('/devices', { transports: ['websocket'] })
+    const socket = io('/devices', { transports: ['websocket'], auth: { token: this.$token }})
     socket.on('deviceChanged', this.refresh)
     this.refresh()
   }

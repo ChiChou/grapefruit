@@ -41,8 +41,23 @@ Vue.use(VueMenu)
 Vue.use(RPC, { router })
 Vue.use(Bus)
 
-new Vue({
-  router,
-  store,
-  render: h => h(App)
-}).$mount('#app')
+// ugly implementation
+async function getToken(): Promise<string> {
+  const cache = sessionStorage.getItem('token')
+  if (typeof cache === 'string') return Promise.resolve(cache)
+
+  return axios.get('/token').then(({ data }) => {
+    sessionStorage.setItem('token', data)
+    return data
+  })
+}
+
+getToken().then(token => {
+  Vue.prototype.$token = token
+
+  new Vue({
+    router,
+    store,
+    render: h => h(App)
+  }).$mount('#app')
+})

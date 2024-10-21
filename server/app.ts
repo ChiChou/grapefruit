@@ -1,5 +1,3 @@
-import 'reflect-metadata'
-
 import Koa from 'koa'
 import Router from 'koa-router'
 import bodyParser from 'koa-bodyparser'
@@ -15,13 +13,13 @@ import * as serialize from './lib/serialize'
 import * as transfer from './lib/transfer'
 import Channels from './lib/channels'
 
-import { wrap, tryGetDevice } from './lib/device'
-
-import { URL } from 'url'
 import { exec } from 'child_process'
 import { createServer } from 'http'
 import { program } from 'commander'
 import { AddressInfo } from 'net'
+import { randomBytes } from 'crypto'
+
+import { wrap, tryGetDevice } from './lib/device'
 import { concat } from './lib/workspace'
 import { Scope } from 'frida/dist/device'
 
@@ -35,9 +33,12 @@ const app = new Koa()
 const router = new Router({ prefix: '/api' })
 
 const mgr = frida.getDeviceManager()
-
+const accessToken = randomBytes(16).toString('base64')
 
 router
+  .get('/token', async (ctx) => {
+    ctx.body = accessToken
+  })
   .get('/devices', async (ctx) => {
     const unique = new Set()
     const devices = await mgr.enumerateDevices()
@@ -181,7 +182,7 @@ if (process.env.NODE_ENV === 'development') {
       pretty: true
     }))
     .use(new Router().get('/', (ctx) => {
-      const u = new URL(ctx.request.origin)
+      const u = ctx.URL
       u.port = '8080'
       ctx.redirect(u.toString())
       ctx.body = 'Grapefruit Development Server'
@@ -260,7 +261,7 @@ async function main(): Promise<void> {
   program.parse(process.argv)
 
   const server = createServer(app.callback())
-  const channels = new Channels(server)
+  const channels = new Channels(server, accessToken)
   channels.connect()
   server.listen(program.port, program.host)
   server.on('listening', () => {
