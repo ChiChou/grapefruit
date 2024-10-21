@@ -1,4 +1,4 @@
-name: pack
+name: publish
 
 on:
   push:
@@ -14,10 +14,22 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    env:
+      NODE_OPTIONS: --openssl-legacy-provider
+
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: 'true'
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
 
       - name: Install Dependency
         run: npm ci
