@@ -38,6 +38,8 @@ jobs:
         uses: JS-DevTools/npm-publish@v1
         with:
           token: ${{ secrets.NPM_TOKEN }}
+        env:
+          NODE_OPTIONS: --openssl-legacy-provider
 
       - name: Create Release
         id: create_release
