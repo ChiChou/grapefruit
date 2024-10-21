@@ -29,17 +29,16 @@ jobs:
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
+          registry-url: "https://registry.npmjs.org"
           node-version: ${{ matrix.node-version }}
 
       - name: Install Dependency
         run: npm ci
 
       - name: Publish
-        uses: JS-DevTools/npm-publish@v1
-        with:
-          token: ${{ secrets.NPM_TOKEN }}
+        run: npm publish
         env:
-          NODE_OPTIONS: --openssl-legacy-provider
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create Release
         id: create_release
