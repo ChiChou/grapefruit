@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as frida from 'frida'
 import http from 'http'
+import { timingSafeEqual } from 'crypto'
 
 import { Server, Namespace, Socket } from 'socket.io'
 import REPL from './repl'
@@ -18,14 +19,14 @@ interface RPCPacket {
 }
 
 export default class Channels {
-  token: string
+  token: Buffer
   socket: Server
   devices: Namespace
   session: Namespace
   changedSignal: frida.DevicesChangedHandler
 
   constructor(srv: http.Server, token: string) {
-    this.token = token
+    this.token = Buffer.from(token)
     this.socket = new Server(srv)
     this.devices = this.socket.of('/devices')
     this.session = this.socket.of('/session')
@@ -43,10 +44,12 @@ export default class Channels {
     this.changedSignal = this.onchange.bind(this)
     mgr.changed.connect(this.changedSignal)
 
-    const validate = (socket: Socket) =>{
-      if (socket.handshake.auth.token !== this.token) {
-        socket.disconnect()
+    const validate = (socket: Socket) => {
+      const { token } = socket.handshake.auth
+      if (typeof token === 'string' && timingSafeEqual(Buffer.from(token), this.token)) {
+        return
       }
+      socket.disconnect()
     }
 
     this.devices.on('connection', validate);
