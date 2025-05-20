@@ -4,7 +4,7 @@ const { platform } = require('os');
 
 const isWin = platform() === 'win32'
 
-const env = Object.assign({}, process.env, { NODE_ENV: 'development' })
+const env = Object.assign({}, process.env, { NODE_ENV: 'development', NODE_OPTIONS: '--openssl-legacy-provider' })
 
 function* tasks() {
   const spec = {
