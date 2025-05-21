@@ -1,11 +1,14 @@
-const demangle = new NativeFunction(
-  Module.findExportByName('libc++abi.dylib', '__cxa_demangle')!,
-  'pointer', ['pointer', 'pointer', 'pointer', 'pointer'])
-
 const BUF_LEN = 256 * 1024
 const buf = Memory.alloc(BUF_LEN)
 
 function cxaDemangle(name: string): string | null {
+  const libcxxabi = Process.findModuleByName('libc++abi.dylib')
+  if (!libcxxabi) return null
+
+  const demangle = new NativeFunction(
+    libcxxabi.findExportByName('__cxa_demangle')!,
+    'pointer', ['pointer', 'pointer', 'pointer', 'pointer'])
+
   const len = Memory.alloc(Process.pointerSize)
   const status = Memory.alloc(Process.pointerSize)
 
@@ -150,3 +153,4 @@ export function exported(name?: string, keyword?: string) {
     })
   }
 }
+

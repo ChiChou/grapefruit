@@ -1,4 +1,4 @@
-import uuid from '../lib/uuid'
+import uuid from '../lib/uuid.js'
 
 function quote(table: string) {
   return `"${table.replace(/"/g, '')}"`

@@ -1,15 +1,28 @@
-const CLLocationDegrees = (Process.pointerSize === 4) ? 'float' : 'double';
-const CLLocationCoordinate2D = [CLLocationDegrees, CLLocationDegrees];
+import ObjC from 'frida-objc-bridge'
+
+if (Process.pointerSize !== 8)
+  throw new Error('This module only supports 64-bit')
+
+const CLLocationDegrees: NativeFunctionReturnType = 'double';
+const CLLocationCoordinate2D: NativeFunctionReturnType = [CLLocationDegrees, CLLocationDegrees]
 
 let listeners: InvocationListener[] = []
 const hooked: Set<string> = new Set()
 
 export function fake(lat: number, lng: number) {
-  Module.load('/System/Library/Frameworks/CoreLocation.framework/CoreLocation')
-  Module.ensureInitialized('CoreLocation')
+  const pError = Memory.alloc(Process.pointerSize)
+  ObjC.classes.NSBundle.bundleWithPath_('/System/Library/Frameworks/CoreLocation.framework').loadAndReturnError_(pError);
+  const err = pError.readPointer()
+  if (!err.isNull()) {
+    const error = new ObjC.Object(err)
+    throw new Error(error.localizedDescription())
+  }
+
+  const CoreLocation = Process.findModuleByName('CoreLocation')!
+
   const CLLocationCoordinate2DMake = new NativeFunction(
-    Module.findExportByName('CoreLocation', 'CLLocationCoordinate2DMake')!,
-    CLLocationCoordinate2D, [CLLocationDegrees, CLLocationDegrees])
+    CoreLocation.findExportByName('CLLocationCoordinate2DMake')!,
+    CLLocationCoordinate2D, ['double', 'double'])
 
   dismiss()
 

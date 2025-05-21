@@ -1,3 +1,5 @@
+import ObjC from 'frida-objc-bridge'
+
 export function performOnMainThread(action: Function): Promise<any> {
   const { NSThread } = ObjC.classes
 

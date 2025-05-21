@@ -1,3 +1,5 @@
+import ObjC from 'frida-objc-bridge'
+
 let original
 let disabled = false
 
@@ -5,7 +7,6 @@ function getClass() {
   if (!Process.findModuleByName('LocalAuthentication'))
     return
 
-  Module.ensureInitialized('LocalAuthentication')
   const { LAContext } = ObjC.classes
   if (!LAContext)
     console.error('Warning: touch id is not supported on this device')

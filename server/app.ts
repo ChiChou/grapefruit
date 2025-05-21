@@ -21,8 +21,7 @@ import { randomBytes } from 'crypto'
 
 import { wrap, tryGetDevice } from './lib/device'
 import { concat } from './lib/workspace'
-import { Scope } from 'frida/dist/device'
-
+import { Scope } from 'frida'
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 Buffer.prototype.toJSON = function () {
@@ -44,7 +43,6 @@ router
     const devices = await mgr.enumerateDevices()
 
     ctx.body = {
-      version: require('frida/package.json').version,
       node: process.version,
       list: devices.filter(dev => {
         if (dev.id === 'local' || dev.id === 'socket')
@@ -74,7 +72,7 @@ router
     })
     if (!apps.length) ctx.throw(404, `app "${bundle}" not found`)
     const app = apps[0]
-    const { icons } = app.parameters
+    const { icons } = app.parameters as { icons: { format: string, image: Buffer }[] }
     if (!icons || !icons.length) ctx.throw(404, 'icons unavaliable')
     const icon = icons.find(i => i.format === 'png')
     if (!icon || !icon.image) ctx.throw(404, 'Invalid icon format. Consider upgrading your frida on device')
@@ -146,8 +144,8 @@ router
     }
   })
   .get('/types', async (ctx) => {
-    const base = require.resolve('frida/package.json')
-    ctx.body = fs.createReadStream(path.join(base, '..', '..', '@types', 'frida-gum', 'index.d.ts'))
+    const base = require.resolve('@types/frida-gum/package.json')
+    ctx.body = fs.createReadStream(path.join(base, '..', 'index.d.ts'))
   })
   .get('/template/:name', async (ctx) => {
     const name = `${ctx.params.name}`.toLowerCase()

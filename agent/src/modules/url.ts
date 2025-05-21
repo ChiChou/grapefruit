@@ -1,3 +1,5 @@
+import ObjC from 'frida-objc-bridge'
+
 export function open(urlStr: string) {
 	const app = ObjC.classes.UIApplication.sharedApplication()
 

@@ -1,6 +1,6 @@
-import { performOnMainThread } from '../lib/dispatch'
+import ObjC from 'frida-objc-bridge'
 
-import UIKit from '../api/UIKit'
+import { performOnMainThread } from '../lib/dispatch.js'
 
 type Point = [number, number];
 type Size = [number, number];
@@ -19,6 +19,26 @@ interface Node {
   preview?: ArrayBuffer;
   delegate?: Delegate;
 }
+
+const CGFloat = (Process.pointerSize === 4) ? 'float' : 'double'
+const CGSize: NativeFunctionArgumentType = [CGFloat, CGFloat];
+
+const UIKit = Process.getModuleByName('UIKit')
+if (!UIKit) {
+  throw new Error('UIKit not found')
+}
+
+const UIGraphicsBeginImageContextWithOptions = new NativeFunction(
+  UIKit.findExportByName('UIGraphicsBeginImageContextWithOptions')!, 'void', [CGSize, 'bool', CGFloat]);
+
+const UIGraphicsGetImageFromCurrentImageContext = new NativeFunction(
+  UIKit.findExportByName('UIGraphicsGetImageFromCurrentImageContext')!, 'pointer', []);
+
+const UIGraphicsEndImageContext = new NativeFunction(
+  UIKit.findExportByName('UIGraphicsEndImageContext')!, 'void', []);
+
+const UIImagePNGRepresentation = new NativeFunction(
+  UIKit.findExportByName('UIImagePNGRepresentation')!, 'pointer', ['pointer']);
 
 export function dump(includingPreview: false): Promise<Node | null> {
   const { UIWindow } = ObjC.classes
@@ -46,10 +66,10 @@ export function dump(includingPreview: false): Promise<Node | null> {
       // preview
       const bounds = view.bounds()
       const size = bounds[1]
-      UIKit.UIGraphicsBeginImageContextWithOptions(size, 0, 0)
-      const image = UIKit.UIGraphicsGetImageFromCurrentImageContext();
-      UIKit.UIGraphicsEndImageContext()
-      const png = UIKit.UIImagePNGRepresentation(image) as NativePointer
+      UIGraphicsBeginImageContextWithOptions(size, 0, 0)
+      const image = UIGraphicsGetImageFromCurrentImageContext();
+      UIGraphicsEndImageContext()
+      const png = UIImagePNGRepresentation(image) as NativePointer
       if (!png.isNull()) {
         const data = new ObjC.Object(png)
         preview = data.base64EncodedStringWithOptions_(0).toString()

@@ -8,7 +8,7 @@
       </h1>
 
       <aside class="menu">
-        <p class="menu-label">NodeJS: {{ node }};<br>node-frida: {{ version }}</p>
+        <p class="menu-label">NodeJS: {{ node }}</p>
 
         <hr />
 
@@ -134,7 +134,6 @@ export default class Welcome extends Vue {
     this.loading = true
     Axios.get('/devices')
       .then(({ data }) => {
-        this.version = data.version
         this.node = data.node
         this.devices = data.list
 

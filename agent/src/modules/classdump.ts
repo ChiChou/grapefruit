@@ -1,8 +1,10 @@
+import ObjC from 'frida-objc-bridge'
+
 const { NSBundle, NSString } = ObjC.classes
 const copyClassNamesForImage = new NativeFunction(
-  Module.findExportByName(null, 'objc_copyClassNamesForImage')!, 'pointer', ['pointer', 'pointer']
+  Module.findGlobalExportByName('objc_copyClassNamesForImage')!, 'pointer', ['pointer', 'pointer']
 )
-const free = new NativeFunction(Module.findExportByName(null, 'free')!, 'void', ['pointer'])
+const free = new NativeFunction(Module.findGlobalExportByName('free')!, 'void', ['pointer'])
 
 export function dump(path?: string): string[] {
   const filename = path || NSBundle.mainBundle().executablePath().toString()

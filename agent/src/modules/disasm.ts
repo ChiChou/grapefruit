@@ -1,4 +1,4 @@
-import c from '../../gen/macho.c'
+import ObjC from 'frida-objc-bridge'
 
 interface Section {
   name?: string;
@@ -7,20 +7,16 @@ interface Section {
 }
 
 function maps() {
-  const uintptr_t = Process.pointerSize === 8 ? 'int64' : 'long'
-  const cm = new CModule(c)
-  const sections = new NativeFunction(cm.sections, 'void', ['pointer', 'pointer'])
   const vmmap: Section[] = []
 
   for (const mod of Process.enumerateModules()) {
-    const cb = new NativeCallback((sectname: NativePointer, base: NativeArgumentValue, top: NativeArgumentValue) => {
-      const name = sectname.readCString()?.slice(0, 16)
-      const floor = ptr(base.toString())
-      const ceil = ptr(top.toString())
-      vmmap.push({ name, floor, ceil })
-    }, 'void', ['pointer', uintptr_t, uintptr_t])
-
-    sections(mod.base, cb)
+    mod.enumerateSections().forEach(section => {
+      vmmap.push({
+        name: section.name,
+        floor: section.address,
+        ceil: section.address.add(section.size)
+      })
+    })
   }
 
   return vmmap

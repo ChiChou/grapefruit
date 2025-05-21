@@ -9,7 +9,7 @@ import * as transfer from './transfer'
 import { wrap, tryGetDevice } from './device'
 import { connect, proxy } from './rpc'
 
-import { MessageType } from 'frida/dist/script'
+import { MessageType } from 'frida'
 
 const mgr = frida.getDeviceManager()
 
@@ -23,7 +23,7 @@ export default class Channels {
   socket: Server
   devices: Namespace
   session: Namespace
-  changedSignal: frida.DevicesChangedHandler
+  changedSignal: frida.DeviceChangedHandler
 
   constructor(srv: http.Server, token: string) {
     this.token = Buffer.from(token)

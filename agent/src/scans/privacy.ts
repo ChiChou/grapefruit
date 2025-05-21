@@ -1,3 +1,5 @@
+import ObjC from 'frida-objc-bridge'
+
 const groups = {
   Bluetooth: [
     'NSBluetoothAlwaysUsageDescription',

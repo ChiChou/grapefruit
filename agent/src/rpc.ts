@@ -1,3 +1,5 @@
+import ObjC from 'frida-objc-bridge'
+
 const exported = new Map()
 
 export function register(func: Function, name?: string) {

@@ -1,11 +1,14 @@
-import CF from '../api/CoreFoundation'
-import Security from '../api/Security'
+import ObjC from 'frida-objc-bridge'
 
-import { CFSTR } from '../lib/foundation'
-import { valueOf } from '../lib/dict'
+import { CFSTR } from '../lib/foundation.js'
+import { valueOf } from '../lib/dict.js'
 
-for (const mod of ['Foundation', 'CoreFoundation', 'Security']) {
-  Module.ensureInitialized(mod)
+const CoreFoundation = Process.findModuleByName('CoreFoundation')
+const Security = Process.findModuleByName('Security')
+const Foundation = Process.findModuleByName('Foundation')
+
+if (!(CoreFoundation && Security && Foundation)) {
+  throw new Error('one or more required modules not loaded')
 }
 
 const constants = [
@@ -55,7 +58,7 @@ const constants = [
 const lookup: { [val: string]: string } = {}
 const C: { [key: string]: NativePointer } = {}
 for (let symbol of constants) {
-  const p = Module.findExportByName('Security', symbol)
+  const p = Security.findExportByName(symbol)
   if (!p) {
     console.error(`${symbol} not found`)
     continue
@@ -92,6 +95,9 @@ function encodeData(val?: ObjC.Object) {
   }
   return null
 }
+
+const SecItemCopyMatching = new NativeFunction(Security.findExportByName('SecItemCopyMatching')!, 'int', ['pointer', 'pointer'])
+const SecItemDelete = new NativeFunction(Security.findExportByName('SecItemDelete')!, 'int', ['pointer'])
 
 export function list(withfaceId = false): object[] {
   const kCFBooleanTrue = ObjC.classes.__NSCFBoolean.numberWithBool_(true)
@@ -132,8 +138,8 @@ export function list(withfaceId = false): object[] {
     query.setObject_forKey_(clazz, C.kSecClass)
 
     const p = Memory.alloc(Process.pointerSize)
-    const status = Security.SecItemCopyMatching(query, p) as NativePointer
-    if (!status.isNull())
+    const status = SecItemCopyMatching(query, p)
+    if (status)
       continue
 
     const arr = new ObjC.Object(p.readPointer())
@@ -164,6 +170,6 @@ export function clear() {
   for (const clazz of kSecClasses) {
     query.setObject_forKey_(clazz, C.kSecClass)
   }
-  Security.SecItemDelete(query)
+  SecItemDelete(query)
   return true
 }

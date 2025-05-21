@@ -1,3 +1,5 @@
+import ObjC from 'frida-objc-bridge'
+
 export class Dict {
   static *keys(dict: ObjC.Object) {
     if (!dict.isKindOfClass_(ObjC.classes.NSDictionary))

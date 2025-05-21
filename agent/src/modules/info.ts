@@ -1,15 +1,18 @@
-import { valueOf } from '../lib/dict'
-import { NSTemporaryDirectory, NSHomeDirectory } from '../lib/foundation'
+import ObjC from 'frida-objc-bridge'
+import { valueOf } from '../lib/dict.js'
+import { NSTemporaryDirectory, NSHomeDirectory } from '../lib/foundation.js'
 
 type Info = { [key: string]: any }
 
 export function icon(): ArrayBuffer {
-  const { NSBundle, UIImage } = ObjC.classes
+  const UIKit = Process.getModuleByName('UIKit')
+  if (!UIKit)
+    throw new Error('UIKit not found')
+
   const UIImagePNGRepresentation = new NativeFunction(
-    Module.findExportByName('UIKit', 'UIImagePNGRepresentation')!,
-    'pointer',
-    ['pointer']
-  )
+    UIKit.findExportByName('UIImagePNGRepresentation')!, 'pointer', ['pointer'])
+
+  const { NSBundle, UIImage } = ObjC.classes
 
   const fail = new ArrayBuffer(0)
   const dict = NSBundle.mainBundle().infoDictionary()

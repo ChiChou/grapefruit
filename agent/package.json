@@ -4,10 +4,9 @@
   "private": true,
   "main": "dist.js",
   "scripts": {
-    "prepare": "npm run preprocessor && npm run cmod && npm run build",
+    "prepare": "npm run preprocessor && npm run build",
     "build": "frida-compile src/index.ts -o dist.js",
     "watch": "npm run build -- -w",
-    "cmod": "node scripts/cmodule.js",
     "preprocessor": "node scripts/preprocessor.js"
   },
   "files": [
@@ -16,8 +15,11 @@
     "system-wide"
   ],
   "devDependencies": {
-    "@types/frida-gum": "^17.0.0",
-    "@types/node": "^16.3.1",
-    "frida-compile": "^10.2.4"
+    "@types/frida-gum": "^19.0.0",
+    "@types/node": "^22.15.21",
+    "frida-compile": "^17.0.0"
+  },
+  "dependencies": {
+    "frida-objc-bridge": "^8.0.4"
   }
 }

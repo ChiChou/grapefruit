@@ -1,7 +1,11 @@
-import { NSHomeDirectory, NSTemporaryDirectory, attrs, Attributes } from '../lib/foundation'
-import { open } from '../lib/libc'
-import { valueOf } from '../lib/dict'
-import uuid from '../lib/uuid'
+import ObjC from 'frida-objc-bridge'
+
+import fs from 'fs'
+
+import { NSHomeDirectory, NSTemporaryDirectory, attrs, Attributes } from '../lib/foundation.js'
+import { valueOf } from '../lib/dict.js'
+import uuid from '../lib/uuid.js'
+import { StringLike } from '../typings.js'
 
 const { NSBundle, NSFileManager, NSString, NSDictionary } = ObjC.classes
 
@@ -64,7 +68,7 @@ function readdir(path: string, max = 500, folderOnly = false): File[] {
 }
 
 export function resolve(root: string, path = '') {
-  let prefix: string
+  let prefix: StringLike
   if (root === 'tmp') {
     prefix = NSTemporaryDirectory()
   } else if (root === 'home' || root === '~') {
@@ -125,13 +129,7 @@ export function copy(src: string, dst: string) {
 }
 
 export async function text(path: string) {
-  const name = Memory.allocUtf8String(path)
-  const SIZE = 10 * 1024 // max read size: 10k
-  const fd = open(name, 0, 0) as number
-  if (fd === -1) throw new Error(`unable to open file ${path}`)
-
-  const stream = new UnixInputStream(fd, { autoClose: true })
-  return stream.read(SIZE)
+  return ObjC.classes.NSString.stringWithContentsOfFile_encoding_error_(path, 4, NULL).toString()
 }
 
 export async function download(path: string) {
@@ -145,12 +143,9 @@ export async function download(path: string) {
     throw new Error(`${path} is a directory`)
   }
 
-  const fd = open(name, 0, 0) as number
-  if (fd === -1) throw new Error(`unable to open file ${path}`)
-
   send({ subject, event: 'begin', session, path, size })
   setImmediate(async () => {
-    const stream = new UnixInputStream(fd, { autoClose: true })
+    const stream = fs.createReadStream(path, { highWaterMark: watermark })
     let eof = false
     while (!eof) {
       const buf = await stream.read(watermark)

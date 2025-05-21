@@ -1,3 +1,5 @@
+import ObjC from 'frida-objc-bridge'
+
 // const SEL selectors[] = {
 //   @selector(connectionDidFinishLoading:),
 //   @selector(connection:willSendRequest:redirectResponse:),
@@ -13,7 +15,7 @@
 //   @selector(URLSession:downloadTask:didFinishDownloadingToURL:)
 // };
 
-import { list } from '../modules/classdump'
+import { list } from '../modules/classdump.js'
 
 const rawSelectors = `
 @selector(connectionDidFinishLoading:),

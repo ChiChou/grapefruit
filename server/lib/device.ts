@@ -3,7 +3,7 @@ import { Device, Session, enumerateDevices, getUsbDevice, getDevice } from 'frid
 import { retry } from './utils'
 
 import * as serialize from './serialize'
-import { DeviceType } from 'frida/dist/device'
+import { DeviceType } from 'frida'
 
 export async function match(prefix: string): Promise<Device> {
   const list = await enumerateDevices()

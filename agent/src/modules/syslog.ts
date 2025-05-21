@@ -1,4 +1,13 @@
-import { pipe, dup2, close, fcntl } from '../lib/libc'
+const libc = Process.findModuleByName('libSystem.B.dylib')
+
+if (!libc) {
+  throw new Error('libSystem.B.dylib not found')
+}
+
+const close = new NativeFunction(libc.findExportByName('close')!, 'int', ['int'])
+const pipe = new NativeFunction(libc.findExportByName('pipe')!, 'int', ['pointer'])
+const dup2 = new NativeFunction(libc.findExportByName('dup2')!, 'int', ['int', 'int'])
+const fcntl = new NativeFunction(libc.findExportByName('fcntl')!, 'int', ['int', 'int', 'int'])
 
 
 // sys/fcntl.h

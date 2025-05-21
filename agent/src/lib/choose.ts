@@ -1,3 +1,5 @@
+import ObjC from "frida-objc-bridge"
+
 export async function get(clazz: ObjC.Object, handle: string): Promise<ObjC.Object> {
   const webview: NativePointer = await new Promise((resolve, reject) => {
     let p: NativePointer = NULL

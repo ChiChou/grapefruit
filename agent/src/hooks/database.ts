@@ -1,4 +1,4 @@
-import { hook } from './core'
+import { hook } from './core.js'
 
 const set = new Set<InvocationListener>()
 

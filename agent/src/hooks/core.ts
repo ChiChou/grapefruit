@@ -1,3 +1,5 @@
+import ObjC from 'frida-objc-bridge'
+
 interface Signature {
   args: string[];
   ret?: string;
@@ -8,8 +10,11 @@ const now = () => (new Date()).getTime()
 const readable = (type: string, arg: NativePointer) => (type === 'char *' ? arg.readUtf8String() : arg)
 const hooked = new Map<string, InvocationListener>()
 
-export function hook(mod: string | null, symbol: string, signature: Signature) {
-  const p = Module.findExportByName(mod, symbol)
+export function hook(mod: string, symbol: string, signature: Signature) {
+  const library = Process.findModuleByName(mod)
+  if (!library) throw new Error(`Module ${mod} not loaded`)
+
+  const p = library.findExportByName(symbol)
   if (!p) throw new Error(`Function ${mod || 'global'}!${symbol} not found`)
   const range = Process.findRangeByAddress(p)
   if (!range?.protection.includes('x')) throw new Error('Invalid symbol, expected a function but received a data pointer')
@@ -57,8 +62,10 @@ export function hook(mod: string | null, symbol: string, signature: Signature) {
   return listener
 }
 
-export function unhook(mod: string | null, symbol: string) {
-  const p = Module.findExportByName(mod, symbol)
+export function unhook(mod: string, symbol: string) {
+  const library = Process.findModuleByName(mod)
+  if (!library) throw new Error(`Module ${mod} is not loaded`)
+  const p = library.findExportByName(symbol)
   const name = `${mod || ''}!${symbol}`
   if (!p) throw new Error(`${name} not found`)
   const id = p.toString()

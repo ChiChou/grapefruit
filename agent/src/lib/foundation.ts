@@ -1,11 +1,36 @@
-import { valueOf } from './dict'
-import CF from '../api/CoreFoundation'
+import ObjC from 'frida-objc-bridge'
+import { NSString } from '../typings.js'
+
+import { valueOf } from './dict.js'
+
+const CoreFoundation = Process.findModuleByName('CoreFoundation')
+if (!CoreFoundation) {
+  throw new Error('CoreFoundation not loaded')
+}
+
+const CFStringGetCStringPtrImpl = CoreFoundation.findExportByName('CFStringGetCStringPtr')
+const CFStringGetLengthImpl = CoreFoundation.findExportByName('CFStringGetLength')
+
+if (!CFStringGetCStringPtrImpl) {
+  throw new Error('CFStringGetCStringPtr not found')
+}
+
+if (!CFStringGetLengthImpl) {
+  throw new Error('CFStringGetLength not found')
+}
+
+const CFStringGetCStringPtr = new NativeFunction(CFStringGetCStringPtrImpl, 'pointer', ['pointer', 'int'])
+const CFStringGetLength = new NativeFunction(CFStringGetLengthImpl, 'int', ['pointer'])
+
 
 function wrap(name: string) {
-  return function () {
-    const func = new NativeFunction(Module.findExportByName(null, name)!, 'pointer', [])
+  return function (): NSString {
+    const impl = Module.findGlobalExportByName(name)
+    if (!impl) throw new Error(`${name} not found`)
+
+    const func = new NativeFunction(impl, 'pointer', [])
     const result = func() as NativePointer
-    return new ObjC.Object(result).toString()
+    return new ObjC.Object(result) as NSString
   }
 }
 
@@ -16,8 +41,8 @@ export const NSHomeDirectory = wrap('NSHomeDirectory')
 
 export function CFSTR(p: NativePointer) {
   const kCFStringEncodingUTF8 = 0x08000100
-  const str = CF.CFStringGetCStringPtr(p, kCFStringEncodingUTF8) as NativePointer
-  return str.readUtf8String(CF.CFStringGetLength(p) as number)
+  const str = CFStringGetCStringPtr(p, kCFStringEncodingUTF8)
+  return str.readUtf8String(CFStringGetLength(p))
 }
 
 const attributeLookup = {

@@ -18,7 +18,7 @@ async function rpc() {
       .map(e => e.name)
 
     for (let name of registry) {
-      yield `import * as ${name} from './${name}'`;
+      yield `import * as ${name} from './${name}.js'`;
     }
     yield ''
     yield `export default { ${registry.join(', ')} }`

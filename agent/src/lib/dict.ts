@@ -1,3 +1,5 @@
+import ObjC from 'frida-objc-bridge'
+
 /* eslint no-use-before-define: 0 */
 const NSPropertyListImmutable = 0
 

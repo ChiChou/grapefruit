@@ -1,6 +1,7 @@
-import { get as getInstance } from '../lib/choose'
-import { description } from '../lib/dict'
-import { Arr, Dict } from '../lib/iterators'
+import ObjC from 'frida-objc-bridge'
+import { get as getInstance } from '../lib/choose.js'
+import { description } from '../lib/dict.js'
+import { Arr, Dict } from '../lib/iterators.js'
 
 type JSCCollection = { [handle: string]: string }
 

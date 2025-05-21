@@ -4,11 +4,11 @@
   "description": "Runtime Application Instruments for iOS",
   "main": "index.js",
   "dependencies": {
-    "@types/frida-gum": "^16.2.0",
+    "@types/frida-gum": "^19.0.0",
     "bplist-creator": "0.0.8",
     "bplist-parser": "^0.2.0",
     "commander": "^6.0.0",
-    "frida": "^16.5.6",
+    "frida": "^17.0.1",
     "koa": "^2.11.0",
     "koa-bodyparser": "^4.3.0",
     "koa-json": "^2.0.2",

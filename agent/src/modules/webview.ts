@@ -1,5 +1,6 @@
-import { performOnMainThread } from "../lib/dispatch"
-import { get as getInstance } from '../lib/choose'
+import ObjC from 'frida-objc-bridge'
+import { performOnMainThread } from "../lib/dispatch.js"
+import { get as getInstance } from '../lib/choose.js'
 
 const WebViewKinds = ['UI', 'WK'] as const
 

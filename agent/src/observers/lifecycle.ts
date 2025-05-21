@@ -1,3 +1,5 @@
+import ObjC from 'frida-objc-bridge'
+
 const salt = Math.random().toString(36).slice(2)
 const name = `GrapefruitAppDelegate${salt}`
 const MyAppDelegate = ObjC.registerProtocol({

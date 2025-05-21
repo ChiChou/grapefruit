@@ -10,6 +10,3 @@ function requireMinimalVersion(requirement: string) {
 }
 
 requireMinimalVersion('12.5')
-
-Module.ensureInitialized('Foundation')
-// Module.ensureInitialized('UIKit')

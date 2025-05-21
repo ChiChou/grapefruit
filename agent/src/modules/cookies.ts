@@ -1,3 +1,5 @@
+import ObjC from 'frida-objc-bridge'
+
 const PROPERTIES = ['version', 'name', 'value', 'domain', 'path', 'expiresDate', 'portList', 'sameSitePolicy']
 
 type Cookie = { [key:string]: string | boolean }
