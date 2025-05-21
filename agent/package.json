@@ -5,7 +5,7 @@
   "main": "dist.js",
   "scripts": {
     "prepare": "npm run preprocessor && npm run build",
-    "build": "frida-compile src/index.ts -o dist.js",
+    "build": "frida-compile src/index.ts -o dist.js -c",
     "watch": "npm run build -- -w",
     "preprocessor": "node scripts/preprocessor.js"
   },

@@ -44,7 +44,7 @@ export default class Channels {
     this.changedSignal = this.onchange.bind(this)
     mgr.changed.connect(this.changedSignal)
 
-    const validate = (socket: Socket) => {
+    const validate = (socket: Socket): void => {
       const { token } = socket.handshake.auth
       if (typeof token === 'string' && timingSafeEqual(Buffer.from(token), this.token)) {
         return
@@ -111,7 +111,7 @@ export default class Channels {
               transfer.begin(session, size, path)
             } else if (event === 'data') {
               transfer.push(session, data)
-              await agent.post({ type: 'ack' })
+              agent.post({ type: 'ack' })
             } else if (event === 'end') {
               transfer.end(session)
             }

@@ -72,7 +72,7 @@ router
     })
     if (!apps.length) ctx.throw(404, `app "${bundle}" not found`)
     const app = apps[0]
-    const { icons } = app.parameters as { icons: { format: string, image: Buffer }[] }
+    const { icons } = app.parameters as { icons: { format: string; image: Buffer }[] }
     if (!icons || !icons.length) ctx.throw(404, 'icons unavaliable')
     const icon = icons.find(i => i.format === 'png')
     if (!icon || !icon.image) ctx.throw(404, 'Invalid icon format. Consider upgrading your frida on device')

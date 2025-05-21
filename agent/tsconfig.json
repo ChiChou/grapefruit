@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "experimentalDecorators": true,
     "target": "es2020",
     "lib": ["es2020"],
     "allowJs": true,
@@ -11,5 +10,5 @@
     "module": "Node16",
     "moduleResolution": "node16"
   },
-  "exclude": ["_agent.js"]
+  "exclude": ["dist.js"]
 }

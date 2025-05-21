@@ -25,5 +25,5 @@ export function invoke(name: string, args=[]) {
 }
 
 export function interfaces() {
-  return [...exported.keys()]
+  return [...exported.keys()] as string[]
 }

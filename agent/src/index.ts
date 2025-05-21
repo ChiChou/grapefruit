@@ -4,15 +4,10 @@ import './ready.js'
 import './polyfill.js'
 // import './observers/http'
 
-import { init as enableLifeCycleHook } from './observers/lifecycle.js'
+// import { init as enableLifeCycleHook } from './observers/lifecycle.js'
 
 import { interfaces, invoke, register } from './rpc.js'
 import modules from './modules/index.js'
-
-rpc.exports = {
-  interfaces,
-  invoke,
-}
 
 function registerModules() {
   for (const [name, submodule] of Object.entries(modules)) {
@@ -26,7 +21,7 @@ function registerModules() {
 }
 
 setImmediate(registerModules)
-setImmediate(enableLifeCycleHook)
+// setImmediate(enableLifeCycleHook)
 
 // disable autolock
 ObjC.schedule(ObjC.mainQueue, () => {
@@ -62,3 +57,8 @@ Interceptor.attach(Module.findGlobalExportByName('objc_exception_throw')!, {
     console.error('Objective-C exception:', new ObjC.Object(args[0]))
   }
 })
+
+rpc.exports = {
+  interfaces,
+  invoke,
+}
