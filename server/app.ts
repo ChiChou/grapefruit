@@ -45,7 +45,7 @@ router
     ctx.body = {
       node: process.version,
       list: devices.filter(dev => {
-        if (dev.id === 'local' || dev.id === 'socket')
+        if (dev.id === 'local' || dev.id === 'socket' || dev.id === 'barebone')
           return false
 
         if (unique.has(dev.id))
