@@ -4,13 +4,8 @@
     <main>
       <SidePanel />
 
-      <split-pane
-        :min-percent="10"
-        :default-percent="sideWidth"
-        split="vertical"
-        class="main-pane"
-        @resize="sidebarResize"
-      >
+      <split-pane :min-percent="10" :default-percent="sideWidth" split="vertical" class="main-pane"
+        @resize="sidebarResize">
         <template slot="paneL">
           <div class="space space-sidebar">
             <keep-alive>
@@ -170,7 +165,7 @@ export default class Workspace extends Vue {
     const tabsSingleton = new Map<string, ContentItem>()
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    layout.registerComponent('subview', function(container: Container, state: any) {
+    layout.registerComponent('subview', function (container: Container, state: any) {
       const { component, props, title } = state
       const propsData = { data: props, component, container }
       const FrameClass = Vue.extend(Frame)
@@ -306,7 +301,7 @@ export default class Workspace extends Vue {
     const { term } = this
     if (!term) return
 
-    const color: {[key: string]: StyleFunction} = {
+    const color: { [key: string]: StyleFunction } = {
       info: colors.greenBright,
       error: colors.redBright,
       warn: colors.yellow,
@@ -335,6 +330,18 @@ export default class Workspace extends Vue {
         if (msg === 'invalid parameter type' && this.device && this.bundle) {
           location.reload()
         }
+
+        this.$buefy.snackbar.open({
+          type: 'is-danger',
+          position: 'is-top',
+          actionText: 'Reload',
+          // indefinite: true,
+          duration: 10 * 1000,
+          queue: false,
+          message: `Error (${msg})`,
+          onAction: () => location.reload()
+        })
+        this.loading = 'disconnected'
       })
   }
 
@@ -377,7 +384,7 @@ export default class Workspace extends Vue {
   flex-direction: column;
   height: 100vh;
 
-  > main {
+  >main {
     flex: 1;
     display: flex;
     flex-direction: row;
@@ -445,6 +452,7 @@ footer.status {
 
   &.space-terminal {
     background: #1e1e1e;
+
     .xterm {
       padding: 10px;
     }
@@ -462,7 +470,8 @@ footer.status {
   }
 }
 
-a.dropdown-item:hover, button.dropdown-item:hover {
+a.dropdown-item:hover,
+button.dropdown-item:hover {
   background: #00000031;
   color: #FFC107;
 }
@@ -488,9 +497,8 @@ a.dropdown-item:hover, button.dropdown-item:hover {
   font-size: 14px;
 }
 
-.lm_header .lm_controls > li {
+.lm_header .lm_controls>li {
   height: 24px;
   width: 24px;
 }
-
 </style>
