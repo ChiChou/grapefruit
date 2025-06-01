@@ -1,0 +1,30 @@
+{
+  "name": "igf-agent",
+  "version": "1.0.0",
+  "description": "Frida agent",
+  "private": true,
+  "main": "agent/index.ts",
+  "scripts": {
+    "build:springboard": "frida-compile fruity/springboard.ts -o dist/springboard.js",
+    "prepare:springboard": "npm run build:springboard -- -c",
+    "watch:springboard": "npm run build:springboard -- -w",
+    "build:ios": "frida-compile fruity/index.ts -o dist/fruity.js",
+    "prepare:ios": "npm run build:ios -- -c",
+    "watch:ios": "npm run build:ios -- -w",
+    "build:eval": "frida-compile eval.ts -o dist/eval.js",
+    "prepare:eval": "npm run build:eval -- -c",
+    "build": "npm run build:springboard && npm run build:ios && npm run build:eval",
+    "prepare": "npm run prepare:springboard && npm run prepare:ios && npm run prepare:eval",
+    "test": "node --experimental-strip-types --test tests/*.ts"
+  },
+  "devDependencies": {
+    "@types/frida-gum": "^19.0.0",
+    "@types/node": "^18.14.0",
+    "frida": "^17.0.7",
+    "frida-compile": "^18.0.0"
+  },
+  "dependencies": {
+    "frida-objc-bridge": "^8.0.4"
+  },
+  "type": "module"
+}
