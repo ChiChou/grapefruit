@@ -9,5 +9,5 @@
     "module": "ESNext",
     "moduleResolution": "node"
   },
-  "exclude": ["dist/**"]
+  "exclude": ["dist/**", "scripts/**"]
 }
