@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "dev": "node --experimental-strip-types --watch index.ts"
+  },
+  "type": "module"
+}

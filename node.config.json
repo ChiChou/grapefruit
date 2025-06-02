@@ -1,0 +1,9 @@
+{
+  "$schema": "https://nodejs.org/dist/v23.10.0/docs/node-config-schema.json",
+  "nodeOptions": {
+    "experimental-strip-types": true,
+    "watch-preserve-output": true,
+    "watch": true,
+    "watch-path": ["server/index.ts"]
+  }
+}

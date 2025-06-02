@@ -1,0 +1,47 @@
+{
+  "name": "igf",
+  "version": "0.14.0",
+  "description": "Runtime Application Instruments for iOS",
+  "license": "MIT",
+  "author": "CodeColorist",
+  "type": "module",
+  "main": "server/index.ts",
+  "bin": {
+    "igf": "bin/igf"
+  },
+  "scripts": {
+    "dev": "node --experimental-strip-types scripts/dev.ts",
+    "start": "npx igf",
+    "mock": "node --experimental-strip-types --env-file=.env mock/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "env-paths": "^3.0.0",
+    "frida": "^17.0.7",
+    "koa": "^3.0.0",
+    "koa-bodyparser": "^4.4.1",
+    "koa-json": "^2.0.2",
+    "koa-logger": "^3.2.1",
+    "koa-router": "^13.0.1",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "@types/koa": "^2.15.0",
+    "@types/koa-bodyparser": "^4.3.12",
+    "@types/koa-json": "^2.0.23",
+    "@types/koa-logger": "^3.1.5",
+    "@types/koa-router": "^7.4.8",
+    "@types/node": "^22.15.29"
+  },
+  "engines": {
+    "node": ">=23.10.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChiChou/Grapefruit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ChiChou/Grapefruit/issues"
+  },
+  "homepage": "https://github.com/ChiChou/Grapefruit#readme"
+}
