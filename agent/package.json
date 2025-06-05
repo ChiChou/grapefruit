@@ -8,9 +8,10 @@
     "build:springboard": "frida-compile fruity/springboard.ts -o dist/springboard.js",
     "build:ios": "frida-compile fruity/index.ts -o dist/fruity.js",
     "build:eval": "frida-compile eval.ts -o dist/eval.js",
-    "prepare": "node --experimental-strip-types scripts/prepare.ts",
-    "dev": "node --experimental-strip-types scripts/watch.ts",
-    "test": "node --experimental-strip-types --test tests/*.ts"
+    "node:flags": "node --experimental-strip-types",
+    "prepare": "npm run node:flags scripts/prepare.ts",
+    "dev": "npm run node:flags scripts/watch.ts",
+    "test": "npm run node:flags -- --test tests/*.ts"
   },
   "devDependencies": {
     "@types/frida-gum": "^19.0.0",
