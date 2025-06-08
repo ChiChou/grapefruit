@@ -14,7 +14,7 @@
 
 ### Dependencies
 
-Grapefruit requires [Node.js](https://nodejs.org/) to be installed. If you can't install the frida-node dependency, please check out the troubleshooting section to [choose another version of Node.js](https://github.com/ChiChou/Grapefruit/wiki/How-do-I-decide-which-version-of-nodejs-to-use%3F).
+Grapefruit requires [Node.js](https://nodejs.org/) to be installed. ~~If you can't install the frida-node dependency, please check out the troubleshooting section to [choose another version of Node.js](https://github.com/ChiChou/Grapefruit/wiki/How-do-I-decide-which-version-of-nodejs-to-use%3F).~~ Since frida 17 moved to [N-API](https://nodejs.org/api/n-api.html), there should be no issue installing the npm package, unless your system is not supported.
 
 Setup frida on your iOS device: https://www.frida.re/docs/ios/
 
