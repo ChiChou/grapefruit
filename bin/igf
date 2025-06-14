@@ -1,3 +1,0 @@
-#!/usr/bin/env node --experimental-strip-types --env-file=.env
-
-import "../server/index.ts";
