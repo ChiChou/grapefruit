@@ -11,8 +11,7 @@ import { Server } from "socket.io";
 import frida from "frida";
 
 import env from "../lib/env.ts";
-import { sameOrigin } from "../lib/utils.ts";
-import type { Device, Application } from "../gui/schema.d.ts";
+import type { Device, Application } from "../../gui/src/schema.d.ts";
 
 // Mock data
 const mockDevices: Device[] = [
