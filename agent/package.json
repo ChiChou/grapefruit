@@ -6,6 +6,7 @@
   "main": "agent/index.ts",
   "scripts": {
     "build:springboard": "frida-compile fruity/springboard.ts -o dist/springboard.js",
+    "build:android": "frida-compile droid/index.ts -o dist/droid.js",
     "build:ios": "frida-compile fruity/index.ts -o dist/fruity.js",
     "build:eval": "frida-compile eval.ts -o dist/eval.js",
     "node:flags": "node --experimental-strip-types",
