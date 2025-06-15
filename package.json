@@ -7,13 +7,15 @@
   "type": "module",
   "main": "server/index.ts",
   "bin": {
-    "igf": "bin/igf"
+    "igf": "bin/igf.ts"
   },
   "scripts": {
-    "dev": "node --experimental-strip-types scripts/dev.ts",
-    "start": "npx igf",
-    "mock": "node --experimental-strip-types --env-file=.env mock/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "node:flags": "node --experimental-strip-types --env-file-if-exists=.env",
+    "node:devflags": "node --experimental-strip-types --env-file=dev.env",
+    "dev": "npm run node:devflags scripts/dev.ts",
+    "start": "npm run node:flags server/index.ts",
+    "mock": "npm run node:devflags mock/index.ts",
+    "test": "echo \"Todo: add test runner\" && exit 1"
   },
   "dependencies": {
     "env-paths": "^3.0.0",
@@ -23,6 +25,7 @@
     "koa-json": "^2.0.2",
     "koa-logger": "^3.2.1",
     "koa-router": "^13.0.1",
+    "koa-send": "^5.0.1",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
@@ -31,6 +34,7 @@
     "@types/koa-json": "^2.0.23",
     "@types/koa-logger": "^3.1.5",
     "@types/koa-router": "^7.4.8",
+    "@types/koa-send": "^4.1.6",
     "@types/node": "^22.15.29"
   },
   "engines": {

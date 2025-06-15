@@ -1,5 +1,4 @@
 import cp from "node:child_process";
-import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 
@@ -11,17 +10,6 @@ const subprojects = ["agent", "server", "gui"] as const;
 const subdirs = subprojects.map((name) =>
   path.join(import.meta.dirname, "..", name),
 );
-
-async function findPort() {
-  return new Promise<number>((resolve, reject) => {
-    const server = net.createServer();
-    server.listen(0, () => {
-      const { port } = server.address() as net.AddressInfo;
-      server.close(() => resolve(port));
-    });
-    server.on("error", (err) => reject(err));
-  });
-}
 
 function tmux() {
   const argv = ["new-session"];
@@ -51,12 +39,6 @@ function wt() {
 }
 
 async function main() {
-  if (!process.env.PORT) process.env.PORT = `${await findPort()}`;
-
-  process.env.HOST = "127.0.0.1";
-  process.env.BACKEND = `http://127.0.1:${process.env.PORT}`;
-  process.env.NODE_ENV = "development";
-
   if (isWindows) {
     wt();
   } else {
