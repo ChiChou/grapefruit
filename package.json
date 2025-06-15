@@ -7,7 +7,7 @@
   "type": "module",
   "main": "server/index.ts",
   "bin": {
-    "igf": "bin/igf.ts"
+    "igf": "bin/igf.js"
   },
   "scripts": {
     "node:flags": "node --experimental-strip-types --env-file-if-exists=.env",
