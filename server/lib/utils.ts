@@ -3,10 +3,6 @@ import { promises as fsp } from "node:fs";
 
 import frida from "frida";
 
-export function sameOrigin(a: URL, b: URL) {
-  return a.protocol === b.protocol && a.host === b.host;
-}
-
 export async function agent(name: string) {
   const scriptPath = path.join(
     import.meta.dirname,

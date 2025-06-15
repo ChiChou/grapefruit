@@ -3,12 +3,10 @@
 import type { AddressInfo } from "node:net";
 
 import env from "../server/lib/env.ts";
-import { realtime, server } from "../server/index.ts";
+import server from "../server/index.ts";
 
 server.listen(env.port, env.host, () => {
   const addr = server.address() as AddressInfo;
   console.log(`Server is running on http://${addr.address}:${addr.port}`);
   console.log("environment:", env);
 });
-
-process.on("exit", () => realtime.close());
