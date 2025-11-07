@@ -1,0 +1,27 @@
+{
+  "name": "igf",
+  "version": "0.20.0",
+  "description": "",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "node --experimental-strip-types --watch src/index.ts",
+    "start": "node --experimental-strip-types src/index.ts",
+    "test": "node --env-file-if-exists=test.env --test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@hono/node-server": "^1.19.6",
+    "env-paths": "^3.0.0",
+    "frida": "^16.7.19",
+    "hono": "^4.10.4",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "socket.io-client": "^4.8.1",
+    "typescript": "^5.9.3"
+  }
+}
