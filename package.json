@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node --experimental-strip-types --watch src/index.ts",
     "start": "node --experimental-strip-types src/index.ts",
-    "test": "node --env-file-if-exists=test.env --test"
+    "test": "node --env-file-if-exists=test.env --test",
+    "prepare": "cd agent && npm i"
   },
   "keywords": [],
   "author": "",
