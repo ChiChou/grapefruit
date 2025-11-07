@@ -1,0 +1,19 @@
+{
+  "name": "igf-agent",
+  "version": "1.0.0",
+  "description": "igf frida agent",
+  "private": true,
+  "main": "agent/index.ts",
+  "type": "module",
+  "scripts": {
+    "prepare": "scripts/build.ts"
+  },
+  "devDependencies": {
+    "@types/frida-gum": "^18.8.2",
+    "@types/node": "^18.14.0"
+  },
+  "dependencies": {
+    "frida-java-bridge": "^7.0.10",
+    "frida-objc-bridge": "^8.0.5"
+  }
+}
