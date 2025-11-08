@@ -26,6 +26,77 @@ interface DeviceInfo {
   }>;
 }
 
+function AppCardSkeleton() {
+  return (
+    <div className="block rounded-lg py-6 px-2">
+      <div className="mb-3 flex items-center justify-center">
+        <Skeleton className="h-16 w-16 rounded-xl" />
+      </div>
+      <div className="space-y-1 text-center">
+        <Skeleton className="mx-auto h-4 w-20" />
+        <Skeleton className="mx-auto h-3 w-24" />
+      </div>
+    </div>
+  );
+}
+
+function DeviceHeader({ deviceInfo }: { deviceInfo: DeviceInfo | null }) {
+  return (
+    <>
+      <h1 className="mb-2 text-2xl font-bold dark:text-gray-100">
+        {deviceInfo?.name || "Device"}
+      </h1>
+      <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
+        {deviceInfo?.arch} • {deviceInfo?.os.name} {deviceInfo?.os.version} •{" "}
+        {deviceInfo?.udid}
+      </p>
+    </>
+  );
+}
+
+interface AppCardProps {
+  app: App;
+  udid: string;
+}
+
+function AppCard({ app, udid }: AppCardProps) {
+  return (
+    <Link
+      to={`/workspace/${udid}/${app.identifier}`}
+      className="block rounded-lg py-6 px-2 transition-colors  hover:bg-amber-100 dark:hover:bg-gray-800"
+    >
+      <div className="relative mb-3 flex items-center justify-center">
+        <img
+          src={`/api/device/${udid}/icon/${app.identifier}`}
+          alt={app.name}
+          loading="lazy"
+          className="h-16 w-16 rounded-xl"
+          onError={(e) => {
+            e.currentTarget.src =
+              "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' fill='%23ddd'/%3E%3C/svg%3E";
+          }}
+        />
+        {app.pid !== 0 && (
+          <Badge
+            className="absolute -right-1 -top-1 bg-green-500 px-1.5 py-0.5 text-xs"
+            variant="default"
+          >
+            {app.pid}
+          </Badge>
+        )}
+      </div>
+      <div className="space-y-1 text-center">
+        <p className="line-clamp-2 text-sm font-medium leading-tight dark:text-gray-100">
+          {app.name}
+        </p>
+        <p className="line-clamp-1 text-xs text-gray-500 dark:text-gray-400">
+          {app.identifier}
+        </p>
+      </div>
+    </Link>
+  );
+}
+
 export function AppsView() {
   const { udid } = useParams();
   const [apps, setApps] = useState<App[]>([]);
@@ -58,7 +129,6 @@ export function AppsView() {
       .then(([appsData, infoData]) => {
         setApps(appsData);
         setDeviceInfo(infoData);
-        setLoading(false);
       })
       .catch((err) => {
         if (err.name === "AbortError") {
@@ -66,6 +136,8 @@ export function AppsView() {
           return;
         }
         setError(err.message);
+      })
+      .finally(() => {
         setLoading(false);
       });
 
@@ -82,15 +154,7 @@ export function AppsView() {
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
           {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className="block rounded-lg py-6 px-2">
-              <div className="mb-3 flex items-center justify-center">
-                <Skeleton className="h-16 w-16 rounded-xl" />
-              </div>
-              <div className="space-y-1 text-center">
-                <Skeleton className="mx-auto h-4 w-20" />
-                <Skeleton className="mx-auto h-3 w-24" />
-              </div>
-            </div>
+            <AppCardSkeleton key={i} />
           ))}
         </div>
       </div>
@@ -110,50 +174,11 @@ export function AppsView() {
 
   return (
     <div className="p-6">
-      <h1 className="mb-2 text-2xl font-bold dark:text-gray-100">
-        {deviceInfo?.name || "Device"}
-      </h1>
-      <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
-        {deviceInfo?.arch} • {deviceInfo?.os.name} {deviceInfo?.os.version} •{" "}
-        {deviceInfo?.udid}
-      </p>
+      <DeviceHeader deviceInfo={deviceInfo} />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
         {apps.map((app) => (
-          <Link
-            key={app.identifier}
-            to={`/workspace/${udid}/${app.identifier}`}
-            className="block rounded-lg py-6 px-2 transition-colors  hover:bg-amber-100 dark:hover:bg-gray-800"
-          >
-            <div className="relative mb-3 flex items-center justify-center">
-              <img
-                src={`/api/device/${udid}/icon/${app.identifier}`}
-                alt={app.name}
-                loading="lazy"
-                className="h-16 w-16 rounded-xl"
-                onError={(e) => {
-                  e.currentTarget.src =
-                    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' fill='%23ddd'/%3E%3C/svg%3E";
-                }}
-              />
-              {app.pid !== 0 && (
-                <Badge
-                  className="absolute -right-1 -top-1 bg-green-500 px-1.5 py-0.5 text-xs"
-                  variant="default"
-                >
-                  {app.pid}
-                </Badge>
-              )}
-            </div>
-            <div className="space-y-1 text-center">
-              <p className="line-clamp-2 text-sm font-medium leading-tight dark:text-gray-100">
-                {app.name}
-              </p>
-              <p className="line-clamp-1 text-xs text-gray-500 dark:text-gray-400">
-                {app.identifier}
-              </p>
-            </div>
-          </Link>
+          <AppCard key={app.identifier} app={app} udid={udid!} />
         ))}
       </div>
 

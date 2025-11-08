@@ -5,6 +5,9 @@
   "private": true,
   "main": "agent/index.ts",
   "type": "module",
+  "engines": {
+    "node": ">=22.18.0"
+  },
   "scripts": {
     "prepare": "scripts/build.ts"
   },
