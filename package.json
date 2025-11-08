@@ -4,8 +4,8 @@
   "description": "",
   "main": "src/index.ts",
   "scripts": {
-    "dev": "node scripts/dev.ts",
-    "watch": "node --watch src/index.ts",
+    "dev:both": "node scripts/dev.ts",
+    "dev": "node --watch src/index.ts",
     "start": "node src/index.ts",
     "test": "node --test",
     "prepare": "cd agent && npm i"
