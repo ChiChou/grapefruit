@@ -170,7 +170,9 @@ export function AppsView() {
         <h1 className="mb-4 text-2xl font-bold dark:text-gray-100">
           {t("apps_for_device")}
         </h1>
-        <p className="text-red-600 dark:text-red-400">{t("error")}: {error}</p>
+        <p className="text-red-600 dark:text-red-400">
+          {t("error")}: {error}
+        </p>
       </div>
     );
   }

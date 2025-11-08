@@ -2,7 +2,6 @@
   "toggle_dark_mode": "Toggle dark mode",
   "logo_alt": "Logo",
   "devices": "Devices",
-  "loading_devices": "Loading devices...",
   "error": "Error",
   "no_devices_found": "No devices found",
   "select_language": "Select language",
@@ -11,6 +10,7 @@
   "device": "Device",
   "apps_for_device": "Apps for Device",
   "failed_to_fetch_apps": "Failed to fetch apps",
+  "failed_to_fetch_devices": "Failed to fetch devices",
   "failed_to_fetch_device_info": "Failed to fetch device info",
   "no_apps_found": "No apps found",
   "please_select_device": "Please select a device"

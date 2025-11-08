@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
+import io from "socket.io-client";
 
 interface Device {
   id: string;
@@ -16,11 +17,11 @@ export function DeviceList() {
   const { udid } = useParams();
   const { t } = useTranslation();
 
-  useEffect(() => {
+  const loadDevices = () => {
     fetch("/api/devices")
       .then((res) => {
         if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
+          throw new Error(t("failed_to_fetch_devices"));
         }
         return res.json();
       })
@@ -32,15 +33,34 @@ export function DeviceList() {
         setError(err.message);
         setLoading(false);
       });
-  }, []);
+  };
+
+  useEffect(() => {
+    const socket = io("/devices").on("change", () => {
+      loadDevices();
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  });
+
+  useEffect(loadDevices);
 
   if (loading) {
     return (
       <>
-        <h2 className="mb-4 text-lg  dark:text-gray-100 font-light">{t("devices")}</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          {t("loading_devices")}
-        </p>
+        <h2 className="mb-4 text-lg  dark:text-gray-100 font-light">
+          {t("devices")}
+        </h2>
+        <div className="flex flex-col gap-2" role="status" aria-live="polite">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-8 w-3/4 rounded-md bg-gray-200 dark:bg-gray-700 animate-pulse"
+            />
+          ))}
+        </div>
       </>
     );
   }
@@ -48,15 +68,21 @@ export function DeviceList() {
   if (error) {
     return (
       <>
-        <h2 className="mb-4 text-lg  dark:text-gray-100 font-light">{t("devices")}</h2>
-        <p className="text-sm text-red-500 dark:text-red-400">{t("error")}: {error}</p>
+        <h2 className="mb-4 text-lg  dark:text-gray-100 font-light">
+          {t("devices")}
+        </h2>
+        <p className="text-sm text-red-500 dark:text-red-400">
+          {t("error")}: {error}
+        </p>
       </>
     );
   }
 
   return (
     <>
-      <h2 className="mb-4 text-lg  dark:text-gray-100 font-light">{t("devices")}</h2>
+      <h2 className="mb-4 text-lg  dark:text-gray-100 font-light">
+        {t("devices")}
+      </h2>
       {devices.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {t("no_devices_found")}
