@@ -3,6 +3,9 @@ import { Link, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import io from "socket.io-client";
 
+import { Spinner } from "@/components/ui/spinner";
+import { Separator } from "@/components/ui/separator";
+
 interface Device {
   id: string;
   type: "usb" | "tether" | "remote";
@@ -43,7 +46,7 @@ export function DeviceList() {
     return () => {
       socket.disconnect();
     };
-  });
+  }, []);
 
   useEffect(loadDevices);
 
@@ -51,7 +54,8 @@ export function DeviceList() {
     return (
       <>
         <h2 className="mb-4 text-lg  dark:text-gray-100 font-light">
-          {t("devices")}
+          {t("devices")}{" "}
+          <Spinner className="inline-block h-5 w-5 animate-spin" />
         </h2>
         <div className="flex flex-col gap-2" role="status" aria-live="polite">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -80,6 +84,7 @@ export function DeviceList() {
 
   return (
     <>
+      <Separator className="mb-4" />
       <h2 className="mb-4 text-lg  dark:text-gray-100 font-light">
         {t("devices")}
       </h2>

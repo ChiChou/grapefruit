@@ -1,8 +1,11 @@
 import { useParams, Link } from "react-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { AlertCircleIcon } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useTranslation } from "react-i18next";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface App {
   name: string;
@@ -41,16 +44,17 @@ function AppCardSkeleton() {
   );
 }
 
-function DeviceHeader({ deviceInfo }: { deviceInfo: DeviceInfo | null }) {
+function DeviceHeader({ deviceInfo: info }: { deviceInfo: DeviceInfo }) {
   const { t } = useTranslation();
   return (
     <>
       <h1 className="mb-2 text-2xl font-bold dark:text-gray-100">
-        {deviceInfo?.name || t("device")}
+        {info.name || t("device")}
       </h1>
       <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
-        {deviceInfo?.arch} • {deviceInfo?.os.name} {deviceInfo?.os.version} •{" "}
-        {deviceInfo?.udid}
+        {info.arch} {info.os?.name} {info.os?.version}
+        <br />
+        {info.udid}
       </p>
     </>
   );
@@ -166,20 +170,21 @@ export function AppsView() {
 
   if (error) {
     return (
-      <div className="p-6">
-        <h1 className="mb-4 text-2xl font-bold dark:text-gray-100">
-          {t("apps_for_device")}
-        </h1>
-        <p className="text-red-600 dark:text-red-400">
-          {t("error")}: {error}
-        </p>
+      <div className="p-6 flex items-center justify-center min-h-screen">
+        <Alert variant="destructive" className="max-w-md w-full">
+          <AlertCircleIcon />
+          <AlertTitle>{t("error")}</AlertTitle>
+          <AlertDescription>
+            <p>{error}</p>
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
 
   return (
     <div className="p-6">
-      <DeviceHeader deviceInfo={deviceInfo} />
+      {deviceInfo ? <DeviceHeader deviceInfo={deviceInfo} /> : <></>}
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
         {apps.map((app) => (

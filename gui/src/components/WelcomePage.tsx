@@ -1,21 +1,13 @@
-import { MoonIcon, SunIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, Outlet } from "react-router";
 
 import logo from "../assets/logo.svg";
 import { DeviceList } from "./DeviceList";
 import { LanguageSelector } from "./LanguageSelector";
-import { useTheme } from "./theme-provider";
-import { Button } from "./ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { DarkmodeToggle } from "./DarkmodeToggle";
 
 export function WelcomePage() {
-  const { theme, setTheme } = useTheme();
   const { t } = useTranslation();
-
-  const toggleDarkMode = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  };
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden sm:flex-row">
@@ -28,23 +20,7 @@ export function WelcomePage() {
         <DeviceList />
         <footer className="mt-auto flex items-center gap-2 pt-4">
           <LanguageSelector />
-          <Tooltip>
-            <TooltipContent>{t("toggle_dark_mode")}</TooltipContent>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleDarkMode}
-                aria-label={t("toggle_dark_mode")}
-              >
-                {theme === "dark" ? (
-                  <SunIcon className="h-5 w-5" />
-                ) : (
-                  <MoonIcon className="h-5 w-5" />
-                )}
-              </Button>
-            </TooltipTrigger>
-          </Tooltip>
+          <DarkmodeToggle />
         </footer>
       </div>
       <main className="flex-1 overflow-auto">

@@ -13,5 +13,13 @@
   "failed_to_fetch_devices": "Failed to fetch devices",
   "failed_to_fetch_device_info": "Failed to fetch device info",
   "no_apps_found": "No apps found",
-  "please_select_device": "Please select a device"
+  "please_select_device": "Please select a device",
+  "desktop_only_warning": "Grapefruit is designed for desktop browsers only",
+  "search_commands": "Search commands",
+  "no_results": "No results found",
+  "commands": "Commands",
+  "logs": "Logs",
+  "shell": "Shell",
+  "hooks": "Hooks",
+  "new_to_grapefruit": "New to Grapefruit? Check them out"
 }

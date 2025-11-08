@@ -13,5 +13,13 @@
   "failed_to_fetch_devices": "获取设备列表失败",
   "failed_to_fetch_device_info": "获取设备信息失败",
   "no_apps_found": "未找到应用",
-  "please_select_device": "请选择一个设备"
+  "please_select_device": "请选择一个设备",
+  "desktop_only_warning": "Grapefruit 仅适用于桌面浏览器",
+  "search_commands": "搜索命令",
+  "no_results": "未找到结果",
+  "commands": "命令",
+  "logs": "日志",
+  "shell": "终端",
+  "hooks": "钩子",
+  "new_to_grapefruit": "需要快速上手？请查阅"
 }

@@ -5,7 +5,26 @@ export function DefaultMessage() {
 
   return (
     <div className="flex h-full items-center justify-center">
-      <p className="text-lg text-gray-500">{t("please_select_device")}</p>
+      <div className="text-center">
+        <p className="text-lg text-gray-500">{t("please_select_device")}</p>
+        <p className="text-gray-500 mt-4">{t("new_to_grapefruit")}</p>
+        <p>
+          <a
+            href="http://github.com/chichou/grapefruit"
+            target="_blank"
+            className="hover:text-amber-500 transition-colors duration-200"
+          >
+            GitHub
+          </a>
+          <a
+            href="https://discord.gg/pwutZNx"
+            target="_blank"
+            className="ml-2 hover:text-amber-500 transition-colors duration-200"
+          >
+            Discord
+          </a>
+        </p>
+      </div>
     </div>
   );
 }

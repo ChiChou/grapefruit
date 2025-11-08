@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router";
+import { useTranslation } from "react-i18next";
 import "./App.css";
 import { WelcomePage } from "./components/WelcomePage";
 import { DefaultMessage } from "./components/DefaultMessage";
@@ -7,12 +8,14 @@ import { Workspace } from "./components/Workspace";
 import { AlertTriangle } from "lucide-react";
 
 function App() {
+  const { t } = useTranslation();
+
   return (
     <>
       <div className="block bg-yellow-100 px-4 py-3 text-center text-sm font-medium text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 sm:hidden">
         <div className="flex items-center justify-center gap-2">
           <AlertTriangle className="h-4 w-4" />
-          <span>Grapefruit is designed for desktop browsers only</span>
+          <span>{t("desktop_only_warning")}</span>
         </div>
       </div>
       <Routes>
