@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
+import { useTranslation } from "react-i18next";
 
 interface Device {
   id: string;
@@ -13,6 +14,7 @@ export function DeviceList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { udid } = useParams();
+  const { t } = useTranslation();
 
   useEffect(() => {
     fetch("/api/devices")
@@ -35,9 +37,9 @@ export function DeviceList() {
   if (loading) {
     return (
       <>
-        <h2 className="mb-4 text-lg  dark:text-gray-100 font-light">Devices</h2>
+        <h2 className="mb-4 text-lg  dark:text-gray-100 font-light">{t("devices")}</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Loading devices...
+          {t("loading_devices")}
         </p>
       </>
     );
@@ -46,18 +48,18 @@ export function DeviceList() {
   if (error) {
     return (
       <>
-        <h2 className="mb-4 text-lg  dark:text-gray-100 font-light">Devices</h2>
-        <p className="text-sm text-red-500 dark:text-red-400">Error: {error}</p>
+        <h2 className="mb-4 text-lg  dark:text-gray-100 font-light">{t("devices")}</h2>
+        <p className="text-sm text-red-500 dark:text-red-400">{t("error")}: {error}</p>
       </>
     );
   }
 
   return (
     <>
-      <h2 className="mb-4 text-lg  dark:text-gray-100 font-light">Devices</h2>
+      <h2 className="mb-4 text-lg  dark:text-gray-100 font-light">{t("devices")}</h2>
       {devices.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          No devices found
+          {t("no_devices_found")}
         </p>
       ) : (
         <ul className="flex gap-0 sm:flex-col sm:space-y-2">

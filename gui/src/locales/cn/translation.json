@@ -1,0 +1,17 @@
+{
+  "toggle_dark_mode": "切换夜间模式",
+  "logo_alt": "标志",
+  "devices": "设备",
+  "loading_devices": "正在加载设备...",
+  "error": "错误",
+  "no_devices_found": "未找到设备",
+  "select_language": "选择语言",
+  "language_en": "🇬🇧 English",
+  "language_cn": "🇨🇳 简体中文",
+  "device": "设备",
+  "apps_for_device": "应用列表",
+  "failed_to_fetch_apps": "获取应用失败",
+  "failed_to_fetch_device_info": "获取设备信息失败",
+  "no_apps_found": "未找到应用",
+  "please_select_device": "请选择一个设备"
+}

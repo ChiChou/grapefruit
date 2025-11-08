@@ -2,6 +2,7 @@ import { useParams, Link } from "react-router";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "react-i18next";
 
 interface App {
   name: string;
@@ -41,10 +42,11 @@ function AppCardSkeleton() {
 }
 
 function DeviceHeader({ deviceInfo }: { deviceInfo: DeviceInfo | null }) {
+  const { t } = useTranslation();
   return (
     <>
       <h1 className="mb-2 text-2xl font-bold dark:text-gray-100">
-        {deviceInfo?.name || "Device"}
+        {deviceInfo?.name || t("device")}
       </h1>
       <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
         {deviceInfo?.arch} • {deviceInfo?.os.name} {deviceInfo?.os.version} •{" "}
@@ -103,6 +105,7 @@ export function AppsView() {
   const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!udid) return;
@@ -116,13 +119,13 @@ export function AppsView() {
       fetch(`/api/device/${udid}/apps`, {
         signal: abortController.signal,
       }).then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch apps");
+        if (!res.ok) throw new Error(t("failed_to_fetch_apps"));
         return res.json();
       }),
       fetch(`/api/device/${udid}/info`, {
         signal: abortController.signal,
       }).then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch device info");
+        if (!res.ok) throw new Error(t("failed_to_fetch_device_info"));
         return res.json();
       }),
     ])
@@ -165,9 +168,9 @@ export function AppsView() {
     return (
       <div className="p-6">
         <h1 className="mb-4 text-2xl font-bold dark:text-gray-100">
-          Apps for Device
+          {t("apps_for_device")}
         </h1>
-        <p className="text-red-600 dark:text-red-400">Error: {error}</p>
+        <p className="text-red-600 dark:text-red-400">{t("error")}: {error}</p>
       </div>
     );
   }
@@ -184,7 +187,7 @@ export function AppsView() {
 
       {apps.length === 0 && (
         <p className="text-center text-gray-500 dark:text-gray-400">
-          No apps found
+          {t("no_apps_found")}
         </p>
       )}
     </div>
