@@ -28,5 +28,12 @@
   "new_to_grapefruit": "需要快速上手？请查阅",
   "connected": "已连接",
   "disconnected": "连接断开",
-  "connecting": "正在连接"
+  "connecting": "正在连接",
+  "reload": "刷新",
+  "add_device": "添加设备",
+  "add_remote_device": "添加远程设备",
+  "ip_address": "IP 地址",
+  "confirm": "确认",
+  "cancel": "取消",
+  "delete": "删除"
 }

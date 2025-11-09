@@ -104,10 +104,16 @@ api
     return c.body(null, 204);
   })
   .delete("/devices/remote/:hostname", async (c) => {
-    const address = c.req.param("hostname");
-    const device = await manager.getDeviceById(address, env.timeout);
-    if (device) {
-      await manager.removeRemoteDevice(address);
+    const hostname = c.req.param("hostname");
+    const deviceExists = await manager
+      .getDeviceById(hostname, env.timeout)
+      .then((dev) => dev.type === "remote")
+      .catch(() => false);
+
+    if (deviceExists) {
+      const prefix = "socket@";
+      const host = hostname.substring(prefix.length);
+      await manager.removeRemoteDevice(host);
       return c.body(null, 204);
     } else {
       return c.json({ error: "remote device not found" }, 404);

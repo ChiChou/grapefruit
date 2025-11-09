@@ -28,5 +28,12 @@
   "new_to_grapefruit": "New to Grapefruit? Check them out",
   "connected": "Connected",
   "disconnected": "Disconnected",
-  "connecting": "Connecting"
+  "connecting": "Connecting",
+  "reload": "Reload",
+  "add_device": "Add device",
+  "add_remote_device": "Add remote device",
+  "ip_address": "IP address",
+  "confirm": "Confirm",
+  "cancel": "Cancel",
+  "delete": "Delete"
 }
