@@ -1,6 +1,7 @@
 import * as checksec from "./modules/checksec.js";
 import * as classdump from "./modules/classdump.js";
 import * as cookies from "./modules/cookies.js";
+import * as entitlements from "./modules/entitlements.js";
 import * as fs from "./modules/fs.js";
 import * as info from "./modules/info.js";
 import * as jsc from "./modules/jsc.js";
@@ -22,6 +23,7 @@ export default {
   checksec,
   classdump,
   cookies,
+  entitlements,
   fs,
   info,
   jsc,

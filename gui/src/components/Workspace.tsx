@@ -22,6 +22,7 @@ import { LanguageSelector } from "./LanguageSelector";
 import { DarkmodeToggle } from "./DarkmodeToggle";
 
 import logo from "../assets/logo.svg";
+import createRPC from "@/lib/rpc";
 
 export function Workspace() {
   const { device, bundle } = useParams();
@@ -32,12 +33,20 @@ export function Workspace() {
       query: { device, bundle },
     });
 
+    const rpc = createRPC(socket);
+
     socket.on("connect", () => {
       console.log("Connected to workspace events socket");
     });
 
     socket.on("disconnect", () => {
       console.log("Disconnected from workspace events socket");
+    });
+
+    socket.on("ready", async () => {
+      // test call
+      const xml = await rpc.entitlements.xml();
+      console.info(xml);
     });
 
     return () => {

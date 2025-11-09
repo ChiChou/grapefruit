@@ -2,8 +2,6 @@ import { type ServerType } from "@hono/node-server";
 import { Server, type Socket } from "socket.io";
 import frida from "frida";
 
-import type { RemoteRPC as FruityRPC } from "../agent/types/fruity/registry.d.ts";
-
 import env from "./lib/env.ts";
 import getVersion from "./lib/version.ts";
 import { readAgent } from "./lib/utils.ts";
@@ -14,13 +12,11 @@ interface ServerToClientEvents {
 }
 
 interface ClientToServerEvents {
-  rpc: <M extends keyof FruityRPC, F extends keyof FruityRPC[M]>(
-    mod: M,
-    method: F,
-    args: FruityRPC[M][F] extends (...args: infer A) => any ? A : never,
-    ack: (
-      result: FruityRPC[M][F] extends (...args: any) => infer R ? R : never,
-    ) => void,
+  rpc: (
+    mod: string,
+    method: string,
+    args: any[],
+    ack: (err: Error | null, result: any) => void,
   ) => void;
 }
 
@@ -64,10 +60,11 @@ async function onConnection(
       console.info(`RPC method called: ${method}`, ...args);
       script.exports
         .invoke(ns, method, args)
-        .catch((ex: Error) => {
-          console.error(`RPC method ${method} failed:`, ex);
+        .catch((err: Error) => {
+          console.error(`RPC method ${method} failed:`, err);
+          ack(err, null);
         })
-        .then(ack);
+        .then((result) => ack(null, result));
     })
     .on("disconnect", async () => {
       await script.unload();
