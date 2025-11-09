@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link, Outlet, useParams } from "react-router";
 import { t } from "i18next";
-import { FileText, Terminal, Webhook } from "lucide-react";
+import {
+  FileText,
+  Terminal,
+  Webhook,
+  Info,
+  Package,
+  Files,
+  Braces,
+} from "lucide-react";
 import io from "socket.io-client";
 
 import {
@@ -10,10 +18,15 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { DarkmodeToggle } from "./DarkmodeToggle";
 import { LanguageSelector } from "./LanguageSelector";
 
-import logo from "../assets/logo.svg";
+import logo from "../assets/grapefruit.svg";
 import createRPC from "@/lib/rpc";
 
 const ConnectionStatus = {
@@ -105,16 +118,94 @@ export function Workspace() {
           minSize={15}
           className="flex flex-col"
         >
-          <div className="flex-1 p-4 space-y-4">
-            <div className="mb-4 flex items-center justify-center gap-2 px-4">
-              <Link to="/">
-                <img src={logo} alt={t("logo_alt")} className="h-10 w-40" />
-              </Link>
+          <div className="flex h-full">
+            {/* Left sidebar with icon tabs */}
+            <div className="w-12 bg-gray-50 dark:bg-gray-900 border-r dark:border-gray-700 flex flex-col">
+              {/* Logo */}
+              <div className="p-2 flex items-center justify-center border-b dark:border-gray-700">
+                <Link to="/">
+                  <img src={logo} alt={t("logo_alt")} className="h-6 w-6" />
+                </Link>
+              </div>
+
+              {/* Tab icons */}
+              <div className="flex-1 flex flex-col gap-1 pt-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      to={`/workspace/${device}/${bundle}/general`}
+                      className={`p-2 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors ${
+                        window.location.pathname.includes("/general")
+                          ? "bg-gray-200 dark:bg-gray-800 border-l-2 border-primary"
+                          : ""
+                      }`}
+                    >
+                      <Info className="h-5 w-5" />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{t("general")}</TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      to={`/workspace/${device}/${bundle}/modules`}
+                      className={`p-2 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors ${
+                        window.location.pathname.includes("/modules")
+                          ? "bg-gray-200 dark:bg-gray-800 border-l-2 border-primary"
+                          : ""
+                      }`}
+                    >
+                      <Package className="h-5 w-5" />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{t("modules")}</TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      to={`/workspace/${device}/${bundle}/classes`}
+                      className={`p-2 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors ${
+                        window.location.pathname.includes("/classes")
+                          ? "bg-gray-200 dark:bg-gray-800 border-l-2 border-primary"
+                          : ""
+                      }`}
+                    >
+                      <Braces className="h-5 w-5" />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{t("classes")}</TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      to={`/workspace/${device}/${bundle}/files`}
+                      className={`p-2 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors ${
+                        window.location.pathname.includes("/files")
+                          ? "bg-gray-200 dark:bg-gray-800 border-l-2 border-primary"
+                          : ""
+                      }`}
+                    >
+                      <Files className="h-5 w-5" />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{t("files")}</TooltipContent>
+                </Tooltip>
+              </div>
+
+              {/* Settings at bottom */}
+              <div className="flex flex-col gap-1 py-2 items-center">
+                <LanguageSelector />
+                <DarkmodeToggle />
+              </div>
             </div>
-          </div>
-          <div className="p-4 flex gap-3">
-            <LanguageSelector />
-            <DarkmodeToggle />
+
+            {/* Tab content */}
+            <div className="flex-1 overflow-auto">
+              <Outlet />
+            </div>
           </div>
         </ResizablePanel>
         <ResizableHandle withHandle />
@@ -125,7 +216,7 @@ export function Workspace() {
             onLayout={handleBottomPanelResize}
           >
             <ResizablePanel>
-              <Outlet />
+              {/* todo: use this area for document tabs */}
             </ResizablePanel>
             <ResizableHandle />
             <ResizablePanel defaultSize={bottomPanelSize}>

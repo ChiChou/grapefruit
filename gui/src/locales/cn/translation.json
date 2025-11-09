@@ -35,5 +35,9 @@
   "ip_address": "IP 地址",
   "confirm": "确认",
   "cancel": "取消",
-  "delete": "删除"
+  "delete": "删除",
+  "general": "概览",
+  "modules": "模块",
+  "classes": "类",
+  "files": "文件"
 }

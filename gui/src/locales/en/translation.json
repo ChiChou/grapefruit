@@ -35,5 +35,9 @@
   "ip_address": "IP address",
   "confirm": "Confirm",
   "cancel": "Cancel",
-  "delete": "Delete"
+  "delete": "Delete",
+  "general": "General",
+  "modules": "Modules",
+  "classes": "Classes",
+  "files": "Files"
 }
