@@ -1,9 +1,6 @@
-import path from "node:path";
-
 import frida from "frida";
 import { Hono } from "hono";
 import { logger } from "hono/logger";
-import { serveStatic } from "@hono/node-server/serve-static";
 import { prettyJSON } from "hono/pretty-json";
 import { createMiddleware } from "hono/factory";
 
