@@ -25,5 +25,8 @@
   "logs": "Logs",
   "shell": "Shell",
   "hooks": "Hooks",
-  "new_to_grapefruit": "New to Grapefruit? Check them out"
+  "new_to_grapefruit": "New to Grapefruit? Check them out",
+  "connected": "Connected",
+  "disconnected": "Disconnected",
+  "connecting": "Connecting"
 }

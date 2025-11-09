@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, Outlet, useParams } from "react-router";
 import { t } from "i18next";
 import { FileText, Terminal, Webhook } from "lucide-react";
@@ -16,8 +16,17 @@ import { LanguageSelector } from "./LanguageSelector";
 import logo from "../assets/logo.svg";
 import createRPC from "@/lib/rpc";
 
+enum ConnectionStatus {
+  Connecting = "connecting",
+  Ready = "ready",
+  Disconnected = "disconnected",
+}
+
 export function Workspace() {
   const { device, bundle } = useParams();
+  const [status, setStatus] = useState<ConnectionStatus>(
+    ConnectionStatus.Connecting,
+  );
 
   useEffect(() => {
     const socket = io(`/session`, {
@@ -28,13 +37,16 @@ export function Workspace() {
 
     socket.on("connect", () => {
       console.log("Connected to workspace events socket");
+      setStatus(ConnectionStatus.Connecting);
     });
 
     socket.on("disconnect", () => {
       console.log("Disconnected from workspace events socket");
+      setStatus(ConnectionStatus.Disconnected);
     });
 
     socket.on("ready", async () => {
+      setStatus(ConnectionStatus.Ready);
       // test call
       console.info(await rpc.lsof.fds());
       const xml = await rpc.entitlements.xml();
@@ -45,6 +57,18 @@ export function Workspace() {
       socket.disconnect();
     };
   }, [device, bundle]);
+
+  const getStatusColor = () => {
+    switch (status) {
+      case ConnectionStatus.Ready:
+        return "bg-green-500";
+      case ConnectionStatus.Disconnected:
+        return "bg-yellow-500";
+      case ConnectionStatus.Connecting:
+      default:
+        return "bg-gray-500";
+    }
+  };
 
   return (
     <div className="flex h-screen flex-col">
@@ -102,6 +126,11 @@ export function Workspace() {
           </ResizablePanelGroup>
         </ResizablePanel>
       </ResizablePanelGroup>
+      <footer className={`${getStatusColor()} px-4 py-1 text-xs text-white`}>
+        {status === ConnectionStatus.Ready && t("connected")}
+        {status === ConnectionStatus.Connecting && t("connecting")}
+        {status === ConnectionStatus.Disconnected && t("disconnected")}
+      </footer>
     </div>
   );
 }
