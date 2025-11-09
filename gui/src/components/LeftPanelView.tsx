@@ -11,13 +11,9 @@ import { DarkmodeToggle } from "./DarkmodeToggle";
 import { LanguageSelector } from "./LanguageSelector";
 
 import logo from "../assets/grapefruit.svg";
+import type { WorkspacePanelPros } from "./panel-props";
 
-interface LeftPanelViewProps {
-  device: string;
-  bundle: string;
-}
-
-export function LeftPanelView({ device, bundle }: LeftPanelViewProps) {
+export function LeftPanelView({ device, bundle }: WorkspacePanelPros) {
   return (
     <div className="flex h-full">
       <div className="w-12 bg-gray-50 dark:bg-gray-900 border-r dark:border-gray-700 flex flex-col">
