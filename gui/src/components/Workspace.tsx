@@ -16,17 +16,28 @@ import { LanguageSelector } from "./LanguageSelector";
 import logo from "../assets/logo.svg";
 import createRPC from "@/lib/rpc";
 
-enum ConnectionStatus {
-  Connecting = "connecting",
-  Ready = "ready",
-  Disconnected = "disconnected",
-}
+const ConnectionStatus = {
+  Connecting: "connecting",
+  Ready: "ready",
+  Disconnected: "disconnected",
+} as const;
+
+type ConnectionStatus =
+  (typeof ConnectionStatus)[keyof typeof ConnectionStatus];
 
 export function Workspace() {
   const { device, bundle } = useParams();
   const [status, setStatus] = useState<ConnectionStatus>(
     ConnectionStatus.Connecting,
   );
+  const [leftPanelSize, setLeftPanelSize] = useState<number>(() => {
+    const saved = localStorage.getItem("workspace-left-panel-size");
+    return saved ? Number(saved) : 20;
+  });
+  const [bottomPanelSize, setBottomPanelSize] = useState<number>(() => {
+    const saved = localStorage.getItem("workspace-bottom-panel-size");
+    return saved ? Number(saved) : 30;
+  });
 
   useEffect(() => {
     const socket = io(`/session`, {
@@ -58,6 +69,18 @@ export function Workspace() {
     };
   }, [device, bundle]);
 
+  const handleLeftPanelResize = (sizes: number[]) => {
+    const size = sizes[0];
+    setLeftPanelSize(size);
+    localStorage.setItem("workspace-left-panel-size", String(size));
+  };
+
+  const handleBottomPanelResize = (sizes: number[]) => {
+    const size = sizes[1];
+    setBottomPanelSize(size);
+    localStorage.setItem("workspace-bottom-panel-size", String(size));
+  };
+
   const getStatusColor = () => {
     switch (status) {
       case ConnectionStatus.Ready:
@@ -72,8 +95,16 @@ export function Workspace() {
 
   return (
     <div className="flex h-screen flex-col">
-      <ResizablePanelGroup direction="horizontal" className="h-full">
-        <ResizablePanel defaultSize={20} className="flex flex-col">
+      <ResizablePanelGroup
+        direction="horizontal"
+        className="h-full"
+        onLayout={handleLeftPanelResize}
+      >
+        <ResizablePanel
+          defaultSize={leftPanelSize}
+          minSize={15}
+          className="flex flex-col"
+        >
           <div className="flex-1 p-4 space-y-4">
             <div className="mb-4 flex items-center justify-center gap-2 px-4">
               <Link to="/">
@@ -88,12 +119,16 @@ export function Workspace() {
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel>
-          <ResizablePanelGroup direction="vertical" className="h-full">
+          <ResizablePanelGroup
+            direction="vertical"
+            className="h-full"
+            onLayout={handleBottomPanelResize}
+          >
             <ResizablePanel>
               <Outlet />
             </ResizablePanel>
             <ResizableHandle />
-            <ResizablePanel defaultSize={30}>
+            <ResizablePanel defaultSize={bottomPanelSize}>
               <Tabs defaultValue="logs" className="h-full flex flex-col">
                 <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0">
                   <TabsTrigger
