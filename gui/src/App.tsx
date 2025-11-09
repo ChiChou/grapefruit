@@ -5,10 +5,12 @@ import { WelcomePage } from "./components/WelcomePage";
 import { DefaultMessage } from "./components/DefaultMessage";
 import { AppsView } from "./components/AppsView";
 import { Workspace } from "./components/Workspace";
-import { GeneralView } from "./components/GeneralView";
-import { ModulesView } from "./components/ModulesView";
-import { ClassesView } from "./components/ClassesView";
-import { FilesView } from "./components/FilesView";
+
+import { GeneralPanel } from "./components/panels/GeneralPanel";
+import { ModulesPanel } from "./components/panels/ModulesPanel";
+import { ClassesPanel } from "./components/panels/ClassesPanel";
+import { FilesPanel } from "./components/panels/FilesPanel";
+
 import { AlertTriangle } from "lucide-react";
 
 function App() {
@@ -29,10 +31,10 @@ function App() {
         </Route>
         <Route path="/workspace/:device/:bundle" element={<Workspace />}>
           <Route index element={<Navigate to="general" replace />} />
-          <Route path="general" element={<GeneralView />} />
-          <Route path="modules" element={<ModulesView />} />
-          <Route path="classes" element={<ClassesView />} />
-          <Route path="files" element={<FilesView />} />
+          <Route path="general" element={<GeneralPanel />} />
+          <Route path="modules" element={<ModulesPanel />} />
+          <Route path="classes" element={<ClassesPanel />} />
+          <Route path="files" element={<FilesPanel />} />
         </Route>
       </Routes>
     </>
