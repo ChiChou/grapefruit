@@ -1,5 +1,12 @@
 import { useTranslation } from "react-i18next";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { Check, Languages } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { Button } from "./ui/button";
 
 export function LanguageSelector() {
   const { t, i18n } = useTranslation();
@@ -8,20 +15,31 @@ export function LanguageSelector() {
     i18n.changeLanguage(lng);
   };
 
+  const languages = [
+    { value: "en", label: t("language_en") },
+    { value: "cn", label: t("language_cn") },
+  ];
+
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <select
-          value={i18n.language}
-          onChange={(e) => changeLanguage(e.target.value)}
-          className="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-          aria-label={t("select_language")}
-        >
-          <option value="en">{t("language_en")}</option>
-          <option value="cn">{t("language_cn")}</option>
-        </select>
-      </TooltipTrigger>
-      <TooltipContent>{t("select_language")}</TooltipContent>
-    </Tooltip>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="icon" className="gap-2">
+          <Languages />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        {languages.map((lang) => (
+          <DropdownMenuItem
+            key={lang.value}
+            onClick={() => changeLanguage(lang.value)}
+            className="gap-2"
+          >
+            {lang.value === i18n.language && <Check className="h-4 w-4" />}
+            {lang.value !== i18n.language && <span className="w-4" />}
+            {lang.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

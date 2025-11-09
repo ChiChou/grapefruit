@@ -3,8 +3,8 @@ import { Link, Outlet } from "react-router";
 
 import logo from "../assets/logo.svg";
 import { DeviceList } from "./DeviceList";
-import { LanguageSelector } from "./LanguageSelector";
 import { DarkmodeToggle } from "./DarkmodeToggle";
+import { LanguageSelector } from "./LanguageSelector";
 
 export function WelcomePage() {
   const { t } = useTranslation();
@@ -17,7 +17,9 @@ export function WelcomePage() {
             <img src={logo} alt={t("logo_alt")} className="h-10 w-40" />
           </Link>
         </div>
-        <DeviceList />
+        <div className="mb-4">
+          <DeviceList />
+        </div>
         <footer className="mt-auto flex items-center gap-2 pt-4">
           <LanguageSelector />
           <DarkmodeToggle />

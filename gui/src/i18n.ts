@@ -8,11 +8,13 @@ const resources = {
   cn: { translation: cn },
 };
 
-const savedLanguage = localStorage.getItem("language") || "cn";
+const lng =
+  localStorage.getItem("language") ||
+  (navigator.language.match(/^zh-?/i) ? "cn" : "en");
 
 i18n.use(initReactI18next).init({
   resources,
-  lng: savedLanguage,
+  lng,
   fallbackLng: "en",
   interpolation: {
     escapeValue: false,

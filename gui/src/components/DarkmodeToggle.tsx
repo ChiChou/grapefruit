@@ -20,7 +20,7 @@ export function DarkmodeToggle() {
       <TooltipContent>{t("toggle_dark_mode")}</TooltipContent>
       <TooltipTrigger asChild>
         <Button
-          variant="ghost"
+          variant="outline"
           size="icon"
           onClick={toggleDarkMode}
           aria-label={t("toggle_dark_mode")}

@@ -56,7 +56,6 @@ export function DeviceList() {
     return (
       <>
         <h2 className="mb-4 text-lg  dark:text-gray-100 font-light">
-          {t("devices")}{" "}
           <Spinner className="inline-block h-5 w-5 animate-spin" />
         </h2>
         <div className="flex flex-col gap-2" role="status" aria-live="polite">
@@ -74,9 +73,6 @@ export function DeviceList() {
   if (error) {
     return (
       <>
-        <h2 className="mb-4 text-lg  dark:text-gray-100 font-light">
-          {t("devices")}
-        </h2>
         <p className="text-sm text-red-500 dark:text-red-400">
           {t("error")}: {error}
         </p>
@@ -87,9 +83,6 @@ export function DeviceList() {
   return (
     <>
       <Separator className="mb-4" />
-      <h2 className="mb-4 text-lg  dark:text-gray-100 font-light">
-        {t("devices")}
-      </h2>
       {devices.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {t("no_devices_found")}
