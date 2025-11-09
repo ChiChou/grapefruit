@@ -63,10 +63,10 @@ export function Workspace() {
       case ConnectionStatus.Ready:
         return "bg-green-500";
       case ConnectionStatus.Disconnected:
-        return "bg-yellow-500";
+        return "bg-orange-500";
       case ConnectionStatus.Connecting:
       default:
-        return "bg-gray-500";
+        return "bg-gray-600";
     }
   };
 

@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Link, Outlet } from "react-router";
 
 import logo from "../assets/logo.svg";
-import { DeviceList } from "./DeviceList";
+import { Devices } from "./Devices";
 import { DarkmodeToggle } from "./DarkmodeToggle";
 import { LanguageSelector } from "./LanguageSelector";
 
@@ -18,7 +18,7 @@ export function WelcomePage() {
           </Link>
         </div>
         <div className="mb-4">
-          <DeviceList />
+          <Devices />
         </div>
         <footer className="mt-auto flex items-center gap-2 pt-4">
           <LanguageSelector />

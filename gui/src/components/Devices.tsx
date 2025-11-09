@@ -5,6 +5,7 @@ import io from "socket.io-client";
 
 import { Spinner } from "@/components/ui/spinner";
 import { Separator } from "@/components/ui/separator";
+import { TriangleAlert } from "lucide-react";
 
 interface Device {
   id: string;
@@ -13,7 +14,7 @@ interface Device {
   name: string;
 }
 
-export function DeviceList() {
+export function Devices() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +85,8 @@ export function DeviceList() {
     <>
       <Separator className="mb-4" />
       {devices.length === 0 ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-sm text-gray-500 dark:text-gray-400 text-center flex items-center justify-center gap-2">
+          <TriangleAlert className="h-4 w-4" />
           {t("no_devices_found")}
         </p>
       ) : (
