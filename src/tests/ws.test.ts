@@ -27,10 +27,10 @@ describe("socket.io tests", () => {
     await new Promise<void>((resolve, reject) => {
       const { port } = server.address() as AddressInfo;
       const socket = ioc(`http://127.0.0.1:${port}/devices`);
-      const timeout = setTimeout(
-        () => reject(new Error("test timed out")),
-        1000,
-      );
+      const timeout = setTimeout(() => {
+        socket.disconnect();
+        reject(new Error("test timed out"));
+      }, 1000);
 
       socket.once("change", () => {
         clearTimeout(timeout);
@@ -68,16 +68,17 @@ describe("socket.io tests", () => {
         `http://localhost:${port}/session?${query.toString()}`,
       );
 
-      const timeout = setTimeout(
-        () => reject(new Error("test timed out")),
-        5000,
-      );
+      const timeout = setTimeout(() => {
+        socket.disconnect();
+        reject(new Error("test timed out"));
+      }, 5000);
 
       socket.once("ready", () => {
         clearTimeout(timeout);
         console.debug("Session ready, connection established");
-        socket.emit("rpc", "foo");
-        setTimeout(() => {
+        socket.emit("rpc", "invalid");
+        socket.emit("rpc", "fs", "ls", ["bundle"], (result: any) => {
+          console.log("rpc result:", result);
           socket.disconnect();
           resolve();
         });

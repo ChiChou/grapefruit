@@ -85,7 +85,7 @@ function resolve(root: string, component?: StringLike): NSString {
   } else if (root === "bundle" || root === "!") {
     prefix = ObjC.classes.NSBundle.mainBundle().bundlePath();
   } else {
-    throw new Error("Invalid root");
+    throw new Error(`Invalid root: ${JSON.stringify(root)}`);
   }
 
   if (component) return prefix.stringByAppendingPathComponent_(component);

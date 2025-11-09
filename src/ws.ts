@@ -2,6 +2,8 @@ import { type ServerType } from "@hono/node-server";
 import { Server, type Socket } from "socket.io";
 import frida from "frida";
 
+import type { RemoteRPC as FruityRPC } from "../agent/types/fruity/registry.d.ts";
+
 import env from "./lib/env.ts";
 import getVersion from "./lib/version.ts";
 import { readAgent } from "./lib/utils.ts";
@@ -12,13 +14,20 @@ interface ServerToClientEvents {
 }
 
 interface ClientToServerEvents {
-  rpc: (method: string) => void;
+  rpc: <M extends keyof FruityRPC, F extends keyof FruityRPC[M]>(
+    mod: M,
+    method: F,
+    args: FruityRPC[M][F] extends (...args: infer A) => any ? A : never,
+    ack: (
+      result: FruityRPC[M][F] extends (...args: any) => infer R ? R : never,
+    ) => void,
+  ) => void;
 }
 
 const manager = frida.getDeviceManager();
 
 async function onConnection(
-  socket: Socket,
+  socket: Socket<ClientToServerEvents, ServerToClientEvents>,
   deviceId: string,
   bundleId: string,
 ) {
@@ -46,8 +55,19 @@ async function onConnection(
   await script.load();
 
   socket
-    .on("rpc", (method) => {
-      console.log(`RPC method called: ${method}`);
+    .on("rpc", (ns, method, args, ack) => {
+      if (typeof method !== "string" || !Array.isArray(args)) {
+        console.warn("invalid RPC call, dropping");
+        return;
+      }
+
+      console.info(`RPC method called: ${method}`, ...args);
+      script.exports
+        .invoke(ns, method, args)
+        .catch((ex: Error) => {
+          console.error(`RPC method ${method} failed:`, ex);
+        })
+        .then(ack);
     })
     .on("disconnect", async () => {
       await script.unload();

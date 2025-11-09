@@ -3,3 +3,5 @@ _agent.js
 *.js
 
 /patched/
+
+/types/

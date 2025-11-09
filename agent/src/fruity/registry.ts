@@ -1,8 +1,6 @@
 import route from "./router.js";
 
-export function invoke(name: string, ...args: any[]) {
-  const [ns, fn] = name.split(".");
-
+export function invoke(ns: string, fn: string, args: any[]) {
   const iface = route[ns as keyof typeof route];
   if (!iface) throw new Error(`${ns} not found`);
   const method = iface[fn as keyof typeof iface] as Function;
