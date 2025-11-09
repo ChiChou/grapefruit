@@ -82,10 +82,12 @@ typedef __darwin_socklen_t socklen_t;
   */
 typedef __uint32_t in_addr_t; /* base type for internet address */
 
-/* defined in
-  * https://raw.githubusercontent.com/apple-oss-distributions/xnu/main/bsd/netinet/in.h
-  */
-#define ntohs(x) ((__uint16_t)(x))
+#if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
+  #define ntohs(x) ((((x) & 0x00FF) << 8) | (((x) & 0xFF00) >> 8))
+#else
+  #define ntohs(x) (x)
+#endif
+
 /*
   * Internet address (a structure for historical reasons)
   */
@@ -533,13 +535,13 @@ export const enum ProcFDType {
   KQUEUE = "kqueue",
 }
 
-interface VnodeFD {
+export interface VnodeFD {
   fd: number;
   path: string;
   type: ProcFDType.VNODE;
 }
 
-interface SocketFD {
+export interface SocketFD {
   fd: number;
   protocol: string;
   lip: string;
