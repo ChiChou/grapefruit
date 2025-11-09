@@ -21,6 +21,7 @@ export function DeviceList() {
   const { t } = useTranslation();
 
   const loadDevices = () => {
+    console.log("load devices");
     fetch("/api/devices")
       .then((res) => {
         if (!res.ok) {
@@ -40,6 +41,7 @@ export function DeviceList() {
 
   useEffect(() => {
     const socket = io("/devices").on("change", () => {
+      console.log("device changed");
       loadDevices();
     });
 
@@ -48,7 +50,7 @@ export function DeviceList() {
     };
   }, []);
 
-  useEffect(loadDevices);
+  useEffect(loadDevices, []);
 
   if (loading) {
     return (

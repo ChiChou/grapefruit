@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Outlet, useParams } from "react-router";
 import { t } from "i18next";
 import { FileText, Terminal, Webhook } from "lucide-react";
+import io from "socket.io-client";
 
 import {
   ResizableHandle,
@@ -10,7 +11,6 @@ import {
 } from "@/components/ui/resizable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Command,
   CommandDialog,
   CommandEmpty,
   CommandGroup,
@@ -23,15 +23,27 @@ import { DarkmodeToggle } from "./DarkmodeToggle";
 
 import logo from "../assets/logo.svg";
 
-interface App {
-  name: string;
-  identifier: string;
-  pid: number;
-}
-
 export function Workspace() {
-  const { udid, identifier } = useParams();
+  const { device, bundle } = useParams();
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const socket = io(`/session`, {
+      query: { device, bundle },
+    });
+
+    socket.on("connect", () => {
+      console.log("Connected to workspace events socket");
+    });
+
+    socket.on("disconnect", () => {
+      console.log("Disconnected from workspace events socket");
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [device, bundle]);
 
   return (
     <div className="flex h-screen flex-col">
@@ -73,11 +85,11 @@ export function Workspace() {
         <ResizableHandle withHandle />
         <ResizablePanel>
           <ResizablePanelGroup direction="vertical" className="h-full">
-            <ResizablePanel defaultSize={30}>
+            <ResizablePanel>
               <Outlet />
             </ResizablePanel>
             <ResizableHandle />
-            <ResizablePanel defaultSize={15}>
+            <ResizablePanel defaultSize={30}>
               <Tabs defaultValue="logs" className="h-full flex flex-col">
                 <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0">
                   <TabsTrigger

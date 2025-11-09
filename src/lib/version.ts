@@ -1,7 +1,7 @@
 import path from "path";
 import { fileURLToPath } from "url";
 
-export default async function getVersion(pkg: string) {
+export default async function get(pkg: string) {
   const {
     default: { version },
   } = await pkgJSON(pkg);

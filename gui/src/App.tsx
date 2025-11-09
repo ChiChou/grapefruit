@@ -23,7 +23,7 @@ function App() {
           <Route index element={<DefaultMessage />} />
           <Route path="apps/:udid" element={<AppsView />} />
         </Route>
-        <Route path="/workspace/:udid/:identifier" element={<Workspace />} />
+        <Route path="/workspace/:device/:bundle" element={<Workspace />} />
       </Routes>
     </>
   );

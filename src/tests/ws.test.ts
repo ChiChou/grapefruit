@@ -1,5 +1,5 @@
 import { type AddressInfo } from "node:net";
-import { after, before, describe, it } from "node:test";
+import { afterEach, beforeEach, describe, it } from "node:test";
 import { createServer } from "node:http";
 import assert from "node:assert";
 
@@ -10,13 +10,13 @@ import attach from "../ws.ts";
 
 let server: ReturnType<typeof createServer>;
 
-before(async () => {
+beforeEach(async () => {
   server = createServer();
   attach(server);
   return new Promise<void>((resolve) => server.listen(() => resolve()));
 });
 
-after(async () => {
+afterEach(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()));
 });
 
@@ -45,7 +45,56 @@ describe("socket.io tests", () => {
       });
 
       socket.on("connect_error", (err) => {
+        clearTimeout(timeout);
         reject(new Error(`Socket connection failed: ${err.message}`));
+      });
+    });
+  });
+
+  it("should run rpc tests", async () => {
+    const deviceId = process.env.UDID;
+    if (!deviceId) {
+      console.warn("Skipping /session test: UDID environment variable not set");
+      return;
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      const { port } = server.address() as AddressInfo;
+      const query = new URLSearchParams({
+        device: deviceId,
+        bundle: "com.apple.mobilesafari",
+      });
+      const socket = ioc(
+        `http://localhost:${port}/session?${query.toString()}`,
+      );
+
+      const timeout = setTimeout(
+        () => reject(new Error("test timed out")),
+        5000,
+      );
+
+      socket.once("ready", () => {
+        clearTimeout(timeout);
+        console.debug("Session ready, connection established");
+        socket.emit("rpc", "foo");
+        setTimeout(() => {
+          socket.disconnect();
+          resolve();
+        });
+      });
+
+      socket.on("connect_error", (err) => {
+        clearTimeout(timeout);
+        reject(new Error(`Socket connection failed: ${err.message}`));
+      });
+
+      socket.on("disconnect", (reason) => {
+        if (reason === "io server disconnect") {
+          clearTimeout(timeout);
+          reject(
+            new Error("Server disconnected the socket, likely due to an error"),
+          );
+        }
       });
     });
   });
