@@ -45,6 +45,7 @@ export function Workspace() {
 
     socket.on("ready", async () => {
       // test call
+      console.info(await rpc.lsof.fds());
       const xml = await rpc.entitlements.xml();
       console.info(xml);
     });

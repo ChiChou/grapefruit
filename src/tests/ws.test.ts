@@ -77,11 +77,17 @@ describe("socket.io tests", () => {
         clearTimeout(timeout);
         console.debug("Session ready, connection established");
         socket.emit("rpc", "invalid");
-        socket.emit("rpc", "fs", "ls", ["bundle"], (result: any) => {
-          console.log("rpc result:", result);
-          socket.disconnect();
-          resolve();
-        });
+        socket.emit(
+          "rpc",
+          "fs",
+          "ls",
+          ["bundle"],
+          (err: Error | null, result: any) => {
+            console.log("rpc result:", result);
+            socket.disconnect();
+            resolve();
+          },
+        );
       });
 
       socket.on("connect_error", (err) => {
