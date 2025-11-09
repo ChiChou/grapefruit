@@ -1,6 +1,6 @@
 import { type ServerType } from "@hono/node-server";
 import { Server, type Socket } from "socket.io";
-import frida from "frida";
+import frida, { SessionDetachReason } from "frida";
 
 import env from "./lib/env.ts";
 import getVersion from "./lib/version.ts";
@@ -9,6 +9,8 @@ import { readAgent } from "./lib/utils.ts";
 interface ServerToClientEvents {
   ready: () => void;
   change: () => void;
+  detached: (reason: string) => void;
+  log: (level: string, text: string) => void;
 }
 
 interface ClientToServerEvents {
@@ -48,16 +50,46 @@ async function onConnection(
     await readAgent(`fruity@${fridaMajor}`),
   );
 
+  session.detached.connect((reason, crash) => {
+    console.error("session detached:", reason, crash);
+    switch (reason) {
+      case SessionDetachReason.ApplicationRequested:
+        break;
+      case SessionDetachReason.DeviceLost:
+        console.error("device lost");
+        break;
+      case SessionDetachReason.ProcessTerminated:
+      case SessionDetachReason.ProcessReplaced:
+        console.error("app was terminated or replaced");
+    }
+    socket.emit("detached", reason as string);
+    socket.disconnect(true);
+  });
+
+  script.destroyed.connect(() => {
+    console.error("script is destroyed");
+    socket.disconnect(true);
+  });
+
+  script.logHandler = (level, text) => {
+    console.log(`[agent][${level}] ${text}`);
+    socket.emit("log", level, text);
+  };
+
   await script.load();
 
   socket
     .on("rpc", (ns, method, args, ack) => {
-      if (typeof method !== "string" || !Array.isArray(args)) {
-        console.warn("invalid RPC call, dropping");
+      if (
+        typeof ns !== "string" ||
+        typeof method !== "string" ||
+        !Array.isArray(args)
+      ) {
+        console.warn(`invalid RPC call ${ns}.${method}, dropping`, args);
         return;
       }
 
-      console.info(`RPC method called: ${method}`, ...args);
+      console.info(`RPC method: ${ns}.${method}`, ...args);
       script.exports
         .invoke(ns, method, args)
         .catch((err: Error) => {
@@ -67,9 +99,12 @@ async function onConnection(
         .then((result) => ack(null, result));
     })
     .on("disconnect", async () => {
-      await script.unload();
-      await session.detach();
-      console.info("session detached");
+      console.info("socket disconnected");
+      try {
+        await script.unload();
+        await session.detach();
+      } finally {
+      }
     })
     .emit("ready");
 }
