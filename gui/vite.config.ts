@@ -27,6 +27,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@shared/schema": path.resolve(__dirname, "..", "shared", "schema.d.ts"),
     },
   },
 });
