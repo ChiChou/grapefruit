@@ -7,28 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-interface App {
-  name: string;
-  identifier: string;
-  pid: number;
-}
-
-interface DeviceInfo {
-  arch: string;
-  os: {
-    version: string;
-    id: string;
-    name: string;
-  };
-  udid: string;
-  platform: string;
-  name: string;
-  access: string;
-  interfaces?: Array<{
-    type: string;
-    address: string;
-  }>;
-}
+import type { Application, DeviceInfo } from "@shared/schema";
 
 function AppCardSkeleton() {
   return (
@@ -61,7 +40,7 @@ function DeviceHeader({ deviceInfo: info }: { deviceInfo: DeviceInfo }) {
 }
 
 interface AppCardProps {
-  app: App;
+  app: Application;
   udid: string;
 }
 
@@ -105,7 +84,7 @@ function AppCard({ app, udid }: AppCardProps) {
 
 export function AppsView() {
   const { udid } = useParams();
-  const [apps, setApps] = useState<App[]>([]);
+  const [apps, setApps] = useState<Application[]>([]);
   const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

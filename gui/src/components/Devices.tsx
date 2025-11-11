@@ -1,7 +1,8 @@
+import io from "socket.io-client";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
-import io from "socket.io-client";
+import { TriangleAlert, RefreshCw, Plus, X } from "lucide-react";
 
 import { Spinner } from "@/components/ui/spinner";
 import { Separator } from "@/components/ui/separator";
@@ -11,14 +12,8 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { TriangleAlert, RefreshCw, Plus, X } from "lucide-react";
 
-interface Device {
-  id: string;
-  type: "usb" | "tether" | "remote";
-  removable: boolean;
-  name: string;
-}
+import { type Device } from "@shared/schema";
 
 export function Devices() {
   const [devices, setDevices] = useState<Device[]>([]);
