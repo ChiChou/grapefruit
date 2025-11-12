@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate, useParams } from "react-router";
 import { t } from "i18next";
-import io from "socket.io-client";
 
 import {
   ResizableHandle,
@@ -9,25 +7,13 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 
-import createRPC from "@/lib/rpc";
 import { LeftPanelView } from "./LeftPanelView";
 import { BottomPanelView } from "./BottomPanelView";
+import { ConnectionStatus, useSession } from "@/context/SessionContext";
+import SessionProvider from "./SessionProvider";
 
-const ConnectionStatus = {
-  Connecting: "connecting",
-  Ready: "ready",
-  Disconnected: "disconnected",
-} as const;
-
-type ConnectionStatus =
-  (typeof ConnectionStatus)[keyof typeof ConnectionStatus];
-
-export function Workspace() {
-  const { device, bundle } = useParams();
-
-  const [status, setStatus] = useState<ConnectionStatus>(
-    ConnectionStatus.Connecting,
-  );
+function WorkspaceContent() {
+  const { api, status } = useSession();
   const [leftPanelSize, setLeftPanelSize] = useState<number>(() => {
     const saved = localStorage.getItem("workspace-left-panel-size");
     return saved ? Number(saved) : 20;
@@ -36,40 +22,6 @@ export function Workspace() {
     const saved = localStorage.getItem("workspace-bottom-panel-size");
     return saved ? Number(saved) : 30;
   });
-
-  useEffect(() => {
-    const socket = io(`/session`, {
-      query: { device, bundle },
-    });
-
-    const rpc = createRPC(socket);
-
-    socket.on("connect", () => {
-      console.log("Connected to workspace events socket");
-      setStatus(ConnectionStatus.Connecting);
-    });
-
-    socket.on("disconnect", () => {
-      console.log("Disconnected from workspace events socket");
-      setStatus(ConnectionStatus.Disconnected);
-    });
-
-    socket.on("ready", async () => {
-      setStatus(ConnectionStatus.Ready);
-      // test call
-      console.info(await rpc.lsof.fds());
-      const xml = await rpc.entitlements.xml();
-      console.info(xml);
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [device, bundle]);
-
-  if (!device || !bundle) {
-    return <Navigate to="/" replace />;
-  }
 
   const handleLeftPanelResize = (sizes: number[]) => {
     const size = sizes[0];
@@ -95,6 +47,18 @@ export function Workspace() {
     }
   };
 
+  useEffect(() => {
+    if (!api || status !== ConnectionStatus.Ready) return;
+
+    api.lsof.fds().then(console.log);
+    api.fs
+      .ls("!")
+      .then((files) => {
+        console.log("Root files:", files);
+      })
+      .catch(console.error);
+  }, [status, api]);
+
   return (
     <div className="flex h-screen flex-col">
       <ResizablePanelGroup
@@ -107,7 +71,7 @@ export function Workspace() {
           minSize={15}
           className="flex flex-col"
         >
-          <LeftPanelView device={device} bundle={bundle} />
+          <LeftPanelView />
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel>
@@ -121,7 +85,7 @@ export function Workspace() {
             </ResizablePanel>
             <ResizableHandle />
             <ResizablePanel defaultSize={bottomPanelSize}>
-              <BottomPanelView device={device} bundle={bundle} />
+              <BottomPanelView />
             </ResizablePanel>
           </ResizablePanelGroup>
         </ResizablePanel>
@@ -132,5 +96,13 @@ export function Workspace() {
         {status === ConnectionStatus.Disconnected && t("disconnected")}
       </footer>
     </div>
+  );
+}
+
+export function Workspace() {
+  return (
+    <SessionProvider>
+      <WorkspaceContent />
+    </SessionProvider>
   );
 }

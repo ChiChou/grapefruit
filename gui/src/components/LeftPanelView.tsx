@@ -9,11 +9,12 @@ import {
 } from "@/components/ui/tooltip";
 import { DarkmodeToggle } from "./DarkmodeToggle";
 import { LanguageSelector } from "./LanguageSelector";
+import { useSession } from "@/context/SessionContext";
 
 import logo from "../assets/grapefruit.svg";
-import type { WorkspacePanelPros } from "./panel-props";
 
-export function LeftPanelView({ device, bundle }: WorkspacePanelPros) {
+export function LeftPanelView() {
+  const { device, bundle } = useSession();
   return (
     <div className="flex h-full">
       <div className="w-12 bg-gray-50 dark:bg-gray-900 border-r dark:border-gray-700 flex flex-col">

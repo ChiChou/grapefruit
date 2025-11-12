@@ -3,11 +3,11 @@ import type { Socket } from "socket.io-client";
 
 import type { RemoteRPC as FruityRPC } from "../../../agent/types/fruity/registry.d.ts";
 
-interface SessionClientEvents {
+export interface SessionClientEvents {
   ready: () => void;
 }
 
-interface SessionServerEvents {
+export interface SessionServerEvents {
   rpc: (
     mod: string,
     method: string,
@@ -17,7 +17,7 @@ interface SessionServerEvents {
 }
 
 // Convert FruityRPC to async promise-based API
-type AsyncFruityRPC = {
+export type AsyncFruityRPC = {
   [Namespace in keyof FruityRPC]: {
     [Method in keyof FruityRPC[Namespace]]: FruityRPC[Namespace][Method] extends (
       ...args: infer Args
@@ -27,7 +27,7 @@ type AsyncFruityRPC = {
   };
 };
 
-export default function createRPC(
+export function createAPI(
   socket: Socket<SessionClientEvents, SessionServerEvents>,
 ): AsyncFruityRPC {
   return new Proxy({} as AsyncFruityRPC, {

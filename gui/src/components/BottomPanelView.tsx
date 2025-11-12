@@ -3,9 +3,7 @@ import { FileText, Terminal, Webhook } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import type { WorkspacePanelPros } from "./panel-props";
-
-export function BottomPanelView({ device, bundle }: WorkspacePanelPros) {
+export function BottomPanelView() {
   return (
     <Tabs defaultValue="logs" className="h-full flex flex-col">
       <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0">
