@@ -9,7 +9,7 @@
     "node": ">=22.18.0"
   },
   "scripts": {
-    "prepare": "scripts/build.ts && npm run type:fruity",
+    "prepare": "node scripts/build.ts && npm run type:fruity",
     "type:flags": "tsgo --declaration --experimentalDecorators --emitDeclarationOnly --outDir types --target es2019 --skipLibCheck",
     "type:fruity": "npm run type:flags -- src/fruity/registry.ts"
   },
