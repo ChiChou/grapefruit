@@ -44,8 +44,17 @@ async function onConnection(
     throw new Error(`Application ${bundleId} not found on device`);
 
   const app = match.at(0)!;
-  const pid = app.pid ? app.pid : await device.spawn(bundleId);
+  const start = async () => {
+    const frontmost = await device.getFrontmostApplication();
+    if (frontmost?.pid === app.pid) return Promise.resolve(app.pid);
+    return device.spawn(bundleId, {
+      env: { DISABLE_TWEAKS: "1" }, // workaround for ellekit crash
+    });
+  };
+
+  const pid = await start();
   const session = await device.attach(pid);
+  await device.resume(pid);
   const script = await session.createScript(
     await readAgent(`fruity@${fridaMajor}`),
   );
