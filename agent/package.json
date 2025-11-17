@@ -19,6 +19,7 @@
     "@typescript/native-preview": "7.0.0-dev.20251108.1"
   },
   "dependencies": {
+    "frida-compile": "^19.0.4",
     "frida-java-bridge": "^7.0.10",
     "frida-objc-bridge": "^8.0.5"
   }
