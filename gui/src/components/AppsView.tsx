@@ -149,7 +149,7 @@ export function AppsView() {
 
   if (error) {
     return (
-      <div className="p-6 flex items-center justify-center min-h-screen">
+      <div className="p-6 flex items-center justify-center h-full">
         <Alert variant="destructive" className="max-w-md w-full">
           <AlertCircleIcon />
           <AlertTitle>{t("error")}</AlertTitle>
