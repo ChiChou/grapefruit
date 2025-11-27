@@ -1,6 +1,6 @@
 /node_modules/
 _agent.js
-*.js
+dist/*.js
 
 /patched/
 
