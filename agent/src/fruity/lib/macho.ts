@@ -1,7 +1,7 @@
-const MH_EXECUTE = 0x2;
-const MH_DYLIB = 0x6;
-const MH_DYLINKER = 0x7;
-const MH_BUNDLE = 0x8;
+// const MH_EXECUTE = 0x2;
+// const MH_DYLIB = 0x6;
+// const MH_DYLINKER = 0x7;
+// const MH_BUNDLE = 0x8;
 
 const MH_PIE = 0x200000;
 const MH_NO_HEAP_EXECUTION = 0x1000000;
@@ -39,9 +39,9 @@ export function encryptionInfo(mod: Module): EncryptInfo | null {
     throw new Error("Invalid Mach-O header magic value");
   }
 
-  const fileType = header.add(0xc).readU32();
+  // const fileType = header.add(0xc).readU32();
   const ncmds = header.add(0x10).readU32();
-  const sizeOfCmds = header.add(0x14).readU32();
+  // const sizeOfCmds = header.add(0x14).readU32();
 
   for (let p = header.add(HEADER_SIZE_64), i = 0; i < ncmds; i++) {
     const cmd = p.readU32();

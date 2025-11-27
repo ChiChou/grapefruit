@@ -9,18 +9,25 @@
     "node": ">=22.18.0"
   },
   "scripts": {
-    "prepare": "node scripts/build.ts && npm run type:fruity",
+    "build:fruity": "frida-compile src/fruity/index.ts -o dist/fruity.js",
+    "build:droid": "frida-compile src/droid/index.ts -o dist/droid.js",
+    "build": "npm run lint && npm run build:fruity && npm run build:droid",
+    "prepare": "npm run build",
+    "lint": "eslint src/**/*.ts",
     "type:flags": "tsgo --declaration --experimentalDecorators --emitDeclarationOnly --outDir types --target es2019 --skipLibCheck",
     "type:fruity": "npm run type:flags -- src/fruity/registry.ts"
   },
   "devDependencies": {
     "@types/frida-gum": "^18.8.2",
     "@types/node": "^18.14.0",
-    "@typescript/native-preview": "7.0.0-dev.20251108.1"
+    "@typescript-eslint/eslint-plugin": "^8.48.0",
+    "@typescript-eslint/parser": "^8.48.0",
+    "@typescript/native-preview": "7.0.0-dev.20251108.1",
+    "eslint": "^9.39.1"
   },
   "dependencies": {
-    "frida-compile": "^19.0.4",
     "frida-java-bridge": "^7.0.10",
-    "frida-objc-bridge": "^8.0.5"
+    "frida-objc-bridge": "^8.0.5",
+    "frida-swift-bridge": "^3.0.2"
   }
 }

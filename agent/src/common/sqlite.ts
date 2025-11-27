@@ -27,10 +27,10 @@ class Database {
     // leave this alone or help me commit some code to escape the table name
 
     const statement = this.prepare(`PRAGMA table_info(${quote(table)})`);
-    return [...all(statement)].map((info: any[6]) => info.slice(1, 3));
+    return [...all(statement)].map((info: unknown[]) => info.slice(1, 3));
   }
 
-  prepare(sql: string, args: any[] = []) {
+  prepare(sql: string, args: unknown[] = []) {
     const statement = this.db.prepare(sql);
     for (let i = 0; i < args.length; i++) {
       const index = i + 1;
@@ -43,7 +43,7 @@ class Database {
       } else if (arg instanceof ArrayBuffer) {
         statement.bindBlob(index, arg);
       } else {
-        statement.bindText(index, arg);
+        statement.bindText(index, `${arg}`);
       }
     }
     return statement;

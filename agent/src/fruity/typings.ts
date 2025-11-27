@@ -55,9 +55,15 @@ export interface NSDate extends NSObject {
   timeIntervalSince1970(): number;
 }
 
-export interface NSError extends NSObject {}
+export interface NSError extends NSObject {
+  code(): number;
+  domain(): NSString;
+  userInfo(): NSDictionary<NSString, NSObject>;
+}
 
-export interface NSData extends NSObject {}
+export interface NSData extends NSObject {
+  writeToFile_atomically_(path: StringLike, atomically: boolean): boolean;
+}
 
 export type NSFileAttribute = NSDictionary<NSString, NSObject>;
 
