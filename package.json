@@ -20,7 +20,8 @@
   "dependencies": {
     "@hono/node-server": "^1.19.6",
     "env-paths": "^3.0.0",
-    "frida": "^16.7.19",
+    "frida": "^17.5.1",
+    "frida16": "npm:frida@^16.7.19",
     "hono": "^4.10.4",
     "socket.io": "^4.8.1"
   },

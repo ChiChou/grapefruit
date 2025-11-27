@@ -4,11 +4,15 @@ const devmode = process.env.NODE_ENV === "development";
 const host = devmode ? hostname() : "127.0.0.1";
 const port = 31337;
 const frontend = devmode ? 3000 : port;
-
 const envAsNumber = (name: string, defaultValue: number) =>
   parseInt(process.env[name.toUpperCase()] || "0") || defaultValue;
+const fridaVersion = envAsNumber("FRIDA_VERSION", 17);
+
+if (fridaVersion !== 16 && fridaVersion !== 17)
+  throw new Error("Invalid FRIDA_VERSION, must be 16 or 17");
 
 export default {
+  frida: fridaVersion,
   dev: devmode,
   host: process.env.HOST || host,
   port: envAsNumber(devmode ? "BACKEND_PORT" : "PORT", port),

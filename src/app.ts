@@ -1,4 +1,3 @@
-import frida from "frida";
 import { Hono } from "hono";
 import { logger } from "hono/logger";
 import { prettyJSON } from "hono/pretty-json";
@@ -6,6 +5,7 @@ import { createMiddleware } from "hono/factory";
 
 import getVersion from "./lib/version.ts";
 import env from "./lib/env.ts";
+import frida, { type Device } from "./lib/xvii.ts";
 
 import {
   app as serializeApp,
@@ -21,7 +21,7 @@ app.use("/api/*", prettyJSON());
 const api = app.basePath("/api");
 const getDeviceMiddleware = createMiddleware<{
   Variables: {
-    device: frida.Device;
+    device: Device;
     bundle?: string;
   };
 }>(async (c, next) => {

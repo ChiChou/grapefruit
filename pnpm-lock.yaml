@@ -15,8 +15,11 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0
       frida:
-        specifier: ^16.7.19
-        version: 16.7.19
+        specifier: ^17.5.1
+        version: 17.5.1
+      frida16:
+        specifier: npm:frida@^16.7.19
+        version: frida@16.7.19
       hono:
         specifier: ^4.10.4
         version: 4.10.4
@@ -138,6 +141,10 @@ packages:
 
   frida@16.7.19:
     resolution: {integrity: sha512-OqMpRpzOzilQyIo9WpBcw8kgj11awAP/eQVDTUFQ1bg/2s9ceNnBqrRmIUlqvFeTo96b++9ijA8Ly5xkVMUyQw==}
+    engines: {node: '>=16'}
+
+  frida@17.5.1:
+    resolution: {integrity: sha512-K/Ut+Kj9hpxx49RU35js0uP9k1GUsSepPACSEBtYWvj2NfFmP5z8eG9bZWA15ZDlJ/nCZxZ3VrZMXc9ALJVlgQ==}
     engines: {node: '>=16'}
 
   fs-constants@1.0.0:
@@ -406,6 +413,12 @@ snapshots:
   file-uri-to-path@1.0.0: {}
 
   frida@16.7.19:
+    dependencies:
+      bindings: 1.5.0
+      minimatch: 10.1.1
+      prebuild-install: 7.1.3
+
+  frida@17.5.1:
     dependencies:
       bindings: 1.5.0
       minimatch: 10.1.1
