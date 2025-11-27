@@ -1,5 +1,5 @@
 import path from "path";
-import { fileURLToPath } from "url";
+import { fileURLToPath, pathToFileURL } from "url";
 
 export default async function get(pkg: string) {
   const {
@@ -14,7 +14,8 @@ async function pkgJSON(pkg: string): Promise<{ default: { version: string } }> {
     const needle = "node_modules" + path.sep;
     const index = abs.lastIndexOf(needle);
     const prefix = abs.substring(0, index + needle.length);
-    return import(path.join(prefix, pkg, "package.json"), {
+    const url = pathToFileURL(path.join(prefix, pkg, "package.json")).href;
+    return import(url, {
       with: { type: "json" },
     });
   });
