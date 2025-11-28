@@ -7,10 +7,6 @@ if (process.env.NODE_ENV !== "development") {
   // todo: serve built frontend
 }
 
-process.on("uncaughtException", (err) => {
-  console.error("Uncaught Exception:", err);
-});
-
 const server = serve(
   {
     fetch: app.fetch,
@@ -21,3 +17,18 @@ const server = serve(
     attach(server);
   },
 );
+
+process
+  .on("uncaughtException", (err) => {
+    console.error("Uncaught Exception:", err);
+  })
+  .on("unhandledRejection", (reason, promise) => {
+    console.error("Unhandled Rejection at:", promise, "reason:", reason);
+  })
+  .on("SIGINT", () => {
+    server.close();
+  })
+  // nodejs --watch will send this signal on file changes
+  .on("SIGTERM", () => {
+    server.close();
+  });
