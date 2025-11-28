@@ -9,5 +9,5 @@ type FridaModule = typeof import("frida");
 const which = env.frida === 16 ? "frida16" : "frida";
 const frida: FridaModule = await import(which);
 
-export * from "frida";
+export type * from "frida";
 export default frida;

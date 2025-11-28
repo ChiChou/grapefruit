@@ -42,7 +42,10 @@ api
       with: { type: "json" },
     });
 
-    return c.json({ frida: await getVersion("frida"), igf: version });
+    return c.json({
+      frida: await getVersion(env.frida === 16 ? "frida16" : "frida"),
+      igf: version,
+    });
   })
   .get("/devices", async (c) => {
     const skip = new Set(["local", "socket", "barebone"]);

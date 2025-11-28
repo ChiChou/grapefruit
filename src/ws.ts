@@ -1,9 +1,9 @@
 import { type ServerType } from "@hono/node-server";
 import { Server, type Socket } from "socket.io";
-import frida, { SessionDetachReason } from "frida";
+import { SessionDetachReason } from "frida";
 
+import frida from "./lib/xvii.ts";
 import env from "./lib/env.ts";
-import getVersion from "./lib/version.ts";
 import { readAgent } from "./lib/utils.ts";
 
 interface ServerToClientEvents {
@@ -29,11 +29,6 @@ async function onConnection(
   deviceId: string,
   bundleId: string,
 ) {
-  const fridaVersion = await getVersion("frida");
-  const fridaMajor = fridaVersion.split(".").at(0);
-  if (fridaMajor !== "16" && fridaMajor !== "17")
-    throw new Error(`Only frida 16 and 17 are supported, got ${fridaVersion}`);
-
   const device = await manager.getDeviceById(deviceId, env.timeout);
   const match = await device.enumerateApplications({
     identifiers: [bundleId],
@@ -55,9 +50,7 @@ async function onConnection(
   const pid = await start();
   const session = await device.attach(pid);
   await device.resume(pid);
-  const script = await session.createScript(
-    await readAgent(`fruity@${fridaMajor}`),
-  );
+  const script = await session.createScript(await readAgent(`fruity`));
 
   session.detached.connect((reason, crash) => {
     console.error("session detached:", reason, crash);
