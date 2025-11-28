@@ -99,9 +99,9 @@ export function expand(root: string, component?: string) {
 
 const filemgr = ObjC.classes.NSFileManager.defaultManager() as NSFileManager;
 
-function throwsError<T>(
-  fn: (pError: NativePointer, ...args: unknown[]) => T,
-  ...args: unknown[]
+function throwsError<Args extends unknown[], T>(
+  fn: (pError: NativePointer, ...args: Args) => T,
+  ...args: Args
 ): T {
   const pError = Memory.alloc(Process.pointerSize).writePointer(NULL);
   const result = fn(pError, ...args);
