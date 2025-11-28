@@ -50,7 +50,7 @@ const UIImagePNGRepresentation = new NativeFunction(
   ["pointer"],
 );
 
-export function dump(includingPreview: false): Promise<UIDumpNode | null> {
+export function dump(includingPreview: false) {
   const { UIWindow } = ObjC.classes;
   const win = UIWindow.keyWindow();
   const recursive = (view: ObjC.Object): UIDumpNode | null => {
@@ -105,9 +105,7 @@ export function dump(includingPreview: false): Promise<UIDumpNode | null> {
     };
   };
 
-  return performOnMainThread(() =>
-    recursive(win),
-  ) as Promise<UIDumpNode | null>;
+  return performOnMainThread(() => recursive(win));
 }
 
 let overlay: ObjC.Object;
@@ -136,7 +134,7 @@ export function highlight(frame: Frame): void {
 
 export async function dismissHighlight(): Promise<void> {
   if (!overlay) return;
-  await performOnMainThread(() => overlay.removeFromSuperview());
+  return performOnMainThread(() => overlay.removeFromSuperview() as void);
 }
 
 // highlight([[0,0],[375,812]])

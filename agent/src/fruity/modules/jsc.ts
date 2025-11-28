@@ -1,5 +1,4 @@
 import { get as getInstance } from "../lib/choose.js";
-import { description } from "../bridge/dictionary.js";
 import {
   NSObject,
   StringLike,
@@ -8,7 +7,8 @@ import {
   NSString,
 } from "../typings.js";
 
-import { NS } from "../bridge/iterator.js";
+import * as Array from "../bridge/nsarray.js";
+import * as Dictionary from "../bridge/dictionary.js";
 
 interface JSContext extends NSObject {
   evaluateScript_(script: StringLike): NSObject;
@@ -45,7 +45,7 @@ function serialize(obj: NSObject) {
   if (obj.isKindOfClass_(ObjC.classes.NSDictionary))
     return {
       type: "dict",
-      keys: NS.Dictionary.keys(obj as NSDictionary<NSObject, NSObject>),
+      keys: Dictionary.keys(obj as NSDictionary<NSObject, NSObject>),
       size: obj.count(),
     };
 
@@ -79,8 +79,8 @@ export async function dump(handle: string) {
     .evaluateScript_("Object.keys(this)")
     .toArray() as NSArray<NSString>;
   const funcClass = jsc.evaluateScript_("Function");
-  const result = new Map<string, any>();
-  for (const key of NS.Array.values(topKeys)) {
+  const result = new Map<string, unknown>();
+  for (const key of Array.values(topKeys)) {
     const val = jsc.objectForKeyedSubscript_(key as NSString);
     if (!val.isObject()) continue;
     const obj = val.toObject();
@@ -104,7 +104,7 @@ export async function dump(handle: string) {
       continue;
     }
     result.set(`${key}`, serialize(obj));
-    console.log(key, description(obj));
+    console.log(key, Dictionary.description(obj));
   }
   return { ...result };
 }

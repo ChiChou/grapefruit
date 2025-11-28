@@ -1,4 +1,4 @@
-export function performOnMainThread(action: Function): Promise<any> {
+export function performOnMainThread<T>(action: () => T): Promise<T> {
   const { NSThread } = ObjC.classes;
 
   return new Promise((resolve, reject) => {

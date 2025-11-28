@@ -1,6 +1,14 @@
-import type { _Nullable, NSArray, NSDictionary } from "../typings.js";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { _Nullable, NSArray, NSDictionary, NSObject } from "../typings.js";
+import * as Array from "./nsarray.js";
 
 const NSPropertyListImmutable = 0;
+
+export function* keys(dict: NSDictionary<NSObject, NSObject>) {
+  if (!dict.isKindOfClass_(ObjC.classes.NSDictionary))
+    throw new Error(`Unexpected class ${dict.$className}`);
+  Array.values(dict.allKeys());
+}
 
 export function valueOf(value: _Nullable<ObjC.Object>): any {
   if (!value) return null;

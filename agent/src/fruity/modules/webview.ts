@@ -8,8 +8,31 @@ const WebViewKinds = ["UI", "WK"] as const;
 type Kind = (typeof WebViewKinds)[number];
 type WebViewsCollection = Record<Kind, { [handle: string]: string }>;
 
-interface NSURLRequest extends NSObject {}
-interface WKWebViewConfiguration extends NSObject {}
+interface NSURLRequest extends NSObject {
+  initWithURL_(url: NSURL): NSURLRequest;
+}
+
+interface WKPreferences extends NSObject {
+  javaScriptCanOpenWindowsAutomatically(): boolean;
+  siteSpecificQuirksModeEnabled(): boolean;
+  fraudulentWebsiteWarningEnabled(): boolean;
+
+  /**
+   * @deprecated in iOS 14.0
+   */
+  javaScriptEnabled(): boolean;
+}
+
+interface WKWebpagePreferences extends NSObject {
+  allowsContentJavaScript(): boolean;
+  lockdownModeEnabled(): boolean;
+}
+
+interface WKWebViewConfiguration extends NSObject {
+  websiteDataStore(): NSObject;
+  preferences(): WKPreferences;
+  defaultWebpagePreferences(): WKWebpagePreferences;
+}
 
 interface WKWebView extends NSObject {
   configuration(): WKWebViewConfiguration;
