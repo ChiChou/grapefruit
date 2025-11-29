@@ -11,6 +11,8 @@
   "scripts": {
     "build:fruity": "frida-compile src/fruity/index.ts -o dist/fruity.js",
     "build:droid": "frida-compile src/droid/index.ts -o dist/droid.js",
+    "watch:fruity": "frida-compile --watch src/fruity/index.ts -o dist/fruity.js",
+    "watch:droid": "frida-compile --watch src/droid/index.ts -o dist/droid.js",
     "build": "npm run lint && npm run build:fruity && npm run build:droid",
     "prepare": "npm run build",
     "lint": "eslint src/**/*.ts",
