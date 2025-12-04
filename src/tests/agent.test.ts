@@ -11,15 +11,15 @@ describe("load agent", () => {
       return;
     }
 
-    const script16 = join(
+    const fruityAgentPath = join(
       import.meta.dirname,
       "..",
       "..",
       "agent",
       "dist",
-      "fruity@16.js",
+      "fruity.js",
     );
-    const source = await fs.readFile(script16, "utf8");
+    const source = await fs.readFile(fruityAgentPath, "utf8");
 
     try {
       const dev = await frida.getUsbDevice();
