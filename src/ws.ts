@@ -1,6 +1,6 @@
 import { type ServerType } from "@hono/node-server";
 import { Server, type Socket } from "socket.io";
-import { SessionDetachReason } from "frida";
+import { SessionDetachReason, type SpawnOptions } from "frida";
 
 import frida from "./lib/xvii.ts";
 import env from "./lib/env.ts";
@@ -42,9 +42,16 @@ async function onConnection(
   const start = async () => {
     const frontmost = await device.getFrontmostApplication();
     if (frontmost?.pid === app.pid) return Promise.resolve(app.pid);
-    return device.spawn(bundleId, {
-      env: { DISABLE_TWEAKS: "1" }, // workaround for ellekit crash
-    });
+
+    const devParams = await device.querySystemParameters();
+    const opt: SpawnOptions = {};
+    if (devParams.access === "full" && devParams.os.id === "darwin") {
+      opt.env = {
+        DISABLE_TWEAKS: "1", // workaround for ellekit crash. todo: move to preferences
+      };
+    }
+
+    return device.spawn(bundleId, opt);
   };
 
   const pid = await start();
