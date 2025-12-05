@@ -45,7 +45,7 @@ async function onConnection(
 
     const devParams = await device.querySystemParameters();
     const opt: SpawnOptions = {};
-    if (devParams.access === "full" && devParams.os.id === "darwin") {
+    if (devParams.access === "full" && devParams.os.id === "ios") {
       opt.env = {
         DISABLE_TWEAKS: "1", // workaround for ellekit crash. todo: move to preferences
       };
