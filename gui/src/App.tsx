@@ -1,5 +1,8 @@
 import { Routes, Route, Navigate } from "react-router";
 import { useTranslation } from "react-i18next";
+
+import "dockview/dist/styles/dockview.css";
+
 import "./App.css";
 import { WelcomePage } from "./components/WelcomePage";
 import { DefaultMessage } from "./components/DefaultMessage";

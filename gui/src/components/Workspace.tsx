@@ -2,6 +2,13 @@ import { useEffect, useState } from "react";
 import { t } from "i18next";
 
 import {
+  DockviewReact,
+  type DockviewReadyEvent,
+  type IDockviewPanelProps,
+  themeLight,
+} from "dockview";
+
+import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
@@ -11,9 +18,11 @@ import { LeftPanelView } from "./LeftPanelView";
 import { BottomPanelView } from "./BottomPanelView";
 import { ConnectionStatus, useSession } from "@/context/SessionContext";
 import SessionProvider from "./SessionProvider";
+import { useTheme } from "./theme-provider";
 
 function WorkspaceContent() {
   const { api, status } = useSession();
+  const { theme } = useTheme();
   const [leftPanelSize, setLeftPanelSize] = useState<number>(() => {
     const saved = localStorage.getItem("workspace-left-panel-size");
     return saved ? Number(saved) : 20;
@@ -47,6 +56,16 @@ function WorkspaceContent() {
     }
   };
 
+  const [dockViewClazz, setDockViewClazz] = useState<string>(
+    "dockview-theme-light",
+  );
+
+  useEffect(() => {
+    setDockViewClazz(
+      theme === "dark" ? "dockview-theme-abyss" : "dockview-theme-light",
+    );
+  }, [theme]);
+
   useEffect(() => {
     if (!api || status !== ConnectionStatus.Ready) return;
 
@@ -58,6 +77,47 @@ function WorkspaceContent() {
       })
       .catch(console.error);
   }, [status, api]);
+
+  const Default = (props: IDockviewPanelProps) => {
+    return <div>{props.api.title}</div>;
+  };
+
+  const components = {
+    default: Default,
+  };
+
+  const onReady = (event: DockviewReadyEvent) => {
+    event.api.addPanel({
+      id: "panel_1",
+      component: "default",
+    });
+
+    event.api.addPanel({
+      id: "panel_2",
+      component: "default",
+      position: {
+        direction: "right",
+        referencePanel: "panel_1",
+      },
+    });
+
+    event.api.addPanel({
+      id: "panel_3",
+      component: "default",
+      position: {
+        direction: "below",
+        referencePanel: "panel_1",
+      },
+    });
+    event.api.addPanel({
+      id: "panel_4",
+      component: "default",
+    });
+    event.api.addPanel({
+      id: "panel_5",
+      component: "default",
+    });
+  };
 
   return (
     <div className="flex h-screen flex-col">
@@ -81,7 +141,14 @@ function WorkspaceContent() {
             onLayout={handleBottomPanelResize}
           >
             <ResizablePanel>
-              {/* todo: use this area for document tabs */}
+              <DockviewReact
+                // workaround: theme must not be empty, otherwise
+                //  Dockview will always insert abyss className
+                theme={themeLight}
+                className={dockViewClazz}
+                onReady={onReady}
+                components={components}
+              />
             </ResizablePanel>
             <ResizableHandle />
             <ResizablePanel defaultSize={bottomPanelSize}>

@@ -23,6 +23,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "dockview": "^4.11.0",
     "i18next": "^25.6.1",
     "lucide-react": "^0.552.0",
     "react": "^19.1.1",
