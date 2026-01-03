@@ -1,7 +1,6 @@
 import frida from "frida";
-import { join } from "node:path";
-import { promises as fs } from "node:fs";
 import { describe, it } from "node:test";
+import { readAgent } from "../lib/utils.ts";
 
 describe("load agent", () => {
   it("should spawn app", async () => {
@@ -11,15 +10,7 @@ describe("load agent", () => {
       return;
     }
 
-    const fruityAgentPath = join(
-      import.meta.dirname,
-      "..",
-      "..",
-      "agent",
-      "dist",
-      "fruity.js",
-    );
-    const source = await fs.readFile(fruityAgentPath, "utf8");
+    const source = await readAgent("fruity");
 
     try {
       const dev = await frida.getUsbDevice();
