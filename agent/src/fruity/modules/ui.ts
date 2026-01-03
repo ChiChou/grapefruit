@@ -22,9 +22,6 @@ const CGFloat = Process.pointerSize === 4 ? "float" : "double";
 const CGSize: NativeFunctionArgumentType = [CGFloat, CGFloat];
 
 const UIKit = Process.getModuleByName("UIKit");
-if (!UIKit) {
-  throw new Error("UIKit not found");
-}
 
 const UIGraphicsBeginImageContextWithOptions = new NativeFunction(
   UIKit.findExportByName("UIGraphicsBeginImageContextWithOptions")!,
