@@ -1,3 +1,4 @@
+import ObjC from "frida-objc-bridge";
 type Tree<T> = {
   [name: string]: Tree<T> | T;
 };

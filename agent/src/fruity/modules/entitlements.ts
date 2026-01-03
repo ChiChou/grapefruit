@@ -1,3 +1,5 @@
+import ObjC from "frida-objc-bridge";
+
 import { NSData } from "../typings.js";
 
 ObjC.classes.NSBundle.bundleWithPath_(

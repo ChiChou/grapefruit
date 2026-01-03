@@ -1,3 +1,4 @@
+import ObjC from "frida-objc-bridge";
 import type { NSArray, NSObject } from "../typings.js";
 
 export function* values(arr: NSArray<NSObject>) {

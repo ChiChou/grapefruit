@@ -1,3 +1,5 @@
+import ObjC from "frida-objc-bridge";
+
 export async function get<T extends ObjC.Object>(
   clazz: T,
   handle: string,

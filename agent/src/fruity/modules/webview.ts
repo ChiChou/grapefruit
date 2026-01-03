@@ -1,3 +1,4 @@
+import ObjC from "frida-objc-bridge";
 import type { NSObject, StringLike, NSURL, NSString } from "../typings.js";
 
 import { performOnMainThread } from "../lib/dispatch.js";

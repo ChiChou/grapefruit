@@ -1,3 +1,4 @@
+import ObjC from "frida-objc-bridge";
 import { performOnMainThread } from "../lib/dispatch.js";
 
 type Point = [number, number];

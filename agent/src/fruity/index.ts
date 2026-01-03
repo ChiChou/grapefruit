@@ -1,3 +1,4 @@
+import ObjC from "frida-objc-bridge";
 import { init as enableLifeCycleHook } from "./observers/lifecycle.js";
 import { interfaces, invoke } from "./registry.js";
 

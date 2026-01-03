@@ -1,3 +1,5 @@
+import Java from "frida-java-bridge";
+
 export interface PackageInfo {
   name: string;
   version: string;

@@ -1,3 +1,4 @@
+import ObjC from "frida-objc-bridge";
 import { get as getInstance } from "../lib/choose.js";
 import {
   NSObject,

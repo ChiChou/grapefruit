@@ -1,3 +1,4 @@
+import ObjC from "frida-objc-bridge";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { _Nullable, NSArray, NSDictionary, NSObject } from "../typings.js";
 import * as Array from "./nsarray.js";

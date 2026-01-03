@@ -1,3 +1,4 @@
+import ObjC from "frida-objc-bridge";
 export interface NSObject extends ObjC.Object {
   respondsToSelector_(sel: NativePointer): boolean;
   isKindOfClass_(cls: ObjC.Object): boolean;
