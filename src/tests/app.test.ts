@@ -1,10 +1,5 @@
-import { after, before, describe, it } from "node:test";
+import { describe, it } from "node:test";
 import assert from "node:assert";
-// import type { ServerType } from "@hono/node-server";
-
-// import frida from "frida";
-// import io from "socket.io-client";
-// import { serve } from "@hono/node-server";
 
 import app from "../app.ts";
 
@@ -39,29 +34,4 @@ describe("API tests", () => {
     console.debug("apps", apps.slice(0, 10));
     assert(Array.isArray(apps), "Apps should be an array");
   });
-
-  // it("should accept socket.io clients", async () => {
-  //   const socket = io(prefix() + "/devices");
-  //   await new Promise<void>((resolve, reject) => {
-  //     const timeout = setTimeout(
-  //       () => reject(new Error("test timed out")),
-  //       5000,
-  //     );
-
-  //     socket.on("change", () => {
-  //       clearTimeout(timeout);
-  //       resolve();
-  //       socket.disconnect();
-  //     });
-
-  //     socket.on("connect", () => {
-  //       assert(socket.connected, "socket client works");
-  //       frida.getDeviceManager().addRemoteDevice("127.0.0.1");
-  //     });
-
-  //     socket.on("connect_error", (err) => {
-  //       reject(new Error(`Socket connection failed: ${err.message}`));
-  //     });
-  //   });
-  // });
 });
