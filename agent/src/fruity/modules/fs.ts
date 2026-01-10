@@ -13,10 +13,7 @@ import { valueOf } from "../bridge/dictionary.js";
 import { NSHomeDirectory, NSTemporaryDirectory } from "../lib/foundation.js";
 
 const cf = Process.getModuleByName("CoreFoundation");
-if (!cf) throw new Error("CoreFoundation is not loaded");
-
 const foundation = Process.getModuleByName("Foundation");
-if (!foundation) throw new Error("Foundation is not loaded");
 
 const NSURL_RESOURCE_KEYS = {
   name: "NSURLNameKey",
@@ -31,8 +28,7 @@ const NSURL_RESOURCE_KEYS = {
 
 const expectedKeys: NSArray<NSString> = ObjC.classes.NSMutableArray.new();
 for (const value of Object.values(NSURL_RESOURCE_KEYS)) {
-  const p = cf.findExportByName(value);
-  if (!p) throw new Error(`Key ${value} not found`);
+  const p = cf.getExportByName(value);
   expectedKeys.addObject_(p.readPointer());
 }
 
@@ -112,6 +108,7 @@ function throwsError<Args extends unknown[], T>(
   return result;
 }
 
+// TODO: fix type annotation
 export function ls(root: string, component = "") {
   function contentsOf(pError: NativePointer, url: NSURL) {
     const withHidden = false;
@@ -140,15 +137,12 @@ export function ls(root: string, component = "") {
         const url = result.objectAtIndex_(i);
         const dict = url.resourceValuesForKeys_error_(expectedKeys, pError);
         const err = pError.readPointer();
-        if (!err.isNull() || !dict)
+        if (!err.isNull())
           throw new Error(
             `Error reading resource values for ${url}, ${new ObjC.Object(err).localizedDescription()}`,
           );
 
-        for (const [jsKey, key] of Object.entries(NSURL_RESOURCE_KEYS)) {
-          const value = dict.objectForKey_(key);
-          if (!value) continue;
-        }
+        if (!dict) yield {};
 
         yield convert(dict);
       }
@@ -193,13 +187,16 @@ export function mv(src: string, dst: string) {
 }
 
 export function attr(path: string) {
-  return throwsError((pError, path) => {
-    filemgr.attributesOfItemAtPath_error_(path, pError);
-  }, path);
+  const attr = throwsError(
+    (pError, path) => filemgr.attributesOfItemAtPath_error_(path, pError),
+    path,
+  );
+
+  return valueOf(attr) as Attributes;
 }
 
 export function plist(path: string) {
-  return ObjC.classes.NSDictionary.dictionaryWithContentsOfFile_(path);
+  return valueOf(ObjC.classes.NSDictionary.dictionaryWithContentsOfFile_(path));
 }
 
 const NSUTF8StringEncoding = 4;
@@ -209,7 +206,7 @@ export function text(path: string) {
     path,
     NSUTF8StringEncoding,
     NULL,
-  ).toString();
+  ).toString() as string;
 }
 
 export function saveText(path: string, text: string) {
@@ -220,5 +217,5 @@ export function saveText(path: string, text: string) {
     true,
     NSUTF8StringEncoding,
     NULL,
-  );
+  ) as boolean;
 }
