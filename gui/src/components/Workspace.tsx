@@ -24,7 +24,7 @@ import { HandlesTab } from "./tabs/HandlesTab";
 import { InfoPlistTab } from "./tabs/InfoPlistTab";
 
 function WorkspaceContent() {
-  const { api, status } = useSession();
+  const { status } = useSession();
   const { theme } = useTheme();
   const [leftPanelSize, setLeftPanelSize] = useState<number>(() => {
     const saved = localStorage.getItem("workspace-left-panel-size");
@@ -68,18 +68,6 @@ function WorkspaceContent() {
       theme === "dark" ? "dockview-theme-abyss" : "dockview-theme-light",
     );
   }, [theme]);
-
-  useEffect(() => {
-    if (!api || status !== ConnectionStatus.Ready) return;
-
-    api.lsof.fds().then(console.log);
-    api.fs
-      .ls("!")
-      .then((files) => {
-        console.log("Root files:", files);
-      })
-      .catch(console.error);
-  }, [status, api]);
 
   const dockviewApiRef = useRef<DockviewApi | null>(null);
 

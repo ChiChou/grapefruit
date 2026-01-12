@@ -8,8 +8,10 @@ import type {
   BasicInfo,
   URLScheme,
 } from "../../../../agent/src/fruity/modules/info";
+import { useParams } from "react-router";
 
 export function GeneralPanel() {
+  const { device, bundle } = useParams();
   const { t } = useTranslation();
   const { api, status } = useSession();
   const [basicInfo, setBasicInfo] = useState<BasicInfo | null>(null);
@@ -25,12 +27,12 @@ export function GeneralPanel() {
       .basics()
       .then((info) => setBasicInfo(info))
       .catch((error) => {
-        setError(error?.message || t("failed_to_fetch_app_info"));
+        setError(error?.message);
       })
       .finally(() => {
         setIsLoading(false);
       });
-  }, [status, api, t]);
+  }, [status, api]);
 
   return (
     <div className="h-full p-4 overflow-auto">
@@ -43,27 +45,44 @@ export function GeneralPanel() {
       )}
       {isLoading ? (
         <div className="space-y-4">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-4 w-full" />
+          <div className="flex gap-4">
+            <Skeleton className="h-16 w-16 rounded-xl shrink-0" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          </div>
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-4 w-3/4" />
         </div>
       ) : basicInfo ? (
         <div className="space-y-4">
-          <div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-              {t("label")}
-            </div>
-            <div className="text-sm">{basicInfo.label || t("na")}</div>
-          </div>
-          <div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-              {t("bundle_id")}
-            </div>
-            <div className="text-sm font-mono break-all">
-              {basicInfo.id || t("na")}
+          <div className="flex gap-4">
+            <img
+              src={`/api/device/${device}/icon/${bundle}`}
+              alt={basicInfo.label}
+              loading="lazy"
+              className="h-16 w-16 rounded-xl shrink-0"
+              onError={(e) => {
+                e.currentTarget.src =
+                  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' fill='%23ddd'/%3E%3C/svg%3E";
+              }}
+            />
+            <div className="flex-1 min-w-0">
+              <div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                  {t("app_name")}
+                </div>
+                <div className="text-sm">{basicInfo.label || t("na")}</div>
+              </div>
+              <div className="mt-2">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                  {t("bundle_id")}
+                </div>
+                <div className="text-sm font-mono break-all">
+                  {basicInfo.id || t("na")}
+                </div>
+              </div>
             </div>
           </div>
           <div>

@@ -40,7 +40,7 @@
   "modules": "模块",
   "classes": "类",
   "files": "文件",
-  "label": "标签",
+  "app_name": "应用名",
   "bundle_id": "包 ID",
   "version": "版本",
   "min_os": "最低系统要求",

@@ -130,7 +130,7 @@ export function AppsView() {
     return () => {
       abortController.abort();
     };
-  }, [udid]);
+  }, [udid, t]);
 
   if (loading) {
     return (
