@@ -8,12 +8,10 @@ import type {
   BasicInfo,
   URLScheme,
 } from "../../../../agent/src/fruity/modules/info";
-import { useParams } from "react-router";
 
 export function GeneralPanel() {
-  const { device, bundle } = useParams();
   const { t } = useTranslation();
-  const { api, status } = useSession();
+  const { api, status, device, bundle } = useSession();
   const [basicInfo, setBasicInfo] = useState<BasicInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

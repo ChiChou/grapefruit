@@ -24,8 +24,24 @@ function cxaDemangle(name: string): string | null {
   return null;
 }
 
-export function modules() {
-  return Process.enumerateModules();
+export interface ModuleInfo {
+  name: string;
+  size: number;
+  version: string | null;
+  path: string;
+  base: string;
+}
+
+export function modules(): ModuleInfo[] {
+  return Process.enumerateModules().map(
+    ({ name, version, base, path, size }) => ({
+      name,
+      size,
+      version,
+      path,
+      base: base.toString(),
+    }),
+  );
 }
 
 function find(name?: string): Module {
