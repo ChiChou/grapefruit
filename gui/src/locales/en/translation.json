@@ -55,5 +55,13 @@
   "connect_to_view_app_info": "Connect to a target to view application information",
   "na": "N/A",
   "download": "Download",
-  "loading": "Loading"
+  "loading": "Loading",
+  "file_descriptor": "File Descriptor",
+  "type": "Type",
+  "details": "Details",
+  "active_file_handles": "Active File Handles",
+  "never": "Never",
+  "1s": "1 second",
+  "10s": "10 seconds",
+  "1min": "1 minute"
 }

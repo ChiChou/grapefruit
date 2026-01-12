@@ -55,5 +55,13 @@
   "connect_to_view_app_info": "请连接到目标以查看应用信息",
   "na": "N/A",
   "download": "下载",
-  "loading": "加载中"
+  "loading": "加载中",
+  "file_descriptor": "文件描述符",
+  "type": "类型",
+  "details": "详情",
+  "active_file_handles": "活动文件句柄",
+  "never": "从不",
+  "1s": "1 秒",
+  "10s": "10 秒",
+  "1min": "1 分钟"
 }

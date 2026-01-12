@@ -15,11 +15,12 @@ import logo from "../assets/grapefruit.svg";
 
 export function LeftPanelView() {
   const { device, bundle } = useSession();
+
   return (
     <div className="flex h-full">
       <div className="w-12 bg-gray-50 dark:bg-gray-900 border-r dark:border-gray-700 flex flex-col">
         <div className="p-2 flex items-center justify-center border-b dark:border-gray-700">
-          <Link to="/">
+          <Link to={`/apps/${device}`} className="flex items-center">
             <img src={logo} alt={t("logo_alt")} className="h-6 w-6" />
           </Link>
         </div>

@@ -553,7 +553,7 @@ export interface SocketFD {
   type: ProcFDType.SOCKET;
 }
 
-type FileDescriptor = VnodeFD | SocketFD;
+export type FileDescriptor = VnodeFD | SocketFD;
 
 const libsystem = Module.load("/usr/lib/libSystem.B.dylib");
 
