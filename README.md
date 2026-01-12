@@ -1,1 +1,18 @@
-For built-in [SQLite3](https://nodejs.org/api/sqlite.html) and [TypeScript](https://nodejs.org/en/learn/typescript/run-natively) support, igf requires Node.js v22.18.0 or higher.
+# Grapefruit: Runtime Application Instruments for iOS
+
+## Prerequisites
+
+- [Bun](https://bun.com/)
+
+## Installation
+
+1. Clone the repository
+2. Install dependencies: `bun install`
+3. Run full stack server: `bun run `dev:both`
+
+## Project Structure
+
+- `agent/` - Frida agent for mobile instrumentation
+- `gui/` - React frontend application
+- `shared/` - Shared types and schemas
+- `src/` - Main backend application
