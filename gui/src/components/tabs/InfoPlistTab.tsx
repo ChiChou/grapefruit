@@ -3,9 +3,18 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
+import Editor, { loader } from "@monaco-editor/react";
+import { useTheme } from "@/components/theme-provider";
+
+// Configure Monaco to only load typescript, javascript, and xml languages
+loader.init().then((monaco) => {
+  // Register XML language if not already registered
+  monaco.languages.register({ id: "xml" });
+});
 
 export function InfoPlistTab() {
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const { api, status } = useSession();
   const [loading, setLoading] = useState<boolean>(false);
   const [xml, setXml] = useState<string>("");
@@ -46,9 +55,30 @@ export function InfoPlistTab() {
           {t("download")}
         </Button>
       </div>
-      <pre className="flex-1 overflow-auto p-4 bg-gray-100 dark:bg-gray-800 border-t border-gray-300 dark:border-gray-700">
-        {loading ? "Loading..." : xml}
-      </pre>
+      <div className="flex-1 border-t border-gray-300 dark:border-gray-700">
+        {loading ? (
+          <div className="flex items-center justify-center h-full text-gray-500">
+            {t("loading")}...
+          </div>
+        ) : (
+          <Editor
+            height="100%"
+            language="xml"
+            value={xml}
+            theme={theme === "dark" ? "vs-dark" : "light"}
+            options={{
+              readOnly: true,
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              wordWrap: "on",
+              fontSize: 13,
+              lineNumbers: "on",
+              folding: true,
+              automaticLayout: true,
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 }

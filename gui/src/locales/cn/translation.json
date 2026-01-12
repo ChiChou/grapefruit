@@ -54,5 +54,6 @@
   "no_app_info": "无可用的应用信息",
   "connect_to_view_app_info": "请连接到目标以查看应用信息",
   "na": "N/A",
-  "download": "下载"
+  "download": "下载",
+  "loading": "加载中"
 }

@@ -54,5 +54,6 @@
   "no_app_info": "No application information available",
   "connect_to_view_app_info": "Connect to a target to view application information",
   "na": "N/A",
-  "download": "Download"
+  "download": "Download",
+  "loading": "Loading"
 }
