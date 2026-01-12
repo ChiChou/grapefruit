@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { t } from "i18next";
 
 import {
+  type DockviewApi,
   DockviewReact,
   type DockviewReadyEvent,
-  type IDockviewPanelProps,
+  type SerializedDockview,
   themeLight,
 } from "dockview";
 
@@ -19,6 +20,8 @@ import { BottomPanelView } from "./BottomPanelView";
 import { ConnectionStatus, useSession } from "@/context/SessionContext";
 import SessionProvider from "./SessionProvider";
 import { useTheme } from "./theme-provider";
+import { HandlesTab } from "./tabs/HandlesTab";
+import { InfoPlistTab } from "./tabs/InfoPlistTab";
 
 function WorkspaceContent() {
   const { api, status } = useSession();
@@ -78,44 +81,56 @@ function WorkspaceContent() {
       .catch(console.error);
   }, [status, api]);
 
-  const Default = (props: IDockviewPanelProps) => {
-    return <div>{props.api.title}</div>;
-  };
+  const dockviewApiRef = useRef<DockviewApi | null>(null);
 
   const components = {
-    default: Default,
+    handles: HandlesTab,
+    infoPlist: InfoPlistTab,
   };
 
+  const saveLayout = useCallback(() => {
+    if (dockviewApiRef.current) {
+      const layout = dockviewApiRef.current.toJSON();
+      localStorage.setItem("workspace-dockview-layout", JSON.stringify(layout));
+    }
+  }, []);
+
   const onReady = (event: DockviewReadyEvent) => {
-    event.api.addPanel({
-      id: "panel_1",
-      component: "default",
+    dockviewApiRef.current = event.api;
+
+    const savedLayout = localStorage.getItem("workspace-dockview-layout");
+    if (savedLayout) {
+      try {
+        const layout: SerializedDockview = JSON.parse(savedLayout);
+        event.api.fromJSON(layout);
+      } catch (e) {
+        console.error("Failed to restore dockview layout:", e);
+        localStorage.removeItem("workspace-dockview-layout");
+        // Create default layout on restore failure
+        createDefaultLayout(event.api);
+      }
+    } else {
+      // Default layout if no saved layout exists
+      createDefaultLayout(event.api);
+    }
+
+    // Save layout on changes
+    event.api.onDidLayoutChange(() => {
+      saveLayout();
+    });
+  };
+
+  const createDefaultLayout = (dockApi: DockviewApi) => {
+    dockApi.addPanel({
+      id: "handles_tab",
+      component: "handles",
+      title: t("active_file_handles"),
     });
 
-    event.api.addPanel({
-      id: "panel_2",
-      component: "default",
-      position: {
-        direction: "right",
-        referencePanel: "panel_1",
-      },
-    });
-
-    event.api.addPanel({
-      id: "panel_3",
-      component: "default",
-      position: {
-        direction: "below",
-        referencePanel: "panel_1",
-      },
-    });
-    event.api.addPanel({
-      id: "panel_4",
-      component: "default",
-    });
-    event.api.addPanel({
-      id: "panel_5",
-      component: "default",
+    dockApi.addPanel({
+      id: "info_plist_tab",
+      component: "infoPlist",
+      title: "Info.plist",
     });
   };
 

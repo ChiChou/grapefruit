@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Socket } from "socket.io-client";
 
-import type { RemoteRPC as FruityRPC } from "../../../agent/types/fruity/registry.d.ts";
+import type {
+  RemoteRPC,
+  RPCRoute,
+} from "../../../agent/types/fruity/registry.d.ts";
 
 export interface SessionClientEvents {
   ready: () => void;
@@ -16,16 +19,8 @@ export interface SessionServerEvents {
   ) => void;
 }
 
-// Convert FruityRPC to async promise-based API
-export type AsyncFruityRPC = {
-  [Namespace in keyof FruityRPC]: {
-    [Method in keyof FruityRPC[Namespace]]: FruityRPC[Namespace][Method] extends (
-      ...args: infer Args
-    ) => infer Return
-      ? (...args: Args) => Promise<Return>
-      : never;
-  };
-};
+// RemoteRPC already converts methods to Promise-based
+export type AsyncFruityRPC = RemoteRPC<RPCRoute>;
 
 export function createAPI(
   socket: Socket<SessionClientEvents, SessionServerEvents>,

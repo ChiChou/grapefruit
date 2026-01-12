@@ -39,5 +39,20 @@
   "general": "General",
   "modules": "Modules",
   "classes": "Classes",
-  "files": "Files"
+  "files": "Files",
+  "label": "Label",
+  "bundle_id": "Bundle ID",
+  "version": "Version",
+  "min_os": "Minimum OS",
+  "size": "Size",
+  "bundle_path": "Bundle path",
+  "executable": "Executable",
+  "tmp_dir": "Temp directory",
+  "home_dir": "Home directory",
+  "url_schemes": "URL Schemes",
+  "failed_to_fetch_app_info": "Failed to fetch application information",
+  "no_app_info": "No application information available",
+  "connect_to_view_app_info": "Connect to a target to view application information",
+  "na": "N/A",
+  "download": "Download"
 }
