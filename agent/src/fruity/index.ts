@@ -26,15 +26,17 @@ Process.setExceptionHandler((detail) => {
   return false;
 });
 
-// disable autolock
-ObjC.schedule(ObjC.mainQueue, () => {
-  try {
-    ObjC.classes.UIApplication.sharedApplication().setIdleTimerDisabled_(
-      ptr(1),
-    );
-  } finally {
-  }
-});
+if (ObjC.available) {
+  // disable autolock
+  ObjC.schedule(ObjC.mainQueue, () => {
+    try {
+      ObjC.classes.UIApplication.sharedApplication().setIdleTimerDisabled_(
+        ptr(1),
+      );
+    } finally {
+    }
+  });
+}
 
 rpc.exports = {
   invoke,

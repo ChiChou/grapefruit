@@ -1,64 +1,81 @@
 import ObjC from "frida-objc-bridge";
 import { valueOf } from "../bridge/dictionary.js";
 
-const Security = Process.getModuleByName("Security");
+function getSecurityApi() {
+  const Security = Process.getModuleByName("Security");
 
-const SecItemCopyMatching = new NativeFunction(
-  Security.getExportByName("SecItemCopyMatching"),
-  "int",
-  ["pointer", "pointer"],
-);
+  const SecItemCopyMatching = new NativeFunction(
+    Security.getExportByName("SecItemCopyMatching"),
+    "int",
+    ["pointer", "pointer"],
+  );
 
-const SecItemAdd = new NativeFunction(
-  Security.getExportByName("SecItemAdd"),
-  "int",
-  ["pointer", "pointer"],
-);
+  const SecItemAdd = new NativeFunction(
+    Security.getExportByName("SecItemAdd"),
+    "int",
+    ["pointer", "pointer"],
+  );
 
-const SecItemUpdate = new NativeFunction(
-  Security.getExportByName("SecItemUpdate"),
-  "int",
-  ["pointer", "pointer"],
-);
+  const SecItemUpdate = new NativeFunction(
+    Security.getExportByName("SecItemUpdate"),
+    "int",
+    ["pointer", "pointer"],
+  );
 
-const SecItemDelete = new NativeFunction(
-  Security.getExportByName("SecItemDelete"),
-  "int",
-  ["pointer"],
-);
+  const SecItemDelete = new NativeFunction(
+    Security.getExportByName("SecItemDelete"),
+    "int",
+    ["pointer"],
+  );
 
-const SecAccessControlCreateWithFlags = new NativeFunction(
-  Security.getExportByName("SecAccessControlCreateWithFlags"),
-  "pointer",
-  ["pointer", "pointer", "int", "pointer"],
-);
+  const SecAccessControlCreateWithFlags = new NativeFunction(
+    Security.getExportByName("SecAccessControlCreateWithFlags"),
+    "pointer",
+    ["pointer", "pointer", "int", "pointer"],
+  );
 
-const SecAccessControlGetProtection = new NativeFunction(
-  Security.getExportByName("SecAccessControlGetProtection"),
-  "pointer",
-  ["pointer"],
-);
+  const SecAccessControlGetProtection = new NativeFunction(
+    Security.getExportByName("SecAccessControlGetProtection"),
+    "pointer",
+    ["pointer"],
+  );
 
-const SecAccessControlGetRequirePassword = new NativeFunction(
-  Security.getExportByName("SecAccessControlGetRequirePassword"),
-  "bool",
-  ["pointer"],
-);
+  const SecAccessControlGetRequirePassword = new NativeFunction(
+    Security.getExportByName("SecAccessControlGetRequirePassword"),
+    "bool",
+    ["pointer"],
+  );
 
-const SecAccessControlGetConstraint = new NativeFunction(
-  Security.getExportByName("SecAccessControlGetConstraint"),
-  "pointer",
-  ["pointer", "pointer"],
-);
+  const SecAccessControlGetConstraint = new NativeFunction(
+    Security.getExportByName("SecAccessControlGetConstraint"),
+    "pointer",
+    ["pointer", "pointer"],
+  );
 
-const SecAccessControlGetConstraints = new NativeFunction(
-  Security.getExportByName("SecAccessControlGetConstraints"),
-  "pointer",
-  ["pointer"],
-);
+  const SecAccessControlGetConstraints = new NativeFunction(
+    Security.getExportByName("SecAccessControlGetConstraints"),
+    "pointer",
+    ["pointer"],
+  );
+
+  return {
+    SecItemCopyMatching,
+    SecItemAdd,
+    SecItemUpdate,
+    SecItemDelete,
+    SecAccessControlCreateWithFlags,
+    SecAccessControlGetProtection,
+    SecAccessControlGetRequirePassword,
+    SecAccessControlGetConstraint,
+    SecAccessControlGetConstraints,
+    Security,
+  };
+}
 
 function kSec(suffix: string) {
-  return Security.getExportByName(`kSec${suffix}`).readPointer();
+  return Process.getModuleByName("Security")
+    .getExportByName(`kSec${suffix}`)
+    .readPointer();
 }
 
 const kCFBooleanTrue = ObjC.classes.__NSCFBoolean!.numberWithBool_(true);
@@ -113,7 +130,8 @@ interface KeyChainItem {
 const cf2str = (cf: NativePointer) => new ObjC.Object(cf).toString();
 const enumLookup = (prefix: string) =>
   Object.fromEntries(
-    Security.enumerateExports()
+    Process.getModuleByName("Security")
+      .enumerateExports()
       .filter((e) => e.name.startsWith(prefix))
       .map((e) => [cf2str(e.address.readPointer()), e.name]),
   );
@@ -129,6 +147,12 @@ function dumpACL(item: ObjC.Object) {
   const kACMKeyAclConstraintBio = "cbio";
   const kAKSKeyOpDefaultAcl = "dacl";
   const kACMKeyAclParamKofN = "pkofn";
+
+  const {
+    SecAccessControlGetRequirePassword,
+    SecAccessControlGetConstraints,
+    SecAccessControlGetConstraint,
+  } = getSecurityApi();
 
   const access = item.objectForKey_(kSec("AttrAccessControl"));
   if (!access) return;
@@ -203,6 +227,9 @@ function dumpACL(item: ObjC.Object) {
 }
 
 export function list(withfaceId = false): KeyChainItem[] {
+  const { SecItemCopyMatching, SecAccessControlGetProtection } =
+    getSecurityApi();
+
   const kSecAttrAccessibleLookup = enumLookup("kSecAttrAccessible");
 
   const result: KeyChainItem[] = [];
@@ -252,9 +279,6 @@ export function list(withfaceId = false): KeyChainItem[] {
       const readable: KeyChainItem = {
         clazz: className,
         acl: dumpACL(item),
-        // accessibleAttribute: constantLookup(
-        //   item.objectForKey_(kSec.AttrAccessible),
-        // ),
       };
 
       const access = item.objectForKey_(kSec("AttrAccessControl"));

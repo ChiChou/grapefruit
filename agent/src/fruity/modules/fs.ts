@@ -12,47 +12,6 @@ import type {
 import { valueOf } from "../bridge/dictionary.js";
 import { NSHomeDirectory, NSTemporaryDirectory } from "../lib/foundation.js";
 
-const cf = Process.getModuleByName("CoreFoundation");
-const foundation = Process.getModuleByName("Foundation");
-
-const NSURL_RESOURCE_KEYS = {
-  name: "NSURLNameKey",
-  isDir: "NSURLIsDirectoryKey",
-  protectionKey: "NSURLFileProtectionKey",
-  size: "NSURLFileSizeKey",
-  isAlias: "NSURLIsAliasFileKey",
-  creationDate: "NSURLCreationDateKey",
-  isLink: "NSURLIsSymbolicLinkKey",
-  isWritable: "NSURLIsWritableKey",
-};
-
-const expectedKeys: NSArray<NSString> = ObjC.classes.NSMutableArray.new();
-for (const value of Object.values(NSURL_RESOURCE_KEYS)) {
-  const p = cf.getExportByName(value);
-  expectedKeys.addObject_(p.readPointer());
-}
-
-const NS_FILE_ATTR_KEYS = {
-  created: "NSFileCreationDate",
-  groupOwnerId: "NSFileGroupOwnerAccountID",
-  groupOwnerName: "NSFileGroupOwnerAccountName",
-  ownerId: "NSFileOwnerAccountID",
-  ownerName: "NSFileOwnerAccountName",
-  perm: "NSFilePosixPermissions",
-  protection: "NSFileProtectionKey",
-  size: "NSFileSize",
-  type: "NSFileType",
-};
-
-const NSFileAttributeKeyLookup = Object.fromEntries(
-  Object.entries(NS_FILE_ATTR_KEYS).map(([key, value]) => [
-    key,
-    new ObjC.Object(
-      foundation.findExportByName(value)!.readPointer(),
-    ) as NSString,
-  ]),
-);
-
 export interface Item {
   type: "file" | "directory" | "symlink";
   name: string;
@@ -94,7 +53,9 @@ export function expand(root: string, component?: string) {
   return resolve(root, component).toString();
 }
 
-const filemgr = ObjC.classes.NSFileManager.defaultManager() as NSFileManager;
+function shared() {
+  return ObjC.classes.NSFileManager.defaultManager() as NSFileManager;
+}
 
 function throwsError<Args extends unknown[], T>(
   fn: (pError: NativePointer, ...args: Args) => T,
@@ -108,66 +69,89 @@ function throwsError<Args extends unknown[], T>(
   return result;
 }
 
-// TODO: fix type annotation
-export function ls(root: string, component = "") {
-  function contentsOf(pError: NativePointer, url: NSURL) {
-    const withHidden = false;
-    const NSDirectoryEnumerationSkipsHiddenFiles = 1 << 2;
-    const opt = withHidden ? 0 : NSDirectoryEnumerationSkipsHiddenFiles;
-    const result =
-      filemgr.contentsOfDirectoryAtURL_includingPropertiesForKeys_options_error_(
-        url,
-        expectedKeys,
-        opt,
-        pError,
-      ) as NSArray<NSURL>;
+interface MetaData {
+  name: string;
+  dir: boolean;
+  protection: string | null;
+  size: number | null;
+  alias: boolean;
+  created: Date;
+  symlink: boolean;
+  writable: boolean;
+}
 
-    function convert(nsdict: NSDictionary<StringLike, NSObject>) {
-      return Object.fromEntries(
-        Object.entries(NSURL_RESOURCE_KEYS).map(([jsKey, key]) => [
-          jsKey,
-          valueOf(nsdict.objectForKey_(key)),
-        ]),
-      );
-    }
+function contentsOf(pError: NativePointer, url: NSURL) {
+  const NSURL_RESOURCE_KEYS = {
+    name: "NSURLNameKey",
+    dir: "NSURLIsDirectoryKey",
+    protection: "NSURLFileProtectionKey",
+    size: "NSURLFileSizeKey",
+    alias: "NSURLIsAliasFileKey",
+    created: "NSURLCreationDateKey",
+    symlink: "NSURLIsSymbolicLinkKey",
+    writable: "NSURLIsWritableKey",
+  } as const;
 
-    function* gen() {
-      const pError = Memory.alloc(Process.pointerSize).writePointer(NULL);
-      for (let i = 0; i < result.count(); i++) {
-        const url = result.objectAtIndex_(i);
-        const dict = url.resourceValuesForKeys_error_(expectedKeys, pError);
-        const err = pError.readPointer();
-        if (!err.isNull())
-          throw new Error(
-            `Error reading resource values for ${url}, ${new ObjC.Object(err).localizedDescription()}`,
-          );
-
-        if (!dict) yield {};
-
-        yield convert(dict);
-      }
-    }
-
-    return [...gen()];
+  const cf = Process.getModuleByName("CoreFoundation");
+  const expectedKeys: NSArray<NSString> = ObjC.classes.NSMutableArray.new();
+  for (const value of Object.values(NSURL_RESOURCE_KEYS)) {
+    const p = cf.getExportByName(value);
+    expectedKeys.addObject_(p.readPointer());
   }
 
+  const withHidden = false;
+  const NSDirectoryEnumerationSkipsHiddenFiles = 1 << 2;
+  const opt = withHidden ? 0 : NSDirectoryEnumerationSkipsHiddenFiles;
+  const result =
+    shared().contentsOfDirectoryAtURL_includingPropertiesForKeys_options_error_(
+      url,
+      expectedKeys,
+      opt,
+      pError,
+    ) as NSArray<NSURL>;
+
+  function convert(nsdict: NSDictionary<StringLike, NSObject>) {
+    return Object.fromEntries(
+      Object.entries(NSURL_RESOURCE_KEYS).map(([jsKey, key]) => [
+        jsKey,
+        valueOf(nsdict.objectForKey_(key)),
+      ]),
+    ) as MetaData;
+  }
+
+  function* gen() {
+    const pError = Memory.alloc(Process.pointerSize).writePointer(NULL);
+    for (let i = 0; i < result.count(); i++) {
+      const url = result.objectAtIndex_(i);
+      const dict = url.resourceValuesForKeys_error_(expectedKeys, pError);
+      const err = pError.readPointer();
+      if (!err.isNull())
+        throw new Error(
+          `Error reading resource values for ${url}, ${new ObjC.Object(err).localizedDescription()}`,
+        );
+
+      if (dict) yield convert(dict);
+    }
+  }
+
+  return [...gen()];
+}
+
+export function ls(root: string, component = "") {
   const cwd = resolve(root, component);
   return throwsError(contentsOf, ObjC.classes.NSURL.fileURLWithPath_(cwd));
 }
 
 export function rm(path: string) {
   return throwsError((pError, path) => {
-    const url = ObjC.classes.NSURL.fileURLWithPath_(path);
-    return filemgr.removeItemAtURL_error_(url, pError);
+    return shared().removeItemAtPath_error_(path, pError);
   }, path);
 }
 
 export function cp(src: string, dst: string) {
   return throwsError(
     (pError, src, dst) => {
-      const srcUrl = ObjC.classes.NSURL.fileURLWithPath_(src);
-      const dstUrl = ObjC.classes.NSURL.fileURLWithPath_(dst);
-      return filemgr.copyItemAtURL_toURL_error_(srcUrl, dstUrl, pError);
+      return shared().copyItemAtPath_toPath_error_(src, dst, pError);
     },
     src,
     dst,
@@ -177,22 +161,56 @@ export function cp(src: string, dst: string) {
 export function mv(src: string, dst: string) {
   return throwsError(
     (pError, src, dst) => {
-      const srcUrl = ObjC.classes.NSURL.fileURLWithPath_(src);
-      const dstUrl = ObjC.classes.NSURL.fileURLWithPath_(dst);
-      return filemgr.moveItemAtURL_toURL_error_(srcUrl, dstUrl, pError);
+      return shared().moveItemAtPath_toPath_error_(src, dst, pError);
     },
     src,
     dst,
   );
 }
 
-export function attr(path: string) {
-  const attr = throwsError(
-    (pError, path) => filemgr.attributesOfItemAtPath_error_(path, pError),
+export function attrs(path: string) {
+  const foundation = Process.getModuleByName("Foundation");
+
+  const NS_FILE_ATTR_KEYS = {
+    NSFileCreationDate: ["created", new Date()],
+    NSFileGroupOwnerAccountID: ["gid", 0],
+    NSFileGroupOwnerAccountName: ["group", ""],
+    NSFileOwnerAccountID: ["uid", 0],
+    NSFileOwnerAccountName: ["owner", ""],
+    NSFilePosixPermissions: ["perm", 0],
+    NSFileProtectionKey: ["protection", ""],
+    NSFileSize: ["size", 0],
+    NSFileType: ["type", ""],
+  } as const;
+
+  type NsFileAttrs = typeof NS_FILE_ATTR_KEYS;
+  type MetaDataShape = {
+    -readonly [K in keyof NsFileAttrs as NsFileAttrs[K][0]]: NsFileAttrs[K][1] extends number
+      ? number
+      : NsFileAttrs[K][1] extends string
+        ? string
+        : NsFileAttrs[K][1];
+  };
+
+  interface FileAttributes extends MetaDataShape {}
+
+  const attrs = throwsError(
+    (pError, path) => shared().attributesOfItemAtPath_error_(path, pError),
     path,
   );
 
-  return valueOf(attr) as Attributes;
+  const result: Partial<FileAttributes> = {};
+  for (const [nsKey, [jsKey, placeholder]] of Object.entries(
+    NS_FILE_ATTR_KEYS,
+  ) as [keyof NsFileAttrs, NsFileAttrs[keyof NsFileAttrs]][]) {
+    const k = new ObjC.Object(
+      foundation.getExportByName(nsKey).readPointer(),
+    ) as NSString;
+    const value = attrs.objectForKey_(k);
+    result[jsKey] = valueOf(value);
+  }
+
+  return result as FileAttributes;
 }
 
 export function plist(path: string) {

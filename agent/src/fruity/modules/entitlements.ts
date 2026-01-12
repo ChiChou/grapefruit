@@ -2,41 +2,6 @@ import ObjC from "frida-objc-bridge";
 
 import { NSData } from "../typings.js";
 
-ObjC.classes.NSBundle.bundleWithPath_(
-  "/System/Library/Frameworks/Security.framework",
-).load();
-
-const Security = Process.getModuleByName("Security");
-
-const SecStaticCodeCreateWithPath = new NativeFunction(
-  Security.findExportByName("SecStaticCodeCreateWithPath")!,
-  "int",
-  ["pointer", "uint32", "pointer"],
-);
-
-const kSecCodeInfoEntitlementsDict = Security.findExportByName(
-  "kSecCodeInfoEntitlementsDict",
-)!.readPointer();
-
-const SecCodeCopySigningInformation = new NativeFunction(
-  Security.findExportByName("SecCodeCopySigningInformation")!,
-  "int",
-  ["pointer", "uint32", "pointer"],
-);
-
-const CoreFoundation = Process.getModuleByName("CoreFoundation");
-const CFRelease = new NativeFunction(
-  CoreFoundation.findExportByName("CFRelease")!,
-  "void",
-  ["pointer"],
-);
-
-const CFRetain = new NativeFunction(
-  CoreFoundation.findExportByName("CFRetain")!,
-  "pointer",
-  ["pointer"],
-);
-
 const kSecCSDefaultFlags = 0;
 // const kSecCSInternalInformation = 1 << 0;
 const kSecCSSigningInformation = 1 << 1;
@@ -48,7 +13,52 @@ export interface Entitlements {
   [key: string]: string | boolean | number | string[];
 }
 
+// todo: move this to a common module
+function getCFApi() {
+  const CoreFoundation = Process.getModuleByName("CoreFoundation");
+  const CFRelease = new NativeFunction(
+    CoreFoundation.findExportByName("CFRelease")!,
+    "void",
+    ["pointer"],
+  );
+
+  const CFRetain = new NativeFunction(
+    CoreFoundation.findExportByName("CFRetain")!,
+    "pointer",
+    ["pointer"],
+  );
+
+  return {
+    CFRetain,
+    CFRelease,
+  };
+}
+
 function dictionary(url: ObjC.Object): NativePointer {
+  ObjC.classes.NSBundle.bundleWithPath_(
+    "/System/Library/Frameworks/Security.framework",
+  ).load();
+
+  const Security = Process.getModuleByName("Security");
+
+  const SecStaticCodeCreateWithPath = new NativeFunction(
+    Security.findExportByName("SecStaticCodeCreateWithPath")!,
+    "int",
+    ["pointer", "uint32", "pointer"],
+  );
+
+  const kSecCodeInfoEntitlementsDict = Security.findExportByName(
+    "kSecCodeInfoEntitlementsDict",
+  )!.readPointer();
+
+  const SecCodeCopySigningInformation = new NativeFunction(
+    Security.findExportByName("SecCodeCopySigningInformation")!,
+    "int",
+    ["pointer", "uint32", "pointer"],
+  );
+
+  const { CFRetain, CFRelease } = getCFApi();
+
   const pCodeRef = Memory.alloc(Process.pointerSize);
   const pSignInfo = Memory.alloc(Process.pointerSize);
 
@@ -110,7 +120,7 @@ export function json(path?: string): string {
       0,
       NULL,
     );
-  CFRelease(dict);
+  getCFApi().CFRelease(dict);
   return dataToString(data);
 }
 
@@ -125,6 +135,6 @@ export function xml(path?: string): string {
       NULL,
     );
 
-  CFRelease(dict);
+  getCFApi().CFRelease(dict);
   return dataToString(data);
 }

@@ -1,25 +1,3 @@
-const libc = Process.findModuleByName("libSystem.B.dylib");
-
-if (!libc) {
-  throw new Error("libSystem.B.dylib not found");
-}
-
-const close = new NativeFunction(libc.findExportByName("close")!, "int", [
-  "int",
-]);
-const pipe = new NativeFunction(libc.findExportByName("pipe")!, "int", [
-  "pointer",
-]);
-const dup2 = new NativeFunction(libc.findExportByName("dup2")!, "int", [
-  "int",
-  "int",
-]);
-const fcntl = new NativeFunction(libc.findExportByName("fcntl")!, "int", [
-  "int",
-  "int",
-  "int",
-]);
-
 // sys/fcntl.h
 const F_SETFL = 4;
 const O_NONBLOCK = 0x0004;
@@ -33,6 +11,28 @@ const fildes = Memory.alloc(SIZEOF_INT * 2);
 let stream: UnixInputStream | null = null;
 
 export function start() {
+  const libc = Process.findModuleByName("libSystem.B.dylib");
+
+  if (!libc) {
+    throw new Error("libSystem.B.dylib not found");
+  }
+
+  const close = new NativeFunction(libc.findExportByName("close")!, "int", [
+    "int",
+  ]);
+  const pipe = new NativeFunction(libc.findExportByName("pipe")!, "int", [
+    "pointer",
+  ]);
+  const dup2 = new NativeFunction(libc.findExportByName("dup2")!, "int", [
+    "int",
+    "int",
+  ]);
+  const fcntl = new NativeFunction(libc.findExportByName("fcntl")!, "int", [
+    "int",
+    "int",
+    "int",
+  ]);
+
   if (stream) return;
 
   pipe(fildes);

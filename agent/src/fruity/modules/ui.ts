@@ -22,35 +22,35 @@ export interface UIDumpNode {
 const CGFloat = Process.pointerSize === 4 ? "float" : "double";
 const CGSize: NativeFunctionArgumentType = [CGFloat, CGFloat];
 
-const UIKit = Process.getModuleByName("UIKit");
-
-const UIGraphicsBeginImageContextWithOptions = new NativeFunction(
-  UIKit.findExportByName("UIGraphicsBeginImageContextWithOptions")!,
-  "void",
-  [CGSize, "bool", CGFloat],
-);
-
-const UIGraphicsGetImageFromCurrentImageContext = new NativeFunction(
-  UIKit.findExportByName("UIGraphicsGetImageFromCurrentImageContext")!,
-  "pointer",
-  [],
-);
-
-const UIGraphicsEndImageContext = new NativeFunction(
-  UIKit.findExportByName("UIGraphicsEndImageContext")!,
-  "void",
-  [],
-);
-
-const UIImagePNGRepresentation = new NativeFunction(
-  UIKit.findExportByName("UIImagePNGRepresentation")!,
-  "pointer",
-  ["pointer"],
-);
-
 export function dump(includingPreview: false) {
+  const UIKit = Process.getModuleByName("UIKit");
+  const UIGraphicsBeginImageContextWithOptions = new NativeFunction(
+    UIKit.findExportByName("UIGraphicsBeginImageContextWithOptions")!,
+    "void",
+    [CGSize, "bool", CGFloat],
+  );
+
+  const UIGraphicsGetImageFromCurrentImageContext = new NativeFunction(
+    UIKit.findExportByName("UIGraphicsGetImageFromCurrentImageContext")!,
+    "pointer",
+    [],
+  );
+
+  const UIGraphicsEndImageContext = new NativeFunction(
+    UIKit.findExportByName("UIGraphicsEndImageContext")!,
+    "void",
+    [],
+  );
+
+  const UIImagePNGRepresentation = new NativeFunction(
+    UIKit.findExportByName("UIImagePNGRepresentation")!,
+    "pointer",
+    ["pointer"],
+  );
+
   const { UIWindow } = ObjC.classes;
   const win = UIWindow.keyWindow();
+
   const recursive = (view: ObjC.Object): UIDumpNode | null => {
     if (!view) return null;
 
