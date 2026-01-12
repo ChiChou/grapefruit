@@ -13,11 +13,11 @@
     "build:droid": "frida-compile src/droid/index.ts -o dist/droid.js",
     "watch:fruity": "frida-compile --watch src/fruity/index.ts -o dist/fruity.js",
     "watch:droid": "frida-compile --watch src/droid/index.ts -o dist/droid.js",
-    "build": "npm run lint && npm run build:fruity && npm run build:droid",
-    "prepare": "npm run build",
+    "build": "bun run lint && bun run build:fruity && bun run build:droid",
+    "prepare": "bun run build",
     "lint": "eslint src/**/*.ts",
     "type:flags": "tsgo --declaration --experimentalDecorators --emitDeclarationOnly --outDir types --target es2019 --skipLibCheck",
-    "type:fruity": "npm run type:flags -- src/fruity/registry.ts"
+    "type:fruity": "bun run type:flags -- src/fruity/registry.ts"
   },
   "devDependencies": {
     "@types/frida-gum": "^19.0.1",

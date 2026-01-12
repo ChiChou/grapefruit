@@ -8,7 +8,7 @@
     "dev": "node --watch src/index.ts",
     "start": "node src/index.ts",
     "test": "node --test",
-    "prepare": "cd agent && npm i && cd .. && cd gui && npm i"
+    "prepare": "cd agent && bun i && cd .. && cd gui && bun i"
   },
   "keywords": [],
   "author": "",
