@@ -113,5 +113,5 @@ export function plistReadable() {
 
   return ObjC.classes.NSString.alloc()
     .initWithData_encoding_(xml, NSUTF8StringEncoding)
-    .toString();
+    .toString() as string;
 }

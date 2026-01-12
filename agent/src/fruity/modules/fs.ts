@@ -168,38 +168,36 @@ export function mv(src: string, dst: string) {
   );
 }
 
+const NS_FILE_ATTR_KEYS = {
+  NSFileCreationDate: ["created", new Date()],
+  NSFileGroupOwnerAccountID: ["gid", 0],
+  NSFileGroupOwnerAccountName: ["group", ""],
+  NSFileOwnerAccountID: ["uid", 0],
+  NSFileOwnerAccountName: ["owner", ""],
+  NSFilePosixPermissions: ["perm", 0],
+  NSFileProtectionKey: ["protection", ""],
+  NSFileSize: ["size", 0],
+  NSFileType: ["type", ""],
+} as const;
+
+type NsFileAttrs = typeof NS_FILE_ATTR_KEYS;
+type FileAttributes = {
+  -readonly [K in keyof NsFileAttrs as NsFileAttrs[K][0]]: NsFileAttrs[K][1] extends number
+    ? number
+    : NsFileAttrs[K][1] extends string
+      ? string
+      : NsFileAttrs[K][1];
+};
+
 export function attrs(path: string) {
   const foundation = Process.getModuleByName("Foundation");
-
-  const NS_FILE_ATTR_KEYS = {
-    NSFileCreationDate: ["created", new Date()],
-    NSFileGroupOwnerAccountID: ["gid", 0],
-    NSFileGroupOwnerAccountName: ["group", ""],
-    NSFileOwnerAccountID: ["uid", 0],
-    NSFileOwnerAccountName: ["owner", ""],
-    NSFilePosixPermissions: ["perm", 0],
-    NSFileProtectionKey: ["protection", ""],
-    NSFileSize: ["size", 0],
-    NSFileType: ["type", ""],
-  } as const;
-
-  type NsFileAttrs = typeof NS_FILE_ATTR_KEYS;
-  type MetaDataShape = {
-    -readonly [K in keyof NsFileAttrs as NsFileAttrs[K][0]]: NsFileAttrs[K][1] extends number
-      ? number
-      : NsFileAttrs[K][1] extends string
-        ? string
-        : NsFileAttrs[K][1];
-  };
-
-  interface FileAttributes extends MetaDataShape {}
 
   const attrs = throwsError(
     (pError, path) => shared().attributesOfItemAtPath_error_(path, pError),
     path,
   );
 
-  const result: Partial<FileAttributes> = {};
+  const result: Record<string, unknown> = {};
   for (const [nsKey, [jsKey, placeholder]] of Object.entries(
     NS_FILE_ATTR_KEYS,
   ) as [keyof NsFileAttrs, NsFileAttrs[keyof NsFileAttrs]][]) {
