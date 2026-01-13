@@ -33,6 +33,10 @@ export function useDockActions(api: DockviewApi | null) {
 
       const existingPanel = api.getPanel(options.id);
       if (existingPanel) {
+        // Update params if provided
+        if (options.params) {
+          existingPanel.api.updateParameters(options.params);
+        }
         existingPanel.api.setActive();
         return;
       }

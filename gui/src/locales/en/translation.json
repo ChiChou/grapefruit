@@ -85,5 +85,8 @@
   "method": "Method",
   "show_inherited": "Show Inherited",
   "bundle": "Bundle",
-  "home": "Home"
+  "home": "Home",
+  "finder": "Finder",
+  "empty_directory": "Empty directory",
+  "modified": "Modified"
 }

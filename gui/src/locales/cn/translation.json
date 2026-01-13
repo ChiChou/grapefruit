@@ -85,5 +85,8 @@
   "method": "方法",
   "show_inherited": "显示继承",
   "bundle": "应用包",
-  "home": "主目录"
+  "home": "主目录",
+  "finder": "文件浏览",
+  "empty_directory": "空目录",
+  "modified": "修改时间"
 }

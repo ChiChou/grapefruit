@@ -24,6 +24,7 @@ import { HandlesTab } from "./tabs/HandlesTab";
 import { InfoPlistTab } from "./tabs/InfoPlistTab";
 import { ModuleDetailTab } from "./tabs/ModuleDetailTab";
 import { ClassDetailTab } from "./tabs/ClassDetailTab";
+import { FinderTab } from "./tabs/FinderTab";
 import { DockContext, useDockActions } from "@/context/DockContext";
 
 function WorkspaceContent() {
@@ -89,6 +90,7 @@ function WorkspaceContent() {
     infoPlist: InfoPlistTab,
     moduleDetail: ModuleDetailTab,
     classDetail: ClassDetailTab,
+    finder: FinderTab,
   };
 
   const onReady = (event: DockviewReadyEvent) => {

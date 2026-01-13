@@ -4,6 +4,7 @@ import { ChevronRight, ChevronDown, Folder, FolderOpen } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConnectionStatus, useSession } from "@/context/SessionContext";
+import { useDock } from "@/context/DockContext";
 
 import type { MetaData } from "../../../../agent/src/fruity/modules/fs.ts";
 
@@ -20,19 +21,41 @@ function DirectoryTree({
   root,
   apiReady,
   loadDirectory,
+  onDirectorySelect,
 }: {
   root: RootType;
   apiReady: boolean;
   loadDirectory: (path: string) => Promise<MetaData[]>;
+  onDirectorySelect: (path: string) => void;
 }) {
-  const { t } = useTranslation();
   const [nodes, setNodes] = useState<TreeNode[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [activePath, setActivePath] = useState<string | null>(null);
+
+  const rootName = root === "!" ? "Bundle" : "Home";
 
   useEffect(() => {
     if (!apiReady) return;
 
-    setIsLoading(true);
+    // Initialize with root node and load its children
+    setNodes([
+      {
+        meta: {
+          name: rootName,
+          dir: true,
+          protection: null,
+          size: null,
+          alias: false,
+          created: new Date(),
+          symlink: false,
+          writable: root === "~",
+        },
+        children: null,
+        isLoading: true,
+        isExpanded: true,
+      },
+    ]);
+
+    // Load root directory contents
     loadDirectory(root)
       .then((items) => {
         const dirs = items
@@ -43,14 +66,45 @@ function DirectoryTree({
             isLoading: false,
             isExpanded: false,
           }));
-        setNodes(dirs);
+        setNodes([
+          {
+            meta: {
+              name: rootName,
+              dir: true,
+              protection: null,
+              size: null,
+              alias: false,
+              created: new Date(),
+              symlink: false,
+              writable: root === "~",
+            },
+            children: dirs,
+            isLoading: false,
+            isExpanded: true,
+          },
+        ]);
       })
       .catch((err) => {
         console.error("Failed to load root directory:", err);
-        setNodes([]);
-      })
-      .finally(() => setIsLoading(false));
-  }, [apiReady, root, loadDirectory]);
+        setNodes([
+          {
+            meta: {
+              name: rootName,
+              dir: true,
+              protection: null,
+              size: null,
+              alias: false,
+              created: new Date(),
+              symlink: false,
+              writable: root === "~",
+            },
+            children: [],
+            isLoading: false,
+            isExpanded: true,
+          },
+        ]);
+      });
+  }, [apiReady, root, rootName, loadDirectory]);
 
   const updateNodeAtPath = (
     nodes: TreeNode[],
@@ -118,7 +172,10 @@ function DirectoryTree({
     }
 
     // Load children
-    const fullPath = `${root}/${path.join("/")}`;
+    // For root node, path is [rootName], so we load from root directly
+    // For other nodes, we skip the rootName and build the path
+    const isRootNode = path.length === 1 && path[0] === rootName;
+    const fullPath = isRootNode ? root : `${root}/${path.slice(1).join("/")}`;
     try {
       const items = await loadDirectory(fullPath);
       const dirs = items
@@ -162,16 +219,33 @@ function DirectoryTree({
     return getNodeAtPath(node.children, path, pathIndex + 1);
   };
 
+  const handleNodeClick = (path: string[]) => {
+    const pathStr = path.join("/");
+    setActivePath(pathStr);
+    toggleNode(path);
+
+    // Build the full path for the finder tab
+    const isRootNode = path.length === 1 && path[0] === rootName;
+    const fullPath = isRootNode ? root : `${root}/${path.slice(1).join("/")}`;
+    onDirectorySelect(fullPath);
+  };
+
   const renderNode = (node: TreeNode, path: string[], depth: number) => {
     const currentPath = [...path, node.meta.name];
+    const pathStr = currentPath.join("/");
+    const isActive = activePath === pathStr;
 
     return (
       <div key={node.meta.name}>
         <button
           type="button"
-          className="flex items-center w-full py-1 px-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-left"
+          className={`flex items-center w-full py-1 px-2 text-left ${
+            isActive
+              ? "bg-blue-100 dark:bg-blue-900"
+              : "hover:bg-gray-100 dark:hover:bg-gray-800"
+          }`}
           style={{ paddingLeft: `${depth * 16 + 8}px` }}
-          onClick={() => toggleNode(currentPath)}
+          onClick={() => handleNodeClick(currentPath)}
         >
           <span className="w-4 h-4 mr-1 flex items-center justify-center">
             {node.isLoading ? (
@@ -200,22 +274,6 @@ function DirectoryTree({
     );
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full text-gray-500">
-        {t("loading")}...
-      </div>
-    );
-  }
-
-  if (nodes.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-full text-gray-500">
-        {t("no_results")}
-      </div>
-    );
-  }
-
   return (
     <div className="overflow-auto h-full">
       {nodes.map((node) => renderNode(node, [], 0))}
@@ -226,6 +284,7 @@ function DirectoryTree({
 export function FilesPanel() {
   const { t } = useTranslation();
   const { api, status } = useSession();
+  const { openSingletonPanel } = useDock();
   const [activeTab, setActiveTab] = useState<"bundle" | "home">("bundle");
 
   const apiReady = status === ConnectionStatus.Ready && !!api;
@@ -237,6 +296,18 @@ export function FilesPanel() {
       return result as unknown as MetaData[];
     },
     [api],
+  );
+
+  const handleDirectorySelect = useCallback(
+    (path: string) => {
+      openSingletonPanel({
+        id: "finder_tab",
+        component: "finder",
+        title: t("finder"),
+        params: { path },
+      });
+    },
+    [openSingletonPanel, t],
   );
 
   return (
@@ -257,6 +328,7 @@ export function FilesPanel() {
             root="!"
             apiReady={apiReady}
             loadDirectory={loadDirectory}
+            onDirectorySelect={handleDirectorySelect}
           />
         </TabsContent>
         <TabsContent value="home" className="flex-1 overflow-hidden">
@@ -264,6 +336,7 @@ export function FilesPanel() {
             root="~"
             apiReady={apiReady}
             loadDirectory={loadDirectory}
+            onDirectorySelect={handleDirectorySelect}
           />
         </TabsContent>
       </Tabs>
