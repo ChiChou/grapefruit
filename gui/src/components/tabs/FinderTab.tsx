@@ -45,10 +45,8 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
     api.fs
       .ls(params.path)
       .then((result) => {
-        const data = result as unknown as MetaData[];
-        // Sort: directories first, then files, both alphabetically
+        const data = result.filter((e) => !e.dir);
         data.sort((a, b) => {
-          if (a.dir !== b.dir) return a.dir ? -1 : 1;
           return a.name.localeCompare(b.name);
         });
         setItems(data);
