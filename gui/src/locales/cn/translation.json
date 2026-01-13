@@ -64,5 +64,13 @@
   "1s": "1 秒",
   "10s": "10 秒",
   "1min": "1 分钟",
-  "search": "搜索..."
+  "search": "搜索...",
+  "dependencies": "依赖",
+  "sections": "段",
+  "symbols": "符号",
+  "imported": "导入",
+  "exported": "导出",
+  "name": "名称",
+  "address": "地址",
+  "demangled": "解码名"
 }

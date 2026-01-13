@@ -44,12 +44,6 @@ export function modules(): ModuleInfo[] {
   );
 }
 
-function find(name?: string): Module {
-  if (name) return Process.findModuleByName(name)!;
-  const [main] = Process.enumerateModules();
-  return main;
-}
-
 export function resolve(type: "objc" | "module", query: string) {
   const matches = new ApiResolver(type).enumerateMatches(query);
   return type === "module"
@@ -58,14 +52,6 @@ export function resolve(type: "objc" | "module", query: string) {
         return Object.assign({}, item, { module, symbol });
       })
     : matches;
-}
-
-export function importedModules(name?: string) {
-  const modules = new Set<string>();
-  for (const imp of find(name).enumerateImports()) {
-    if (imp.module) modules.add(imp.module);
-  }
-  return [...modules];
 }
 
 function loadDemangler() {
@@ -117,73 +103,102 @@ function tryDemangle(name: string): string | null {
   return null;
 }
 
-export function imported(name: string, module: string) {
+// accurate module lookup by path, to avoid name collision
+function getModule(path: string) {
+  const basename = path.substring(path.lastIndexOf("/") + 1);
+  const match = Process.findModuleByName(basename);
+  if (match && match.path === path) return match;
+
+  // fallback to linear search
+  const first = Process.enumerateModules().find((mod) => mod.path === path);
+  if (first) return first;
+
+  throw new Error(`Module not found: ${path}`);
+}
+
+export interface Imported {
+  name: string;
+  addr: string;
+  demangled: string | null;
+}
+
+export function imports(path: string): Imported[] {
   const unique = new Set<number>();
-  return find(name)
+  return getModule(path)
     .enumerateImports()
-    .filter((imp) => imp.module === module)
     .filter((imp) => {
       if (!imp.address) return false;
-      const key = imp.address.toInt32();
-      if (unique.has(key)) return false;
-      unique.add(key);
+      const k = imp.address.toInt32();
+      if (unique.has(k)) return false;
+      unique.add(k);
       return true;
     })
-    .map((imp) => {
-      const { name, address, slot, type } = imp;
+    .map(({ name, address, slot, type }) => {
       const demangled = tryDemangle(name);
-      return { name, address, slot, type, demangled };
+      return {
+        name,
+        addr: address?.toString() || "",
+        demangled,
+      };
     });
 }
 
-export function symbols(name?: string, keyword?: string) {
-  let canidates = find(name)
-    .enumerateSymbols()
-    .filter((sym) => sym.name !== "<redacted>" && !sym.address.isNull());
-
-  if (typeof keyword === "string" && keyword.length)
-    canidates = canidates.filter((sym) =>
-      sym.name.toLowerCase().includes(keyword.toLowerCase()),
-    );
-
-  return {
-    count: canidates.length,
-    list: canidates.slice(0, 200).map((sym) => {
-      const { name, address } = sym;
-      const demangled = tryDemangle(name);
-      let type = undefined;
-      if (
-        sym.name !== "_mh_execute_header" &&
-        sym.section?.id.endsWith("__TEXT.__text")
-      )
-        type = "function";
-
-      if (sym.name.startsWith("OBJC_CLASS_$_")) type = "variable";
-
-      return {
-        global: sym.isGlobal,
-        type,
-        name,
-        demangled,
-        address,
-      };
-    }),
-  };
+export function dependencies(path: string) {
+  return getModule(path)
+    .enumerateDependencies()
+    .map((dep) => dep.name);
 }
 
-export function exported(name?: string, keyword?: string) {
-  let canidates = find(name).enumerateExports();
-  if (typeof keyword === "string" && keyword.length)
-    canidates = canidates.filter((exp) =>
-      exp.name.toLowerCase().includes(keyword.toLowerCase()),
-    );
+export interface Section {
+  name: string;
+  addr: string;
+  size: number;
+}
 
-  return {
-    count: canidates.length,
-    list: canidates.slice(0, 200).map((exp) => {
-      const { name, address, type } = exp;
-      const demangled = tryDemangle(exp.name);
-      return { name, address, type, demangled };
-    }),
-  };
+export function sections(path: string): Section[] {
+  return getModule(path)
+    .enumerateSections()
+    .map((sec) => {
+      const { name, address, size } = sec;
+      return { name, addr: address.toString(), size };
+    });
+}
+
+export interface Symbol {
+  name: string;
+  addr: string;
+  demangled: string | null;
+}
+
+export function symbols(path: string): Symbol[] {
+  return getModule(path)
+    .enumerateSymbols()
+    .filter((sym) => sym.name !== "<redacted>" && !sym.address.isNull())
+    .map((sym) => {
+      const { name, address } = sym;
+      const demangled = tryDemangle(name);
+
+      return {
+        name,
+        addr: address.toString(),
+        demangled,
+      };
+    });
+}
+
+export interface Exported {
+  name: string;
+  addr: string;
+  demangled: string | null;
+}
+
+export function exports(path: string): Exported[] {
+  return getModule(path)
+    .enumerateExports()
+    .filter((exp) => !exp.address.isNull())
+    .map((exp) => {
+      const { name, address } = exp;
+      const demangled = tryDemangle(name);
+      return { name, addr: address.toString(), demangled };
+    });
 }

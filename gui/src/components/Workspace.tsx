@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { t } from "i18next";
 
 import {
@@ -89,13 +89,6 @@ function WorkspaceContent() {
     moduleDetail: ModuleDetailTab,
   };
 
-  const saveLayout = useCallback(() => {
-    if (dockApi) {
-      const layout = dockApi.toJSON();
-      localStorage.setItem("workspace-dockview-layout", JSON.stringify(layout));
-    }
-  }, [dockApi]);
-
   const onReady = (event: DockviewReadyEvent) => {
     setDockApi(event.api);
 
@@ -115,9 +108,10 @@ function WorkspaceContent() {
       createDefaultLayout(event.api);
     }
 
-    // Save layout on changes
+    // Save layout on changes - use event.api directly to avoid stale closure
     event.api.onDidLayoutChange(() => {
-      saveLayout();
+      const layout = event.api.toJSON();
+      localStorage.setItem("workspace-dockview-layout", JSON.stringify(layout));
     });
   };
 

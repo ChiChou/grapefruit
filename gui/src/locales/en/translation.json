@@ -64,5 +64,13 @@
   "1s": "1 second",
   "10s": "10 seconds",
   "1min": "1 minute",
-  "search": "Search..."
+  "search": "Search...",
+  "dependencies": "Dependencies",
+  "sections": "Sections",
+  "symbols": "Symbols",
+  "imported": "Imported",
+  "exported": "Exported",
+  "name": "Name",
+  "address": "Address",
+  "demangled": "Demangled"
 }
