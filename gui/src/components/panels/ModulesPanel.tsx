@@ -45,13 +45,14 @@ export function ModulesPanel() {
     return modules.filter(
       (m) =>
         m.name.toLowerCase().includes(query) ||
-        m.path.toLowerCase().includes(query)
+        m.path.toLowerCase().includes(query),
     );
   }, [modules, search]);
 
   const { startIndex, visibleItems } = useMemo(() => {
     const start = Math.max(0, Math.floor(scrollTop / ITEM_HEIGHT) - OVERSCAN);
-    const visibleCount = Math.ceil(containerHeight / ITEM_HEIGHT) + OVERSCAN * 2;
+    const visibleCount =
+      Math.ceil(containerHeight / ITEM_HEIGHT) + OVERSCAN * 2;
     const end = Math.min(filteredModules.length, start + visibleCount);
     return {
       startIndex: start,
@@ -105,7 +106,11 @@ export function ModulesPanel() {
               >
                 <div className="text-sm font-medium truncate">{mod.name}</div>
                 <div className="text-xs text-gray-500 font-mono truncate">
-                  {mod.base}
+                  {mod.base.toLowerCase()}-
+                  {"0x" +
+                    (parseInt(mod.base, 16) + mod.size)
+                      .toString(16)
+                      .toLowerCase()}
                 </div>
                 <div className="text-xs text-gray-400 truncate">{mod.path}</div>
               </div>
