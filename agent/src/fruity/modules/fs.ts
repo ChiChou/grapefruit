@@ -32,27 +32,6 @@ export interface Attributes {
   protection: string;
 }
 
-function resolve(root: string, component?: StringLike): NSString {
-  let prefix: NSString;
-  if (root === "tmp") {
-    prefix = NSTemporaryDirectory();
-  } else if (root === "home" || root === "~") {
-    prefix = NSHomeDirectory();
-  } else if (root === "bundle" || root === "!") {
-    prefix = ObjC.classes.NSBundle.mainBundle().bundlePath();
-  } else {
-    throw new Error(`Invalid root: ${JSON.stringify(root)}`);
-  }
-
-  if (component) return prefix.stringByAppendingPathComponent_(component);
-
-  return prefix;
-}
-
-export function expand(root: string, component?: string) {
-  return resolve(root, component).toString();
-}
-
 function shared() {
   return ObjC.classes.NSFileManager.defaultManager() as NSFileManager;
 }
@@ -69,7 +48,7 @@ function throwsError<Args extends unknown[], T>(
   return result;
 }
 
-interface MetaData {
+export interface MetaData {
   name: string;
   dir: boolean;
   protection: string | null;
@@ -137,8 +116,42 @@ function contentsOf(pError: NativePointer, url: NSURL) {
   return [...gen()];
 }
 
-export function ls(root: string, component = "") {
-  const cwd = resolve(root, component);
+function getFoundationApi() {
+  const foundation = Process.getModuleByName("Foundation");
+  const NSHomeDirectory = new NativeFunction(
+    foundation.getExportByName("NSHomeDirectory"),
+    "pointer",
+    [],
+  );
+
+  const NSTemporaryDirectory = new NativeFunction(
+    foundation.getExportByName("NSTemporaryDirectory"),
+    "pointer",
+    [],
+  );
+
+  return {
+    NSHomeDirectory,
+    NSTemporaryDirectory,
+  };
+}
+
+function expandTilde(path: string) {
+  if (path.startsWith("~/") || path === "~") {
+    return ObjC.classes.NSString.stringWithString_(path)
+      .stringByExpandingTildeInPath()
+      .toString();
+  } else if (path.startsWith("!/") || path === "!") {
+    return ObjC.classes.NSBundle.mainBundle().bundlePath() + path.substring(1);
+  } else if (path.startsWith("/")) {
+    return path;
+  }
+
+  throw new Error(`Cannot expand path: ${path}`);
+}
+
+export function ls(path: string) {
+  const cwd = expandTilde(path);
   return throwsError(contentsOf, ObjC.classes.NSURL.fileURLWithPath_(cwd));
 }
 

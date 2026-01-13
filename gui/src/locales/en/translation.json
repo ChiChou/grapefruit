@@ -83,5 +83,7 @@
   "offset": "Offset",
   "methods": "Methods",
   "method": "Method",
-  "show_inherited": "Show Inherited"
+  "show_inherited": "Show Inherited",
+  "bundle": "Bundle",
+  "home": "Home"
 }
