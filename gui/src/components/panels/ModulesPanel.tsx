@@ -1,4 +1,5 @@
 import { ConnectionStatus, useSession } from "@/context/SessionContext";
+import { useDock } from "@/context/DockContext";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ const OVERSCAN = 5;
 export function ModulesPanel() {
   const { t } = useTranslation();
   const { api, status } = useSession();
+  const { openFilePanel } = useDock();
   const [isLoading, setIsLoading] = useState(false);
   const [modules, setModules] = useState<ModuleInfo[]>([]);
   const [search, setSearch] = useState("");
@@ -104,7 +106,22 @@ export function ModulesPanel() {
                   top: (startIndex + idx) * ITEM_HEIGHT,
                 }}
               >
-                <div className="text-sm font-medium truncate">{mod.name}</div>
+                <button
+                  type="button"
+                  className="text-sm font-medium truncate text-left w-full text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                  onClick={() =>
+                    openFilePanel({
+                      id: `module_${mod.base}`,
+                      component: "moduleDetail",
+                      title: mod.name,
+                      params: {
+                        path: mod.path,
+                      },
+                    })
+                  }
+                >
+                  {mod.name}
+                </button>
                 <div className="text-xs text-gray-500 font-mono truncate">
                   {mod.base.toLowerCase()}-
                   {"0x" +

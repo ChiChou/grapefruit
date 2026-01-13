@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { t } from "i18next";
 
 import {
@@ -22,6 +22,8 @@ import SessionProvider from "./SessionProvider";
 import { useTheme } from "./theme-provider";
 import { HandlesTab } from "./tabs/HandlesTab";
 import { InfoPlistTab } from "./tabs/InfoPlistTab";
+import { ModuleDetailTab } from "./tabs/ModuleDetailTab";
+import { DockContext, useDockActions } from "@/context/DockContext";
 
 function WorkspaceContent() {
   const { status } = useSession();
@@ -69,22 +71,33 @@ function WorkspaceContent() {
     );
   }, [theme]);
 
-  const dockviewApiRef = useRef<DockviewApi | null>(null);
+  const [dockApi, setDockApi] = useState<DockviewApi | null>(null);
+  const { openSingletonPanel, openFilePanel } = useDockActions(dockApi);
+
+  const dockContextValue = useMemo(
+    () => ({
+      api: dockApi,
+      openSingletonPanel,
+      openFilePanel,
+    }),
+    [dockApi, openSingletonPanel, openFilePanel],
+  );
 
   const components = {
     handles: HandlesTab,
     infoPlist: InfoPlistTab,
+    moduleDetail: ModuleDetailTab,
   };
 
   const saveLayout = useCallback(() => {
-    if (dockviewApiRef.current) {
-      const layout = dockviewApiRef.current.toJSON();
+    if (dockApi) {
+      const layout = dockApi.toJSON();
       localStorage.setItem("workspace-dockview-layout", JSON.stringify(layout));
     }
-  }, []);
+  }, [dockApi]);
 
   const onReady = (event: DockviewReadyEvent) => {
-    dockviewApiRef.current = event.api;
+    setDockApi(event.api);
 
     const savedLayout = localStorage.getItem("workspace-dockview-layout");
     if (savedLayout) {
@@ -123,49 +136,51 @@ function WorkspaceContent() {
   };
 
   return (
-    <div className="flex h-screen flex-col">
-      <ResizablePanelGroup
-        direction="horizontal"
-        className="h-full"
-        onLayout={handleLeftPanelResize}
-      >
-        <ResizablePanel
-          defaultSize={leftPanelSize}
-          minSize={15}
-          className="flex flex-col"
+    <DockContext.Provider value={dockContextValue}>
+      <div className="flex h-screen flex-col">
+        <ResizablePanelGroup
+          direction="horizontal"
+          className="h-full"
+          onLayout={handleLeftPanelResize}
         >
-          <LeftPanelView />
-        </ResizablePanel>
-        <ResizableHandle withHandle />
-        <ResizablePanel>
-          <ResizablePanelGroup
-            direction="vertical"
-            className="h-full"
-            onLayout={handleBottomPanelResize}
+          <ResizablePanel
+            defaultSize={leftPanelSize}
+            minSize={15}
+            className="flex flex-col"
           >
-            <ResizablePanel>
-              <DockviewReact
-                // workaround: theme must not be empty, otherwise
-                //  Dockview will always insert abyss className
-                theme={themeLight}
-                className={dockViewClazz}
-                onReady={onReady}
-                components={components}
-              />
-            </ResizablePanel>
-            <ResizableHandle />
-            <ResizablePanel defaultSize={bottomPanelSize}>
-              <BottomPanelView />
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        </ResizablePanel>
-      </ResizablePanelGroup>
-      <footer className={`${getStatusColor()} px-4 py-1 text-xs text-white`}>
-        {status === ConnectionStatus.Ready && t("connected")}
-        {status === ConnectionStatus.Connecting && t("connecting")}
-        {status === ConnectionStatus.Disconnected && t("disconnected")}
-      </footer>
-    </div>
+            <LeftPanelView />
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel>
+            <ResizablePanelGroup
+              direction="vertical"
+              className="h-full"
+              onLayout={handleBottomPanelResize}
+            >
+              <ResizablePanel>
+                <DockviewReact
+                  // workaround: theme must not be empty, otherwise
+                  //  Dockview will always insert abyss className
+                  theme={themeLight}
+                  className={dockViewClazz}
+                  onReady={onReady}
+                  components={components}
+                />
+              </ResizablePanel>
+              <ResizableHandle />
+              <ResizablePanel defaultSize={bottomPanelSize}>
+                <BottomPanelView />
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+        <footer className={`${getStatusColor()} px-4 py-1 text-xs text-white`}>
+          {status === ConnectionStatus.Ready && t("connected")}
+          {status === ConnectionStatus.Connecting && t("connecting")}
+          {status === ConnectionStatus.Disconnected && t("disconnected")}
+        </footer>
+      </div>
+    </DockContext.Provider>
   );
 }
 
