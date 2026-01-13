@@ -1,9 +1,10 @@
-import { ConnectionStatus, useSession } from "@/context/SessionContext";
-import { useDock } from "@/context/DockContext";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+
+import { ConnectionStatus, useSession } from "@/context/SessionContext";
+import { useDock } from "@/context/DockContext";
+import { Input } from "@/components/ui/input";
 import type { ModuleInfo } from "../../../../agent/types/fruity/modules/symbol";
 
 const ITEM_HEIGHT = 72;
@@ -69,7 +70,6 @@ export function ModulesPanel() {
   return (
     <div className="h-full flex flex-col">
       <div className="p-4 space-y-4">
-        <h2 className="text-xl font-semibold">{t("modules")}</h2>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input

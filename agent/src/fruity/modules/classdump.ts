@@ -3,22 +3,29 @@ type Tree<T> = {
   [name: string]: Tree<T> | T;
 };
 
-const mainBundle = ObjC.classes.NSBundle.mainBundle();
-
-const moduleMaps: { [key: string]: ModuleMap } = {
-  __global__: new ModuleMap(),
-  __app__: new ModuleMap((module) =>
-    module.path.startsWith(mainBundle.bundlePath().toString()),
-  ),
-  __main__: new ModuleMap((module) => module.path === Process.mainModule.path),
-};
-
 export function list(scope: string) {
+  const mainBundle = ObjC.classes.NSBundle.mainBundle();
+
+  const moduleMaps: { [key: string]: ModuleMap } = {
+    __global__: new ModuleMap(),
+    __app__: new ModuleMap((module) =>
+      module.path.startsWith(mainBundle.bundlePath().toString()),
+    ),
+    __main__: new ModuleMap(
+      (module) => module.path === Process.mainModule.path,
+    ),
+  };
+
   const ownedBy = moduleMaps.hasOwnProperty(scope)
     ? moduleMaps[scope]
     : new ModuleMap((module) => module.path === scope);
 
-  return ObjC.enumerateLoadedClassesSync({ ownedBy });
+  const groupBy = ObjC.enumerateLoadedClassesSync({ ownedBy });
+  const all = [];
+  for (const mod in groupBy) {
+    all.push(...groupBy[mod]);
+  }
+  return all;
 }
 
 export function find(keyword: string): string[] {

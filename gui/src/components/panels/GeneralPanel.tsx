@@ -34,7 +34,6 @@ export function GeneralPanel() {
 
   return (
     <div className="h-full p-4 overflow-auto">
-      <h2 className="text-xl font-semibold mb-4">{t("general")}</h2>
       {error && (
         <Alert variant="destructive" className="mb-4">
           <AlertTitle>{t("error")}</AlertTitle>

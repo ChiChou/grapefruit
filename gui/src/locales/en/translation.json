@@ -72,5 +72,8 @@
   "exported": "Exported",
   "name": "Name",
   "address": "Address",
-  "demangled": "Demangled"
+  "demangled": "Demangled",
+  "main": "Main",
+  "app": "App",
+  "global": "Global"
 }

@@ -72,5 +72,8 @@
   "exported": "导出",
   "name": "名称",
   "address": "地址",
-  "demangled": "解码名"
+  "demangled": "解码名",
+  "main": "主模块",
+  "app": "应用",
+  "global": "全局"
 }
