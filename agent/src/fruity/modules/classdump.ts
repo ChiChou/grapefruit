@@ -77,50 +77,46 @@ export function hierarchy(): Tree<string> {
   return tree;
 }
 
-type Method = {
+export interface ClassInfo {
   name: string;
-  impl: string;
-};
+  protocols: string[];
+  methods: { [key: string]: string };
+  proto: string[];
+  own: string[];
+  ivars: { [offset: string]: string };
+  module: string;
+}
 
-// type MethodDecl = {
-//   required: boolean;
-//   types: string;
-// }
+export function inspect(name: string) {
+  const clazz = ObjC.classes[name];
+  if (!clazz) throw new Error(`class ${name} not found`);
 
-// type Protocol = {
-//   name: string;
-//   methods: {[key: string]: MethodDecl};
-//   properties: string[];
-// }
-
-export function inspect(clazz: string) {
-  let cls = ObjC.classes[clazz];
-  if (!cls) throw new Error(`class ${clazz} not found`);
-
-  const methods: { [key: string]: Method } = {};
-  cls.$methods.forEach((name) => {
-    const impl = cls[name].implementation.toString();
-    methods[name] = { name, impl };
+  const methods: { [key: string]: string } = {};
+  clazz.$methods.forEach((sel) => {
+    const impl = clazz[sel].implementation as NativePointer;
+    methods[sel] = `${impl}`;
+    const mod = Process.findModuleByAddress(impl);
+    if (mod) {
+      methods[sel] += ` (${mod.name}+${impl.sub(mod.base)})`;
+    }
   });
 
-  const protocols = JSON.parse(JSON.stringify(cls.$protocols)) as {
-    [key: string]: ObjC.Protocol;
-  };
-  for (const protocol of Object.values(protocols)) {
-    if (protocol.protocols) protocol.protocols = {};
-  }
-
-  const module = cls.$moduleName;
-  const own = cls.$ownMethods;
-  const ivars = copyIvars(cls);
+  const protocols = Object.keys(clazz.$protocols);
+  const module = clazz.$moduleName;
+  const own = clazz.$ownMethods;
+  const ivars = copyIvars(clazz);
 
   const proto = [];
-  while ((cls = cls.$superClass)) proto.unshift(cls.$className);
+  {
+    let cur = clazz;
+    while ((cur = cur.$superClass)) proto.unshift(cur.$className);
+  }
 
   return {
+    name: name,
     protocols,
     methods,
-    prototypeChain: proto,
+    proto: proto,
     own,
     ivars,
     module,

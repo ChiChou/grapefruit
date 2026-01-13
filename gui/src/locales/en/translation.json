@@ -75,5 +75,13 @@
   "demangled": "Demangled",
   "main": "Main",
   "app": "App",
-  "global": "Global"
+  "global": "Global",
+  "module": "Module",
+  "super_classes": "Super Classes",
+  "protocols": "Protocols",
+  "instance_variables": "Instance Variables",
+  "offset": "Offset",
+  "methods": "Methods",
+  "method": "Method",
+  "show_inherited": "Show Inherited"
 }

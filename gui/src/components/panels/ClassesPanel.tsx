@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ConnectionStatus, useSession } from "@/context/SessionContext";
+import { useDock } from "@/context/DockContext";
 
 const ITEM_HEIGHT = 32;
 const OVERSCAN = 5;
@@ -15,6 +16,7 @@ type ScopeType = "__main__" | "__app__" | "__global__";
 export function ClassesPanel() {
   const { t } = useTranslation();
   const { api, status } = useSession();
+  const { openFilePanel } = useDock();
   const [isLoading, setIsLoading] = useState(false);
   const [classes, setClasses] = useState<string[]>([]);
   const [scope, setScope] = useState<ScopeType>("__app__");
@@ -145,9 +147,20 @@ export function ClassesPanel() {
                   top: (startIndex + idx) * ITEM_HEIGHT,
                 }}
               >
-                <span className="text-sm font-mono truncate block">
+                <button
+                  type="button"
+                  className="text-sm font-mono truncate block text-left w-full text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                  onClick={() =>
+                    openFilePanel({
+                      id: `class_${className}`,
+                      component: "classDetail",
+                      title: className,
+                      params: { className },
+                    })
+                  }
+                >
                   {className}
-                </span>
+                </button>
               </div>
             ))}
           </div>

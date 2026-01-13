@@ -23,6 +23,7 @@ import { useTheme } from "./theme-provider";
 import { HandlesTab } from "./tabs/HandlesTab";
 import { InfoPlistTab } from "./tabs/InfoPlistTab";
 import { ModuleDetailTab } from "./tabs/ModuleDetailTab";
+import { ClassDetailTab } from "./tabs/ClassDetailTab";
 import { DockContext, useDockActions } from "@/context/DockContext";
 
 function WorkspaceContent() {
@@ -87,6 +88,7 @@ function WorkspaceContent() {
     handles: HandlesTab,
     infoPlist: InfoPlistTab,
     moduleDetail: ModuleDetailTab,
+    classDetail: ClassDetailTab,
   };
 
   const onReady = (event: DockviewReadyEvent) => {
