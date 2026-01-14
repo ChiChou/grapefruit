@@ -77,12 +77,6 @@ export function basics(): BasicInfo {
     ]),
   ) as VersionInfoDict;
 
-  const urlTypes = infoDict.objectForKey_("CFBundleURLTypes") as NSArray<
-    NSDictionary<StringLike, NSObject>
-  >;
-  const rawUrls: RawURLScheme[] = urlTypes ? toJsArray(urlTypes) : [];
-  const urls = rawUrls.map(wrapURLScheme);
-
   const { NSHomeDirectory, NSTemporaryDirectory } = getFoundationApi();
 
   return {
@@ -92,9 +86,22 @@ export function basics(): BasicInfo {
     id: main.bundleIdentifier().toString(),
     path: main.bundlePath().toString(),
     main: main.executablePath().toString(),
-    urls,
+    urls: urls(),
     ...versions,
   };
+}
+
+export function urls(): URLScheme[] {
+  const infoDict =
+    ObjC.classes.NSBundle.mainBundle().infoDictionary() as NSDictionary<
+      StringLike,
+      NSObject
+    >;
+  const urlTypes = infoDict.objectForKey_("CFBundleURLTypes") as NSArray<
+    NSDictionary<StringLike, NSObject>
+  >;
+  const rawUrls: RawURLScheme[] = urlTypes ? toJsArray(urlTypes) : [];
+  return rawUrls.map(wrapURLScheme);
 }
 
 export function plist() {

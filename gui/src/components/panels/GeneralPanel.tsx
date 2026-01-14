@@ -1,13 +1,12 @@
-import { ConnectionStatus, useSession } from "@/context/SessionContext";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import type {
-  BasicInfo,
-  URLScheme,
-} from "../../../../agent/src/fruity/modules/info";
+import { ConnectionStatus, useSession } from "@/context/SessionContext";
+
+import type { BasicInfo } from "../../../../agent/src/fruity/modules/info";
 
 export function GeneralPanel() {
   const { t } = useTranslation();
@@ -131,26 +130,6 @@ export function GeneralPanel() {
               {basicInfo.home || t("na")}
             </div>
           </div>
-          {basicInfo.urls && basicInfo.urls.length > 0 && (
-            <div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                {t("url_schemes")}
-              </div>
-              <div className="space-y-2">
-                {basicInfo.urls.map((urlScheme: URLScheme, index: number) => (
-                  <div key={index} className="text-sm">
-                    <Badge variant="outline" className="mb-1">
-                      {urlScheme.name}
-                    </Badge>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 break-all">
-                      {urlScheme.schemes.join(", ")}
-                      <span className="ml-1">({urlScheme.role})</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       ) : status === ConnectionStatus.Ready ? (
         <div className="text-sm text-gray-500 dark:text-gray-400">
