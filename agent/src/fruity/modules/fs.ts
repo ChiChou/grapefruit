@@ -10,7 +10,6 @@ import type {
 } from "../typings.js";
 
 import { valueOf } from "../bridge/dictionary.js";
-import { NSHomeDirectory, NSTemporaryDirectory } from "../lib/foundation.js";
 
 export interface Item {
   type: "file" | "directory" | "symlink";
@@ -114,26 +113,6 @@ function contentsOf(pError: NativePointer, url: NSURL) {
   }
 
   return [...gen()];
-}
-
-function getFoundationApi() {
-  const foundation = Process.getModuleByName("Foundation");
-  const NSHomeDirectory = new NativeFunction(
-    foundation.getExportByName("NSHomeDirectory"),
-    "pointer",
-    [],
-  );
-
-  const NSTemporaryDirectory = new NativeFunction(
-    foundation.getExportByName("NSTemporaryDirectory"),
-    "pointer",
-    [],
-  );
-
-  return {
-    NSHomeDirectory,
-    NSTemporaryDirectory,
-  };
 }
 
 function expandTilde(path: string) {

@@ -8,7 +8,7 @@ import type {
 } from "../typings.js";
 
 import { toJsArray, valueOf } from "../bridge/dictionary.js";
-import { tmp, home } from "../lib/foundation.js";
+import getFoundationApi from "../native/foundation.js";
 
 export interface URLScheme {
   name: string;
@@ -83,9 +83,11 @@ export function basics(): BasicInfo {
   const rawUrls: RawURLScheme[] = urlTypes ? toJsArray(urlTypes) : [];
   const urls = rawUrls.map(wrapURLScheme);
 
+  const { NSHomeDirectory, NSTemporaryDirectory } = getFoundationApi();
+
   return {
-    tmp: tmp(),
-    home: home(),
+    tmp: new ObjC.Object(NSTemporaryDirectory()).toString(),
+    home: new ObjC.Object(NSHomeDirectory()).toString(),
     label: getLabel(infoDict),
     id: main.bundleIdentifier().toString(),
     path: main.bundlePath().toString(),
