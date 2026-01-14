@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ConnectionStatus, useSession } from "@/context/SessionContext";
 
 import type { BasicInfo } from "../../../../agent/src/fruity/modules/info";
+import { Link } from "react-router";
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -156,7 +157,12 @@ export function GeneralPanel() {
               {t("home_dir")}
             </div>
             <div className="flex items-center text-sm font-mono break-all">
-              <span>{basicInfo.home || t("na")}</span>
+              <Link
+                to={`/workspace/${device}/${bundle}/files`}
+                className="hover:underline"
+              >
+                <span>{basicInfo.home || t("na")}</span>
+              </Link>
               {basicInfo.home && <CopyButton text={basicInfo.home} />}
             </div>
           </div>

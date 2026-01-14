@@ -285,7 +285,7 @@ export function FilesPanel() {
   const { t } = useTranslation();
   const { api, status } = useSession();
   const { openSingletonPanel } = useDock();
-  const [activeTab, setActiveTab] = useState<"bundle" | "home">("bundle");
+  const [activeTab, setActiveTab] = useState<"bundle" | "home">("home");
 
   const apiReady = status === ConnectionStatus.Ready && !!api;
 
@@ -317,12 +317,14 @@ export function FilesPanel() {
         onValueChange={(v) => setActiveTab(v as "bundle" | "home")}
         className="h-full flex flex-col"
       >
-        <div className="p-4 pb-0">
-          <TabsList>
-            <TabsTrigger value="bundle">{t("bundle")}</TabsTrigger>
-            <TabsTrigger value="home">{t("home")}</TabsTrigger>
-          </TabsList>
-        </div>
+        <TabsList className="w-full rounded-none">
+          <TabsTrigger value="home" className="flex-1">
+            {t("home")}
+          </TabsTrigger>
+          <TabsTrigger value="bundle" className="flex-1">
+            {t("bundle")}
+          </TabsTrigger>
+        </TabsList>
         <TabsContent value="bundle" className="flex-1 overflow-hidden">
           <DirectoryTree
             root="!"
