@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Copy, Check } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -7,6 +8,31 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ConnectionStatus, useSession } from "@/context/SessionContext";
 
 import type { BasicInfo } from "../../../../agent/src/fruity/modules/info";
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="ml-2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+      title="Copy to clipboard"
+    >
+      {copied ? (
+        <Check className="w-3 h-3 text-green-500" />
+      ) : (
+        <Copy className="w-3 h-3" />
+      )}
+    </button>
+  );
+}
 
 export function GeneralPanel() {
   const { t } = useTranslation();
@@ -102,32 +128,36 @@ export function GeneralPanel() {
             <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
               {t("bundle_path")}
             </div>
-            <div className="text-sm font-mono break-all">
-              {basicInfo.path || t("na")}
+            <div className="flex items-center text-sm font-mono break-all">
+              <span>{basicInfo.path || t("na")}</span>
+              {basicInfo.path && <CopyButton text={basicInfo.path} />}
             </div>
           </div>
           <div>
             <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
               {t("executable")}
             </div>
-            <div className="text-sm font-mono break-all">
-              {basicInfo.main || t("na")}
+            <div className="flex items-center text-sm font-mono break-all">
+              <span>{basicInfo.main || t("na")}</span>
+              {basicInfo.main && <CopyButton text={basicInfo.main} />}
             </div>
           </div>
           <div>
             <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
               {t("tmp_dir")}
             </div>
-            <div className="text-sm font-mono break-all">
-              {basicInfo.tmp || t("na")}
+            <div className="flex items-center text-sm font-mono break-all">
+              <span>{basicInfo.tmp || t("na")}</span>
+              {basicInfo.tmp && <CopyButton text={basicInfo.tmp} />}
             </div>
           </div>
           <div>
             <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
               {t("home_dir")}
             </div>
-            <div className="text-sm font-mono break-all">
-              {basicInfo.home || t("na")}
+            <div className="flex items-center text-sm font-mono break-all">
+              <span>{basicInfo.home || t("na")}</span>
+              {basicInfo.home && <CopyButton text={basicInfo.home} />}
             </div>
           </div>
         </div>
