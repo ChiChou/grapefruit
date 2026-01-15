@@ -18,6 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowDown, ArrowUp, ArrowUpDown, RefreshCw } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 import type {
   FileDescriptor,
@@ -51,6 +53,8 @@ export function HandlesTab() {
   const [sortKey, setSortKey] = useState<SortKey>("fd");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [reloadInterval, setReloadInterval] = useState(0);
+  const [showVnode, setShowVnode] = useState(true);
+  const [showSocket, setShowSocket] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchHandles = useCallback(() => {
@@ -91,23 +95,29 @@ export function HandlesTab() {
     }
   };
 
-  const sortedHandles = useMemo(() => {
-    return [...handles].sort((a, b) => {
-      let cmp = 0;
-      switch (sortKey) {
-        case "fd":
-          cmp = a.fd - b.fd;
-          break;
-        case "type":
-          cmp = a.type.localeCompare(b.type);
-          break;
-        case "details":
-          cmp = getDetails(a).localeCompare(getDetails(b));
-          break;
-      }
-      return sortOrder === "asc" ? cmp : -cmp;
-    });
-  }, [handles, sortKey, sortOrder]);
+  const filteredAndSortedHandles = useMemo(() => {
+    return handles
+      .filter((handle) => {
+        if (handle.type === "vnode" && !showVnode) return false;
+        if (handle.type === "socket" && !showSocket) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        let cmp = 0;
+        switch (sortKey) {
+          case "fd":
+            cmp = a.fd - b.fd;
+            break;
+          case "type":
+            cmp = a.type.localeCompare(b.type);
+            break;
+          case "details":
+            cmp = getDetails(a).localeCompare(getDetails(b));
+            break;
+        }
+        return sortOrder === "asc" ? cmp : -cmp;
+      });
+  }, [handles, sortKey, sortOrder, showVnode, showSocket]);
 
   const SortIcon = ({ column }: { column: SortKey }) => {
     if (sortKey !== column) return <ArrowUpDown className="h-4 w-4 ml-1" />;
@@ -121,7 +131,28 @@ export function HandlesTab() {
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between p-4">
-        <h2 className="text-xl font-semibold">{t("active_file_handles")}</h2>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="filter-vnode"
+              checked={showVnode}
+              onCheckedChange={(checked) => setShowVnode(checked === true)}
+            />
+            <Label htmlFor="filter-vnode" className="text-sm cursor-pointer">
+              vnode
+            </Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="filter-socket"
+              checked={showSocket}
+              onCheckedChange={(checked) => setShowSocket(checked === true)}
+            />
+            <Label htmlFor="filter-socket" className="text-sm cursor-pointer">
+              socket
+            </Label>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           <Select
             value={String(reloadInterval)}
@@ -189,7 +220,7 @@ export function HandlesTab() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedHandles.map((handle) => (
+              {filteredAndSortedHandles.map((handle) => (
                 <TableRow key={handle.fd}>
                   <TableCell className="font-mono">{handle.fd}</TableCell>
                   <TableCell>{handle.type}</TableCell>
