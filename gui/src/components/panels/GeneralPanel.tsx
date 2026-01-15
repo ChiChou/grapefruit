@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, FileText, FolderOpen } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { ConnectionStatus, useSession } from "@/context/SessionContext";
+import { useDock } from "@/context/DockContext";
 
 import type { BasicInfo } from "../../../../agent/types/fruity/modules/info";
 import { Link } from "react-router";
@@ -38,9 +40,26 @@ function CopyButton({ text }: { text: string }) {
 export function GeneralPanel() {
   const { t } = useTranslation();
   const { api, status, device, bundle } = useSession();
+  const { openSingletonPanel } = useDock();
   const [basicInfo, setBasicInfo] = useState<BasicInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const openHandlesTab = () => {
+    openSingletonPanel({
+      id: "handles_tab",
+      component: "handles",
+      title: t("active_file_handles"),
+    });
+  };
+
+  const openInfoPlistTab = () => {
+    openSingletonPanel({
+      id: "info_plist_tab",
+      component: "infoPlist",
+      title: "Info.plist",
+    });
+  };
 
   useEffect(() => {
     if (!api || status !== ConnectionStatus.Ready) return;
@@ -164,6 +183,18 @@ export function GeneralPanel() {
                 <span>{basicInfo.home || t("na")}</span>
               </Link>
               {basicInfo.home && <CopyButton text={basicInfo.home} />}
+            </div>
+          </div>
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={openHandlesTab}>
+                <FolderOpen className="w-4 h-4 mr-2" />
+                {t("active_file_handles")}
+              </Button>
+              <Button variant="outline" size="sm" onClick={openInfoPlistTab}>
+                <FileText className="w-4 h-4 mr-2" />
+                Info.plist
+              </Button>
             </div>
           </div>
         </div>
