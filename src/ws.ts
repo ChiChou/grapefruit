@@ -6,11 +6,19 @@ import frida from "./lib/xvii.ts";
 import env from "./lib/env.ts";
 import { readAgent } from "./lib/utils.ts";
 
+interface DownloadMessage {
+  subject: "download";
+  data?: Buffer;
+  event: "trunk" | "end" | "error";
+  session: string;
+}
+
 interface ServerToClientEvents {
   ready: () => void;
   change: () => void;
   detached: (reason: string) => void;
   log: (level: string, text: string) => void;
+  download: (msg: DownloadMessage) => void;
 }
 
 interface ClientToServerEvents {
@@ -78,6 +86,17 @@ async function onConnection(
   script.destroyed.connect(() => {
     console.error("script is destroyed");
     socket.disconnect(true);
+  });
+
+  script.message.connect((message, data) => {
+    if (message.type === "send") {
+      if (message.payload?.subject === "download") {
+        const copy = Object.assign({}, message.payload, { data });
+        socket.emit("download", copy as DownloadMessage);
+      }
+    } else if (message.type === "error") {
+      console.error("script error:", message);
+    }
   });
 
   script.logHandler = (level, text) => {

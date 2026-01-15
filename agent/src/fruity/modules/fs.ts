@@ -7,6 +7,7 @@ import type {
   StringLike,
   NSObject,
   NSDictionary,
+  NSData,
 } from "../typings.js";
 
 import { valueOf } from "../bridge/dictionary.js";
@@ -215,6 +216,11 @@ export function text(path: string) {
     NSUTF8StringEncoding,
     NULL,
   ).toString() as string;
+}
+
+export function data(path: string) {
+  const d = ObjC.classes.NSData.dataWithContentsOfFile_(path) as NSData;
+  return d.bytes().readByteArray(d.length());
 }
 
 export function saveText(path: string, text: string) {

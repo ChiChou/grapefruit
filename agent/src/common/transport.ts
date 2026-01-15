@@ -11,7 +11,7 @@ class SessionAllocator {
     this.#value = 0;
   }
 
-  add(): number {
+  next(): number {
     return this.#value++;
   }
 
@@ -26,7 +26,7 @@ class SessionAllocator {
 }
 
 export function upload(destination: string, size: number) {
-  const session = SessionAllocator.shared.add();
+  const session = SessionAllocator.shared.next();
   const writer = fs.createWriteStream(destination, "binary");
 
   let counter = 0;
@@ -89,23 +89,34 @@ export function upload(destination: string, size: number) {
 }
 
 export function download(path: string) {
-  const session = SessionAllocator.shared.add();
+  const session = SessionAllocator.shared.next();
   const stats = fs.statSync(path);
   const reader = fs.createReadStream(path, "binary");
-  reader.on("data", (trunk) => {
-    send({
-      subject: "download",
-      event: "trunk",
-      session,
-    });
+  const subject = `download`;
+  let index = 0;
+  reader.on("data", (trunk: ArrayBuffer) => {
+    send(
+      {
+        subject,
+        event: "trunk",
+        session,
+        index,
+      },
+      trunk,
+    );
+    index++;
   });
   reader.on("end", () => {
-    send({});
+    send({
+      subject,
+      event: "end",
+      session,
+    });
     reader.destroy();
   });
   reader.on("error", () => {
     send({
-      subject: "download",
+      subject,
       event: "error",
       session,
     });

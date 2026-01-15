@@ -64,6 +64,8 @@ export interface NSError extends NSObject {
 
 export interface NSData extends NSObject {
   writeToFile_atomically_(path: StringLike, atomically: boolean): boolean;
+  bytes(): NativePointer;
+  length(): number;
 }
 
 export type NSFileAttribute = NSDictionary<NSString, NSObject>;
