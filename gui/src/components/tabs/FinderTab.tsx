@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
-import { File, Folder } from "lucide-react";
+import {
+  File,
+  Folder,
+  FolderOpen,
+  Pencil,
+  Download,
+  Trash2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 import { ConnectionStatus, useSession } from "@/context/SessionContext";
 import {
@@ -46,9 +54,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
       .ls(params.path)
       .then((result) => {
         const data = result.filter((e) => !e.dir);
-        data.sort((a, b) => {
-          return a.name.localeCompare(b.name);
-        });
+        data.sort((a, b) => a.name.localeCompare(b.name));
         setItems(data);
       })
       .catch((err) => {
@@ -81,13 +87,14 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
           <TableRow>
             <TableHead className="w-8"></TableHead>
             <TableHead>{t("name")}</TableHead>
+            <TableHead className="w-32"></TableHead>
             <TableHead className="w-24 text-right">{t("size")}</TableHead>
             <TableHead className="w-48">{t("modified")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {items.map((item) => (
-            <TableRow key={item.name}>
+            <TableRow key={item.name} className="group">
               <TableCell>
                 {item.dir ? (
                   <Folder className="w-4 h-4 text-yellow-500" />
@@ -96,6 +103,42 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
                 )}
               </TableCell>
               <TableCell className="font-mono text-sm">{item.name}</TableCell>
+              <TableCell>
+                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    title={t("open")}
+                  >
+                    <FolderOpen className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    title={t("rename")}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    title={t("download")}
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-destructive hover:text-destructive"
+                    title={t("delete")}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </TableCell>
               <TableCell className="text-right text-sm">
                 {item.dir ? "-" : formatSize(item.size)}
               </TableCell>
