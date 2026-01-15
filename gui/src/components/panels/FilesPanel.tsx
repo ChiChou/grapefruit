@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConnectionStatus, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 
-import type { MetaData } from "../../../../agent/src/fruity/modules/fs.ts";
+import type { MetaData } from "../../../../agent/types/fruity/modules/fs.ts";
 
 interface TreeNode {
   meta: MetaData;

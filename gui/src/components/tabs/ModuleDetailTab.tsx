@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import type { Section } from "../../../../agent/src/fruity/modules/symbol.ts";
+import type { Section } from "../../../../agent/types/fruity/modules/symbol";
 
 export interface ModuleDetailParams {
   path: string;

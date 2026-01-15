@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ConnectionStatus, useSession } from "@/context/SessionContext";
 
-import type { BasicInfo } from "../../../../agent/src/fruity/modules/info";
+import type { BasicInfo } from "../../../../agent/types/fruity/modules/info";
 import { Link } from "react-router";
 
 function CopyButton({ text }: { text: string }) {

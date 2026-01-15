@@ -15,7 +15,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
-import type { ClassInfo } from "../../../../agent/src/fruity/modules/classdump.ts";
+import type { ClassInfo } from "../../../../agent/types/fruity/modules/classdump";
 
 export interface ClassDetailParams {
   className: string;

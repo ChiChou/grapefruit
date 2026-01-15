@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import type { MetaData } from "../../../../agent/src/fruity/modules/fs.ts";
+import type { MetaData } from "../../../../agent/types/fruity/modules/fs";
 
 export interface FinderTabParams {
   path: string;
