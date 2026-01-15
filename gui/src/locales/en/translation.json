@@ -88,5 +88,6 @@
   "home": "Home",
   "finder": "Finder",
   "empty_directory": "Empty directory",
-  "modified": "Modified"
+  "modified": "Modified",
+  "copy": "Copy"
 }

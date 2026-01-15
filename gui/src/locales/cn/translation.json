@@ -88,5 +88,6 @@
   "home": "主目录",
   "finder": "文件浏览",
   "empty_directory": "空目录",
-  "modified": "修改时间"
+  "modified": "修改时间",
+  "copy": "复制"
 }
