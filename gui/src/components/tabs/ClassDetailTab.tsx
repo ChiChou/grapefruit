@@ -37,7 +37,7 @@ export function ClassDetailTab({
     setIsLoading(true);
     api.classdump
       .inspect(params.className)
-      .then((result) => setClassInfo(result as unknown as ClassInfo))
+      .then((result) => setClassInfo(result))
       .catch((err) => {
         console.error("Failed to load class info:", err);
         setClassInfo(null);

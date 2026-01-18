@@ -37,7 +37,7 @@ export function find(keyword: string): string[] {
   return [...gen()];
 }
 
-function copyIvars(clazz: ObjC.Object) {
+function copyIvars(clazz: ObjC.Object): { [offset: string]: string } {
   const { pointerSize } = Process;
   const numIvarsBuf = Memory.alloc(pointerSize);
   const ivarHandles = ObjC.api.class_copyIvarList(clazz.handle, numIvarsBuf);
@@ -55,7 +55,7 @@ function copyIvars(clazz: ObjC.Object) {
     ObjC.api.free(ivarHandles);
   }
 
-  return { ...result };
+  return Object.fromEntries(result);
 }
 
 export function hierarchy(): Tree<string> {
@@ -87,7 +87,7 @@ export interface ClassInfo {
   module: string;
 }
 
-export function inspect(name: string) {
+export function inspect(name: string): ClassInfo {
   const clazz = ObjC.classes[name];
   if (!clazz) throw new Error(`class ${name} not found`);
 
