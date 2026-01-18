@@ -79,24 +79,6 @@ export function LeftPanelView() {
               <TooltipContent side="right">{t("classes")}</TooltipContent>
             </Tooltip>
           </NavLink>
-
-          <NavLink
-            to={`/workspace/${device}/${bundle}/files`}
-            className={({ isActive }) =>
-              `p-2 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors ${
-                isActive
-                  ? "bg-gray-200 dark:bg-gray-800 border-l-2 border-primary"
-                  : ""
-              }`
-            }
-          >
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Files className="h-5 w-5" />
-              </TooltipTrigger>
-              <TooltipContent side="right">{t("files")}</TooltipContent>
-            </Tooltip>
-          </NavLink>
         </div>
 
         {/* Settings at bottom */}

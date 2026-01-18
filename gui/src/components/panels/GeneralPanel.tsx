@@ -176,12 +176,7 @@ export function GeneralPanel() {
               {t("home_dir")}
             </div>
             <div className="flex items-center text-sm font-mono break-all">
-              <Link
-                to={`/workspace/${device}/${bundle}/files`}
-                className="hover:underline"
-              >
-                <span>{basicInfo.home || t("na")}</span>
-              </Link>
+              <span>{basicInfo.home || t("na")}</span>
               {basicInfo.home && <CopyButton text={basicInfo.home} />}
             </div>
           </div>

@@ -1,10 +1,23 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  ChevronRight,
+  ChevronDown,
+  Folder,
+  FolderOpen,
+  File,
+  Pencil,
+  Download,
+  Trash2,
+} from "lucide-react";
 import type { IDockviewPanelProps } from "dockview";
-import { File, Folder, Pencil, Download, Trash2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@/components/ui/resizable";
 import { Button } from "@/components/ui/button";
-
-import { ConnectionStatus, useSession } from "@/context/SessionContext";
 import {
   Table,
   TableBody,
@@ -13,8 +26,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ConnectionStatus, useSession } from "@/context/SessionContext";
+import type { MetaData } from "../../../../agent/types/fruity/modules/fs.ts";
 
-import type { MetaData } from "../../../../agent/types/fruity/modules/fs";
+interface TreeNode {
+  meta: MetaData;
+  children: TreeNode[] | null;
+  isLoading: boolean;
+  isExpanded: boolean;
+}
+
+type RootType = "!" | "~";
 
 export interface FinderTabParams {
   path: string;
@@ -33,29 +55,257 @@ function formatDate(date: Date): string {
   return new Date(date).toLocaleString();
 }
 
-export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
-  const { api, status } = useSession();
-  const { t } = useTranslation();
-  const [isLoading, setIsLoading] = useState(false);
-  const [items, setItems] = useState<MetaData[]>([]);
+function DirectoryTree({
+  root,
+  apiReady,
+  loadDirectory,
+  onDirectorySelect,
+}: {
+  root: RootType;
+  apiReady: boolean;
+  loadDirectory: (path: string) => Promise<MetaData[]>;
+  onDirectorySelect: (path: string) => void;
+}) {
+  const [nodes, setNodes] = useState<TreeNode[]>([]);
+  const [activePath, setActivePath] = useState<string | null>(null);
+  const rootName = root === "!" ? "Bundle" : "Home";
 
   useEffect(() => {
-    if (status !== ConnectionStatus.Ready || !api) return;
+    if (!apiReady) return;
+    setNodes([
+      {
+        meta: {
+          name: rootName,
+          dir: true,
+          protection: null,
+          size: null,
+          alias: false,
+          created: new Date(),
+          symlink: false,
+          writable: root === "~",
+        },
+        children: null,
+        isLoading: true,
+        isExpanded: true,
+      },
+    ]);
+    loadDirectory(root)
+      .then((items) => {
+        const dirs = items
+          .filter((item) => item.dir)
+          .map((meta) => ({
+            meta,
+            children: null,
+            isLoading: false,
+            isExpanded: false,
+          }));
+        setNodes([
+          {
+            meta: {
+              name: rootName,
+              dir: true,
+              protection: null,
+              size: null,
+              alias: false,
+              created: new Date(),
+              symlink: false,
+              writable: root === "~",
+            },
+            children: dirs,
+            isLoading: false,
+            isExpanded: true,
+          },
+        ]);
+      })
+      .catch(() => {
+        setNodes([
+          {
+            meta: {
+              name: rootName,
+              dir: true,
+              protection: null,
+              size: null,
+              alias: false,
+              created: new Date(),
+              symlink: false,
+              writable: root === "~",
+            },
+            children: [],
+            isLoading: false,
+            isExpanded: true,
+          },
+        ]);
+      });
+  }, [apiReady, root, rootName, loadDirectory]);
 
-    setIsLoading(true);
-    api.fs
-      .ls(params.path)
-      .then((result) => {
-        const data = result.filter((e) => !e.dir);
-        data.sort((a, b) => a.name.localeCompare(b.name));
-        setItems(data);
+  const updateNodeAtPath = (
+    nodes: TreeNode[],
+    path: string[],
+    pathIndex: number,
+    updater: (node: TreeNode) => TreeNode,
+  ): TreeNode[] => {
+    return nodes.map((node) => {
+      if (node.meta.name !== path[pathIndex]) {
+        return node;
+      }
+      if (pathIndex === path.length - 1) {
+        return updater(node);
+      }
+      if (node.children) {
+        return {
+          ...node,
+          children: updateNodeAtPath(
+            node.children,
+            path,
+            pathIndex + 1,
+            updater,
+          ),
+        };
+      }
+      return node;
+    });
+  };
+
+  const getNodeAtPath = (
+    nodes: TreeNode[],
+    path: string[],
+    pathIndex: number,
+  ): TreeNode | null => {
+    const node = nodes.find((n) => n.meta.name === path[pathIndex]);
+    if (!node) return null;
+    if (pathIndex === path.length - 1) return node;
+    if (!node.children) return null;
+    return getNodeAtPath(node.children, path, pathIndex + 1);
+  };
+
+  const handleNodeClick = (path: string[]) => {
+    const pathStr = path.join("/");
+    setActivePath(pathStr);
+    const targetNode = getNodeAtPath(nodes, path, 0);
+    if (!targetNode) return;
+
+    if (targetNode.isExpanded) {
+      setNodes((prev) =>
+        updateNodeAtPath(prev, path, 0, (n) => ({
+          ...n,
+          isExpanded: false,
+        })),
+      );
+      return;
+    }
+
+    if (targetNode.children !== null) {
+      setNodes((prev) =>
+        updateNodeAtPath(prev, path, 0, (n) => ({
+          ...n,
+          isExpanded: true,
+        })),
+      );
+      return;
+    }
+
+    const isRootNode = path.length === 1 && path[0] === rootName;
+    const fullPath = isRootNode ? root : `${root}/${path.slice(1).join("/")}`;
+
+    setNodes((prev) =>
+      updateNodeAtPath(prev, path, 0, (n) => ({
+        ...n,
+        isLoading: true,
+      })),
+    );
+
+    onDirectorySelect(fullPath);
+
+    loadDirectory(fullPath)
+      .then((items) => {
+        const dirs = items
+          .filter((item) => item.dir)
+          .map((meta) => ({
+            meta,
+            children: null,
+            isLoading: false,
+            isExpanded: false,
+          }));
+        setNodes((prev) =>
+          updateNodeAtPath(prev, path, 0, (n) => ({
+            ...n,
+            children: dirs,
+            isLoading: false,
+            isExpanded: true,
+          })),
+        );
       })
-      .catch((err) => {
-        console.error("Failed to load directory:", err);
-        setItems([]);
-      })
-      .finally(() => setIsLoading(false));
-  }, [api, status, params.path]);
+      .catch(() => {
+        setNodes((prev) =>
+          updateNodeAtPath(prev, path, 0, (n) => ({
+            ...n,
+            children: [],
+            isLoading: false,
+            isExpanded: true,
+          })),
+        );
+      });
+  };
+
+  const renderNode = (node: TreeNode, path: string[], depth: number) => {
+    const currentPath = [...path, node.meta.name];
+    const pathStr = currentPath.join("/");
+    const isActive = activePath === pathStr;
+
+    return (
+      <div key={node.meta.name}>
+        <button
+          type="button"
+          className={`flex items-center w-full py-1 px-2 text-left ${
+            isActive
+              ? "bg-blue-100 dark:bg-blue-900"
+              : "hover:bg-gray-100 dark:hover:bg-gray-800"
+          }`}
+          style={{ paddingLeft: `${depth * 16 + 8}px` }}
+          onClick={() => handleNodeClick(currentPath)}
+        >
+          <span className="w-4 h-4 mr-1 flex items-center justify-center">
+            {node.isLoading ? (
+              <span className="animate-spin text-xs">⏳</span>
+            ) : node.isExpanded ? (
+              <ChevronDown className="w-3 h-3" />
+            ) : (
+              <ChevronRight className="w-3 h-3" />
+            )}
+          </span>
+          {node.isExpanded ? (
+            <FolderOpen className="w-4 h-4 mr-2 text-yellow-500" />
+          ) : (
+            <Folder className="w-4 h-4 mr-2 text-yellow-500" />
+          )}
+          <span className="text-sm truncate">{node.meta.name}</span>
+        </button>
+        {node.isExpanded && node.children && (
+          <div>
+            {node.children.map((child) =>
+              renderNode(child, currentPath, depth + 1),
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="overflow-auto h-full">
+      {nodes.map((node) => renderNode(node, [], 0))}
+    </div>
+  );
+}
+
+function FileTable({
+  items,
+  isLoading,
+}: {
+  items: MetaData[];
+  isLoading: boolean;
+}) {
+  const { t } = useTranslation();
 
   if (isLoading) {
     return (
@@ -135,5 +385,86 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
         </TableBody>
       </Table>
     </div>
+  );
+}
+
+export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
+  const { api, status } = useSession();
+  const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState<"bundle" | "home">("home");
+  const [items, setItems] = useState<MetaData[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const apiReady = status === ConnectionStatus.Ready && !!api;
+
+  const loadDirectory = useCallback(
+    async (path: string): Promise<MetaData[]> => {
+      if (!api) return [];
+      return api.fs.ls(path);
+    },
+    [api],
+  );
+
+  const handleDirectorySelect = useCallback(
+    (path: string) => {
+      setIsLoading(true);
+      loadDirectory(path)
+        .then((result) => {
+          const data = result.filter((e) => !e.dir);
+          data.sort((a, b) => a.name.localeCompare(b.name));
+          setItems(data);
+        })
+        .catch(() => {
+          setItems([]);
+        })
+        .finally(() => setIsLoading(false));
+    },
+    [loadDirectory],
+  );
+
+  useEffect(() => {
+    if (!apiReady) return;
+    handleDirectorySelect(activeTab === "home" ? "~" : "!");
+  }, [apiReady, activeTab, handleDirectorySelect]);
+
+  return (
+    <ResizablePanelGroup direction="horizontal" autoSaveId="finder-split">
+      <ResizablePanel defaultSize={15} minSize={5} maxSize={80}>
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as "bundle" | "home")}
+          className="h-full flex flex-col"
+        >
+          <TabsList className="w-full rounded-none">
+            <TabsTrigger value="home" className="flex-1">
+              {t("home")}
+            </TabsTrigger>
+            <TabsTrigger value="bundle" className="flex-1">
+              {t("bundle")}
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="bundle" className="flex-1 overflow-hidden mt-0">
+            <DirectoryTree
+              root="!"
+              apiReady={apiReady}
+              loadDirectory={loadDirectory}
+              onDirectorySelect={handleDirectorySelect}
+            />
+          </TabsContent>
+          <TabsContent value="home" className="flex-1 overflow-hidden mt-0">
+            <DirectoryTree
+              root="~"
+              apiReady={apiReady}
+              loadDirectory={loadDirectory}
+              onDirectorySelect={handleDirectorySelect}
+            />
+          </TabsContent>
+        </Tabs>
+      </ResizablePanel>
+      <ResizableHandle withHandle />
+      <ResizablePanel defaultSize={85}>
+        <FileTable items={items} isLoading={isLoading} />
+      </ResizablePanel>
+    </ResizablePanelGroup>
   );
 }

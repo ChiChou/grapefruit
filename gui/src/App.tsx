@@ -12,7 +12,6 @@ import { Workspace } from "./components/Workspace";
 import { GeneralPanel } from "./components/panels/GeneralPanel";
 import { ModulesPanel } from "./components/panels/ModulesPanel";
 import { ClassesPanel } from "./components/panels/ClassesPanel";
-import { FilesPanel } from "./components/panels/FilesPanel";
 
 import { AlertTriangle } from "lucide-react";
 
@@ -37,7 +36,6 @@ function App() {
           <Route path="general" element={<GeneralPanel />} />
           <Route path="modules" element={<ModulesPanel />} />
           <Route path="classes" element={<ClassesPanel />} />
-          <Route path="files" element={<FilesPanel />} />
         </Route>
       </Routes>
     </>

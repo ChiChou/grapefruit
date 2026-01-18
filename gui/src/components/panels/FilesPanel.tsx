@@ -292,8 +292,7 @@ export function FilesPanel() {
   const loadDirectory = useCallback(
     async (path: string): Promise<MetaData[]> => {
       if (!api) return [];
-      const result = await api.fs.ls(path);
-      return result as unknown as MetaData[];
+      return api.fs.ls(path);
     },
     [api],
   );
