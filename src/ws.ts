@@ -14,7 +14,7 @@ interface DownloadMessage {
 }
 
 interface ServerToClientEvents {
-  ready: () => void;
+  ready: (pid: number) => void;
   change: () => void;
   detached: (reason: string) => void;
   log: (level: string, text: string) => void;
@@ -134,7 +134,7 @@ async function onConnection(
       } finally {
       }
     })
-    .emit("ready");
+    .emit("ready", session.pid);
 }
 
 export default function attach(server: ServerType) {

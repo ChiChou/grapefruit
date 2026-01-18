@@ -7,7 +7,7 @@ import type {
 } from "../../../agent/types/fruity/registry.d.ts";
 
 export interface SessionClientEvents {
-  ready: () => void;
+  ready: (pid: number) => void;
 }
 
 export interface SessionServerEvents {

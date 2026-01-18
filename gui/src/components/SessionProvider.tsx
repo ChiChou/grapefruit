@@ -19,6 +19,7 @@ function SessionProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<ConnectionStatusType>(
     ConnectionStatus.Disconnected,
   );
+  const [pid, setPid] = useState<number | undefined>();
 
   const { socket, api } = useMemo(() => {
     if (!device || !bundle) {
@@ -35,14 +36,16 @@ function SessionProvider({ children }: { children: ReactNode }) {
     );
 
     newSocket
-      .on("ready", () => {
+      .on("ready", (newPid: number) => {
         setStatus(ConnectionStatus.Ready);
+        setPid(newPid);
       })
       .on("connect", () => {
         setStatus(ConnectionStatus.Connecting);
       })
       .on("disconnect", () => {
         setStatus(ConnectionStatus.Disconnected);
+        setPid(undefined);
       });
 
     const newApi = createAPI(newSocket);
@@ -67,10 +70,11 @@ function SessionProvider({ children }: { children: ReactNode }) {
     () => ({
       device,
       bundle,
+      pid,
       api,
       status,
     }),
-    [device, bundle, api, status],
+    [device, bundle, pid, api, status],
   );
 
   if (!device || !bundle) {

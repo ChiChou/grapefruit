@@ -13,6 +13,7 @@ export type ConnectionStatusType =
 interface SessionContextType {
   device: string | undefined;
   bundle: string | undefined;
+  pid: number | undefined;
   api: AsyncFruityRPC | null;
   status: ConnectionStatusType;
 }
@@ -20,6 +21,7 @@ interface SessionContextType {
 const defaultContext: SessionContextType = {
   device: undefined,
   bundle: undefined,
+  pid: undefined,
   api: null,
   status: ConnectionStatus.Disconnected,
 };
