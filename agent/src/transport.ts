@@ -1,24 +1,8 @@
 import fs from "fs";
 import RemoteStreamController, { type Packet } from "frida-remote-stream";
 
-/**
- * read a range of bytes
- * @param path
- * @param start
- * @param size
- * @returns
- */
-rpc.exports.range = function (path: string, start: number, size: number) {
-  const stats = fs.statSync(path);
-  const end = start + size;
-  if (start < 0 || size < 0 || end >= stats.size)
-    throw new Error("Invalid range");
-
-  const fd = fs.openSync(path, "rb");
-  const buf = Buffer.alloc(size);
-  fs.readSync(fd, buf, 0, size, start);
-  fs.closeSync(fd);
-  return buf;
+rpc.exports.len = function (path: string) {
+  return fs.statSync(path).size;
 };
 
 /**

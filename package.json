@@ -6,8 +6,8 @@
   "scripts": {
     "dev:both": "node scripts/dev.ts",
     "dev": "node --watch src/index.ts",
-    "start": "node src/index.ts",
-    "test": "node --test",
+    "start": "bun src/index.ts",
+    "test": "bun --test",
     "prepare": "cd agent && bun i && cd .. && cd gui && bun i"
   },
   "keywords": [],
@@ -21,6 +21,7 @@
     "@hono/node-server": "^1.19.6",
     "env-paths": "^3.0.0",
     "frida": "^17.5.1",
+    "frida-remote-stream": "^6.0.3",
     "frida16": "npm:frida@^16.7.19",
     "hono": "^4.10.4",
     "socket.io": "^4.8.1"

@@ -29,6 +29,9 @@ process
     server.close();
   })
   // nodejs --watch will send this signal on file changes
+  //
+  // note: do not use bun for dev server now
+  // https://github.com/oven-sh/bun/issues/25721
   .on("SIGTERM", () => {
     server.close();
   });

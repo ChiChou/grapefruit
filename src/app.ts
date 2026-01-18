@@ -2,7 +2,10 @@ import { Hono } from "hono";
 import { logger } from "hono/logger";
 import { prettyJSON } from "hono/pretty-json";
 import { createMiddleware } from "hono/factory";
+import { stream } from "hono/streaming";
+import RemoteStreamController from "frida-remote-stream";
 
+import { readAgent } from "./lib/utils.ts";
 import getVersion from "./lib/version.ts";
 import env from "./lib/env.ts";
 import frida, { type Device } from "./lib/xvii.ts";
@@ -11,6 +14,8 @@ import {
   app as serializeApp,
   device as serializeDevice,
 } from "./lib/serializer.ts";
+import { Readable } from "node:stream";
+import { createWriteStream } from "node:fs";
 
 const manager = frida.getDeviceManager();
 const app = new Hono();
@@ -53,6 +58,84 @@ api
     return c.json(
       devices.filter((dev) => !skip.has(dev.id)).map(serializeDevice),
     );
+  })
+  .get("/download/:device/:pid", getDeviceMiddleware, async (c) => {
+    const path = c.req.query("path");
+    if (typeof path !== "string") return c.text("invalid path", 400);
+
+    // need upstream frida-fs to support { start, end } in fs.createReadStream
+    if (c.req.header("Range")) {
+      return c.text("range download not implemented", 501);
+    }
+
+    const device = c.get("device");
+    const pid = parseInt(c.req.param("pid"), 10);
+
+    const agentSource = await readAgent("transport");
+    const session = await device.attach(pid);
+    const script = await session.createScript(agentSource);
+    await script.load();
+
+    const controller = new RemoteStreamController();
+    controller.events.on("send", ({ stanza, data }) => {
+      script.post(
+        {
+          type: "+stream",
+          payload: stanza,
+        },
+        data,
+      );
+    });
+
+    script.message.connect((message, data) => {
+      if (message.type === "send") {
+        const stanza = message.payload as {
+          payload: { [key: string]: any };
+          name: string;
+        };
+        if (stanza.name === "+stream") {
+          controller.receive({
+            stanza: stanza.payload,
+            data,
+          });
+        }
+      }
+    });
+
+    let size: number;
+    try {
+      size = await script.exports.len(path);
+    } catch (e) {
+      console.error(e);
+      return c.text("file not found", 404);
+    }
+
+    c.header("Content-Length", size.toString());
+    c.header(
+      "Content-Disposition",
+      `attachment; filename="${path.split("/").pop()}"`,
+    );
+
+    return stream(c, async (streamer) => {
+      await Promise.all([
+        new Promise<void>((resolve) => {
+          controller.events.on("stream", async (incomingStream: Readable) => {
+            for await (const chunk of incomingStream) {
+              await streamer.write(chunk);
+            }
+            await script.unload();
+            await session.detach();
+            resolve();
+          });
+        }),
+        script.exports.pull(path),
+      ]);
+    });
+  })
+  .post("/upload/:device/:pid", getDeviceMiddleware, async (c) => {
+    const path = c.req.param("path");
+    if (typeof path !== "string") return c.text("invalid path", 400);
+    return c.text("not implemented", 501);
   })
   .get("/device/:device/apps", getDeviceMiddleware, async (c) => {
     const device = c.get("device");
