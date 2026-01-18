@@ -391,7 +391,11 @@ function FileTable({
 export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
   const { api, status } = useSession();
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<"bundle" | "home">("home");
+
+  const initialPath = params?.path || "~";
+  const initialTab = initialPath === "!" ? "bundle" : "home";
+
+  const [activeTab, setActiveTab] = useState<"bundle" | "home">(initialTab);
   const [items, setItems] = useState<MetaData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -424,8 +428,18 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
 
   useEffect(() => {
     if (!apiReady) return;
-    handleDirectorySelect(activeTab === "home" ? "~" : "!");
-  }, [apiReady, activeTab, handleDirectorySelect]);
+    const path = params?.path || (activeTab === "home" ? "~" : "!");
+    handleDirectorySelect(path);
+  }, [apiReady, activeTab, handleDirectorySelect, params?.path]);
+
+  useEffect(() => {
+    if (!apiReady || !params?.path) return;
+    if (params.path === "!") {
+      setActiveTab("bundle");
+    } else {
+      setActiveTab("home");
+    }
+  }, [apiReady, params?.path]);
 
   return (
     <ResizablePanelGroup direction="horizontal" autoSaveId="finder-split">

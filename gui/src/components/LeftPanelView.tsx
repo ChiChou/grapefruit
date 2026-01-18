@@ -1,6 +1,6 @@
 import { Link, NavLink, Outlet } from "react-router";
 import { t } from "i18next";
-import { Info, Package, Files, Braces } from "lucide-react";
+import { Info, Package, Braces } from "lucide-react";
 
 import {
   Tooltip,

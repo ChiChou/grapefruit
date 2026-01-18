@@ -10,7 +10,6 @@ import { ConnectionStatus, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 
 import type { BasicInfo } from "../../../../agent/types/fruity/modules/info";
-import { Link } from "react-router";
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -37,6 +36,18 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
+function PathDisplay({ path, onClick }: { path: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="text-left flex items-start text-sm font-mono break-all hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer hover:underline"
+    >
+      <span>{path}</span>
+    </button>
+  );
+}
+
 export function GeneralPanel() {
   const { t } = useTranslation();
   const { api, status, device, bundle } = useSession();
@@ -58,6 +69,15 @@ export function GeneralPanel() {
       id: "info_plist_tab",
       component: "infoPlist",
       title: "Info.plist",
+    });
+  };
+
+  const openFinderTab = (path: string) => {
+    openSingletonPanel({
+      id: "finder_tab",
+      component: "finder",
+      title: t("finder"),
+      params: { path },
     });
   };
 
@@ -148,10 +168,17 @@ export function GeneralPanel() {
             <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
               {t("bundle_path")}
             </div>
-            <div className="flex items-center text-sm font-mono break-all">
-              <span>{basicInfo.path || t("na")}</span>
-              {basicInfo.path && <CopyButton text={basicInfo.path} />}
-            </div>
+            {basicInfo.path ? (
+              <div className="flex items-start">
+                <PathDisplay
+                  path={basicInfo.path}
+                  onClick={() => openFinderTab("!")}
+                />
+                <CopyButton text={basicInfo.path} />
+              </div>
+            ) : (
+              <span className="text-sm">{t("na")}</span>
+            )}
           </div>
           <div>
             <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
@@ -175,10 +202,17 @@ export function GeneralPanel() {
             <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
               {t("home_dir")}
             </div>
-            <div className="flex items-center text-sm font-mono break-all">
-              <span>{basicInfo.home || t("na")}</span>
-              {basicInfo.home && <CopyButton text={basicInfo.home} />}
-            </div>
+            {basicInfo.home ? (
+              <div className="flex items-start">
+                <PathDisplay
+                  path={basicInfo.home}
+                  onClick={() => openFinderTab("~")}
+                />
+                <CopyButton text={basicInfo.home} />
+              </div>
+            ) : (
+              <span className="text-sm">{t("na")}</span>
+            )}
           </div>
           <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex flex-wrap gap-2">
