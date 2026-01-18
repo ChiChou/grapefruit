@@ -1,14 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
-import {
-  File,
-  Folder,
-  FolderOpen,
-  Pencil,
-  Download,
-  Trash2,
-} from "lucide-react";
+import { File, Folder, Pencil, Download, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { ConnectionStatus, useSession } from "@/context/SessionContext";
@@ -105,14 +98,6 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
               <TableCell className="font-mono text-sm">{item.name}</TableCell>
               <TableCell>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    title={t("open")}
-                  >
-                    <FolderOpen className="h-4 w-4" />
-                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"
