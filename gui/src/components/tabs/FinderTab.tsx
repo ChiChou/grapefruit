@@ -27,7 +27,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ConnectionStatus, useSession } from "@/context/SessionContext";
-import type { MetaData } from "../../../../agent/types/fruity/modules/fs.ts";
+import type {
+  MetaData,
+  DirectoryListing,
+} from "../../../../agent/types/fruity/modules/fs.ts";
 
 interface TreeNode {
   meta: MetaData;
@@ -63,7 +66,7 @@ function DirectoryTree({
 }: {
   root: RootType;
   apiReady: boolean;
-  loadDirectory: (path: string) => Promise<MetaData[]>;
+  loadDirectory: (path: string) => Promise<DirectoryListing>;
   onDirectorySelect: (path: string) => void;
 }) {
   const [nodes, setNodes] = useState<TreeNode[]>([]);
@@ -90,8 +93,8 @@ function DirectoryTree({
       },
     ]);
     loadDirectory(root)
-      .then((items) => {
-        const dirs = items
+      .then(({ list }) => {
+        const dirs = list
           .filter((item) => item.dir)
           .map((meta) => ({
             meta,
@@ -217,8 +220,8 @@ function DirectoryTree({
     onDirectorySelect(fullPath);
 
     loadDirectory(fullPath)
-      .then((items) => {
-        const dirs = items
+      .then(({ list }) => {
+        const dirs = list
           .filter((item) => item.dir)
           .map((meta) => ({
             meta,
@@ -301,95 +304,121 @@ function DirectoryTree({
 function FileTable({
   items,
   isLoading,
+  cwd,
+  onDownload,
 }: {
   items: MetaData[];
   isLoading: boolean;
+  cwd: string;
+  onDownload: (fileName: string) => void;
 }) {
   const { t } = useTranslation();
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500">
-        {t("loading")}...
+      <div className="flex flex-col h-full">
+        <div className="flex-1 flex items-center justify-center text-gray-500">
+          {t("loading")}...
+        </div>
+        {cwd && (
+          <div className="px-2 py-1 text-xs text-gray-500 border-t">
+            {cwd}
+          </div>
+        )}
       </div>
     );
   }
 
   if (items.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500">
-        {t("empty_directory")}
+      <div className="flex flex-col h-full">
+        <div className="flex-1 flex items-center justify-center text-gray-500">
+          {t("empty_directory")}
+        </div>
+        {cwd && (
+          <div className="px-2 py-1 text-xs text-gray-500 border-t">
+            {cwd}
+          </div>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col overflow-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-8"></TableHead>
-            <TableHead>{t("name")}</TableHead>
-            <TableHead className="w-32"></TableHead>
-            <TableHead className="w-24 text-right">{t("size")}</TableHead>
-            <TableHead className="w-48">{t("modified")}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {items.map((item) => (
-            <TableRow key={item.name} className="group">
-              <TableCell>
-                {item.dir ? (
-                  <Folder className="w-4 h-4 text-yellow-500" />
-                ) : (
-                  <File className="w-4 h-4 text-gray-500" />
-                )}
-              </TableCell>
-              <TableCell className="font-mono text-sm">{item.name}</TableCell>
-              <TableCell>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    title={t("rename")}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    title={t("download")}
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-destructive hover:text-destructive"
-                    title={t("delete")}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
-              <TableCell className="text-right text-sm">
-                {item.dir ? "-" : formatSize(item.size)}
-              </TableCell>
-              <TableCell className="text-sm text-gray-500">
-                {formatDate(item.created)}
-              </TableCell>
+    <div className="flex flex-col h-full">
+      <div className="flex-1 overflow-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-8"></TableHead>
+              <TableHead>{t("name")}</TableHead>
+              <TableHead className="w-32"></TableHead>
+              <TableHead className="w-24 text-right">{t("size")}</TableHead>
+              <TableHead className="w-48">{t("modified")}</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {items.map((item) => (
+              <TableRow key={item.name} className="group">
+                <TableCell>
+                  {item.dir ? (
+                    <Folder className="w-4 h-4 text-yellow-500" />
+                  ) : (
+                    <File className="w-4 h-4 text-gray-500" />
+                  )}
+                </TableCell>
+                <TableCell className="font-mono text-sm">{item.name}</TableCell>
+                <TableCell>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => onDownload(item.name)}
+                      title={t("download")}
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      title={t("rename")}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      title={t("delete")}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+                <TableCell className="text-right text-sm">
+                  {item.dir ? "-" : formatSize(item.size)}
+                </TableCell>
+                <TableCell className="text-sm text-gray-500">
+                  {formatDate(item.created)}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      {cwd && (
+        <div className="px-2 py-1 text-xs text-gray-500 border-t shrink-0">
+          {cwd}
+        </div>
+      )}
     </div>
   );
 }
 
 export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
-  const { api, status } = useSession();
+  const { api, status, pid, device } = useSession();
   const { t } = useTranslation();
 
   const initialPath = params?.path || "~";
@@ -398,12 +427,13 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
   const [activeTab, setActiveTab] = useState<"bundle" | "home">(initialTab);
   const [items, setItems] = useState<MetaData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [cwd, setCwd] = useState<string>("");
 
   const apiReady = status === ConnectionStatus.Ready && !!api;
 
   const loadDirectory = useCallback(
-    async (path: string): Promise<MetaData[]> => {
-      if (!api) return [];
+    async (path: string): Promise<DirectoryListing> => {
+      if (!api) return { cwd: "", list: [] };
       return api.fs.ls(path);
     },
     [api],
@@ -413,9 +443,10 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
     (path: string) => {
       setIsLoading(true);
       loadDirectory(path)
-        .then((result) => {
-          const data = result.filter((e) => !e.dir);
+        .then(({ cwd, list }) => {
+          const data = list.filter((e) => !e.dir);
           data.sort((a, b) => a.name.localeCompare(b.name));
+          setCwd(cwd);
           setItems(data);
         })
         .catch(() => {
@@ -424,6 +455,17 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
         .finally(() => setIsLoading(false));
     },
     [loadDirectory],
+  );
+
+  const handleDownload = useCallback(
+    (fileName: string) => {
+      if (pid === undefined) return;
+      const url = new URL(window.location.href);
+      url.pathname = `/api/download/${device}/${pid}`;
+      url.searchParams.set("path", `${cwd}/${fileName}`);
+      window.open(url.toString(), "_blank");
+    },
+    [pid, device, cwd],
   );
 
   useEffect(() => {
@@ -477,7 +519,12 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
       </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize={85}>
-        <FileTable items={items} isLoading={isLoading} />
+        <FileTable
+          items={items}
+          isLoading={isLoading}
+          cwd={cwd}
+          onDownload={handleDownload}
+        />
       </ResizablePanel>
     </ResizablePanelGroup>
   );

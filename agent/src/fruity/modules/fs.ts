@@ -130,9 +130,18 @@ function expandTilde(path: string) {
   throw new Error(`Cannot expand path: ${path}`);
 }
 
-export function ls(path: string) {
+export interface DirectoryListing {
+  cwd: string;
+  list: MetaData[];
+}
+
+export function ls(path: string): DirectoryListing {
   const cwd = expandTilde(path);
-  return throwsError(contentsOf, ObjC.classes.NSURL.fileURLWithPath_(cwd));
+
+  return {
+    cwd,
+    list: throwsError(contentsOf, ObjC.classes.NSURL.fileURLWithPath_(cwd)),
+  };
 }
 
 export function rm(path: string) {

@@ -15,7 +15,6 @@ import {
   device as serializeDevice,
 } from "./lib/serializer.ts";
 import { Readable } from "node:stream";
-import { createWriteStream } from "node:fs";
 
 const manager = frida.getDeviceManager();
 const app = new Hono();
@@ -60,6 +59,7 @@ api
     );
   })
   .get("/download/:device/:pid", getDeviceMiddleware, async (c) => {
+    console.log("inside route");
     const path = c.req.query("path");
     if (typeof path !== "string") return c.text("invalid path", 400);
 
