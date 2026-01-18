@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ConnectionStatus, useSession } from "@/context/SessionContext";
+import { useDock } from "@/context/DockContext";
 import type {
   MetaData,
   DirectoryListing,
@@ -63,6 +64,48 @@ function formatSize(size: number | null): string {
 
 function formatDate(date: Date): string {
   return new Date(date).toLocaleString();
+}
+
+// naïve file type detection based on extension
+function typeFor(filename: string): string {
+  const ext = filename.split(".").pop()?.toLowerCase();
+  if (!ext) return "hex";
+  switch (ext) {
+    case "txt":
+    case "md":
+    case "js":
+    case "css":
+    case "xml":
+    case "pem":
+      return "text";
+
+    case "sqlite":
+    case "db":
+      return "sqlite";
+
+    case "jpeg":
+    case "jpg":
+    case "png":
+    case "gif":
+    case "tiff":
+    case "tif":
+    case "webp":
+      return "image";
+
+    case "xcprivacy":
+    case "archiver":
+    case "plist":
+      return "plist";
+
+    case "ttf":
+    case "otf":
+    case "woff":
+    case "woff2":
+      return "font";
+
+    default:
+      return "hex";
+  }
 }
 
 function DirectoryTree({
@@ -313,11 +356,13 @@ function FileTable({
   isLoading,
   cwd,
   onDownload,
+  onPreview,
 }: {
   items: MetaData[];
   isLoading: boolean;
   cwd: string;
   onDownload: (fileName: string) => void;
+  onPreview: (fileName: string, type: string) => void;
 }) {
   const { t } = useTranslation();
 
@@ -371,7 +416,15 @@ function FileTable({
                     <File className="w-4 h-4 text-gray-500" />
                   )}
                 </TableCell>
-                <TableCell className="font-mono text-sm">{item.name}</TableCell>
+                <TableCell className="font-mono text-sm">
+                  <button
+                    type="button"
+                    onClick={() => onPreview(item.name, typeFor(item.name))}
+                    className="hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
+                  >
+                    {item.name}
+                  </button>
+                </TableCell>
                 <TableCell>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button
@@ -420,12 +473,36 @@ function FileTable({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start">
-                      <DropdownMenuItem>{t("hex_view")}</DropdownMenuItem>
-                      <DropdownMenuItem>{t("text_editor")}</DropdownMenuItem>
-                      <DropdownMenuItem>{t("sqlite_editor")}</DropdownMenuItem>
-                      <DropdownMenuItem>{t("image_preview")}</DropdownMenuItem>
-                      <DropdownMenuItem>{t("plist_preview")}</DropdownMenuItem>
-                      <DropdownMenuItem>{t("font_preview")}</DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => onPreview(item.name, "hex")}
+                      >
+                        {t("hex_view")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => onPreview(item.name, "text")}
+                      >
+                        {t("text_editor")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => onPreview(item.name, "sqlite")}
+                      >
+                        {t("sqlite_editor")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => onPreview(item.name, "image")}
+                      >
+                        {t("image_preview")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => onPreview(item.name, "plist")}
+                      >
+                        {t("plist_preview")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => onPreview(item.name, "font")}
+                      >
+                        {t("font_preview")}
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -446,6 +523,7 @@ function FileTable({
 export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
   const { api, status, pid, device } = useSession();
   const { t } = useTranslation();
+  const { openSingletonPanel } = useDock();
 
   const initialPath = params?.path || "~";
   const initialTab = initialPath === "!" ? "bundle" : "home";
@@ -492,6 +570,33 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
       window.open(url.toString());
     },
     [pid, device, cwd],
+  );
+
+  const handlePreview = useCallback(
+    (fileName: string, type: string) => {
+      const fullPath = `${cwd}/${fileName}`;
+      const panelId = `preview-${fileName}`;
+
+      const componentMap: Record<string, string> = {
+        hex: "hexPreview",
+        text: "textEditor",
+        sqlite: "sqliteEditor",
+        image: "imagePreview",
+        plist: "plistPreview",
+        font: "fontPreview",
+      };
+
+      const component = componentMap[type];
+      if (!component) return;
+
+      openSingletonPanel({
+        id: panelId,
+        component,
+        title: fileName,
+        params: { path: fullPath },
+      });
+    },
+    [cwd, openSingletonPanel],
   );
 
   useEffect(() => {
@@ -550,6 +655,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
           isLoading={isLoading}
           cwd={cwd}
           onDownload={handleDownload}
+          onPreview={handlePreview}
         />
       </ResizablePanel>
     </ResizablePanelGroup>

@@ -25,6 +25,12 @@ import { InfoPlistTab } from "./tabs/InfoPlistTab";
 import { ModuleDetailTab } from "./tabs/ModuleDetailTab";
 import { ClassDetailTab } from "./tabs/ClassDetailTab";
 import { FinderTab } from "./tabs/FinderTab";
+import { ImagePreviewTab } from "./tabs/ImagePreviewTab";
+import { HexPreviewTab } from "./tabs/HexPreviewTab";
+import { TextEditorTab } from "./tabs/TextEditorTab";
+import { PlistPreviewTab } from "./tabs/PlistPreviewTab";
+import { SQLiteEditorTab } from "./tabs/SQLiteEditorTab";
+import { FontPreviewTab as FontPreviewTab } from "./tabs/FontPreviewTab";
 import { DockContext, useDockActions } from "@/context/DockContext";
 
 function WorkspaceContent() {
@@ -71,6 +77,12 @@ function WorkspaceContent() {
     moduleDetail: ModuleDetailTab,
     classDetail: ClassDetailTab,
     finder: FinderTab,
+    imagePreview: ImagePreviewTab,
+    hexPreview: HexPreviewTab,
+    textEditor: TextEditorTab,
+    plistPreview: PlistPreviewTab,
+    sqliteEditor: SQLiteEditorTab,
+    fontPreview: FontPreviewTab,
   };
 
   const onReady = (event: DockviewReadyEvent) => {
@@ -116,13 +128,25 @@ function WorkspaceContent() {
   return (
     <DockContext.Provider value={dockContextValue}>
       <div className="flex h-screen flex-col">
-        <ResizablePanelGroup direction="horizontal" className="h-full" autoSaveId="workspace-left-split">
-          <ResizablePanel defaultSize={20} minSize={15} className="flex flex-col">
+        <ResizablePanelGroup
+          direction="horizontal"
+          className="h-full"
+          autoSaveId="workspace-left-split"
+        >
+          <ResizablePanel
+            defaultSize={20}
+            minSize={15}
+            className="flex flex-col"
+          >
             <LeftPanelView />
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel>
-            <ResizablePanelGroup direction="vertical" className="h-full" autoSaveId="workspace-bottom-split">
+            <ResizablePanelGroup
+              direction="vertical"
+              className="h-full"
+              autoSaveId="workspace-bottom-split"
+            >
               <ResizablePanel>
                 <DockviewReact
                   // workaround: theme must not be empty, otherwise

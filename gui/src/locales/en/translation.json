@@ -96,5 +96,11 @@
   "sqlite_editor": "SQLite Editor",
   "image_preview": "Image Preview",
   "font_preview": "Font Preview",
-  "plist_preview": "Property List Preview"
+  "plist_preview": "Property List Preview",
+  "expand_all": "Expand All",
+  "collapse_all": "Collapse All",
+  "no_content": "No content",
+  "bytes_per_row": "Bytes/Row",
+  "hex_content": "Hex Content",
+  "ascii": "ASCII"
 }

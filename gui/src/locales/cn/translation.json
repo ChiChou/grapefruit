@@ -96,5 +96,11 @@
   "sqlite_editor": "SQLite 编辑器",
   "image_preview": "图片预览",
   "font_preview": "字体预览",
-  "plist_preview": "plist 预览"
+  "plist_preview": "plist 预览",
+  "expand_all": "全部展开",
+  "collapse_all": "全部折叠",
+  "no_content": "无内容",
+  "bytes_per_row": "每行字节",
+  "hex_content": "十六进制内容",
+  "ascii": "ASCII"
 }
