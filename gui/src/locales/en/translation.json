@@ -89,5 +89,12 @@
   "finder": "Finder",
   "empty_directory": "Empty directory",
   "modified": "Modified",
-  "copy": "Copy"
+  "copy": "Copy",
+  "open_with": "Open with",
+  "hex_view": "Hex View",
+  "text_editor": "Text Editor",
+  "sqlite_editor": "SQLite Editor",
+  "image_preview": "Image Preview",
+  "font_preview": "Font Preview",
+  "plist_preview": "Property List Preview"
 }

@@ -232,6 +232,16 @@ export function data(path: string) {
   return d.bytes().readByteArray(d.length());
 }
 
+export function preview(path: string) {
+  const limit = 1024 * 1024; // 1MB
+  const handle = ObjC.classes.NSFileHandle.fileHandleForReadingAtPath_(path);
+  if (handle.isNull()) throw new Error(`Cannot open file: ${path}`);
+
+  const data = handle.readDataOfLength_(limit) as NSData;
+  handle.closeFile();
+  return data.bytes().readByteArray(data.length());
+}
+
 export function saveText(path: string, text: string) {
   const nsstr = ObjC.classes.NSString.stringWithString_(text) as NSString;
   return nsstr.writeToFile_atomically_encoding_error_(

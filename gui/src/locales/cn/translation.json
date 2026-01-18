@@ -89,5 +89,12 @@
   "finder": "文件浏览",
   "empty_directory": "空目录",
   "modified": "修改时间",
-  "copy": "复制"
+  "copy": "复制",
+  "open_with": "打开方式",
+  "hex_view": "十六进制查看",
+  "text_editor": "文本编辑器",
+  "sqlite_editor": "SQLite 编辑器",
+  "image_preview": "图片预览",
+  "font_preview": "字体预览",
+  "plist_preview": "plist 预览"
 }

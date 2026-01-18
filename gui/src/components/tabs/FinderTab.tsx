@@ -9,6 +9,7 @@ import {
   Pencil,
   Download,
   Trash2,
+  EllipsisVertical,
 } from "lucide-react";
 import type { IDockviewPanelProps } from "dockview";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -26,6 +27,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ConnectionStatus, useSession } from "@/context/SessionContext";
 import type {
   MetaData,
@@ -321,9 +328,7 @@ function FileTable({
           {t("loading")}...
         </div>
         {cwd && (
-          <div className="px-2 py-1 text-xs text-gray-500 border-t">
-            {cwd}
-          </div>
+          <div className="px-2 py-1 text-xs text-gray-500 border-t">{cwd}</div>
         )}
       </div>
     );
@@ -336,9 +341,7 @@ function FileTable({
           {t("empty_directory")}
         </div>
         {cwd && (
-          <div className="px-2 py-1 text-xs text-gray-500 border-t">
-            {cwd}
-          </div>
+          <div className="px-2 py-1 text-xs text-gray-500 border-t">{cwd}</div>
         )}
       </div>
     );
@@ -355,6 +358,7 @@ function FileTable({
               <TableHead className="w-32"></TableHead>
               <TableHead className="w-24 text-right">{t("size")}</TableHead>
               <TableHead className="w-48">{t("modified")}</TableHead>
+              <TableHead className="w-4"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -402,6 +406,28 @@ function FileTable({
                 </TableCell>
                 <TableCell className="text-sm text-gray-500">
                   {formatDate(item.created)}
+                </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        title={t("open_with")}
+                      >
+                        <EllipsisVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      <DropdownMenuItem>{t("hex_view")}</DropdownMenuItem>
+                      <DropdownMenuItem>{t("text_editor")}</DropdownMenuItem>
+                      <DropdownMenuItem>{t("sqlite_editor")}</DropdownMenuItem>
+                      <DropdownMenuItem>{t("image_preview")}</DropdownMenuItem>
+                      <DropdownMenuItem>{t("plist_preview")}</DropdownMenuItem>
+                      <DropdownMenuItem>{t("font_preview")}</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))}
@@ -463,7 +489,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
       const url = new URL(window.location.href);
       url.pathname = `/api/download/${device}/${pid}`;
       url.searchParams.set("path", `${cwd}/${fileName}`);
-      window.open(url.toString(), "_blank");
+      window.open(url.toString());
     },
     [pid, device, cwd],
   );
