@@ -30,26 +30,6 @@ import { DockContext, useDockActions } from "@/context/DockContext";
 function WorkspaceContent() {
   const { status } = useSession();
   const { theme } = useTheme();
-  const [leftPanelSize, setLeftPanelSize] = useState<number>(() => {
-    const saved = localStorage.getItem("workspace-left-panel-size");
-    return saved ? Number(saved) : 20;
-  });
-  const [bottomPanelSize, setBottomPanelSize] = useState<number>(() => {
-    const saved = localStorage.getItem("workspace-bottom-panel-size");
-    return saved ? Number(saved) : 30;
-  });
-
-  const handleLeftPanelResize = (sizes: number[]) => {
-    const size = sizes[0];
-    setLeftPanelSize(size);
-    localStorage.setItem("workspace-left-panel-size", String(size));
-  };
-
-  const handleBottomPanelResize = (sizes: number[]) => {
-    const size = sizes[1];
-    setBottomPanelSize(size);
-    localStorage.setItem("workspace-bottom-panel-size", String(size));
-  };
 
   const getStatusColor = () => {
     switch (status) {
@@ -136,25 +116,13 @@ function WorkspaceContent() {
   return (
     <DockContext.Provider value={dockContextValue}>
       <div className="flex h-screen flex-col">
-        <ResizablePanelGroup
-          direction="horizontal"
-          className="h-full"
-          onLayout={handleLeftPanelResize}
-        >
-          <ResizablePanel
-            defaultSize={leftPanelSize}
-            minSize={15}
-            className="flex flex-col"
-          >
+        <ResizablePanelGroup direction="horizontal" className="h-full" autoSaveId="workspace-left-split">
+          <ResizablePanel defaultSize={20} minSize={15} className="flex flex-col">
             <LeftPanelView />
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel>
-            <ResizablePanelGroup
-              direction="vertical"
-              className="h-full"
-              onLayout={handleBottomPanelResize}
-            >
+            <ResizablePanelGroup direction="vertical" className="h-full" autoSaveId="workspace-bottom-split">
               <ResizablePanel>
                 <DockviewReact
                   // workaround: theme must not be empty, otherwise
@@ -166,7 +134,7 @@ function WorkspaceContent() {
                 />
               </ResizablePanel>
               <ResizableHandle />
-              <ResizablePanel defaultSize={bottomPanelSize}>
+              <ResizablePanel defaultSize={30}>
                 <BottomPanelView />
               </ResizablePanel>
             </ResizablePanelGroup>
