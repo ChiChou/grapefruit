@@ -224,9 +224,8 @@ export function data(path: string) {
 }
 
 export function saveText(path: string, text: string) {
-  return ObjC.classes.NSString.stringWithString_(
-    text,
-  ).writeToFile_atomically_encoding_error_(
+  const nsstr = ObjC.classes.NSString.stringWithString_(text) as NSString;
+  return nsstr.writeToFile_atomically_encoding_error_(
     path,
     true,
     NSUTF8StringEncoding,

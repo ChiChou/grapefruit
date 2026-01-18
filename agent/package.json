@@ -11,9 +11,11 @@
   "scripts": {
     "build:fruity": "frida-compile src/fruity/index.ts -o dist/fruity.js",
     "build:droid": "frida-compile src/droid/index.ts -o dist/droid.js",
-    "watch:fruity": "frida-compile --watch src/fruity/index.ts -o dist/fruity.js",
-    "watch:droid": "frida-compile --watch src/droid/index.ts -o dist/droid.js",
-    "build": "bun run lint && bun run build:fruity && bun run build:droid",
+    "build:transport": "frida-compile src/transport.ts -o dist/transport.js",
+    "watch:fruity": "bun run build:fruity -- --watch",
+    "watch:droid": "bun run build:droid -- --watch",
+    "watch:transport": "bun run build:transport -- --watch",
+    "build": "bun run lint && bun run build:fruity && bun run build:droid && bun run build:transport",
     "prepare": "bun run build",
     "lint": "eslint src/**/*.ts",
     "type:flags": "tsgo --declaration --experimentalDecorators --emitDeclarationOnly --outDir types --target es2019 --skipLibCheck",
@@ -25,11 +27,16 @@
     "@typescript-eslint/eslint-plugin": "^8.48.0",
     "@typescript-eslint/parser": "^8.48.0",
     "@typescript/native-preview": "7.0.0-dev.20251108.1",
-    "eslint": "^9.39.1"
+    "eslint": "^9.39.1",
+    "frida-compile": "^19.0.4"
   },
   "dependencies": {
     "frida-java-bridge": "^7.0.10",
     "frida-objc-bridge": "^8.0.5",
+    "frida-remote-stream": "^6.0.3",
     "frida-swift-bridge": "^3.0.2"
-  }
+  },
+  "trustedDependencies": [
+    "frida"
+  ]
 }
