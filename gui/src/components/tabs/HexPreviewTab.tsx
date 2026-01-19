@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import type { IDockviewPanelProps } from "dockview";
-import { useSession } from "@/context/SessionContext";
+
+import { ConnectionStatus, useSession } from "@/context/SessionContext";
+import HexView, { type Stride } from "@/components/HexView";
 
 export interface HexPreviewTabParams {
   path: string;
@@ -9,23 +11,24 @@ export interface HexPreviewTabParams {
 export function HexPreviewTab({
   params,
 }: IDockviewPanelProps<HexPreviewTabParams>) {
-  const { api, status } = useSession();
+  const { api, status, device, pid } = useSession();
   const [content, setContent] = useState<Uint8Array | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  const [stride, setStride] = useState<Stride>(16);
   const fullPath = params?.path || "";
-  const apiReady = status === "ready" && !!api;
+
+  const fileUrl = `/api/download/${device}/${pid}?path=${encodeURIComponent(fullPath)}`;
 
   const loadContent = useCallback(async () => {
-    if (!apiReady || !fullPath) return;
+    if (!api || status != ConnectionStatus.Ready || !fullPath) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
-      const result = await api.fs.preview(fullPath);
-      const uint8Array = new Uint8Array(result);
+      const r = await fetch(fileUrl);
+      const uint8Array = await r.bytes();
       setContent(uint8Array);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load file");
@@ -33,7 +36,7 @@ export function HexPreviewTab({
     } finally {
       setIsLoading(false);
     }
-  }, [api, apiReady, fullPath]);
+  }, [api, status, fullPath, fileUrl]);
 
   useEffect(() => {
     loadContent();
@@ -64,8 +67,22 @@ export function HexPreviewTab({
   }
 
   return (
-    <div className="h-full flex items-center justify-center text-muted-foreground">
-      <span className="font-mono text-sm">{fullPath}</span>
+    <div className="h-full flex flex-col">
+      <div className="flex items-center gap-2 p-2 border-b">
+        <span className="text-sm text-muted-foreground">Stride:</span>
+        <select
+          value={stride}
+          onChange={(e) => setStride(Number(e.target.value) as Stride)}
+          className="px-2 py-1 text-sm border rounded bg-background"
+        >
+          <option value={8}>8</option>
+          <option value={16}>16</option>
+          <option value={32}>32</option>
+        </select>
+      </div>
+      <div className="flex-1 w-full h-full min-h-0">
+        <HexView data={content} stride={stride} />
+      </div>
     </div>
   );
 }
