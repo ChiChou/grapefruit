@@ -77,6 +77,8 @@ function typeFor(filename: string): string {
     case "css":
     case "xml":
     case "pem":
+    case "json":
+    case "ini":
       return "text";
 
     case "sqlite":
