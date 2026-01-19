@@ -10,20 +10,14 @@ export const ConnectionStatus = {
 export type ConnectionStatusType =
   (typeof ConnectionStatus)[keyof typeof ConnectionStatus];
 
-export interface LogEntry {
-  timestamp: Date;
-  level: string;
-  message: string;
-}
-
 interface SessionContextType {
   device: string | undefined;
   bundle: string | undefined;
   pid: number | undefined;
   api: AsyncFruityRPC | null;
   status: ConnectionStatusType;
-  syslogs: LogEntry[];
-  logs: LogEntry[];
+  syslogs: string[];
+  logs: string[];
 }
 
 const defaultContext: SessionContextType = {

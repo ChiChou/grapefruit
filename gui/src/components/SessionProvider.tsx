@@ -5,7 +5,6 @@ import { io, Socket } from "socket.io-client";
 import {
   ConnectionStatus,
   SessionContext,
-  type LogEntry,
   type ConnectionStatusType,
 } from "@/context/SessionContext";
 
@@ -23,8 +22,8 @@ function SessionProvider({ children }: { children: ReactNode }) {
     ConnectionStatus.Disconnected,
   );
   const [pid, setPid] = useState<number | undefined>();
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [syslogs, setSyslogs] = useState<LogEntry[]>([]);
+  const [logs, setLogs] = useState<string[]>([]);
+  const [syslogs, setSyslogs] = useState<string[]>([]);
 
   const { socket, api } = useMemo(() => {
     if (!device || !bundle) {
@@ -48,32 +47,22 @@ function SessionProvider({ children }: { children: ReactNode }) {
       .on("log", (level: string, message: string) => {
         console.log("agent log", level, message);
         setLogs((prevLogs) => {
-          const entry: LogEntry = {
-            timestamp: new Date(),
-            level,
-            message,
-          };
           const trimmedLogs =
             prevLogs.length >= MAX_LOGS
               ? prevLogs.slice(prevLogs.length - (MAX_LOGS - 1))
               : prevLogs;
 
-          return [...trimmedLogs, entry];
+          return [...trimmedLogs, message];
         });
       })
       .on("syslog", (message: string) => {
         console.log("syslog", message);
         setSyslogs((prevSyslogs) => {
-          const entry: LogEntry = {
-            timestamp: new Date(),
-            level: "info",
-            message,
-          };
           const trimmedSyslogs =
             prevSyslogs.length >= MAX_LOGS
               ? prevSyslogs.slice(prevSyslogs.length - (MAX_LOGS - 1))
               : prevSyslogs;
-          return [...trimmedSyslogs, entry];
+          return [...trimmedSyslogs, message];
         });
       })
       .on("connect", () => {
