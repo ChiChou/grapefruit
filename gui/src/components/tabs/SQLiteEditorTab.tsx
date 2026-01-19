@@ -1,43 +1,95 @@
 import { useCallback, useEffect, useState } from "react";
 import type { IDockviewPanelProps } from "dockview";
-import { useSession } from "@/context/SessionContext";
+import Editor from "@monaco-editor/react";
+
+import type { DumpResult } from "../../../../agent/types/common/sqlite";
+
+import { useSession, ConnectionStatus } from "@/context/SessionContext";
+import { useTheme } from "@/components/theme-provider";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@/components/ui/resizable";
 
 export interface SQLiteEditorTabParams {
   path: string;
 }
 
-export function SQLiteEditorTab({ params }: IDockviewPanelProps<SQLiteEditorTabParams>) {
+export function SQLiteEditorTab({
+  params,
+}: IDockviewPanelProps<SQLiteEditorTabParams>) {
+  const { theme } = useTheme();
   const { api, status } = useSession();
-  const [content, setContent] = useState<Uint8Array | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+
+  const [tables, setTables] = useState<string[]>([]);
+  const [filteredTables, setFilteredTables] = useState<string[]>([]);
+  const [tableSearch, setTableSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [sql, setSQL] = useState("SELECT * FROM ");
+  const [dumpResult, setDumpResult] = useState<DumpResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fullPath = params?.path || "";
-  const apiReady = status === "ready" && !!api;
+  const apiReady = status === ConnectionStatus.Ready && !!api;
 
   const loadContent = useCallback(async () => {
     if (!apiReady || !fullPath) return;
 
-    setIsLoading(true);
+    setLoading(true);
     setError(null);
 
     try {
-      const result = await api.fs.preview(fullPath);
-      const uint8Array = new Uint8Array(result);
-      setContent(uint8Array);
+      const tableList = await api.sqlite.tables(fullPath);
+      setTables(tableList);
+      setFilteredTables(tableList);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load file");
-      setContent(null);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   }, [api, apiReady, fullPath]);
+
+  const loadTableData = useCallback(
+    async (tableName: string) => {
+      if (!apiReady || !fullPath) return;
+
+      try {
+        const result = await api.sqlite.dump(fullPath, tableName);
+        setDumpResult(result);
+        setSQL(`SELECT * FROM "${tableName}" LIMIT 100`);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to load table data",
+        );
+      }
+    },
+    [api, apiReady, fullPath],
+  );
 
   useEffect(() => {
     loadContent();
   }, [loadContent]);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (tableSearch.trim() === "") {
+      setFilteredTables(tables);
+    } else {
+      const lower = tableSearch.toLowerCase();
+      setFilteredTables(tables.filter((t) => t.toLowerCase().includes(lower)));
+    }
+  }, [tableSearch, tables]);
+
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
         Loading...
@@ -53,17 +105,93 @@ export function SQLiteEditorTab({ params }: IDockviewPanelProps<SQLiteEditorTabP
     );
   }
 
-  if (!content) {
-    return (
-      <div className="flex items-center justify-center h-full text-muted-foreground">
-        No content
-      </div>
-    );
-  }
-
   return (
-    <div className="h-full flex items-center justify-center text-muted-foreground">
-      <span className="font-mono text-sm">{fullPath}</span>
-    </div>
+    <ResizablePanelGroup
+      direction="horizontal"
+      autoSaveId="sqlite-editor"
+      className="h-full"
+    >
+      <ResizablePanel defaultSize={30} minSize={20}>
+        <div className="h-full flex flex-col border-r">
+          <div className="p-2 border-b">
+            <Input
+              placeholder="Search tables..."
+              value={tableSearch}
+              onChange={(e) => setTableSearch(e.target.value)}
+            />
+          </div>
+          <div className="flex-1 overflow-auto">
+            {filteredTables.map((table) => (
+              <button
+                key={table}
+                onClick={() => loadTableData(table)}
+                className="w-full px-3 py-2 text-left hover:bg-accent hover:text-accent-foreground text-sm truncate"
+              >
+                {table}
+              </button>
+            ))}
+          </div>
+        </div>
+      </ResizablePanel>
+      <ResizableHandle withHandle />
+      <ResizablePanel defaultSize={70} minSize={30}>
+        <ResizablePanelGroup direction="vertical" className="h-full">
+          <ResizablePanel defaultSize={50} minSize={20}>
+            <Editor
+              language="sql"
+              value={sql}
+              theme={theme === "dark" ? "vs-dark" : "light"}
+              onChange={(value) => setSQL(value || "")}
+              options={{
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                fontSize: 13,
+              }}
+            />
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultSize={50} minSize={20}>
+            <div className="h-full overflow-auto">
+              {dumpResult ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      {dumpResult.header.map((h, i) => (
+                        <TableHead key={i}>
+                          <div className="flex flex-col">
+                            <span>{h.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {h.type}
+                            </span>
+                          </div>
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {dumpResult.data.map((row, rowIndex) => (
+                      <TableRow key={rowIndex}>
+                        {dumpResult.header.map((h, colIndex) => (
+                          <TableCell key={colIndex}>
+                            {row[colIndex] === null ||
+                            row[colIndex] === undefined
+                              ? "NULL"
+                              : String(row[colIndex])}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                  Select a table to view data
+                </div>
+              )}
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </ResizablePanel>
+    </ResizablePanelGroup>
   );
 }

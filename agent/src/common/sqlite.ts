@@ -2,10 +2,34 @@ function quote(table: string) {
   return `"${table.replace(/"/g, "")}"`;
 }
 
+function convertArrayBuffer(item: unknown) {
+  if (item instanceof ArrayBuffer) {
+    const view = new Uint8Array(item);
+    const maxBytes = 12;
+    const hexParts: string[] = [];
+    const count = Math.min(view.length, maxBytes);
+
+    for (let i = 0; i < count; i++) {
+      hexParts.push(view[i].toString(16).padStart(2, "0"));
+    }
+
+    const suffix = view.length > maxBytes ? "…" : "";
+    return `X'${hexParts.join("")}${suffix}'`;
+  }
+
+  return item;
+}
+
 function* all(statement: SqliteStatement) {
   let row;
   /* eslint no-cond-assign: 0 */
-  while ((row = statement.step()) !== null) yield row;
+  while ((row = statement.step()) !== null) yield row.map(convertArrayBuffer);
+}
+
+export interface ColumnInfo {
+  name: string;
+  type: string;
+  // notNull: string;
 }
 
 class Database {
@@ -19,15 +43,24 @@ class Database {
     const SQL_TABLES =
       'SELECT tbl_name FROM sqlite_master WHERE type="table" and tbl_name <> "sqlite_sequence"';
     const statement = this.prepare(SQL_TABLES);
-    return [...all(statement)].map((row) => row[0]);
+    return [...all(statement)].map((row) => row[0] as string);
   }
 
-  columns(table: string) {
-    // I know it's an injection, but since this tool allows you query arbitary sql,
-    // leave this alone or help me commit some code to escape the table name
+  columns(table: string): ColumnInfo[] {
+    type TableInfo = [
+      cid: number,
+      name: string,
+      type: string,
+      notNull: boolean,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      defaultValue: any,
+      pk: boolean,
+    ];
 
     const statement = this.prepare(`PRAGMA table_info(${quote(table)})`);
-    return [...all(statement)].map((info: unknown[]) => info.slice(1, 3));
+    return [...(all(statement) as Generator<TableInfo>)].map((r) => {
+      return { name: r[1], type: r[2] };
+    });
   }
 
   prepare(sql: string, args: unknown[] = []) {
@@ -91,6 +124,12 @@ Script.bindWeak(globalThis, function dispose() {
   }
 });
 
+export interface DumpResult {
+  header: ColumnInfo[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: any[];
+}
+
 export function dump(path: string, table: string) {
   const db = new Database(path);
   const sql = `select * from ${quote(table)} limit 500`;
@@ -98,6 +137,7 @@ export function dump(path: string, table: string) {
     header: db.columns(table),
     data: [...all(db.prepare(sql))],
   };
+
   db.close();
   return result;
 }
