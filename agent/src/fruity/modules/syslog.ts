@@ -12,10 +12,7 @@ let stream: UnixInputStream | null = null;
 
 export function start() {
   const libc = Process.findModuleByName("libSystem.B.dylib");
-
-  if (!libc) {
-    throw new Error("libSystem.B.dylib not found");
-  }
+  if (!libc) throw new Error("libSystem.B.dylib not found");
 
   const close = new NativeFunction(libc.findExportByName("close")!, "int", [
     "int",
@@ -51,12 +48,13 @@ export function start() {
 
     stream.read(4096).then((buf) => {
       if (buf.byteLength) send({ subject }, buf);
-
       setImmediate(read);
     });
   }
 
   setImmediate(read);
+
+  Script.bindWeak(globalThis, stop);
 }
 
 export function stop() {

@@ -10,12 +10,20 @@ export const ConnectionStatus = {
 export type ConnectionStatusType =
   (typeof ConnectionStatus)[keyof typeof ConnectionStatus];
 
+export interface LogEntry {
+  timestamp: Date;
+  level: string;
+  message: string;
+}
+
 interface SessionContextType {
   device: string | undefined;
   bundle: string | undefined;
   pid: number | undefined;
   api: AsyncFruityRPC | null;
   status: ConnectionStatusType;
+  syslogs: LogEntry[];
+  logs: LogEntry[];
 }
 
 const defaultContext: SessionContextType = {
@@ -24,6 +32,8 @@ const defaultContext: SessionContextType = {
   pid: undefined,
   api: null,
   status: ConnectionStatus.Disconnected,
+  syslogs: [],
+  logs: [],
 };
 
 export const SessionContext = React.createContext(defaultContext);

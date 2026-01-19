@@ -96,15 +96,12 @@ function WorkspaceContent() {
       } catch (e) {
         console.error("Failed to restore dockview layout:", e);
         localStorage.removeItem("workspace-dockview-layout");
-        // Create default layout on restore failure
         createDefaultLayout(event.api);
       }
     } else {
-      // Default layout if no saved layout exists
       createDefaultLayout(event.api);
     }
 
-    // Save layout on changes - use event.api directly to avoid stale closure
     event.api.onDidLayoutChange(() => {
       const layout = event.api.toJSON();
       localStorage.setItem("workspace-dockview-layout", JSON.stringify(layout));

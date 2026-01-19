@@ -25,6 +25,7 @@
   "logs": "Logs",
   "shell": "Shell",
   "hooks": "Hooks",
+  "agent_logs": "Agent Logs",
   "new_to_grapefruit": "New to Grapefruit? Check them out",
   "connected": "Connected",
   "disconnected": "Disconnected",

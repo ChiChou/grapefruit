@@ -5,6 +5,7 @@ import { io, Socket } from "socket.io-client";
 import {
   ConnectionStatus,
   SessionContext,
+  type LogEntry,
   type ConnectionStatusType,
 } from "@/context/SessionContext";
 
@@ -14,12 +15,16 @@ import {
   type SessionServerEvents,
 } from "@/lib/rpc";
 
+const MAX_LOGS = 1024;
+
 function SessionProvider({ children }: { children: ReactNode }) {
   const { device, bundle } = useParams();
   const [status, setStatus] = useState<ConnectionStatusType>(
     ConnectionStatus.Disconnected,
   );
   const [pid, setPid] = useState<number | undefined>();
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [syslogs, setSyslogs] = useState<LogEntry[]>([]);
 
   const { socket, api } = useMemo(() => {
     if (!device || !bundle) {
@@ -39,6 +44,37 @@ function SessionProvider({ children }: { children: ReactNode }) {
       .on("ready", (newPid: number) => {
         setStatus(ConnectionStatus.Ready);
         setPid(newPid);
+      })
+      .on("log", (level: string, message: string) => {
+        console.log("agent log", level, message);
+        setLogs((prevLogs) => {
+          const entry: LogEntry = {
+            timestamp: new Date(),
+            level,
+            message,
+          };
+          const trimmedLogs =
+            prevLogs.length >= MAX_LOGS
+              ? prevLogs.slice(prevLogs.length - (MAX_LOGS - 1))
+              : prevLogs;
+
+          return [...trimmedLogs, entry];
+        });
+      })
+      .on("syslog", (message: string) => {
+        console.log("syslog", message);
+        setSyslogs((prevSyslogs) => {
+          const entry: LogEntry = {
+            timestamp: new Date(),
+            level: "info",
+            message,
+          };
+          const trimmedSyslogs =
+            prevSyslogs.length >= MAX_LOGS
+              ? prevSyslogs.slice(prevSyslogs.length - (MAX_LOGS - 1))
+              : prevSyslogs;
+          return [...trimmedSyslogs, entry];
+        });
       })
       .on("connect", () => {
         setStatus(ConnectionStatus.Connecting);
@@ -73,8 +109,10 @@ function SessionProvider({ children }: { children: ReactNode }) {
       pid,
       api,
       status,
+      logs,
+      syslogs,
     }),
-    [device, bundle, pid, api, status],
+    [device, bundle, pid, api, status, logs, syslogs],
   );
 
   if (!device || !bundle) {

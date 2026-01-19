@@ -8,6 +8,8 @@ import type {
 
 export interface SessionClientEvents {
   ready: (pid: number) => void;
+  log: (level: string, text: string) => void;
+  syslog: (text: string) => void;
 }
 
 export interface SessionServerEvents {
@@ -31,6 +33,7 @@ export function createAPI(
         {},
         {
           get(_nsTarget, method: string) {
+            console.debug("async rpc", method);
             return (...args: any[]) => {
               return new Promise((resolve, reject) => {
                 socket.emit(

@@ -25,6 +25,7 @@
   "logs": "日志",
   "shell": "终端",
   "hooks": "钩子",
+  "agent_logs": "Agent 日志",
   "new_to_grapefruit": "需要快速上手？请查阅",
   "connected": "已连接",
   "disconnected": "连接断开",

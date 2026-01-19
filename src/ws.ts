@@ -18,6 +18,7 @@ interface ServerToClientEvents {
   change: () => void;
   detached: (reason: string) => void;
   log: (level: string, text: string) => void;
+  syslog: (text: string) => void;
   download: (msg: DownloadMessage) => void;
 }
 
@@ -90,9 +91,10 @@ async function onConnection(
 
   script.message.connect((message, data) => {
     if (message.type === "send") {
-      if (message.payload?.subject === "download") {
-        const copy = Object.assign({}, message.payload, { data });
-        socket.emit("download", copy as DownloadMessage);
+      if (message.payload.subject === "syslog" && data) {
+        const text = data.toString();
+        console.log(`[syslog]`, text);
+        socket.emit("syslog", text);
       }
     } else if (message.type === "error") {
       console.error("script error:", message);
