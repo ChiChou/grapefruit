@@ -5,11 +5,7 @@ import { useSession } from "@/context/SessionContext";
 import { ChevronDown, ChevronUp, FileJson } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  PlistNode,
-  type PlistValue,
-  buildTree,
-} from "@/components/PlistNode";
+import PlistView, { type PlistValue } from "@/components/PlistView";
 
 export interface PlistPreviewTabParams {
   path: string;
@@ -77,8 +73,6 @@ export function PlistPreviewTab({
     );
   }
 
-  const tree = buildTree(data);
-
   return (
     <div className="h-full flex flex-col">
       <div className="flex-none px-4 py-2 bg-muted/50 border-b flex items-center justify-between">
@@ -108,22 +102,7 @@ export function PlistPreviewTab({
         </div>
       </div>
       <div className="flex-1 overflow-auto p-4">
-        {tree.children ? (
-          tree.children.map((child, i) => (
-            <PlistNode
-              key={i}
-              node={child}
-              forceExpanded={expandAll}
-              forceCollapsed={!expandAll}
-            />
-          ))
-        ) : (
-          <PlistNode
-            node={tree}
-            forceExpanded={expandAll}
-            forceCollapsed={!expandAll}
-          />
-        )}
+        <PlistView data={data} expanded={expandAll} />
       </div>
     </div>
   );

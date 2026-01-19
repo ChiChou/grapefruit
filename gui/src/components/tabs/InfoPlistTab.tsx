@@ -6,7 +6,7 @@ import { Download, Copy, Check } from "lucide-react";
 import Editor, { loader } from "@monaco-editor/react";
 import { useTheme } from "@/components/theme-provider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlistNode, buildTree, type PlistValue } from "@/components/PlistNode";
+import PlistView, { type PlistValue } from "@/components/PlistView";
 
 loader.init().then((monaco) => {
   monaco.languages.register({ id: "xml" });
@@ -53,10 +53,17 @@ export function InfoPlistTab() {
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between p-4 border-b">
-        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "tree" | "text")}>
+        <Tabs
+          value={viewMode}
+          onValueChange={(v) => setViewMode(v as "tree" | "text")}
+        >
           <TabsList className="w-auto h-8">
-            <TabsTrigger value="tree" className="px-3">{t("tree")}</TabsTrigger>
-            <TabsTrigger value="text" className="px-3">{t("text")}</TabsTrigger>
+            <TabsTrigger value="tree" className="px-3">
+              {t("tree")}
+            </TabsTrigger>
+            <TabsTrigger value="text" className="px-3">
+              {t("text")}
+            </TabsTrigger>
           </TabsList>
         </Tabs>
         <div className="flex items-center gap-2">
@@ -85,23 +92,18 @@ export function InfoPlistTab() {
         </div>
       </div>
       <div className="flex-1 overflow-hidden">
-        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "tree" | "text")} className="h-full flex flex-col">
+        <Tabs
+          value={viewMode}
+          onValueChange={(v) => setViewMode(v as "tree" | "text")}
+          className="h-full flex flex-col"
+        >
           <TabsContent value="tree" className="flex-1 overflow-auto p-4 m-0">
             {loading ? (
               <div className="flex items-center justify-center h-full text-gray-500">
                 {t("loading")}...
               </div>
             ) : plistData ? (
-              (() => {
-                const tree = buildTree(plistData);
-                return tree.children ? (
-                  tree.children.map((child, i) => (
-                    <PlistNode key={i} node={child} />
-                  ))
-                ) : (
-                  <PlistNode node={tree} />
-                );
-              })()
+              <PlistView data={plistData} expanded={true} />
             ) : (
               <div className="flex items-center justify-center h-full text-gray-500">
                 {t("no_content")}

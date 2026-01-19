@@ -24,7 +24,7 @@ function isArray(value: PlistValue): value is PlistValue[] {
   return Array.isArray(value);
 }
 
-export function buildTree(
+function buildTree(
   value: PlistValue,
   key?: string,
   expanded = true,
@@ -50,7 +50,7 @@ export function buildTree(
   return { key, value, expanded: true };
 }
 
-export function PlistNode({
+function PlistNode({
   node,
   depth = 0,
   forceExpanded,
@@ -148,5 +148,36 @@ export function PlistNode({
         </div>
       )}
     </div>
+  );
+}
+
+interface PlistViewProps {
+  data:
+    | string
+    | number
+    | boolean
+    | PlistValue[]
+    | { [key: string]: PlistValue };
+  expanded: boolean;
+}
+
+export default function PlistView({ data, expanded }: PlistViewProps) {
+  const tree = buildTree(data);
+
+  return tree.children ? (
+    tree.children.map((child, i) => (
+      <PlistNode
+        key={i}
+        node={child}
+        forceCollapsed={!expanded}
+        forceExpanded={expanded}
+      />
+    ))
+  ) : (
+    <PlistNode
+      node={tree}
+      forceCollapsed={!expanded}
+      forceExpanded={expanded}
+    />
   );
 }
