@@ -102,5 +102,7 @@
   "no_content": "无内容",
   "bytes_per_row": "每行字节",
   "hex_content": "十六进制内容",
-  "ascii": "ASCII"
+  "ascii": "ASCII",
+  "tree": "树形",
+  "text": "文本"
 }

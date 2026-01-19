@@ -1,0 +1,152 @@
+import { useEffect, useState } from "react";
+import { ChevronRight, ChevronDown } from "lucide-react";
+
+export type PlistValue =
+  | string
+  | number
+  | boolean
+  | null
+  | PlistValue[]
+  | { [key: string]: PlistValue };
+
+export interface PlistTreeNode {
+  key?: string;
+  value: PlistValue;
+  expanded: boolean;
+  children?: PlistTreeNode[];
+}
+
+function isObject(value: PlistValue): value is { [key: string]: PlistValue } {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isArray(value: PlistValue): value is PlistValue[] {
+  return Array.isArray(value);
+}
+
+export function buildTree(
+  value: PlistValue,
+  key?: string,
+  expanded = true,
+): PlistTreeNode {
+  if (isObject(value)) {
+    const entries = Object.entries(value);
+    const children = entries.map(([k, v]) => buildTree(v, k, expanded));
+    return {
+      key,
+      value,
+      expanded,
+      children,
+    };
+  } else if (isArray(value)) {
+    const children = value.map((v, i) => buildTree(v, `[${i}]`, expanded));
+    return {
+      key,
+      value,
+      expanded,
+      children,
+    };
+  }
+  return { key, value, expanded: true };
+}
+
+export function PlistNode({
+  node,
+  depth = 0,
+  forceExpanded,
+  forceCollapsed,
+}: {
+  node: PlistTreeNode;
+  depth?: number;
+  forceExpanded?: boolean;
+  forceCollapsed?: boolean;
+}) {
+  const [expanded, setExpanded] = useState(
+    forceCollapsed ? false : (forceExpanded ?? node.expanded),
+  );
+
+  useEffect(() => {
+    if (forceCollapsed) {
+      setExpanded(false);
+    } else if (forceExpanded !== undefined) {
+      setExpanded(forceExpanded);
+    }
+  }, [forceExpanded, forceCollapsed]);
+
+  const hasChildren = node.children && node.children.length > 0;
+
+  const renderValue = (value: PlistValue): string => {
+    if (value === null) return "null";
+    if (typeof value === "string") {
+      return `"${value}"`;
+    }
+    if (typeof value === "boolean") {
+      return value ? "true" : "false";
+    }
+    return String(value);
+  };
+
+  return (
+    <div>
+      <div
+        className="flex items-center hover:bg-gray-100 dark:hover:bg-gray-800 py-0.5 font-mono"
+        style={{ paddingLeft: `${depth * 20 + 8}px` }}
+      >
+        {hasChildren ? (
+          <button
+            type="button"
+            onClick={() => setExpanded(!expanded)}
+            className="p-0.5 mr-1"
+          >
+            {expanded ? (
+              <ChevronDown className="w-3 h-3" />
+            ) : (
+              <ChevronRight className="w-3 h-3" />
+            )}
+          </button>
+        ) : (
+          <span className="w-5" />
+        )}
+        {node.key && (
+          <span className="text-blue-600 dark:text-blue-400 mr-2 text-sm after:content-[':']">
+            {node.key}
+          </span>
+        )}
+        {hasChildren ? (
+          <span className="text-gray-500 text-sm">
+            {isObject(node.value) ? "{" : "["}
+            {!expanded && node.children && node.children.length > 0 && (
+              <span className="text-gray-400 ml-2">
+                ...{node.children.length} items
+              </span>
+            )}
+            {!expanded && "}"}
+          </span>
+        ) : (
+          <span className="text-orange-600 dark:text-orange-400 font-mono text-sm">
+            {renderValue(node.value)}
+          </span>
+        )}
+      </div>
+      {expanded && hasChildren && (
+        <div>
+          {node.children!.map((child, i) => (
+            <PlistNode
+              key={i}
+              node={child}
+              depth={depth + 1}
+              forceExpanded={forceExpanded}
+              forceCollapsed={forceCollapsed}
+            />
+          ))}
+          <div
+            className="text-gray-500 text-sm"
+            style={{ paddingLeft: `${depth * 20 + 8 + 20}px` }}
+          >
+            {isObject(node.value) ? "}" : "]"}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

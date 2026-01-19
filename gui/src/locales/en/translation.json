@@ -102,5 +102,7 @@
   "no_content": "No content",
   "bytes_per_row": "Bytes/Row",
   "hex_content": "Hex Content",
-  "ascii": "ASCII"
+  "ascii": "ASCII",
+  "tree": "Tree",
+  "text": "Text"
 }
