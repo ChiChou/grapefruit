@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 import type { ClassInfo } from "../../../../agent/types/fruity/modules/classdump";
 
@@ -30,6 +31,7 @@ export function ClassDetailTab({
   const [isLoading, setIsLoading] = useState(false);
   const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
   const [showInherited, setShowInherited] = useState(false);
+  const [methodSearch, setMethodSearch] = useState("");
 
   useEffect(() => {
     if (status !== ConnectionStatus.Ready || !api) return;
@@ -74,12 +76,18 @@ export function ClassDetailTab({
   );
   const displayedMethods = useMemo(() => {
     if (!classInfo) return [];
-    const allMethods = Object.entries(classInfo.methods);
-    if (showInherited) {
-      return allMethods;
+    let allMethods = Object.entries(classInfo.methods);
+    if (!showInherited) {
+      allMethods = allMethods.filter(([method]) => ownMethodsSet.has(method));
     }
-    return allMethods.filter(([method]) => ownMethodsSet.has(method));
-  }, [classInfo, showInherited, ownMethodsSet]);
+    if (methodSearch.trim()) {
+      const query = methodSearch.toLowerCase();
+      allMethods = allMethods.filter(([method]) =>
+        method.toLowerCase().includes(query),
+      );
+    }
+    return allMethods;
+  }, [classInfo, showInherited, ownMethodsSet, methodSearch]);
 
   if (isLoading) {
     return (
@@ -191,8 +199,7 @@ export function ClassDetailTab({
         )}
 
         {/* Methods */}
-        {displayedMethods.length > 0 && (
-          <section>
+        <section>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-medium text-gray-500">
                 {t("methods")} ({displayedMethods.length})
@@ -213,30 +220,41 @@ export function ClassDetailTab({
                 </Label>
               </div>
             </div>
-            <div className="border rounded">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("method")}</TableHead>
-                    <TableHead>{t("address")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {displayedMethods.map(([method, addr]) => (
-                    <TableRow key={method}>
-                      <TableCell className="font-mono text-xs">
-                        {method}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs">
-                        {addr}
-                      </TableCell>
+            <Input
+              placeholder={t("search")}
+              value={methodSearch}
+              onChange={(e) => setMethodSearch(e.target.value)}
+              className="mb-2"
+            />
+            {displayedMethods.length > 0 ? (
+              <div className="border rounded">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t("method")}</TableHead>
+                      <TableHead>{t("address")}</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {displayedMethods.map(([method, addr]) => (
+                      <TableRow key={method}>
+                        <TableCell className="font-mono text-xs">
+                          {method}
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">
+                          {addr}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500 py-4 text-center border rounded">
+                {t("no_results")}
+              </div>
+            )}
           </section>
-        )}
       </div>
     </div>
   );
