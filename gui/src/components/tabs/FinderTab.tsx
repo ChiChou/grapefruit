@@ -121,14 +121,13 @@ function DirectoryTree({
 }) {
   const [nodes, setNodes] = useState<TreeNode[]>([]);
   const [activePath, setActivePath] = useState<string | null>(null);
-  const rootName = root === "!" ? "Bundle" : "Home";
 
   useEffect(() => {
     if (!apiReady) return;
     setNodes([
       {
         meta: {
-          name: rootName,
+          name: root,
           dir: true,
           protection: null,
           size: null,
@@ -155,7 +154,7 @@ function DirectoryTree({
         setNodes([
           {
             meta: {
-              name: rootName,
+              name: root,
               dir: true,
               protection: null,
               size: null,
@@ -174,7 +173,7 @@ function DirectoryTree({
         setNodes([
           {
             meta: {
-              name: rootName,
+              name: root,
               dir: true,
               protection: null,
               size: null,
@@ -189,7 +188,7 @@ function DirectoryTree({
           },
         ]);
       });
-  }, [apiReady, root, rootName, loadDirectory]);
+  }, [apiReady, root, loadDirectory]);
 
   const updateNodeAtPath = (
     nodes: TreeNode[],
@@ -237,6 +236,11 @@ function DirectoryTree({
     const targetNode = getNodeAtPath(nodes, path, 0);
     if (!targetNode) return;
 
+    const isRootNode = path.length === 1 && path[0] === root;
+    const fullPath = isRootNode ? root : `${root}/${path.slice(1).join("/")}`;
+
+    onDirectorySelect(fullPath);
+
     if (targetNode.isExpanded) {
       setNodes((prev) =>
         updateNodeAtPath(prev, path, 0, (n) => ({
@@ -257,17 +261,12 @@ function DirectoryTree({
       return;
     }
 
-    const isRootNode = path.length === 1 && path[0] === rootName;
-    const fullPath = isRootNode ? root : `${root}/${path.slice(1).join("/")}`;
-
     setNodes((prev) =>
       updateNodeAtPath(prev, path, 0, (n) => ({
         ...n,
         isLoading: true,
       })),
     );
-
-    onDirectorySelect(fullPath);
 
     loadDirectory(fullPath)
       .then(({ list }) => {
@@ -520,19 +519,24 @@ function FileTable({
   );
 }
 
+const PREFIXES = {
+  home: "~",
+  bundle: "!",
+} as const;
+
 export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
   const { api, status, pid, device } = useSession();
   const { t } = useTranslation();
   const { openSingletonPanel } = useDock();
 
-  const initialPath = params?.path || "~";
-  const initialTab = initialPath === "!" ? "bundle" : "home";
+  const initialPath = params?.path || PREFIXES.home;
+  const initialTab = initialPath === PREFIXES.bundle ? "bundle" : "home";
 
-  const [activeTab, setActiveTab] = useState<"bundle" | "home">(initialTab);
+  const [activeTab, setActiveTab] = useState<keyof typeof PREFIXES>(initialTab);
   const [items, setItems] = useState<MetaData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [cwd, setCwd] = useState<string>("");
 
+  const [fullCwd, setFullCwd] = useState<string | null>(null);
   const apiReady = status === ConnectionStatus.Ready && !!api;
 
   const loadDirectory = useCallback(
@@ -550,7 +554,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
         .then(({ cwd, list }) => {
           const data = list.filter((e) => !e.dir);
           data.sort((a, b) => a.name.localeCompare(b.name));
-          setCwd(cwd);
+          setFullCwd(cwd);
           setItems(data);
         })
         .catch(() => {
@@ -563,18 +567,19 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
 
   const handleDownload = useCallback(
     (fileName: string) => {
-      if (pid === undefined) return;
+      if (pid === undefined || fullCwd === null) return;
+
       const url = new URL(window.location.href);
       url.pathname = `/api/download/${device}/${pid}`;
-      url.searchParams.set("path", `${cwd}/${fileName}`);
+      url.searchParams.set("path", `${fullCwd}/${fileName}`);
       window.open(url.toString());
     },
-    [pid, device, cwd],
+    [pid, device, fullCwd],
   );
 
   const handlePreview = useCallback(
     (fileName: string, type: string) => {
-      const fullPath = `${cwd}/${fileName}`;
+      const fullPath = `${fullCwd}/${fileName}`;
       const panelId = `preview-${fileName}`;
 
       const componentMap: Record<string, string> = {
@@ -596,14 +601,14 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
         params: { path: fullPath },
       });
     },
-    [cwd, openSingletonPanel],
+    [fullCwd, openSingletonPanel],
   );
 
   useEffect(() => {
     if (!apiReady) return;
-    const path = params?.path || (activeTab === "home" ? "~" : "!");
+    const path = PREFIXES[activeTab];
     handleDirectorySelect(path);
-  }, [apiReady, activeTab, handleDirectorySelect, params?.path]);
+  }, [apiReady, activeTab, handleDirectorySelect]);
 
   useEffect(() => {
     if (!apiReady || !params?.path) return;
@@ -653,7 +658,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
         <FileTable
           items={items}
           isLoading={isLoading}
-          cwd={cwd}
+          cwd={fullCwd!}
           onDownload={handleDownload}
           onPreview={handlePreview}
         />
