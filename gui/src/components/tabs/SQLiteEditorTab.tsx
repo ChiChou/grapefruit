@@ -6,6 +6,8 @@ import type { DumpResult } from "../../../../agent/types/common/sqlite";
 
 import { useSession, ConnectionStatus } from "@/context/SessionContext";
 import { useTheme } from "@/components/theme-provider";
+import { Button } from "@/components/ui/button";
+import { Play } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -66,7 +68,7 @@ export function SQLiteEditorTab({
       try {
         const result = await api.sqlite.dump(fullPath, tableName);
         setDumpResult(result);
-        setSQL(`SELECT * FROM "${tableName}" LIMIT 100`);
+        setSQL(`SELECT * FROM "${tableName}" LIMIT 100;`);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to load table data",
@@ -137,17 +139,27 @@ export function SQLiteEditorTab({
       <ResizablePanel defaultSize={70} minSize={30}>
         <ResizablePanelGroup direction="vertical" className="h-full">
           <ResizablePanel defaultSize={50} minSize={20}>
-            <Editor
-              language="sql"
-              value={sql}
-              theme={theme === "dark" ? "vs-dark" : "light"}
-              onChange={(value) => setSQL(value || "")}
-              options={{
-                minimap: { enabled: false },
-                scrollBeyondLastLine: false,
-                fontSize: 13,
-              }}
-            />
+            <div className="h-full flex flex-col">
+              <div className="flex items-center gap-2 p-2 border-b">
+                <Button variant="outline" size="sm">
+                  <Play className="h-4 w-4 mr-2" />
+                  Execute
+                </Button>
+              </div>
+              <div className="flex-1">
+                <Editor
+                  language="sql"
+                  value={sql}
+                  theme={theme === "dark" ? "vs-dark" : "light"}
+                  onChange={(value) => setSQL(value || "")}
+                  options={{
+                    minimap: { enabled: false },
+                    scrollBeyondLastLine: false,
+                    fontSize: 13,
+                  }}
+                />
+              </div>
+            </div>
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={50} minSize={20}>
