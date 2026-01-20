@@ -33,6 +33,7 @@ import { SQLiteEditorTab } from "./tabs/SQLiteEditorTab";
 import { FontPreviewTab } from "./tabs/FontPreviewTab";
 import { BinaryCookieTab } from "./tabs/BinaryCookieTab";
 import { KeyChainTab } from "./tabs/KeyChainTab";
+import { UIDumpTab } from "./tabs/UIDumpTab";
 
 import { DockContext, useDockActions } from "@/context/DockContext";
 
@@ -88,6 +89,7 @@ function WorkspaceContent() {
     fontPreview: FontPreviewTab,
     binaryCookie: BinaryCookieTab,
     keychain: KeyChainTab,
+    uiDump: UIDumpTab,
   };
 
   const onReady = (event: DockviewReadyEvent) => {
