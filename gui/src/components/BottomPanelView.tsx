@@ -1,58 +1,43 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { t } from "i18next";
-import { FileText, Webhook, Activity } from "lucide-react";
+import { FileText, Activity } from "lucide-react";
+import { Terminal as XTerm } from "@xterm/xterm";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { ConnectionStatus, useSession } from "@/context/SessionContext";
-
-function useLogThrottle(logs: string[], delay: number = 100) {
-  const [throttledLogs, setThrottledLogs] = useState<string[]>([]);
-  const lastUpdateRef = useRef(0);
-  const pendingRef = useRef<string[]>([]);
-
-  useEffect(() => {
-    const now = Date.now();
-    const elapsed = now - lastUpdateRef.current;
-
-    if (elapsed >= delay) {
-      setThrottledLogs((prev) => [...prev, ...pendingRef.current]);
-      pendingRef.current = [];
-      lastUpdateRef.current = now;
-    } else {
-      pendingRef.current.push(...logs);
-    }
-  }, [logs, delay]);
-
-  return throttledLogs;
-}
+import { Terminal } from "./Terminal";
 
 export function BottomPanelView() {
-  const { api, status, syslogs, logs } = useSession();
-  const throttledLogs = useLogThrottle(syslogs);
-  const throttledAgentLogs = useLogThrottle(logs);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const agentScrollRef = useRef<HTMLDivElement>(null);
+  const { api, status, events } = useSession();
+
+  const syslogTerminalRef = useRef<XTerm | null>(null);
+  const logTerminalRef = useRef<XTerm | null>(null);
 
   useEffect(() => {
     if (api && status === ConnectionStatus.Ready) api.syslog.start();
-
-    return () => {
-      if (api) api.syslog.stop();
-    };
   }, [api, status]);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [throttledLogs]);
+    if (api && status === ConnectionStatus.Ready) {
+      const handleSyslog = (message: string) => {
+        syslogTerminalRef.current?.writeln(message);
+      };
+      const handleLog = (level: string, message: string) => {
+        logTerminalRef.current?.writeln(`[${level}] ${message}`);
+      };
 
-  useEffect(() => {
-    if (agentScrollRef.current) {
-      agentScrollRef.current.scrollTop = agentScrollRef.current.scrollHeight;
+      events.on("syslog", handleSyslog);
+      events.on("log", handleLog);
+
+      return () => {
+        events.off("syslog", handleSyslog);
+        events.off("log", handleLog);
+        if (status === ConnectionStatus.Ready) {
+          api.syslog.stop();
+        }
+      };
     }
-  }, [throttledAgentLogs]);
+  }, [api, status, events]);
 
   return (
     <Tabs defaultValue="logs" className="h-full flex flex-col">
@@ -80,33 +65,11 @@ export function BottomPanelView() {
         </TabsTrigger>
       </TabsList>
       <TabsContent value="logs" className="flex-1 overflow-hidden mt-0">
-        <ScrollArea className="h-full">
-          <div
-            ref={scrollRef}
-            className="h-full max-h-[calc(100vh-300px)] space-y-1 p-4 font-mono text-xs"
-          >
-            {throttledLogs.map((log, i) => (
-              <div key={i} className="flex gap-2">
-                <span className="whitespace-pre-wrap break-all">{log}</span>
-              </div>
-            ))}
-          </div>
-        </ScrollArea>
+        <Terminal onTerminalReady={(term) => (syslogTerminalRef.current = term)} />
       </TabsContent>
       {/*<TabsContent value="hooks" className="flex-1 p-4 mt-0"></TabsContent>*/}
       <TabsContent value="agent-logs" className="flex-1 overflow-hidden mt-0">
-        <ScrollArea className="h-full">
-          <div
-            ref={agentScrollRef}
-            className="h-full max-h-[calc(100vh-300px)] space-y-1 p-4 font-mono text-xs"
-          >
-            {throttledAgentLogs.map((log, i) => (
-              <div key={i} className="flex gap-2">
-                <span className="whitespace-pre-wrap break-all">{log}</span>
-              </div>
-            ))}
-          </div>
-        </ScrollArea>
+        <Terminal onTerminalReady={(term) => (logTerminalRef.current = term)} />
       </TabsContent>
     </Tabs>
   );

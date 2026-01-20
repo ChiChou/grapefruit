@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo, useEffect, useState } from "react";
+import { type ReactNode, useMemo, useEffect, useState, useRef } from "react";
 import { Navigate, useParams } from "react-router";
 import { io, Socket } from "socket.io-client";
 
@@ -6,6 +6,7 @@ import {
   ConnectionStatus,
   SessionContext,
   type ConnectionStatusType,
+  SessionEventEmitter,
 } from "@/context/SessionContext";
 
 import {
@@ -14,16 +15,14 @@ import {
   type SessionServerEvents,
 } from "@/lib/rpc";
 
-const MAX_LOGS = 1024;
-
 function SessionProvider({ children }: { children: ReactNode }) {
   const { device, bundle } = useParams();
   const [status, setStatus] = useState<ConnectionStatusType>(
     ConnectionStatus.Disconnected,
   );
   const [pid, setPid] = useState<number | undefined>();
-  const [logs, setLogs] = useState<string[]>([]);
-  const [syslogs, setSyslogs] = useState<string[]>([]);
+
+  const eventEmitterRef = useRef(new SessionEventEmitter());
 
   const { socket, api } = useMemo(() => {
     if (!device || !bundle) {
@@ -43,27 +42,15 @@ function SessionProvider({ children }: { children: ReactNode }) {
       .on("ready", (newPid: number) => {
         setStatus(ConnectionStatus.Ready);
         setPid(newPid);
+        eventEmitterRef.current.emit("ready", newPid);
       })
       .on("log", (level: string, message: string) => {
         console.log("agent log", level, message);
-        setLogs((prevLogs) => {
-          const trimmedLogs =
-            prevLogs.length >= MAX_LOGS
-              ? prevLogs.slice(prevLogs.length - (MAX_LOGS - 1))
-              : prevLogs;
-
-          return [...trimmedLogs, message];
-        });
+        eventEmitterRef.current.emit("log", level, message);
       })
       .on("syslog", (message: string) => {
         console.log("syslog", message);
-        setSyslogs((prevSyslogs) => {
-          const trimmedSyslogs =
-            prevSyslogs.length >= MAX_LOGS
-              ? prevSyslogs.slice(prevSyslogs.length - (MAX_LOGS - 1))
-              : prevSyslogs;
-          return [...trimmedSyslogs, message];
-        });
+        eventEmitterRef.current.emit("syslog", message);
       })
       .on("connect", () => {
         setStatus(ConnectionStatus.Connecting);
@@ -98,10 +85,9 @@ function SessionProvider({ children }: { children: ReactNode }) {
       pid,
       api,
       status,
-      logs,
-      syslogs,
+      events: eventEmitterRef.current,
     }),
-    [device, bundle, pid, api, status, logs, syslogs],
+    [device, bundle, pid, api, status],
   );
 
   if (!device || !bundle) {
