@@ -5,6 +5,7 @@ import * as entitlements from "./modules/entitlements.js";
 import * as fs from "./modules/fs.js";
 import * as info from "./modules/info.js";
 import * as jsc from "./modules/jsc.js";
+import * as keychain from "./modules/keychain.js";
 import * as lsof from "./modules/lsof.js";
 import * as symbol from "./modules/symbol.js";
 import * as syslog from "./modules/syslog.js";
@@ -27,6 +28,7 @@ export default {
   fs,
   info,
   jsc,
+  keychain,
   lsof,
   sqlite,
   symbol,

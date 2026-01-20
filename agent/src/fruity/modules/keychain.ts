@@ -33,7 +33,7 @@ function readableAccount(val?: ObjC.Object) {
   return `${val}`;
 }
 
-interface KeyChainItem {
+export interface KeyChainItem {
   clazz?: string;
   creation?: Date;
   modification?: Date;
@@ -156,7 +156,20 @@ function dumpACL(item: ObjC.Object) {
   return list.join(" | ");
 }
 
-export function list(withfaceId = false): KeyChainItem[] {
+export function remove(service: string, account: string) {
+  const query = ObjC.classes.NSMutableDictionary!.alloc().init();
+  query.setObject_forKey_(kSec("Class"), kSec("kSecClassGenericPassword"));
+  query.setObject_forKey_(kSec("AttrService"), service);
+  query.setObject_forKey_(kSec("AttrAccount"), account);
+  const status = getSecurityApi().SecItemDelete(query);
+
+  const errSecItemNotFound = -25300;
+  if (status === errSecItemNotFound) throw new Error("errSecItemNotFound");
+  if (status !== 0)
+    throw new Error(`SecItemDelete returned non zero result ${status}`);
+}
+
+export function list(withBiometricId = false): KeyChainItem[] {
   const { SecItemCopyMatching, SecAccessControlGetProtection } =
     getSecurityApi();
 
@@ -169,7 +182,7 @@ export function list(withfaceId = false): KeyChainItem[] {
   query.setObject_forKey_(kCFBooleanTrue, kSec("ReturnRef"));
   query.setObject_forKey_(kSec("MatchLimitAll"), kSec("MatchLimit"));
 
-  if (!withfaceId) {
+  if (!withBiometricId) {
     query.setObject_forKey_(
       kSec("UseAuthenticationUIFail"),
       kSec("UseAuthenticationUI"),
@@ -215,9 +228,14 @@ export function list(withfaceId = false): KeyChainItem[] {
       const prot = SecAccessControlGetProtection(access);
       readable.prot = kSecAttrAccessibleLookup[cf2str(prot)];
 
-      for (const [key, attr] of Object.entries(KEY_MAPPING)) {
+      for (const [key, attr] of Object.entries(KEY_MAPPING) as Array<
+        [keyof KeyChainItem, NativePointer]
+      >) {
         const v = item.objectForKey_(attr);
-        if (v) readable[key as keyof KeyChainItem] = valueOf(v);
+        if (v) {
+          (readable as Partial<Record<keyof KeyChainItem, unknown>>)[key] =
+            valueOf(v);
+        }
       }
 
       readable.account = readableAccount(
