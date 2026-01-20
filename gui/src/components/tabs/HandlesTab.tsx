@@ -47,7 +47,7 @@ type SortOrder = "asc" | "desc";
 
 export function HandlesTab() {
   const { t } = useTranslation();
-  const { api, status } = useSession();
+  const { api, status, pid, device } = useSession();
   const [loading, setLoading] = useState(false);
   const [handles, setHandles] = useState<FileDescriptor[]>([]);
   const [sortKey, setSortKey] = useState<SortKey>("fd");
@@ -225,7 +225,16 @@ export function HandlesTab() {
                   <TableCell className="font-mono">{handle.fd}</TableCell>
                   <TableCell>{handle.type}</TableCell>
                   <TableCell className="font-mono text-xs break-all">
-                    {isVnodeFD(handle) && handle.path}
+                    {isVnodeFD(handle) && (
+                      <a
+                        href={`/api/download/${device}/${pid}?path=${encodeURIComponent(
+                          handle.path,
+                        )}`}
+                        className="underline text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+                      >
+                        {handle.path}
+                      </a>
+                    )}
                     {isSocketFD(handle) && (
                       <span>
                         {handle.protocol} {handle.lip}:{handle.lport} →{" "}
