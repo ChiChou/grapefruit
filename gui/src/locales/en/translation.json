@@ -105,5 +105,20 @@
   "hex_content": "Hex Content",
   "ascii": "ASCII",
   "tree": "Tree",
-  "text": "Text"
+  "text": "Text",
+  "confirmation": "Confirmation",
+  "delete_cookie_confirmation": "Are you sure to delete cookie {{name}}?",
+  "clear": "Clear",
+  "no_cookies": "No cookies",
+  "domain": "Domain",
+  "value": "Value",
+  "expires": "Expires",
+  "secure": "Secure",
+  "actions": "Actions",
+  "edit": "Edit",
+  "remove": "Remove",
+  "clear_all_cookies_confirmation": "Are you sure to clear all cookies?",
+  "save": "Save",
+  "discard": "Discard",
+  "path": "Path"
 }

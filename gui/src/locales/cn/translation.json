@@ -105,5 +105,20 @@
   "hex_content": "十六进制内容",
   "ascii": "ASCII",
   "tree": "树形",
-  "text": "文本"
+  "text": "文本",
+  "confirmation": "是否确定",
+  "delete_cookie_confirmation": "确定要删除 cookie {{name}} 吗？",
+  "clear": "清空",
+  "no_cookies": "无 Cookie",
+  "domain": "域名",
+  "value": "值",
+  "expires": "过期时间",
+  "secure": "安全",
+  "actions": "操作",
+  "edit": "编辑",
+  "remove": "移除",
+  "clear_all_cookies_confirmation": "确定要清空所有 Cookie 吗？",
+  "save": "保存",
+  "discard": "放弃",
+  "path": "路径"
 }

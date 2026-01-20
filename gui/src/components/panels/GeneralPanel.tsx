@@ -72,6 +72,14 @@ export function GeneralPanel() {
     });
   };
 
+  const openBinaryCookieTab = () => {
+    openSingletonPanel({
+      id: "binary_cookie_tab",
+      component: "binaryCookie",
+      title: "Binary Cookies",
+    });
+  };
+
   const openFinderTab = (path: string) => {
     openSingletonPanel({
       id: "finder_tab",
@@ -223,6 +231,10 @@ export function GeneralPanel() {
               <Button variant="outline" size="sm" onClick={openInfoPlistTab}>
                 <FileText className="w-4 h-4 mr-2" />
                 Info.plist
+              </Button>
+              <Button variant="outline" size="sm" onClick={openBinaryCookieTab}>
+                <FileText className="w-4 h-4 mr-2" />
+                Binary Cookies
               </Button>
             </div>
           </div>

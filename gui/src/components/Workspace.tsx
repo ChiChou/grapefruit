@@ -30,7 +30,9 @@ import { HexPreviewTab } from "./tabs/HexPreviewTab";
 import { TextEditorTab } from "./tabs/TextEditorTab";
 import { PlistPreviewTab } from "./tabs/PlistPreviewTab";
 import { SQLiteEditorTab } from "./tabs/SQLiteEditorTab";
-import { FontPreviewTab as FontPreviewTab } from "./tabs/FontPreviewTab";
+import { FontPreviewTab } from "./tabs/FontPreviewTab";
+import { BinaryCookieTab } from "./tabs/BinaryCookieTab";
+
 import { DockContext, useDockActions } from "@/context/DockContext";
 
 function WorkspaceContent() {
@@ -83,6 +85,7 @@ function WorkspaceContent() {
     plistPreview: PlistPreviewTab,
     sqliteEditor: SQLiteEditorTab,
     fontPreview: FontPreviewTab,
+    binaryCookie: BinaryCookieTab,
   };
 
   const onReady = (event: DockviewReadyEvent) => {
