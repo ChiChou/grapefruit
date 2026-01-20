@@ -116,10 +116,13 @@ function getModule(path: string) {
   throw new Error(`Module not found: ${path}`);
 }
 
+type SymbolType = "f" | "v";
+
 export interface Imported {
   name: string;
   addr: string;
   demangled: string | null;
+  type: SymbolType | undefined;
 }
 
 export function imports(path: string): Imported[] {
@@ -133,12 +136,20 @@ export function imports(path: string): Imported[] {
       unique.add(k);
       return true;
     })
-    .map(({ name, address, slot, type }) => {
+    .map(({ name, address, type }) => {
       const demangled = tryDemangle(name);
+      let t: SymbolType | undefined = undefined;
+      if (type === "function") {
+        t = "f";
+      } else if (type === "variable") {
+        t = "v";
+      }
+
       return {
         name,
         addr: address?.toString() || "",
         demangled,
+        type: t,
       };
     });
 }
@@ -190,15 +201,20 @@ export interface Exported {
   name: string;
   addr: string;
   demangled: string | null;
+  type: SymbolType;
 }
 
 export function exports(path: string): Exported[] {
   return getModule(path)
     .enumerateExports()
     .filter((exp) => !exp.address.isNull())
-    .map((exp) => {
-      const { name, address } = exp;
+    .map(({ name, address, type }) => {
       const demangled = tryDemangle(name);
-      return { name, addr: address.toString(), demangled };
+      return {
+        name,
+        addr: address.toString(),
+        demangled,
+        type: type === "function" ? "f" : "v",
+      };
     });
 }

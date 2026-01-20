@@ -34,12 +34,17 @@ import { FontPreviewTab } from "./tabs/FontPreviewTab";
 import { BinaryCookieTab } from "./tabs/BinaryCookieTab";
 import { KeyChainTab } from "./tabs/KeyChainTab";
 import { UIDumpTab } from "./tabs/UIDumpTab";
+import { MemoryPreviewTab } from "./tabs/MemoryPreviewTab";
 
 import { DockContext, useDockActions } from "@/context/DockContext";
 
 function WorkspaceContent() {
-  const { status } = useSession();
+  const { status, bundle } = useSession();
   const { theme } = useTheme();
+
+  useEffect(() => {
+    document.title = "Grapefruit" + (bundle ? ` - ${bundle}` : "");
+  }, [bundle]);
 
   const getStatusColor = () => {
     switch (status) {
@@ -90,6 +95,7 @@ function WorkspaceContent() {
     binaryCookie: BinaryCookieTab,
     keychain: KeyChainTab,
     uiDump: UIDumpTab,
+    memory: MemoryPreviewTab,
   };
 
   const onReady = (event: DockviewReadyEvent) => {

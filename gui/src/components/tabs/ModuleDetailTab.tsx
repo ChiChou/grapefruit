@@ -190,6 +190,15 @@ export function ModuleDetailTab({
     });
   };
 
+  const openMemoryPreviewTab = (address: string, size: number) => {
+    openFilePanel({
+      id: `memory_${address}_${size}`,
+      component: "memory",
+      title: `Memory ${address}`,
+      params: { address, size },
+    });
+  };
+
   const renderSections = () => {
     if (loading.sections) {
       return (
@@ -220,7 +229,17 @@ export function ModuleDetailTab({
             {sections.map((section) => (
               <TableRow key={section.addr}>
                 <TableCell className="font-mono">{section.name}</TableCell>
-                <TableCell className="font-mono">{section.addr}</TableCell>
+                <TableCell className="font-mono">
+                  <button
+                    type="button"
+                    className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer text-left"
+                    onClick={() =>
+                      openMemoryPreviewTab(section.addr, section.size)
+                    }
+                  >
+                    {section.addr}
+                  </button>
+                </TableCell>
                 <TableCell className="font-mono text-right">
                   {"0x" + section.size.toString(16)}
                 </TableCell>

@@ -14,6 +14,7 @@ import * as url from "./modules/url.js";
 import * as userdefaults from "./modules/userdefaults.js";
 import * as webview from "./modules/webview.js";
 
+import * as memory from "../common/memory.js";
 import * as sqlite from "../common/sqlite.js";
 
 if (!Process.findModuleByName("UIKit")) {
@@ -30,6 +31,7 @@ export default {
   jsc,
   keychain,
   lsof,
+  memory,
   sqlite,
   symbol,
   syslog,
