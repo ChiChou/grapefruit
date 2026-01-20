@@ -141,5 +141,6 @@
   "creator": "Creator",
   "prot": "Protection",
   "data": "Data",
-  "raw": "Raw"
+  "raw": "Raw",
+  "filter": "Filter"
 }
