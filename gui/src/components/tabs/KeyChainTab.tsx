@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Table,
   TableBody,
@@ -250,11 +251,12 @@ export function KeyChainTab() {
         </div>
       </div>
       <div className="flex-1 overflow-auto">
-        {isLoading && items.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-gray-500">
-            {t("loading")}...
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full gap-2 text-gray-500">
+            <Spinner className="w-5 h-5" />
+            <span>{t("loading")}...</span>
           </div>
-        ) : items.length === 0 ? (
+        ) : filteredItems.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-500">
             {t("no_keychain_items")}
           </div>
