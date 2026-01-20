@@ -1,12 +1,14 @@
 import { useEffect, useRef } from "react";
 import { Terminal as XTerm } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
+import { useTheme } from "@/components/theme-provider";
 
 interface TerminalProps {
   onTerminalReady?: (terminal: XTerm) => void;
 }
 
 export function Terminal({ onTerminalReady }: TerminalProps) {
+  const { theme } = useTheme();
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<XTerm | null>(null);
 
@@ -16,8 +18,8 @@ export function Terminal({ onTerminalReady }: TerminalProps) {
     const term = new XTerm({
       convertEol: true,
       theme: {
-        background: "#000000",
-        foreground: "#ffffff",
+        background: theme === "dark" ? "#000000" : "#ffffff",
+        foreground: theme === "dark" ? "#d0d0d0" : "#333333",
       },
       fontSize: 12,
       fontFamily: "monospace",
@@ -32,7 +34,7 @@ export function Terminal({ onTerminalReady }: TerminalProps) {
       onTerminalReady(term);
     }
 
-    const handleResize = () => {
+    const resizeTerminal = () => {
       const dims = terminalRef.current?.getBoundingClientRect();
       if (dims) {
         const cols = Math.floor(dims.width / 8);
@@ -43,14 +45,25 @@ export function Terminal({ onTerminalReady }: TerminalProps) {
       }
     };
 
-    handleResize();
-    window.addEventListener("resize", handleResize);
+    const observer = new ResizeObserver(resizeTerminal);
+    observer.observe(terminalRef.current);
+
+    resizeTerminal();
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      observer.disconnect();
       term.dispose();
     };
-  }, [onTerminalReady]);
+  }, [onTerminalReady, theme]);
+
+  useEffect(() => {
+    if (xtermRef.current) {
+      xtermRef.current.options.theme = {
+        background: theme === "dark" ? "#000000" : "#ffffff",
+        foreground: theme === "dark" ? "#d0d0d0" : "#333333",
+      };
+    }
+  }, [theme]);
 
   return <div ref={terminalRef} className="h-full w-full" />;
 }
