@@ -183,7 +183,7 @@ export function SQLiteEditorTab({
                   <TableBody>
                     {dumpResult.data.map((row, rowIndex) => (
                       <TableRow key={rowIndex}>
-                        {dumpResult.header.map((h, colIndex) => (
+                        {dumpResult.header.map((_, colIndex) => (
                           <TableCell key={colIndex}>
                             {row[colIndex] === null ||
                             row[colIndex] === undefined
