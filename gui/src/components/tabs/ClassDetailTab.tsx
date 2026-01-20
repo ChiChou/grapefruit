@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
 
-import { ConnectionStatus, useSession } from "@/context/SessionContext";
+import { Status, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 import {
   Table,
@@ -34,7 +34,7 @@ export function ClassDetailTab({
   const [methodSearch, setMethodSearch] = useState("");
 
   useEffect(() => {
-    if (status !== ConnectionStatus.Ready || !api) return;
+    if (status !== Status.Ready || !api) return;
 
     setIsLoading(true);
     api.classdump
@@ -200,61 +200,61 @@ export function ClassDetailTab({
 
         {/* Methods */}
         <section>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-gray-500">
-                {t("methods")} ({displayedMethods.length})
-              </h3>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id={`show-inherited-${params.className}`}
-                  checked={showInherited}
-                  onCheckedChange={(checked) =>
-                    setShowInherited(checked === true)
-                  }
-                />
-                <Label
-                  htmlFor={`show-inherited-${params.className}`}
-                  className="text-sm cursor-pointer"
-                >
-                  {t("show_inherited")}
-                </Label>
-              </div>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-medium text-gray-500">
+              {t("methods")} ({displayedMethods.length})
+            </h3>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id={`show-inherited-${params.className}`}
+                checked={showInherited}
+                onCheckedChange={(checked) =>
+                  setShowInherited(checked === true)
+                }
+              />
+              <Label
+                htmlFor={`show-inherited-${params.className}`}
+                className="text-sm cursor-pointer"
+              >
+                {t("show_inherited")}
+              </Label>
             </div>
-            <Input
-              placeholder={t("search")}
-              value={methodSearch}
-              onChange={(e) => setMethodSearch(e.target.value)}
-              className="mb-2"
-            />
-            {displayedMethods.length > 0 ? (
-              <div className="border rounded">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t("method")}</TableHead>
-                      <TableHead>{t("address")}</TableHead>
+          </div>
+          <Input
+            placeholder={t("search")}
+            value={methodSearch}
+            onChange={(e) => setMethodSearch(e.target.value)}
+            className="mb-2"
+          />
+          {displayedMethods.length > 0 ? (
+            <div className="border rounded">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("method")}</TableHead>
+                    <TableHead>{t("address")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {displayedMethods.map(([method, addr]) => (
+                    <TableRow key={method}>
+                      <TableCell className="font-mono text-xs">
+                        {method}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {addr}
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {displayedMethods.map(([method, addr]) => (
-                      <TableRow key={method}>
-                        <TableCell className="font-mono text-xs">
-                          {method}
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">
-                          {addr}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <div className="text-sm text-gray-500 py-4 text-center border rounded">
-                {t("no_results")}
-              </div>
-            )}
-          </section>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="text-sm text-gray-500 py-4 text-center border rounded">
+              {t("no_results")}
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );

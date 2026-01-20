@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
 import { Search } from "lucide-react";
 
-import { ConnectionStatus, useSession } from "@/context/SessionContext";
+import { Status, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -130,7 +130,7 @@ export function ModuleDetailTab({
 
   const loadTabData = useCallback(
     async (tab: TabKey) => {
-      if (status !== ConnectionStatus.Ready || !api) return;
+      if (status !== Status.Ready || !api) return;
       if (data[tab] !== null) return; // Already loaded
 
       setLoading((prev) => ({ ...prev, [tab]: true }));
@@ -171,7 +171,7 @@ export function ModuleDetailTab({
 
   // Load initial tab data
   useEffect(() => {
-    if (status === ConnectionStatus.Ready && api) {
+    if (status === Status.Ready && api) {
       loadTabData("sections");
     }
   }, [status, api, loadTabData]);

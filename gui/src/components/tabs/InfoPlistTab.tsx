@@ -1,4 +1,4 @@
-import { ConnectionStatus, useSession } from "@/context/SessionContext";
+import { Status, useSession } from "@/context/SessionContext";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ export function InfoPlistTab() {
   const [viewMode, setViewMode] = useState<"tree" | "text">("text");
 
   useEffect(() => {
-    if (!api || status !== ConnectionStatus.Ready) return;
+    if (!api || status !== Status.Ready) return;
 
     setLoading(true);
     Promise.all([

@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Search } from "lucide-react";
 import { List, type RowComponentProps } from "react-window";
 
-import { ConnectionStatus, useSession } from "@/context/SessionContext";
+import { Status, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 import { Input } from "@/components/ui/input";
 import type { ModuleInfo } from "../../../../agent/types/fruity/modules/symbol";
@@ -19,7 +19,7 @@ export function ModulesPanel() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    if (!api || status !== ConnectionStatus.Ready) return;
+    if (!api || status !== Status.Ready) return;
 
     setIsLoading(true);
     api.symbol

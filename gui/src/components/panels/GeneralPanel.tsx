@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { ConnectionStatus, useSession } from "@/context/SessionContext";
+import { Status, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 
 import type { BasicInfo } from "../../../../agent/types/fruity/modules/info";
@@ -82,7 +82,7 @@ export function GeneralPanel() {
   };
 
   useEffect(() => {
-    if (!api || status !== ConnectionStatus.Ready) return;
+    if (!api || status !== Status.Ready) return;
 
     setIsLoading(true);
     setError(null);
@@ -227,7 +227,7 @@ export function GeneralPanel() {
             </div>
           </div>
         </div>
-      ) : status === ConnectionStatus.Ready ? (
+      ) : status === Status.Ready ? (
         <div className="text-sm text-gray-500 dark:text-gray-400">
           {t("no_app_info")}
         </div>

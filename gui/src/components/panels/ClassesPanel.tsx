@@ -6,7 +6,7 @@ import { List, type RowComponentProps } from "react-window";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ConnectionStatus, useSession } from "@/context/SessionContext";
+import { Status, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 
 const ITEM_HEIGHT = 32;
@@ -24,7 +24,7 @@ export function ClassesPanel() {
 
   const loadClasses = useCallback(
     async (scopeValue: ScopeType) => {
-      if (status !== ConnectionStatus.Ready || !api) return;
+      if (status !== Status.Ready || !api) return;
 
       setIsLoading(true);
       try {

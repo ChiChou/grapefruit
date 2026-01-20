@@ -4,7 +4,7 @@ import Editor from "@monaco-editor/react";
 
 import type { DumpResult } from "../../../../agent/types/common/sqlite";
 
-import { useSession, ConnectionStatus } from "@/context/SessionContext";
+import { useSession, Status } from "@/context/SessionContext";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
@@ -42,7 +42,7 @@ export function SQLiteEditorTab({
   const [error, setError] = useState<string | null>(null);
 
   const fullPath = params?.path || "";
-  const apiReady = status === ConnectionStatus.Ready && !!api;
+  const apiReady = status === Status.Ready && !!api;
 
   const loadContent = useCallback(async () => {
     if (!apiReady || !fullPath) return;

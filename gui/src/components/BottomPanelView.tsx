@@ -4,7 +4,7 @@ import { FileText, Activity } from "lucide-react";
 import { Terminal as XTerm } from "@xterm/xterm";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ConnectionStatus, useSession } from "@/context/SessionContext";
+import { Status, useSession } from "@/context/SessionContext";
 import { Terminal } from "./Terminal";
 
 export function BottomPanelView() {
@@ -14,10 +14,10 @@ export function BottomPanelView() {
   const logTerminalRef = useRef<XTerm | null>(null);
 
   useEffect(() => {
-    if (api && status === ConnectionStatus.Ready) api.syslog.start();
+    if (api && status === Status.Ready) api.syslog.start();
 
     return () => {
-      if (api && status === ConnectionStatus.Ready) api.syslog.stop();
+      if (api && status === Status.Ready) api.syslog.stop();
     };
   }, [api, status, socket]);
 
@@ -29,7 +29,7 @@ export function BottomPanelView() {
       logTerminalRef.current?.writeln(`[${level}] ${message}`);
     };
 
-    if (status === ConnectionStatus.Ready && socket) {
+    if (status === Status.Ready && socket) {
       socket.on("syslog", handleSyslog);
       socket.on("log", handleLog);
     }

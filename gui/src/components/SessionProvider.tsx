@@ -3,9 +3,9 @@ import { Navigate, useParams } from "react-router";
 import { io, Socket } from "socket.io-client";
 
 import {
-  ConnectionStatus,
+  Status,
   SessionContext,
-  type ConnectionStatusType,
+  type StatusType,
 } from "@/context/SessionContext";
 
 import {
@@ -16,9 +16,7 @@ import {
 
 function SessionProvider({ children }: { children: ReactNode }) {
   const { device, bundle } = useParams();
-  const [status, setStatus] = useState<ConnectionStatusType>(
-    ConnectionStatus.Disconnected,
-  );
+  const [status, setStatus] = useState<StatusType>(Status.Disconnected);
   const [pid, setPid] = useState<number | undefined>();
 
   const socketRef = useRef<Socket<
@@ -29,7 +27,7 @@ function SessionProvider({ children }: { children: ReactNode }) {
   const { socket, api } = useMemo(() => {
     if (!device || !bundle) {
       console.warn("Device or bundle ID missing from URL.");
-      setStatus(ConnectionStatus.Disconnected);
+      setStatus(Status.Disconnected);
       return { socket: null, api: null };
     }
 
@@ -49,7 +47,7 @@ function SessionProvider({ children }: { children: ReactNode }) {
     newSocket
       .on("ready", (newPid: number) => {
         console.log("socket.io ready");
-        setStatus(ConnectionStatus.Ready);
+        setStatus(Status.Ready);
         setPid(newPid);
       })
       .on("log", (level: string, message: string) => {
@@ -60,16 +58,16 @@ function SessionProvider({ children }: { children: ReactNode }) {
       })
       .on("connect", () => {
         console.debug("socket.io connect");
-        setStatus(ConnectionStatus.Connecting);
+        setStatus(Status.Connecting);
       })
       .on("disconnect", () => {
         console.debug("socket.io disconnect");
-        setStatus(ConnectionStatus.Disconnected);
+        setStatus(Status.Disconnected);
         setPid(undefined);
       });
 
     const newApi = createAPI(newSocket);
-    setStatus(ConnectionStatus.Connecting);
+    setStatus(Status.Connecting);
 
     return {
       socket: newSocket,
@@ -79,7 +77,7 @@ function SessionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     return () => {
-      if (status === ConnectionStatus.Ready && socket) {
+      if (status === Status.Ready && socket) {
         console.debug("disconnect for", bundle);
         socket.disconnect();
       }

@@ -33,7 +33,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ConnectionStatus, useSession } from "@/context/SessionContext";
+import { Status, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 import type {
   MetaData,
@@ -539,7 +539,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
   const [isLoading, setIsLoading] = useState(false);
 
   const [fullCwd, setFullCwd] = useState<string | null>(null);
-  const apiReady = status === ConnectionStatus.Ready && !!api;
+  const apiReady = status === Status.Ready && !!api;
 
   const loadDirectory = useCallback(
     async (path: string): Promise<DirectoryListing> => {

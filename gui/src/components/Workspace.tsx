@@ -17,7 +17,7 @@ import {
 
 import { LeftPanelView } from "./LeftPanelView";
 import { BottomPanelView } from "./BottomPanelView";
-import { ConnectionStatus, useSession } from "@/context/SessionContext";
+import { Status, useSession } from "@/context/SessionContext";
 import SessionProvider from "./SessionProvider";
 import { useTheme } from "./theme-provider";
 import { HandlesTab } from "./tabs/HandlesTab";
@@ -39,11 +39,11 @@ function WorkspaceContent() {
 
   const getStatusColor = () => {
     switch (status) {
-      case ConnectionStatus.Ready:
+      case Status.Ready:
         return "bg-green-500";
-      case ConnectionStatus.Disconnected:
+      case Status.Disconnected:
         return "bg-orange-500";
-      case ConnectionStatus.Connecting:
+      case Status.Connecting:
       default:
         return "bg-gray-600";
     }
@@ -162,9 +162,9 @@ function WorkspaceContent() {
           </ResizablePanel>
         </ResizablePanelGroup>
         <footer className={`${getStatusColor()} px-4 py-1 text-xs text-white`}>
-          {status === ConnectionStatus.Ready && t("connected")}
-          {status === ConnectionStatus.Connecting && t("connecting")}
-          {status === ConnectionStatus.Disconnected && t("disconnected")}
+          {status === Status.Ready && t("connected")}
+          {status === Status.Connecting && t("connecting")}
+          {status === Status.Disconnected && t("disconnected")}
         </footer>
       </div>
     </DockContext.Provider>

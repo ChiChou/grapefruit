@@ -1,4 +1,4 @@
-import { ConnectionStatus, useSession } from "@/context/SessionContext";
+import { Status, useSession } from "@/context/SessionContext";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -58,7 +58,7 @@ export function HandlesTab() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchHandles = useCallback(() => {
-    if (!api || status !== ConnectionStatus.Ready) return;
+    if (!api || status !== Status.Ready) return;
 
     setLoading(true);
     api.lsof
@@ -75,7 +75,7 @@ export function HandlesTab() {
       intervalRef.current = null;
     }
 
-    if (reloadInterval > 0 && status === ConnectionStatus.Ready) {
+    if (reloadInterval > 0 && status === Status.Ready) {
       intervalRef.current = setInterval(fetchHandles, reloadInterval * 1000);
     }
 
@@ -172,7 +172,7 @@ export function HandlesTab() {
             variant="outline"
             size="sm"
             onClick={fetchHandles}
-            disabled={loading || status !== ConnectionStatus.Ready}
+            disabled={loading || status !== Status.Ready}
           >
             <RefreshCw
               className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
