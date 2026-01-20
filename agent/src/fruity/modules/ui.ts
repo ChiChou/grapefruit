@@ -14,15 +14,15 @@ export interface UIDumpNode {
   clazz: string;
   description?: string;
   children?: UIDumpNode[];
-  frame?: Frame;
-  preview?: ArrayBuffer;
+  frame: Frame | null;
+  preview: string | null; // base64 encoded png
   delegate?: UIDelegate;
 }
 
 const CGFloat = Process.pointerSize === 4 ? "float" : "double";
 const CGSize: NativeFunctionArgumentType = [CGFloat, CGFloat];
 
-export function dump(includingPreview: false) {
+export function dump(includingPreview = false) {
   const UIKit = Process.getModuleByName("UIKit");
   const UIGraphicsBeginImageContextWithOptions = new NativeFunction(
     UIKit.findExportByName("UIGraphicsBeginImageContextWithOptions")!,
@@ -68,31 +68,32 @@ export function dump(includingPreview: false) {
 
     const frame = view
       .superview()
-      ?.convertRect_toView_(view.frame(), NULL) as Frame;
-    if (!frame) return null;
+      ?.convertRect_toView_(view.frame(), NULL) as Frame | null;
 
     const children: UIDumpNode[] = [];
 
-    let preview = undefined;
+    let preview: string | null = null;
     if (includingPreview) {
       // preview
       const bounds = view.bounds();
       const size = bounds[1];
       UIGraphicsBeginImageContextWithOptions(size, 0, 0);
+      view.drawViewHierarchyInRect_afterScreenUpdates_(bounds, true);
+
       const image = UIGraphicsGetImageFromCurrentImageContext();
       UIGraphicsEndImageContext();
       const png = UIImagePNGRepresentation(image) as NativePointer;
       if (!png.isNull()) {
         const data = new ObjC.Object(png);
-        preview = data.base64EncodedStringWithOptions_(0).toString();
+        preview = data.base64EncodedStringWithOptions_(0).toString() as string;
       }
     }
 
     for (let i = 0; i < subviews.count(); i++) {
-      // todo: use async function
       const child = recursive(subviews.objectAtIndex_(i));
       if (child) children.push(child);
     }
+
     return {
       description,
       children,
@@ -128,6 +129,8 @@ export function highlight(frame: Frame): void {
     }
     win.addSubview_(overlay);
   });
+
+  Script.bindWeak(globalThis, dismissHighlight);
 }
 
 export async function dismissHighlight(): Promise<void> {
@@ -138,5 +141,3 @@ export async function dismissHighlight(): Promise<void> {
 // highlight([[0,0],[375,812]])
 // setTimeout(() => { dismissHighlight() }, 3000)
 // setTimeout(() => { highlight([[100,100],[375,812]]) }, 1000)
-
-Script.bindWeak(globalThis, dismissHighlight);
