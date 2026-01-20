@@ -142,5 +142,11 @@
   "prot": "Protection",
   "data": "Data",
   "raw": "Raw",
-  "filter": "Filter"
+  "filter": "Filter",
+  "ui_hierarchy": "UI Hierarchy",
+  "search_ui_elements": "Search UI elements...",
+  "visual_preview": "Visual Preview",
+  "selected_element": "Selected Element",
+  "no_data": "No data available",
+  "inspect_ui": "Inspect UI"
 }

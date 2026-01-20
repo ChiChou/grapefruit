@@ -104,10 +104,12 @@ export function dump(includingPreview = false) {
     };
   };
 
-  return performOnMainThread(() => recursive(win));
+  return dismissHighlight().then(() =>
+    performOnMainThread(() => recursive(win)),
+  );
 }
 
-let overlay: ObjC.Object;
+let overlay: ObjC.Object | null = null;
 
 // NSMakePoint
 // NSMakeSize
@@ -120,7 +122,7 @@ export function highlight(frame: Frame): void {
 
   ObjC.schedule(ObjC.mainQueue, () => {
     if (!overlay) {
-      overlay = UIView.alloc().initWithFrame_(frame);
+      overlay = UIView.alloc().initWithFrame_(frame) as ObjC.Object;
       overlay.setBackgroundColor_(UIColor.yellowColor());
       overlay.setAlpha_(0.4);
     } else {
@@ -133,9 +135,12 @@ export function highlight(frame: Frame): void {
   Script.bindWeak(globalThis, dismissHighlight);
 }
 
-export async function dismissHighlight(): Promise<void> {
-  if (!overlay) return;
-  return performOnMainThread(() => overlay.removeFromSuperview() as void);
+export async function dismissHighlight() {
+  return performOnMainThread(() => {
+    if (!overlay) return;
+    overlay.removeFromSuperview();
+    overlay = null;
+  });
 }
 
 // highlight([[0,0],[375,812]])

@@ -245,6 +245,16 @@ export function UIDumpTab() {
     fetchData();
   }, [fetchData]);
 
+  const handleSelect = useCallback(
+    (node: UIDumpNode) => {
+      setSelectedNode(node);
+      if (api && node.frame) {
+        api.ui.highlight(node.frame).catch(() => {});
+      }
+    },
+    [api],
+  );
+
   const filteredData =
     searchQuery && data ? filterNodes(data, searchQuery.toLowerCase()) : data;
 
@@ -276,7 +286,7 @@ export function UIDumpTab() {
           <div className="relative">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Search UI elements..."
+              placeholder={t("search_ui_elements")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-8 w-64 h-8 text-xs"
@@ -317,7 +327,7 @@ export function UIDumpTab() {
                 ) : data ? (
                   <UIVisualizer
                     node={data}
-                    onSelect={setSelectedNode}
+                    onSelect={handleSelect}
                     selectedNode={selectedNode}
                   />
                 ) : (
@@ -332,7 +342,7 @@ export function UIDumpTab() {
           <ResizablePanel defaultSize={40} minSize={20}>
             <div className="h-full flex flex-col">
               <div className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
-                UI Hierarchy
+                {t("ui_hierarchy")}
               </div>
               <ScrollArea className="flex-1">
                 <div className="p-2">
@@ -341,7 +351,7 @@ export function UIDumpTab() {
                   ) : filteredData ? (
                     <TreeNode
                       node={filteredData}
-                      onSelect={setSelectedNode}
+                      onSelect={handleSelect}
                       selectedNode={selectedNode}
                     />
                   ) : (
@@ -359,7 +369,7 @@ export function UIDumpTab() {
       {selectedNode && (
         <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-            Selected Element
+            {t("selected_element")}
           </div>
           <div className="text-sm font-mono">
             <div className="text-blue-600 dark:text-blue-400">

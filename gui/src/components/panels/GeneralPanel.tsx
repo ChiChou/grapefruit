@@ -101,7 +101,7 @@ export function GeneralPanel() {
     openSingletonPanel({
       id: "ui_dump_tab",
       component: "uiDump",
-      title: "UI Dump",
+      title: t("inspect_ui"),
     });
   };
 
@@ -267,7 +267,7 @@ export function GeneralPanel() {
               </Button>
               <Button variant="outline" size="sm" onClick={openUIDumpTab}>
                 <Layout className="w-4 h-4 mr-2" />
-                Dump UI
+                {t("inspect_ui")}
               </Button>
             </div>
           </div>

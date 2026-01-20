@@ -140,5 +140,11 @@
   "prot": "保护级别",
   "data": "数据",
   "raw": "原始数据",
-  "filter": "过滤器"
+  "filter": "过滤器",
+  "ui_hierarchy": "UI 层级",
+  "search_ui_elements": "搜索 UI 元素...",
+  "visual_preview": "可视化预览",
+  "selected_element": "已选元素",
+  "no_data": "暂无数据",
+  "inspect_ui": "检视界面"
 }
