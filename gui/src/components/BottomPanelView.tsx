@@ -8,36 +8,39 @@ import { ConnectionStatus, useSession } from "@/context/SessionContext";
 import { Terminal } from "./Terminal";
 
 export function BottomPanelView() {
-  const { api, status, events } = useSession();
+  const { api, status, socket } = useSession();
 
   const syslogTerminalRef = useRef<XTerm | null>(null);
   const logTerminalRef = useRef<XTerm | null>(null);
 
   useEffect(() => {
     if (api && status === ConnectionStatus.Ready) api.syslog.start();
-  }, [api, status]);
+
+    return () => {
+      if (api && status === ConnectionStatus.Ready) api.syslog.stop();
+    };
+  }, [api, status, socket]);
 
   useEffect(() => {
-    if (api && status === ConnectionStatus.Ready) {
-      const handleSyslog = (message: string) => {
-        syslogTerminalRef.current?.writeln(message);
-      };
-      const handleLog = (level: string, message: string) => {
-        logTerminalRef.current?.writeln(`[${level}] ${message}`);
-      };
+    const handleSyslog = (message: string) => {
+      syslogTerminalRef.current?.writeln(message);
+    };
+    const handleLog = (level: string, message: string) => {
+      logTerminalRef.current?.writeln(`[${level}] ${message}`);
+    };
 
-      events.on("syslog", handleSyslog);
-      events.on("log", handleLog);
-
-      return () => {
-        events.off("syslog", handleSyslog);
-        events.off("log", handleLog);
-        if (status === ConnectionStatus.Ready) {
-          api.syslog.stop();
-        }
-      };
+    if (status === ConnectionStatus.Ready && socket) {
+      socket.on("syslog", handleSyslog);
+      socket.on("log", handleLog);
     }
-  }, [api, status, events]);
+
+    return () => {
+      if (socket) {
+        socket.off("syslog", handleSyslog);
+        socket.off("log", handleLog);
+      }
+    };
+  }, [socket, status]);
 
   return (
     <Tabs defaultValue="logs" className="h-full flex flex-col">
@@ -65,7 +68,9 @@ export function BottomPanelView() {
         </TabsTrigger>
       </TabsList>
       <TabsContent value="logs" className="flex-1 overflow-hidden mt-0">
-        <Terminal onTerminalReady={(term) => (syslogTerminalRef.current = term)} />
+        <Terminal
+          onTerminalReady={(term) => (syslogTerminalRef.current = term)}
+        />
       </TabsContent>
       {/*<TabsContent value="hooks" className="flex-1 p-4 mt-0"></TabsContent>*/}
       <TabsContent value="agent-logs" className="flex-1 overflow-hidden mt-0">

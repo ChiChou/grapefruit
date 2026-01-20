@@ -6,7 +6,6 @@ import {
   ConnectionStatus,
   SessionContext,
   type ConnectionStatusType,
-  SessionEventEmitter,
 } from "@/context/SessionContext";
 
 import {
@@ -22,7 +21,10 @@ function SessionProvider({ children }: { children: ReactNode }) {
   );
   const [pid, setPid] = useState<number | undefined>();
 
-  const eventEmitterRef = useRef(new SessionEventEmitter());
+  const socketRef = useRef<Socket<
+    SessionClientEvents,
+    SessionServerEvents
+  > | null>(null);
 
   const { socket, api } = useMemo(() => {
     if (!device || !bundle) {
@@ -38,24 +40,30 @@ function SessionProvider({ children }: { children: ReactNode }) {
       },
     );
 
+    if (socketRef.current) {
+      console.debug("disconnect websocket");
+      socketRef.current.disconnect();
+    }
+    socketRef.current = newSocket;
+
     newSocket
       .on("ready", (newPid: number) => {
+        console.log("socket.io ready");
         setStatus(ConnectionStatus.Ready);
         setPid(newPid);
-        eventEmitterRef.current.emit("ready", newPid);
       })
       .on("log", (level: string, message: string) => {
         console.log("agent log", level, message);
-        eventEmitterRef.current.emit("log", level, message);
       })
       .on("syslog", (message: string) => {
         console.log("syslog", message);
-        eventEmitterRef.current.emit("syslog", message);
       })
       .on("connect", () => {
+        console.debug("socket.io connect");
         setStatus(ConnectionStatus.Connecting);
       })
       .on("disconnect", () => {
+        console.debug("socket.io disconnect");
         setStatus(ConnectionStatus.Disconnected);
         setPid(undefined);
       });
@@ -85,9 +93,9 @@ function SessionProvider({ children }: { children: ReactNode }) {
       pid,
       api,
       status,
-      events: eventEmitterRef.current,
+      socket,
     }),
-    [device, bundle, pid, api, status],
+    [device, bundle, pid, api, status, socket],
   );
 
   if (!device || !bundle) {

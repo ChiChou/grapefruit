@@ -21,7 +21,6 @@ export interface SessionServerEvents {
   ) => void;
 }
 
-// RemoteRPC already converts methods to Promise-based
 export type AsyncFruityRPC = RemoteRPC<RPCRoute>;
 
 export function createAPI(
@@ -33,9 +32,14 @@ export function createAPI(
         {},
         {
           get(_nsTarget, method: string) {
-            console.debug("async rpc", method);
             return (...args: any[]) => {
               return new Promise((resolve, reject) => {
+                console.debug(
+                  "rpc",
+                  "connected=" + socket.connected,
+                  namespace + "." + method,
+                  args.join(" ,"),
+                );
                 socket.emit(
                   "rpc",
                   namespace,
