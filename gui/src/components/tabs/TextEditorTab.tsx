@@ -1,13 +1,41 @@
-import { useCallback, useEffect, useState } from "react";
+import Editor, { loader } from "@monaco-editor/react";
 import type { IDockviewPanelProps } from "dockview";
-import { useSession } from "@/context/SessionContext";
 import { Loader2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+
+import { useTheme } from "@/components/theme-provider";
+import { useSession } from "@/context/SessionContext";
+import { useDock } from "@/context/DockContext";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const LANGUAGES = [
+  { value: "javascript", label: "JavaScript" },
+  { value: "typescript", label: "TypeScript" },
+  { value: "css", label: "CSS" },
+  { value: "xml", label: "XML" },
+  { value: "html", label: "HTML" },
+  { value: "plaintext", label: "Plain Text" },
+] as const;
+
+loader.init().then((monaco) => {
+  for (let i = 0; i < LANGUAGES.length; i++) {
+    monaco.languages.register({ id: LANGUAGES[i].value });
+  }
+});
 
 export interface TextEditorTabParams {
   path: string;
 }
 
-function getLanguageFromPath(path: string): string {
+function guessLanguageFromName(path: string): string {
   const ext = path.split(".").pop()?.toLowerCase();
   switch (ext) {
     case "js":
@@ -28,103 +56,70 @@ function getLanguageFromPath(path: string): string {
   }
 }
 
-function highlightCode(code: string, language: string): string {
-  const html = code
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-
-  if (language === "plaintext") {
-    return `<pre class="text-foreground whitespace-pre-wrap">${html}</pre>`;
-  }
-
-  const patterns: Record<string, Array<[RegExp, string]>> = {
-    javascript: [
-      [/\/\/.*$/gm, "text-gray-500"],
-      [/\/\*[\s\S]*?\*\//g, "text-gray-500"],
-      [/\b(const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|this|class|extends|import|export|from|default|async|await|try|catch|throw|typeof|instanceof|in|of|delete|void|null|undefined|true|false)\b/g, "text-purple-400"],
-      [/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`/g, "text-green-400"],
-      [/\b\d+\b/g, "text-orange-400"],
-      [/\b[A-Z_][a-zA-Z0-9_]*\b/g, "text-yellow-300"],
-      [/[{}()\[\];]/g, "text-yellow-300"],
-    ],
-    typescript: [
-      [/\/\/.*$/gm, "text-gray-500"],
-      [/\/\*[\s\S]*?\*\//g, "text-gray-500"],
-      [/\b(const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|this|class|extends|import|export|from|default|async|await|try|catch|throw|typeof|instanceof|in|of|delete|void|null|undefined|true|false|interface|type|enum|implements|private|public|protected|static|readonly|abstract|namespace|module|declare|as)\b/g, "text-purple-400"],
-      [/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`/g, "text-green-400"],
-      [/\b\d+\b/g, "text-orange-400"],
-      [/\b[A-Z_][a-zA-Z0-9_]*\b/g, "text-yellow-300"],
-      [/[{}()\[\];]/g, "text-yellow-300"],
-      [/:[ \t]*(string|number|boolean|null|undefined|any|void|never|unknown|object|Array<[^>]+>|\[[^\]]*\]|{[^{}]*})/g, "text-blue-300"],
-    ],
-    css: [
-      [/\/\*[\s\S]*?\*\//g, "text-gray-500"],
-      [/[#.](?:[\w-]+)/g, "text-yellow-300"],
-    ],
-    xml: [
-      [/<!--[\s\S]*?-->/g, "text-gray-500"],
-      [/<(?:\/?)([\w-]+)([^>]*)?>/g, "text-purple-400"],
-      [/ ([^=]+)=/g, "text-blue-300"],
-    ],
-  };
-
-  const langPatterns = patterns[language] || [];
-
-  let highlighted = html;
-  for (const [regex, className] of langPatterns) {
-    highlighted = highlighted.replace(regex, (match) => `<span class="${className}">${match}</span>`);
-  }
-
-  return `<pre class="text-foreground whitespace-pre-wrap">${highlighted}</pre>`;
-}
-
-export function TextEditorTab({ params }: IDockviewPanelProps<TextEditorTabParams>) {
+export function TextEditorTab({
+  params,
+}: IDockviewPanelProps<TextEditorTabParams>) {
+  const { t } = useTranslation();
   const { api, status } = useSession();
+  const { theme } = useTheme();
+  const { openSingletonPanel } = useDock();
   const [content, setContent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isInvalidUtf8, setIsInvalidUtf8] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("");
 
   const fullPath = params?.path || "";
-  const language = getLanguageFromPath(fullPath);
-
-  const apiReady = status === "ready" && !!api;
+  const guessedLanguage = guessLanguageFromName(fullPath);
+  const language = selectedLanguage || guessedLanguage;
 
   const loadContent = useCallback(async () => {
+    const apiReady = status === "ready" && !!api;
     if (!apiReady || !fullPath) return;
 
     setIsLoading(true);
     setError(null);
+    setIsInvalidUtf8(false);
 
     try {
       const result = await api.fs.preview(fullPath);
       const uint8Array = new Uint8Array(result);
-      const text = new TextDecoder("utf-8", { fatal: true }).decode(uint8Array);
-      setContent(text);
-    } catch (err) {
+
       try {
-        const result = await api.fs.preview(fullPath);
-        const uint8Array = new Uint8Array(result);
-        const text = new TextDecoder("utf-8", { fatal: false }).decode(uint8Array);
+        const text = new TextDecoder("utf-8", { fatal: true }).decode(
+          uint8Array,
+        );
         setContent(text);
       } catch {
-        setError(err instanceof Error ? err.message : "Failed to load file");
         setContent(null);
+        setIsInvalidUtf8(true);
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load file");
+      setContent(null);
     } finally {
       setIsLoading(false);
     }
-  }, [api, apiReady, fullPath]);
+  }, [api, status, fullPath]);
 
   useEffect(() => {
     loadContent();
   }, [loadContent]);
 
+  const handleOpenInHexPreview = useCallback(() => {
+    openSingletonPanel({
+      id: `hexPreview-${fullPath}`,
+      component: "hexPreview",
+      title: fullPath.split("/").pop()!,
+      params: { path: fullPath },
+    });
+  }, [fullPath, openSingletonPanel]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
         <Loader2 className="w-6 h-6 animate-spin mr-2" />
-        Loading...
+        {t("loading")}...
       </div>
     );
   }
@@ -137,28 +132,61 @@ export function TextEditorTab({ params }: IDockviewPanelProps<TextEditorTabParam
     );
   }
 
-  if (!content) {
+  if (isInvalidUtf8) {
     return (
-      <div className="flex items-center justify-center h-full text-muted-foreground">
-        No content
+      <div className="flex flex-col items-center justify-center h-full gap-4 p-8 text-center">
+        <div className="text-destructive text-lg">{t("invalid_utf8_file")}</div>
+        <div className="text-muted-foreground text-sm max-w-md">
+          {t("invalid_utf8_description")}
+        </div>
+        <Button onClick={handleOpenInHexPreview}>
+          {t("open_in_hex_preview")}
+        </Button>
       </div>
     );
   }
 
-  const highlightedContent = highlightCode(content, language);
+  if (!content) {
+    return (
+      <div className="flex items-center justify-center h-full text-muted-foreground">
+        {t("no_content")}
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col bg-background">
-      <div className="flex-none px-4 py-2 bg-muted/50 border-b flex justify-between items-center">
+      <div className="flex-none px-4 py-2 bg-muted/50 border-b flex justify-between items-center gap-4">
         <span className="truncate">{fullPath}</span>
-        <span className="text-xs text-muted-foreground ml-4 px-2 py-1 bg-muted rounded">
-          {language}
-        </span>
+        <Select value={language} onValueChange={setSelectedLanguage}>
+          <SelectTrigger className="w-40">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {LANGUAGES.map((lang) => (
+              <SelectItem key={lang.value} value={lang.value}>
+                {lang.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-      <div className="flex-1 overflow-auto p-4">
-        <div
-          className="font-mono text-sm leading-6"
-          dangerouslySetInnerHTML={{ __html: highlightedContent }}
+      <div className="flex-1 overflow-hidden">
+        <Editor
+          height="100%"
+          language={language}
+          value={content}
+          theme={theme === "dark" ? "vs-dark" : "light"}
+          options={{
+            readOnly: true,
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            wordWrap: "on",
+            fontSize: 13,
+            lineNumbers: "on",
+            folding: true,
+            automaticLayout: true,
+          }}
         />
       </div>
     </div>

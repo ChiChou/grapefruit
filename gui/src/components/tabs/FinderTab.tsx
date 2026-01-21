@@ -94,6 +94,7 @@ function typeFor(filename: string): string {
     case "webp":
       return "image";
 
+    case "strings":
     case "xcprivacy":
     case "archiver":
     case "plist":

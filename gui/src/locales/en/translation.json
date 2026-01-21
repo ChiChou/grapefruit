@@ -148,5 +148,9 @@
   "visual_preview": "Visual Preview",
   "selected_element": "Selected Element",
   "no_data": "No data available",
-  "inspect_ui": "Inspect UI"
+  "hex_preview": "Hex Preview",
+  "inspect_ui": "Inspect UI",
+  "invalid_utf8_file": "Not a valid text file",
+  "invalid_utf8_description": "This file contains invalid UTF-8 sequences and cannot be displayed as text. Open it in the Hex Preview for binary content.",
+  "open_in_hex_preview": "Open in Hex Editor"
 }

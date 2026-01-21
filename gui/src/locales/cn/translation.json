@@ -146,5 +146,9 @@
   "visual_preview": "可视化预览",
   "selected_element": "已选元素",
   "no_data": "暂无数据",
-  "inspect_ui": "检视界面"
+  "hex_preview": "十六进制查看器",
+  "inspect_ui": "检视界面",
+  "invalid_utf8_file": "不是有效的文本文件",
+  "invalid_utf8_description": "此文件包含无效的 UTF-8 序列，无法作为文本显示。请使用十六进制模式查看其二进制内容。",
+  "open_in_hex_preview": "用十六进制预览打开"
 }
