@@ -61,7 +61,7 @@ export function fake(lat: number, lng: number) {
       location.timestamp(),
     );
 
-    return newLocation;
+    return newLocation.autorelease();
   }
 
   const callbacks: {
@@ -89,7 +89,8 @@ export function fake(lat: number, lng: number) {
         const newLocation = fakeWithOrigin(location);
         newArray.addObject_(newLocation);
       }
-      args[3] = newArray.copy();
+      args[3] = newArray.copy().autorelease();
+      newArray.release();
     },
     "- locationManager:didUpdateHeading:": function (args) {
       console.log(
@@ -106,9 +107,10 @@ export function fake(lat: number, lng: number) {
     const clazz = ObjC.classes[className];
     for (let sel in callbacks) {
       if (sel in clazz) {
-        Interceptor.attach(clazz[sel].implementation, {
+        const l = Interceptor.attach(clazz[sel].implementation, {
           onEnter: callbacks[sel],
         });
+        listeners.push(l);
       }
     }
 
@@ -139,4 +141,6 @@ export function fake(lat: number, lng: number) {
 export function dismiss() {
   listeners.forEach((l) => l.detach());
   listeners = [];
+
+  hooked.clear();
 }
