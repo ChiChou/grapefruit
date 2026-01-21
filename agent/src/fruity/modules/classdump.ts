@@ -3,6 +3,12 @@ type Tree<T> = {
   [name: string]: Tree<T> | T;
 };
 
+export function classesForModule(path: string) {
+  const ownedBy = new ModuleMap((m) => m.path === path);
+  if (!ObjC.available) throw new Error("Objective-C not available");
+  return ObjC.enumerateLoadedClassesSync({ ownedBy })[path];
+}
+
 export function list(scope: string) {
   const mainBundle = ObjC.classes.NSBundle.mainBundle();
 

@@ -23,7 +23,7 @@ export interface ModuleDetailParams {
   path: string;
 }
 
-type TabKey = "dependencies" | "sections" | "symbols" | "imported" | "exported";
+type TabKey = "dependencies" | "sections" | "symbols" | "imported" | "exported" | "classes";
 
 interface SymbolLike {
   name: string;
@@ -37,6 +37,7 @@ interface TabData {
   symbols: SymbolLike[] | null;
   imported: SymbolLike[] | null;
   exported: SymbolLike[] | null;
+  classes: string[] | null;
 }
 
 type SymbolTabKey = "symbols" | "imported" | "exported";
@@ -108,10 +109,11 @@ export function ModuleDetailTab({
   const { openFilePanel } = useDock();
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabKey>("sections");
-  const [searchState, setSearchState] = useState<Record<SymbolTabKey, string>>({
+  const [searchState, setSearchState] = useState<Record<SymbolTabKey | "classes", string>>({
     symbols: "",
     imported: "",
     exported: "",
+    classes: "",
   });
   const [loading, setLoading] = useState<Record<TabKey, boolean>>({
     dependencies: false,
@@ -119,6 +121,7 @@ export function ModuleDetailTab({
     symbols: false,
     imported: false,
     exported: false,
+    classes: false,
   });
   const [data, setData] = useState<TabData>({
     dependencies: null,
@@ -126,6 +129,7 @@ export function ModuleDetailTab({
     symbols: null,
     imported: null,
     exported: null,
+    classes: null,
   });
 
   const loadTabData = useCallback(
@@ -151,6 +155,9 @@ export function ModuleDetailTab({
             break;
           case "exported":
             result = await api.symbol.exports(params.path);
+            break;
+          case "classes":
+            result = await api.classdump.classesForModule(params.path);
             break;
         }
         setData((prev) => ({ ...prev, [tab]: result }));
@@ -284,6 +291,84 @@ export function ModuleDetailTab({
     );
   };
 
+  const renderClasses = () => {
+    if (loading.classes) {
+      return (
+        <div className="flex items-center justify-center h-full text-gray-500">
+          {t("loading")}...
+        </div>
+      );
+    }
+    const classes = data.classes;
+    if (!classes || classes.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-full text-gray-500">
+          {t("no_results")}
+        </div>
+      );
+    }
+    return (
+      <ClassesList
+        classes={classes}
+        searchValue={searchState.classes}
+        onSearchChange={(value) =>
+          setSearchState((prev) => ({ ...prev, classes: value }))
+        }
+      />
+    );
+  };
+
+  function ClassesList({
+    classes,
+    searchValue,
+    onSearchChange,
+  }: {
+    classes: string[];
+    searchValue: string;
+    onSearchChange: (value: string) => void;
+  }) {
+    const filtered = useMemo(() => {
+      const query = searchValue.toLowerCase();
+      if (!query) return classes;
+      return classes.filter((c) => c.toLowerCase().includes(query));
+    }, [classes, searchValue]);
+
+    return (
+      <div className="flex flex-col h-full">
+        <div className="relative mb-2">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder={t("search")}
+            value={searchValue}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <div className="overflow-auto flex-1">
+          <div className="flex flex-wrap gap-2 p-2">
+            {filtered.map((className) => (
+              <button
+                key={className}
+                type="button"
+                className="px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 cursor-pointer truncate max-w-xs"
+                onClick={() =>
+                  openFilePanel({
+                    id: `class_${className}`,
+                    component: "classDetail",
+                    title: className,
+                    params: { className },
+                  })
+                }
+              >
+                {className}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const renderSymbolTab = (tabKey: SymbolTabKey) => {
     if (loading[tabKey]) {
       return (
@@ -323,6 +408,7 @@ export function ModuleDetailTab({
           <TabsList>
             <TabsTrigger value="dependencies">{t("dependencies")}</TabsTrigger>
             <TabsTrigger value="sections">{t("sections")}</TabsTrigger>
+            <TabsTrigger value="classes">{t("classes")}</TabsTrigger>
             <TabsTrigger value="symbols">{t("symbols")}</TabsTrigger>
             <TabsTrigger value="imported">{t("imported")}</TabsTrigger>
             <TabsTrigger value="exported">{t("exported")}</TabsTrigger>
@@ -334,6 +420,9 @@ export function ModuleDetailTab({
         </TabsContent>
         <TabsContent value="sections" className="flex-1">
           {renderSections()}
+        </TabsContent>
+        <TabsContent value="classes" className="flex-1">
+          {renderClasses()}
         </TabsContent>
         <TabsContent value="symbols" className="flex-1">
           {renderSymbolTab("symbols")}
