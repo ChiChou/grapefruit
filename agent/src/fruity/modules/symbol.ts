@@ -54,6 +54,35 @@ export function resolve(type: "objc" | "module", query: string) {
     : matches;
 }
 
+export function strings(path: string) {
+  const mod = getModule(path);
+
+  // do not include: __objc_methtype
+  const valid = [
+    "__objc_methname",
+    "__cstring",
+    "__dlopen_cstrs",
+    "__objc_classname",
+  ];
+  const strings: string[] = [];
+  const validSet = new Set(valid);
+
+  for (const section of mod.enumerateSections()) {
+    if (!validSet.has(section.name) || section.size <= 0) continue;
+
+    const end = section.address.add(section.size);
+    let p = section.address;
+    while (p.compare(end) < 0) {
+      const str = p.readUtf8String();
+      if (!str) break;
+      strings.push(str);
+      p = p.add(str.length + 1);
+    }
+  }
+
+  return strings;
+}
+
 function loadDemangler() {
   const canidates = [
     "/usr/lib/swift",
