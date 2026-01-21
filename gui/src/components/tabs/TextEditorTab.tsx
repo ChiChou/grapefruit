@@ -1,6 +1,7 @@
 import Editor, { loader } from "@monaco-editor/react";
 import type { IDockviewPanelProps } from "dockview";
 import { Loader2 } from "lucide-react";
+import { Magika } from "magika";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -17,43 +18,85 @@ import {
 } from "@/components/ui/select";
 
 const LANGUAGES = [
-  { value: "javascript", label: "JavaScript" },
-  { value: "typescript", label: "TypeScript" },
-  { value: "css", label: "CSS" },
-  { value: "xml", label: "XML" },
-  { value: "html", label: "HTML" },
-  { value: "plaintext", label: "Plain Text" },
-] as const;
+  { value: "javascript", label: "JavaScript", ext: ["js", "mjs", "cjs"] },
+  { value: "typescript", label: "TypeScript", ext: ["ts", "tsx"] },
+  { value: "css", label: "CSS", ext: ["css"] },
+  { value: "html", label: "HTML", ext: ["html", "htm"] },
+  { value: "xml", label: "XML", ext: ["xml"] },
+  { value: "json", label: "JSON", ext: ["json", "jsonc", "jsonl"] },
+  { value: "wasm", label: "WebAssembly", ext: ["wasm"] },
+  { value: "kotlin", label: "Kotlin", ext: ["kt", "kts"] },
+  { value: "java", label: "Java", ext: ["java"] },
+  { value: "gradle", label: "Gradle", ext: ["gradle"] },
+  { value: "smali", label: "Smali", ext: ["smali"] },
+  { value: "swift", label: "Swift", ext: ["swift"] },
+  { value: "objectivec", label: "Objective-C", ext: ["m", "mm"] },
+  { value: "dart", label: "Dart", ext: ["dart"] },
+  { value: "yaml", label: "YAML", ext: ["yml", "yaml"] },
+  { value: "ini", label: "INI", ext: ["ini"] },
+  { value: "toml", label: "TOML", ext: ["toml"] },
+  { value: "lua", label: "Lua", ext: ["lua"] },
+  { value: "python", label: "Python", ext: ["py", "pyw"] },
+  { value: "protobuf", label: "Protocol Buffers", ext: ["proto", "textproto"] },
+  { value: "shell", label: "Shell", ext: ["sh", "bash", "zsh"] },
+  { value: "sql", label: "SQL", ext: ["sql"] },
+  { value: "markdown", label: "Markdown", ext: ["md", "markdown"] },
+  { value: "ruby", label: "Ruby", ext: ["rb"] },
+  { value: "plaintext", label: "Plain Text", ext: ["txt", "text", "log"] },
+];
 
-loader.init().then((monaco) => {
-  for (let i = 0; i < LANGUAGES.length; i++) {
-    monaco.languages.register({ id: LANGUAGES[i].value });
-  }
-});
+const MAGIKA_TO_SYNTAX: Record<string, string> = {
+  // --- Web / Hybrid ---
+  javascript: "javascript",
+  typescript: "typescript",
+  tsx: "typescript",
+  jsx: "javascript",
+  css: "css",
+  html: "html",
+  json: "json",
+  jsonc: "json",
+  jsonl: "json",
+  vue: "html", // Vue files often highlight well as HTML or specialized vue
+  wasm: "wasm",
+
+  // --- Native Android ---
+  kotlin: "kotlin",
+  java: "java",
+  gradle: "gradle",
+  xml: "xml",
+  smali: "smali", // Common in decompiled Android apps
+
+  // --- Native iOS ---
+  swift: "swift",
+  objectivec: "objectivec",
+  appleplist: "xml",
+
+  // --- Cross Platform ---
+  dart: "dart", // Flutter
+
+  // --- Config / Data / Scripts ---
+  yaml: "yaml",
+  ini: "ini",
+  toml: "toml",
+  lua: "lua",
+  python: "python",
+  proto: "protobuf",
+  textproto: "protobuf",
+  shell: "shell",
+  sql: "sql",
+  markdown: "markdown",
+  ruby: "ruby", // often used for Fastlane files
+  pem: "plaintext", // Certificates
+  license: "plaintext",
+
+  // --- Fallbacks ---
+  txt: "plaintext",
+  txtutf8: "plaintext",
+  txtascii: "plaintext",
+};
 
 export interface TextEditorTabParams {
   path: string;
-}
-
-function guessLanguageFromName(path: string): string {
-  const ext = path.split(".").pop()?.toLowerCase();
-  switch (ext) {
-    case "js":
-    case "mjs":
-    case "cjs":
-      return "javascript";
-    case "ts":
-    case "tsx":
-      return "typescript";
-    case "css":
-      return "css";
-    case "xml":
-    case "html":
-    case "htm":
-      return "xml";
-    default:
-      return "plaintext";
-  }
 }
 
 export function TextEditorTab({
@@ -69,9 +112,40 @@ export function TextEditorTab({
   const [isInvalidUtf8, setIsInvalidUtf8] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<string>("");
 
+  const [magika, setMagika] = useState<Magika | null>(null);
+
   const fullPath = params?.path || "";
-  const guessedLanguage = guessLanguageFromName(fullPath);
-  const language = selectedLanguage || guessedLanguage;
+
+  loader.init().then((monaco) => {
+    for (let i = 0; i < LANGUAGES.length; i++) {
+      monaco.languages.register({ id: LANGUAGES[i].value });
+    }
+  });
+
+  useEffect(() => {
+    Magika.create().then(setMagika);
+  }, []);
+
+  const detectSyntaxFromBytes = useCallback(
+    async (u8: Uint8Array): Promise<string> => {
+      if (magika) {
+        const info = await magika.identifyBytes(u8);
+
+        if (info.status === "ok") {
+          const label = info.prediction.dl.label;
+          const isText = info.prediction.dl.is_text;
+
+          if (!isText) return "plaintext";
+
+          const mappedSyntax = MAGIKA_TO_SYNTAX[label];
+          if (mappedSyntax) return mappedSyntax;
+        }
+      }
+
+      return "plaintext";
+    },
+    [magika],
+  );
 
   const loadContent = useCallback(async () => {
     const apiReady = status === "ready" && !!api;
@@ -83,12 +157,11 @@ export function TextEditorTab({
 
     try {
       const result = await api.fs.preview(fullPath);
-      const uint8Array = new Uint8Array(result);
+      const u8 = new Uint8Array(result);
+      setSelectedLanguage(await detectSyntaxFromBytes(u8));
 
       try {
-        const text = new TextDecoder("utf-8", { fatal: true }).decode(
-          uint8Array,
-        );
+        const text = new TextDecoder("utf-8", { fatal: true }).decode(u8);
         setContent(text);
       } catch {
         setContent(null);
@@ -100,7 +173,7 @@ export function TextEditorTab({
     } finally {
       setIsLoading(false);
     }
-  }, [api, status, fullPath]);
+  }, [status, api, fullPath, detectSyntaxFromBytes]);
 
   useEffect(() => {
     loadContent();
@@ -157,8 +230,8 @@ export function TextEditorTab({
   return (
     <div className="h-full flex flex-col bg-background">
       <div className="flex-none px-4 py-2 bg-muted/50 border-b flex justify-between items-center gap-4">
-        <span className="truncate">{fullPath}</span>
-        <Select value={language} onValueChange={setSelectedLanguage}>
+        <span className="truncate text-sm">{fullPath}</span>
+        <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
           <SelectTrigger className="w-40">
             <SelectValue />
           </SelectTrigger>
@@ -174,7 +247,7 @@ export function TextEditorTab({
       <div className="flex-1 overflow-hidden">
         <Editor
           height="100%"
-          language={language}
+          language={selectedLanguage}
           value={content}
           theme={theme === "dark" ? "vs-dark" : "light"}
           options={{

@@ -35,6 +35,7 @@
     "date-fns": "^4.1.0",
     "dockview": "^4.11.0",
     "i18next": "^25.6.1",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.552.0",
     "magika": "^1.0.0",
     "react": "^19.1.1",
