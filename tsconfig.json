@@ -12,9 +12,9 @@
     "allowImportingTsExtensions": true,
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["./shared/*"]
-    }
+      "@shared/*": ["./shared/*"],
+    },
   },
-  "include": ["src/**/*", "shared/**/*"],
-  "exclude": ["node_modules", "gui"]
+  "include": ["src/**/*", "shared/**/*", "src/index.ts"],
+  "exclude": ["node_modules", "gui"],
 }

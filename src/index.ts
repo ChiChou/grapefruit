@@ -4,10 +4,22 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import app from "./app.ts";
 import attach from "./ws.ts";
 
-if (process.env.NODE_ENV !== "development") {
-  const dist = new URL("../gui/dist", import.meta.url).pathname;
-  app.use("/assets/*", serveStatic({ root: dist }));
-  app.use("/*", serveStatic({ root: dist, path: "index.html" }));
+{
+  const root = "./gui/dist";
+  const frontend = new URL(root, import.meta.url).pathname;
+
+  // bug: when compiled by bun single-file executable, the runtime will set
+  // NODE_ENV to development. Does it make any sense?
+
+  if (frontend.startsWith("/$bunfs/root")) {
+    app.use("/assets/*", serveStatic({ root }));
+    app.use("/*", serveStatic({ root, path: "index.html" }));
+  }
+
+  if (process.env.NODE_ENV !== "development") {
+    app.use("/assets/*", serveStatic({ root: frontend }));
+    app.use("/*", serveStatic({ root: frontend, path: "index.html" }));
+  }
 }
 
 const server = serve(
@@ -29,6 +41,7 @@ process
   .on("unhandledRejection", (reason, promise) => {
     console.error("Unhandled Rejection at:", promise, "reason:", reason);
   })
+  // bug: bun single-file executable does not handle ^C
   .on("SIGINT", () => {
     server.close();
   })

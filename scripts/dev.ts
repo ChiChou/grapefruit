@@ -46,4 +46,6 @@ async function main() {
   }
 }
 
+process.env.NDOE_ENV = "development";
+
 main();
