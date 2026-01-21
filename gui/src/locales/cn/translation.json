@@ -150,5 +150,8 @@
   "inspect_ui": "检视界面",
   "invalid_utf8_file": "不是有效的文本文件",
   "invalid_utf8_description": "此文件包含无效的 UTF-8 序列，无法作为文本显示。请使用十六进制模式查看其二进制内容。",
-  "open_in_hex_preview": "用十六进制预览打开"
+  "open_in_hex_preview": "用十六进制预览打开",
+  "geolocation_simulation": "定位模拟",
+  "stop": "停止",
+  "simulated_location": "模拟的位置"
 }

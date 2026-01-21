@@ -3,6 +3,7 @@ import * as classdump from "./modules/classdump.js";
 import * as cookies from "./modules/cookies.js";
 import * as entitlements from "./modules/entitlements.js";
 import * as fs from "./modules/fs.js";
+import * as geolocation from "./modules/geolocation.js";
 import * as info from "./modules/info.js";
 import * as jsc from "./modules/jsc.js";
 import * as keychain from "./modules/keychain.js";
@@ -27,6 +28,7 @@ export default {
   cookies,
   entitlements,
   fs,
+  geolocation,
   info,
   jsc,
   keychain,

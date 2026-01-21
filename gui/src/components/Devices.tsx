@@ -85,9 +85,9 @@ export function Devices() {
     return () => {
       socket.disconnect();
     };
-  }, []);
+  }, [loadDevices]);
 
-  useEffect(loadDevices, []);
+  useEffect(loadDevices, [t]);
 
   if (loading) {
     return (
@@ -184,10 +184,11 @@ export function Devices() {
             <li key={device.id} className="flex items-center gap-2">
               <Link
                 to={`/apps/${device.id}`}
-                className={`flex-1 block rounded-md px-3 py-2 text-sm transition-colors hover:bg-gray-200 dark:hover:bg-gray-700 ${udid === device.id
-                  ? "bg-gray-300 font-medium dark:bg-gray-700 dark:text-gray-100"
-                  : "text-gray-700 dark:text-gray-300"
-                  }`}
+                className={`flex-1 block rounded-md px-3 py-2 text-sm transition-colors hover:bg-gray-200 dark:hover:bg-gray-700 ${
+                  udid === device.id
+                    ? "bg-gray-300 font-medium dark:bg-gray-700 dark:text-gray-100"
+                    : "text-gray-700 dark:text-gray-300"
+                }`}
               >
                 {device.name || device.id}
               </Link>
