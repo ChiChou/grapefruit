@@ -1,10 +1,13 @@
 import { serve } from "@hono/node-server";
+import { serveStatic } from "@hono/node-server/serve-static";
 
 import app from "./app.ts";
 import attach from "./ws.ts";
 
 if (process.env.NODE_ENV !== "development") {
-  // todo: serve built frontend
+  const dist = new URL("../gui/dist", import.meta.url).pathname;
+  app.use("/assets/*", serveStatic({ root: dist }));
+  app.use("/*", serveStatic({ root: dist, path: "index.html" }));
 }
 
 const server = serve(
@@ -13,7 +16,8 @@ const server = serve(
     port: parseInt(process.env.PORT!, 10) || 31337,
   },
   (info) => {
-    console.info(`Server is running on http://${info.address}:${info.port}`);
+    const host = info.address === "::" ? "localhost" : info.address;
+    console.info(`Server is running on http://${host}:${info.port}`);
     attach(server);
   },
 );

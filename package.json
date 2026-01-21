@@ -8,7 +8,9 @@
     "dev": "node --watch src/index.ts",
     "start": "bun src/index.ts",
     "test": "bun --test",
-    "prepare": "cd agent && bun i && cd .. && cd gui && bun i"
+    "prepare": "cd agent && bun i && cd .. && cd gui && bun i",
+    "package": "bun build src/index.ts --compile --outfile bin/igf",
+    "package:all": "bun scripts/cross-build.ts"
   },
   "keywords": [],
   "author": "",
@@ -20,7 +22,7 @@
   "dependencies": {
     "@hono/node-server": "^1.19.6",
     "env-paths": "^3.0.0",
-    "frida": "^17.5.1",
+    "frida": "^17.6.1",
     "frida-remote-stream": "^6.0.3",
     "frida16": "npm:frida@^16.7.19",
     "hono": "^4.10.4",
@@ -30,5 +32,14 @@
     "@types/node": "^24.10.0",
     "socket.io-client": "^4.8.1",
     "typescript": "^5.9.3"
-  }
+  },
+  "patchedDependencies": {
+    "frida@17.5.1": "patches/frida@17.5.1.patch",
+    "frida@17.6.1": "patches/frida@17.6.1.patch",
+    "frida@16.7.19": "patches/frida@16.7.19.patch"
+  },
+  "trustedDependencies": [
+    "frida",
+    "frida16"
+  ]
 }

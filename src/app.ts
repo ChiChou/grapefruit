@@ -1,9 +1,10 @@
+import RemoteStreamController from "frida-remote-stream";
 import { Hono } from "hono";
+import { createMiddleware } from "hono/factory";
 import { logger } from "hono/logger";
 import { prettyJSON } from "hono/pretty-json";
-import { createMiddleware } from "hono/factory";
 import { stream } from "hono/streaming";
-import RemoteStreamController from "frida-remote-stream";
+import { Readable } from "node:stream";
 
 import { readAgent } from "./lib/utils.ts";
 import getVersion from "./lib/version.ts";
@@ -14,7 +15,6 @@ import {
   app as serializeApp,
   device as serializeDevice,
 } from "./lib/serializer.ts";
-import { Readable } from "node:stream";
 
 const manager = frida.getDeviceManager();
 const app = new Hono();

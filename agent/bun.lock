@@ -4,7 +4,6 @@
     "": {
       "name": "igf-agent",
       "dependencies": {
-        "frida-compile": "^19.0.4",
         "frida-java-bridge": "^7.0.10",
         "frida-objc-bridge": "^8.0.5",
         "frida-remote-stream": "^6.0.3",
@@ -17,6 +16,7 @@
         "@typescript-eslint/parser": "^8.48.0",
         "@typescript/native-preview": "7.0.0-dev.20251108.1",
         "eslint": "^9.39.1",
+        "frida-compile": "^19.0.4",
       },
     },
   },
