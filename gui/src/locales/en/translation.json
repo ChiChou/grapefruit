@@ -153,7 +153,10 @@
   "invalid_utf8_file": "Not a valid text file",
   "invalid_utf8_description": "This file contains invalid UTF-8 sequences and cannot be displayed as text. Open it in the Hex Preview for binary content.",
   "open_in_hex_preview": "Open in Hex Editor",
-  "geolocation_simulation": "Geolication Simulation",
+  "geolocation_simulation": "Geolocation Simulation",
   "stop": "Stop",
-  "simulated_location": "Simulated Location"
+  "simulated_location": "Simulated Location",
+  "uploading": "Uploading",
+  "completed": "Completed",
+  "drop_files_here": "Drop files here to upload"
 }

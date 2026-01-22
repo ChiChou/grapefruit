@@ -33,6 +33,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import { Status, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 import type {
@@ -527,6 +534,12 @@ const PREFIXES = {
   bundle: "!",
 } as const;
 
+interface UploadFile {
+  name: string;
+  progress: number;
+  error?: string;
+}
+
 export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
   const { api, status, pid, device } = useSession();
   const { t } = useTranslation();
@@ -540,6 +553,9 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
   const [isLoading, setIsLoading] = useState(false);
 
   const [fullCwd, setFullCwd] = useState<string | null>(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadFiles, setUploadFiles] = useState<UploadFile[]>([]);
+  const [isDragOver, setIsDragOver] = useState(false);
   const apiReady = status === Status.Ready && !!api;
 
   const loadDirectory = useCallback(
@@ -607,6 +623,68 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
     [fullCwd, openSingletonPanel],
   );
 
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(false);
+      if (activeTab !== "home" || !pid || !device || !fullCwd) return;
+
+      const files = Array.from(e.dataTransfer.files);
+      if (files.length === 0) return;
+
+      const newFiles: UploadFile[] = files.map((f) => ({
+        name: f.name,
+        progress: 0,
+      }));
+      setUploadFiles(newFiles);
+      setUploadOpen(true);
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const targetPath = `${fullCwd}/${file.name}`;
+        const formData = new FormData();
+        formData.append("path", targetPath);
+        formData.append("file", file);
+
+        try {
+          const url = new URL(window.location.href);
+          url.pathname = `/api/upload/${device}/${pid}`;
+          const response = await fetch(url.toString(), {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) {
+            const error = await response.text();
+            setUploadFiles((prev) =>
+              prev.map((f, idx) =>
+                idx === i ? { ...f, progress: 0, error: error } : f
+              )
+            );
+          } else {
+            setUploadFiles((prev) =>
+              prev.map((f, idx) => (idx === i ? { ...f, progress: 100 } : f))
+            );
+          }
+        } catch (err) {
+          setUploadFiles((prev) =>
+            prev.map((f, idx) =>
+              idx === i
+                ? { ...f, progress: 0, error: (err as Error).message }
+                : f
+            )
+          );
+        }
+      }
+
+      setTimeout(() => {
+        setUploadOpen(false);
+        handleDirectorySelect(fullCwd);
+      }, 500);
+    },
+    [activeTab, pid, device, fullCwd, handleDirectorySelect],
+  );
+
   useEffect(() => {
     if (!apiReady) return;
     const path = PREFIXES[activeTab];
@@ -623,6 +701,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
   }, [apiReady, params?.path]);
 
   return (
+    <>
     <ResizablePanelGroup direction="horizontal" autoSaveId="finder-split">
       <ResizablePanel defaultSize={15} minSize={5} maxSize={80}>
         <Tabs
@@ -658,14 +737,54 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
       </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize={85}>
-        <FileTable
-          items={items}
-          isLoading={isLoading}
-          cwd={fullCwd!}
-          onDownload={handleDownload}
-          onPreview={handlePreview}
-        />
+        <div
+          className="h-full relative"
+          onDragOver={(e) => {
+            e.preventDefault();
+            if (activeTab === "home") setIsDragOver(true);
+          }}
+          onDragLeave={() => setIsDragOver(false)}
+          onDrop={handleDrop}
+        >
+          {isDragOver && (
+            <div className="absolute inset-0 bg-primary/10 flex items-center justify-center z-10 border-2 border-dashed border-primary">
+              <span className="text-primary font-medium">{t("drop_files_here")}</span>
+            </div>
+          )}
+          <FileTable
+            items={items}
+            isLoading={isLoading}
+            cwd={fullCwd!}
+            onDownload={handleDownload}
+            onPreview={handlePreview}
+          />
+        </div>
       </ResizablePanel>
     </ResizablePanelGroup>
+    <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("uploading")}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 max-h-80 overflow-auto">
+          {uploadFiles.map((file) => (
+            <div key={file.name} className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="truncate max-w-[200px]">{file.name}</span>
+                {file.error ? (
+                  <span className="text-destructive text-xs">{file.error}</span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">
+                    {file.progress === 100 ? t("completed") : `${file.progress}%`}
+                  </span>
+                )}
+              </div>
+              <Progress value={file.progress} />
+            </div>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

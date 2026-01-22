@@ -153,5 +153,8 @@
   "open_in_hex_preview": "用十六进制预览打开",
   "geolocation_simulation": "定位模拟",
   "stop": "停止",
-  "simulated_location": "模拟的位置"
+  "simulated_location": "模拟的位置",
+  "uploading": "正在上传",
+  "completed": "已完成",
+  "drop_files_here": "将文件拖放到此处上传"
 }

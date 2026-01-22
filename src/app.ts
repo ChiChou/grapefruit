@@ -133,9 +133,76 @@ api
     });
   })
   .post("/upload/:device/:pid", getDeviceMiddleware, async (c) => {
-    const path = c.req.param("path");
+    const formBody = await c.req.parseBody();
+    const path = formBody["path"];
     if (typeof path !== "string") return c.text("invalid path", 400);
-    return c.text("not implemented", 501);
+
+    console.log("file upload to", path);
+
+    const device = c.get("device");
+    const pid = parseInt(c.req.param("pid"), 10);
+
+    const agentSource = await agent("transport");
+    const session = await device.attach(pid);
+    const script = await session.createScript(agentSource);
+    await script.load();
+
+    const controller = new RemoteStreamController();
+    controller.events.on("send", ({ stanza, data }) => {
+      script.post(
+        {
+          type: "+stream",
+          payload: stanza,
+        },
+        data,
+      );
+    });
+
+    script.message.connect((message, data) => {
+      if (message.type === "send") {
+        const stanza = message.payload as {
+          payload: { [key: string]: any };
+          name: string;
+        };
+        if (stanza.name === "+stream") {
+          controller.receive({
+            stanza: stanza.payload,
+            data,
+          });
+        }
+      }
+    });
+
+    const file = formBody["file"];
+    if (!(file instanceof File)) return c.text("invalid request", 400);
+
+    console.log("upload file", file.name, file.type, file.size);
+
+    await Promise.all([
+      new Promise<void>(async (resolve) => {
+        const writable = controller.open(`${pid}:${path}`, {
+          meta: { type: "data" },
+        });
+
+        const reader = file.stream().getReader();
+        if (!reader) {
+          resolve();
+          return;
+        }
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          writable.write(value);
+        }
+        writable.end();
+        resolve();
+      }),
+      script.exports.push(path),
+    ]);
+
+    return c.text("not properly implemented yet", 501);
+    // return c.text("upload complete");
   })
   .get("/device/:device/apps", getDeviceMiddleware, async (c) => {
     const device = c.get("device");
