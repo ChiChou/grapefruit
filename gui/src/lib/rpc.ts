@@ -10,6 +10,7 @@ export interface SessionClientEvents {
   ready: (pid: number) => void;
   log: (level: string, text: string) => void;
   syslog: (text: string) => void;
+  invalid: () => void;
 }
 
 export interface SessionServerEvents {

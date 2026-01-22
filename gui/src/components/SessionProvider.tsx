@@ -34,6 +34,11 @@ function SessionProvider({ children }: { children: ReactNode }) {
     );
 
     socket
+      .on("invalid", () => {
+        // bug workaround: first time connection
+        // the server receives empty query
+        location.reload();
+      })
       .on("ready", (newPid: number) => {
         console.log("socket.io ready");
         setStatus(Status.Ready);

@@ -6,20 +6,13 @@ import frida from "./lib/xvii.ts";
 import env from "./lib/env.ts";
 import { agent } from "./lib/assets.ts";
 
-interface DownloadMessage {
-  subject: "download";
-  data?: Buffer;
-  event: "trunk" | "end" | "error";
-  session: string;
-}
-
 interface ServerToClientEvents {
   ready: (pid: number) => void;
   change: () => void;
   detached: (reason: string) => void;
   log: (level: string, text: string) => void;
   syslog: (text: string) => void;
-  download: (msg: DownloadMessage) => void;
+  invalid: () => void;
 }
 
 interface ClientToServerEvents {
@@ -162,6 +155,9 @@ export default function attach(server: ServerType) {
       });
     } else {
       console.error("invalid param:", device, bundle);
+      // there is a weird bug that first time calling socket.io
+      // the query params are empty
+      socket.emit("invalid");
       socket.disconnect(true);
     }
   });
