@@ -15,6 +15,9 @@ import * as url from "./modules/url.js";
 import * as userdefaults from "./modules/userdefaults.js";
 import * as webview from "./modules/webview.js";
 
+import * as objc from "./hooks/objc.js";
+import * as hook from "./hooks/index.js";
+
 import * as memory from "../common/memory.js";
 import * as sqlite from "../common/sqlite.js";
 
@@ -29,11 +32,13 @@ export default {
   entitlements,
   fs,
   geolocation,
+  hook,
   info,
   jsc,
   keychain,
   lsof,
   memory,
+  objc,
   sqlite,
   symbol,
   syslog,

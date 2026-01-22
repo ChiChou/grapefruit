@@ -6,6 +6,10 @@ import frida from "./lib/xvii.ts";
 import env from "./lib/env.ts";
 import { agent } from "./lib/assets.ts";
 
+import type { Message as ObjCHookMessage } from "../agent/types/fruity/hooks/objc.js";
+import type { Message as SQLiteHookMessage } from "../agent/types/fruity/hooks/sqlite.js";
+import type { Message as CryptoHookMessage } from "../agent/types/fruity/hooks/crypto.js";
+
 interface ServerToClientEvents {
   ready: (pid: number) => void;
   change: () => void;
@@ -13,6 +17,8 @@ interface ServerToClientEvents {
   log: (level: string, text: string) => void;
   syslog: (text: string) => void;
   invalid: () => void;
+  lifecycle: (event: 'inactive'| 'active' | 'forerground' | 'background') => void;
+  hook: (msg: ObjCHookMessage | SQLiteHookMessage | CryptoHookMessage) => void;
 }
 
 interface ClientToServerEvents {
@@ -84,10 +90,20 @@ async function onConnection(
 
   script.message.connect((message, data) => {
     if (message.type === "send") {
-      if (message.payload.subject === "syslog" && data) {
+      const { payload } = message;
+      const { subject } = payload;
+      if (subject === "syslog" && data) {
         const text = data.toString();
         console.log(`[syslog]`, text);
         socket.emit("syslog", text);
+      } else {
+        if (subject === "hook") {
+          socket.emit(subject, payload);
+        } else if (subject === 'lifecycle') {
+          socket.emit(subject, payload.event);
+        } else {
+          console.debug('send', payload);
+        }
       }
     } else if (message.type === "error") {
       console.error("script error:", message);

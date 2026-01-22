@@ -3,7 +3,7 @@ import ObjC from "frida-objc-bridge";
 import { BaseMessage, bt } from "./context.js";
 import { parse } from "./typecoding.js";
 
-export interface ObjCMessage extends BaseMessage {
+export interface Message extends BaseMessage {
   cls: string;
   sel: string;
   args: string[];

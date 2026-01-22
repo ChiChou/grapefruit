@@ -1,9 +1,9 @@
 import ObjC from "frida-objc-bridge";
 
-let signalHandlerInstance: ObjC.Object | null = null;
+let signalHandlerInstance: ObjC.Object;
 
 function getSignalHandler(): ObjC.Object {
-  if (signalHandlerInstance === null) {
+  if (!signalHandlerInstance) {
     const salt = Math.random().toString(36).slice(2);
     const name = `GrapefruitAppDelegate${salt}`;
     const MyAppDelegate = ObjC.registerProtocol({
@@ -14,6 +14,14 @@ function getSignalHandler(): ObjC.Object {
           argTypes: [],
         },
         "- background": {
+          retType: "void",
+          argTypes: [],
+        },
+        "- active": {
+          retType: "void",
+          argTypes: [],
+        },
+        "- foreground": {
           retType: "void",
           argTypes: [],
         },
@@ -34,7 +42,15 @@ function getSignalHandler(): ObjC.Object {
           console.warn(
             "App is is now on the background. Grapefruit will be irresponsive.",
           );
-          send({ subject, event: "frozen" });
+          send({ subject, event: "background" });
+        },
+        "- active": () => {
+          send({ subject, event: "active" });
+          console.warn("App became active.");
+        },
+        "- foreground": () => {
+          send({ subject, event: "foreground" });
+          console.warn("App will enter foreground.");
         },
       },
     });
@@ -64,6 +80,18 @@ export function init() {
     "UIApplicationDidEnterBackgroundNotification",
     NULL,
   );
+  center.addObserver_selector_name_object_(
+    signalHandler,
+    ObjC.selector("active"),
+    "UIApplicationDidBecomeActiveNotification",
+    NULL,
+  );
+  center.addObserver_selector_name_object_(
+    signalHandler,
+    ObjC.selector("foreground"),
+    "UIApplicationWillEnterForegroundNotification",
+    NULL,
+  );
 }
 
 function dispose() {
@@ -78,6 +106,16 @@ function dispose() {
   center.removeObserver_name_object_(
     signalHandler,
     "UIApplicationDidEnterBackgroundNotification",
+    NULL,
+  );
+  center.removeObserver_name_object_(
+    signalHandler,
+    "UIApplicationDidBecomeActiveNotification",
+    NULL,
+  );
+  center.removeObserver_name_object_(
+    signalHandler,
+    "UIApplicationWillEnterForegroundNotification",
     NULL,
   );
 }
