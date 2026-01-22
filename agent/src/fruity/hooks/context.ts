@@ -10,9 +10,6 @@ export interface BaseMessage {
   symbol: string;
   dir: "enter" | "leave";
   bt?: Frame[];
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  details?: any;
 }
 
 export function bt(ctx: CpuContext): Frame[] {
