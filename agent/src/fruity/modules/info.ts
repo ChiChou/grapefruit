@@ -8,7 +8,6 @@ import type {
 } from "../typings.js";
 
 import { toJsArray, valueOf } from "../bridge/dictionary.js";
-import getFoundationApi from "../native/foundation.js";
 
 export interface URLScheme {
   name: string;
@@ -77,11 +76,9 @@ export function basics(): BasicInfo {
     ]),
   ) as VersionInfoDict;
 
-  const { NSHomeDirectory, NSTemporaryDirectory } = getFoundationApi();
-
   return {
-    tmp: new ObjC.Object(NSTemporaryDirectory()).toString(),
-    home: new ObjC.Object(NSHomeDirectory()).toString(),
+    tmp: Process.getTmpDir(),
+    home: Process.getHomeDir(),
     label: getLabel(infoDict),
     id: main.bundleIdentifier().toString(),
     path: main.bundlePath().toString(),

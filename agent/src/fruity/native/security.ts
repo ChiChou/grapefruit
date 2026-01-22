@@ -1,4 +1,42 @@
+let cached: {
+  SecItemCopyMatching: NativeFunction<
+    number,
+    [NativePointerValue, NativePointerValue]
+  >;
+  SecItemAdd: NativeFunction<number, [NativePointerValue, NativePointerValue]>;
+  SecItemUpdate: NativeFunction<
+    number,
+    [NativePointerValue, NativePointerValue]
+  >;
+  SecItemDelete: NativeFunction<number, [NativePointerValue]>;
+  SecAccessControlCreateWithFlags: NativeFunction<
+    NativePointer,
+    [NativePointerValue, NativePointerValue, number, NativePointerValue]
+  >;
+  SecAccessControlGetProtection: NativeFunction<
+    NativePointer,
+    [NativePointerValue]
+  >;
+  SecAccessControlGetRequirePassword: NativeFunction<
+    number,
+    [NativePointerValue]
+  >;
+  SecAccessControlGetConstraint: NativeFunction<
+    NativePointer,
+    [NativePointerValue, NativePointerValue]
+  >;
+  SecAccessControlGetConstraints: NativeFunction<
+    NativePointer,
+    [NativePointerValue]
+  >;
+  Security: Module;
+};
+
 export default function api() {
+  if (cached) {
+    return cached;
+  }
+
   const Security = Process.getModuleByName("Security");
 
   const SecItemCopyMatching = new NativeFunction(
@@ -55,7 +93,7 @@ export default function api() {
     ["pointer"],
   );
 
-  return {
+  cached = {
     SecItemCopyMatching,
     SecItemAdd,
     SecItemUpdate,
@@ -67,4 +105,6 @@ export default function api() {
     SecAccessControlGetConstraints,
     Security,
   };
+
+  return cached;
 }
