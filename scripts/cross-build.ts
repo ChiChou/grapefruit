@@ -1,6 +1,7 @@
 import path from "node:path";
 import cp from "node:child_process";
-import { promises as fs } from "node:fs";
+import { promises as fs, globSync } from "node:fs";
+import { $ } from "bun";
 
 const bunTargets: Record<string, [string, string]> = {
   "bun-linux-x64": ["linux", "x64"],
@@ -48,8 +49,9 @@ function bunBuild(target?: string) {
     process.execPath,
     [
       "build",
-      path.join(root, "index.bun.ts"),
       ...targetArgs,
+      path.join(root, "src", "index.bun.ts"),
+      path.join(root, "assets.tgz"),
       "--compile",
       "--outfile",
       path.join(root, "build", "Release", name),
@@ -72,31 +74,20 @@ async function main() {
   }
 
   // generate a script for assets
-  const nodeEntry = Bun.file(path.join("src", "index.ts"));
-  const bunEntry = Bun.file(path.join("index.bun.ts"));
+  const nodeEntry = Bun.file(path.join(root, "src", "index.ts"));
+  const bunEntry = Bun.file(path.join(root, "src", "index.bun.ts"));
   if (await bunEntry.exists()) {
     await bunEntry.delete();
   }
   const writer = bunEntry.writer();
 
-  const embed = async (...segments: string[]) => {
-    const parent = path.join(root, ...segments);
-    for await (const file of fs.glob(path.join(parent, "**/*"))) {
-      const stat = await fs.lstat(file);
-      if (stat.isFile())
-        await writer.write(
-          `import "./${segments.join("/")}/${path.relative(parent, file)}" with { type: "file" };\n`,
-        );
-    }
-  };
-
-  await embed("agent", "dist");
-  await embed("gui", "dist");
+  await $`tar czf assets.tgz gui/dist agent/dist`;
 
   await writer.write("\n");
   const original = await nodeEntry.text();
   // hack
-  await writer.write(original.replaceAll('from "./', 'from "./src/'));
+  // .replaceAll('from "./', 'from "./src/')
+  await writer.write(original);
   await writer.end();
   // await writer.flush();
 

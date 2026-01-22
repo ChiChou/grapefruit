@@ -1,6 +1,6 @@
 import frida from "frida";
 import { describe, it } from "node:test";
-import { readAgent } from "../lib/utils.ts";
+import { agent } from "src/lib/assets.ts";
 
 describe("load agent", () => {
   it("should spawn app", async () => {
@@ -10,7 +10,7 @@ describe("load agent", () => {
       return;
     }
 
-    const source = await readAgent("fruity");
+    const source = await agent("fruity");
 
     try {
       const dev = await frida.getUsbDevice();

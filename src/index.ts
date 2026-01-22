@@ -3,29 +3,27 @@ import { serveStatic } from "@hono/node-server/serve-static";
 
 import app from "./app.ts";
 import attach from "./ws.ts";
+import env from "./lib/env.ts";
+import { asset } from "./lib/assets.ts";
 
 {
-  const root = "./gui/dist";
-  const frontend = new URL(root, import.meta.url).pathname;
-
-  // bug: when compiled by bun single-file executable, the runtime will set
-  // NODE_ENV to development. Does it make any sense?
-
-  if (frontend.startsWith("/$bunfs/root")) {
+  function serveWeb(root: string) {
     app.use("/assets/*", serveStatic({ root }));
     app.use("/*", serveStatic({ root, path: "index.html" }));
   }
 
-  if (process.env.NODE_ENV !== "development") {
-    app.use("/assets/*", serveStatic({ root: frontend }));
-    app.use("/*", serveStatic({ root: frontend, path: "index.html" }));
+  // bug: when compiled by bun single-file executable, the runtime will set
+  // NODE_ENV to "development". Does it make any sense?
+
+  if (env.singleFile || !env.dev) {
+    serveWeb(await asset("gui", "dist"));
   }
 }
 
 const server = serve(
   {
     fetch: app.fetch,
-    port: parseInt(process.env.PORT!, 10) || 31337,
+    port: env.port,
   },
   (info) => {
     const host = info.address === "::" ? "localhost" : info.address;
@@ -38,6 +36,9 @@ for (const sig of ["SIGINT", "SIGTERM", "SIGBEAK"]) {
   process.on(sig, () => {
     console.log("received signal", sig);
     server.close();
+
+    // force close
+    process.exit();
   });
 }
 

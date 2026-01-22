@@ -12,6 +12,7 @@ if (fridaVersion !== 16 && fridaVersion !== 17)
   throw new Error("Invalid FRIDA_VERSION, must be 16 or 17");
 
 export default {
+  singleFile: import.meta.dirname?.includes("/$bunfs/root"),
   frida: fridaVersion,
   dev: devmode,
   host: process.env.HOST || host,

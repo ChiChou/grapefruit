@@ -6,7 +6,6 @@ import { prettyJSON } from "hono/pretty-json";
 import { stream } from "hono/streaming";
 import { Readable } from "node:stream";
 
-import { readAgent } from "./lib/utils.ts";
 import getVersion from "./lib/version.ts";
 import env from "./lib/env.ts";
 import frida, { type Device } from "./lib/xvii.ts";
@@ -15,6 +14,7 @@ import {
   app as serializeApp,
   device as serializeDevice,
 } from "./lib/serializer.ts";
+import { agent } from "./lib/assets.ts";
 
 const manager = frida.getDeviceManager();
 const app = new Hono();
@@ -71,7 +71,7 @@ api
     const device = c.get("device");
     const pid = parseInt(c.req.param("pid"), 10);
 
-    const agentSource = await readAgent("transport");
+    const agentSource = await agent("transport");
     const session = await device.attach(pid);
     const script = await session.createScript(agentSource);
     await script.load();

@@ -4,7 +4,7 @@ import { SessionDetachReason, type SpawnOptions } from "frida";
 
 import frida from "./lib/xvii.ts";
 import env from "./lib/env.ts";
-import { readAgent } from "./lib/utils.ts";
+import { agent } from "./lib/assets.ts";
 
 interface DownloadMessage {
   subject: "download";
@@ -66,7 +66,7 @@ async function onConnection(
   const pid = await start();
   const session = await device.attach(pid);
   await device.resume(pid);
-  const script = await session.createScript(await readAgent(`fruity`));
+  const script = await session.createScript(await agent(`fruity`));
 
   session.detached.connect((reason, crash) => {
     console.error("session detached:", reason, crash);
