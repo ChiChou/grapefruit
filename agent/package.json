@@ -21,7 +21,7 @@
     "type:flags": "tsgo --declaration --experimentalDecorators --emitDeclarationOnly --outDir types --target es2019 --skipLibCheck",
     "type:fruity": "bun run type:flags -- src/fruity/registry.ts",
     "type:droid": "bun run type:flags -- src/droid/registry.ts",
-    "type": "bun run type:fruity && bun run type:driod"
+    "type": "bun run type:fruity && bun run type:droid"
   },
   "devDependencies": {
     "@types/frida-gum": "^19.0.1",
