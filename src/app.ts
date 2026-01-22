@@ -147,7 +147,7 @@ api
     const bundle = c.req.param("bundle");
 
     if (!deviceId) {
-      return c.json({ error: "device not found" }, 404);
+      return c.text("device not found", 404);
     }
 
     const device = await frida.getDevice(deviceId);
@@ -160,7 +160,7 @@ api
 
     const app = apps.at(0);
     if (!app) {
-      return c.json({ error: "application not found" }, 404);
+      return c.text("application not found", 404);
     }
 
     const { icons } = app.parameters as {
@@ -171,11 +171,12 @@ api
       const ico = icons.find((i) => i.format === "png");
       if (ico && ico.image) {
         c.header("Content-Type", "image/png");
+        c.header("Cache-Control", "public, max-age=3600");
         return c.body(new Uint8Array(ico.image));
       }
     }
 
-    return c.json({ error: "icon not found" }, 404);
+    return c.text("icon not found", 404);
   })
   .get("/device/:device/info", getDeviceMiddleware, async (c) => {
     const device = c.get("device");
