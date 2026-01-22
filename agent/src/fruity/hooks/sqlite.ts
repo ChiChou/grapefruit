@@ -72,6 +72,34 @@ export function open() {
       }),
     );
   }
+
+  return hooks;
+}
+
+export function exec() {
+  const sqlite = Process.findModuleByName("libsqlite3.dylib");
+  if (!sqlite) return [];
+
+  const exec = sqlite.getExportByName("sqlite3_exec");
+  if (exec) {
+    return [
+      Interceptor.attach(exec, {
+        onEnter(args) {
+          const sql = args[1].readUtf8String() || "unknown";
+          send({
+            subject: "hook",
+            category: "sql",
+            symbol: "sqlite3_exec",
+            dir: "enter",
+            backtrace: bt(this.context),
+            sql,
+          } as Message);
+        },
+      }),
+    ];
+  }
+
+  return [];
 }
 
 export function prepare() {
