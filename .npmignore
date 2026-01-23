@@ -1,5 +1,3 @@
-!agent/dist
-!gui/dist
 !dist
 
 # do not include build/Release, it's only for GitHub CI

@@ -8,8 +8,9 @@
   },
   "files": [
     "./dist",
-    "./gui/dist",
-    "./agent/dist"
+    "./gui/dist/",
+    "./agent/dist",
+    "./agent/types"
   ],
   "scripts": {
     "dev:both": "bun scripts/dev.ts",
@@ -25,7 +26,14 @@
     "build:cli": "bun scripts/build-bun.ts",
     "build:cross": "bun scripts/build-bun.ts cross"
   },
-  "keywords": [],
+  "keywords": [
+    "mobile",
+    "frida",
+    "ios",
+    "android",
+    "reverse engineering",
+    "instrumentation"
+  ],
   "author": "",
   "license": "MIT",
   "type": "module",
@@ -56,5 +64,13 @@
   "trustedDependencies": [
     "frida",
     "frida16"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chichou/grapefruit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/chichou/grapefruit/issues"
+  },
+  "homepage": "https://github.com/chichou/grapefruit#readme"
 }
