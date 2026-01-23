@@ -1,5 +1,6 @@
 import ObjC from "frida-objc-bridge";
 
+import cf from "../native/corefoundation.js";
 import { NSData } from "../typings.js";
 
 const kSecCSDefaultFlags = 0;
@@ -11,27 +12,6 @@ const kSecCSRequirementInformation = 1 << 2;
 
 export interface Entitlements {
   [key: string]: string | boolean | number | string[];
-}
-
-// todo: move this to a common module
-function getCFApi() {
-  const CoreFoundation = Process.getModuleByName("CoreFoundation");
-  const CFRelease = new NativeFunction(
-    CoreFoundation.findExportByName("CFRelease")!,
-    "void",
-    ["pointer"],
-  );
-
-  const CFRetain = new NativeFunction(
-    CoreFoundation.findExportByName("CFRetain")!,
-    "pointer",
-    ["pointer"],
-  );
-
-  return {
-    CFRetain,
-    CFRelease,
-  };
 }
 
 function dictionary(url: ObjC.Object): NativePointer {
@@ -57,7 +37,7 @@ function dictionary(url: ObjC.Object): NativePointer {
     ["pointer", "uint32", "pointer"],
   );
 
-  const { CFRetain, CFRelease } = getCFApi();
+  const { CFRetain, CFRelease } = cf();
 
   const pCodeRef = Memory.alloc(Process.pointerSize);
   const pSignInfo = Memory.alloc(Process.pointerSize);
@@ -120,7 +100,7 @@ export function json(path?: string): string {
       0,
       NULL,
     );
-  getCFApi().CFRelease(dict);
+  cf().CFRelease(dict);
   return dataToString(data);
 }
 
@@ -135,6 +115,6 @@ export function xml(path?: string): string {
       NULL,
     );
 
-  getCFApi().CFRelease(dict);
+  cf().CFRelease(dict);
   return dataToString(data);
 }

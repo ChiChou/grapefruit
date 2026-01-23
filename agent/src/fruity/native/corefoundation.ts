@@ -1,6 +1,8 @@
 let cached: {
   CFDataGetLength: NativeFunction<number, [NativePointerValue]>;
   CFDataGetBytePtr: NativeFunction<NativePointer, [NativePointerValue]>;
+  CFRetain: NativeFunction<NativePointer, [NativePointerValue]>;
+  CFRelease: NativeFunction<void, [NativePointerValue]>;
 };
 
 export default function api() {
@@ -19,9 +21,23 @@ export default function api() {
     ["pointer"],
   );
 
+  const CFRelease = new NativeFunction(
+    CoreFoundation.findExportByName("CFRelease")!,
+    "void",
+    ["pointer"],
+  );
+
+  const CFRetain = new NativeFunction(
+    CoreFoundation.findExportByName("CFRetain")!,
+    "pointer",
+    ["pointer"],
+  );
+
   cached = {
     CFDataGetLength,
     CFDataGetBytePtr,
+    CFRetain,
+    CFRelease,
   };
 
   return cached;
