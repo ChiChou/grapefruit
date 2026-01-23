@@ -39,6 +39,18 @@ if (ObjC.available) {
 }
 
 rpc.exports = {
-  invoke,
+  invoke(namespace: string, method: string, args?: unknown[]) {
+    const action = () => invoke(namespace, method, args || []);
+    if (ObjC.available && ObjC.classes.NSAutoreleasePool) {
+      const pool = ObjC.classes.NSAutoreleasePool.alloc().init();
+      try {
+        return action();
+      } finally {
+        pool.release();
+      }
+    } else {
+      action();
+    }
+  },
   interfaces,
 };
