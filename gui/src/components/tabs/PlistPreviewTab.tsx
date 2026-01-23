@@ -5,7 +5,7 @@ import { useSession } from "@/context/SessionContext";
 import { ChevronDown, ChevronUp, FileJson } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import PlistView, { type PlistValue } from "@/components/PlistView";
+import PlistTreeView, { type PlistValue } from "@/components/PlistTreeView";
 
 export interface PlistPreviewTabParams {
   path: string;
@@ -102,7 +102,7 @@ export function PlistPreviewTab({
         </div>
       </div>
       <div className="flex-1 overflow-auto p-4">
-        <PlistView data={data} expanded={expandAll} />
+        <PlistTreeView data={data} expanded={expandAll} />
       </div>
     </div>
   );

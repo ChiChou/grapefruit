@@ -6,7 +6,7 @@ import { Download, Copy, Check } from "lucide-react";
 import Editor, { loader } from "@monaco-editor/react";
 import { useTheme } from "@/components/theme-provider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import PlistView, { type PlistValue } from "@/components/PlistView";
+import PlistTreeView, { type PlistValue } from "@/components/PlistTreeView";
 
 loader.init().then((monaco) => {
   monaco.languages.register({ id: "xml" });
@@ -103,7 +103,7 @@ export function InfoPlistTab() {
                 {t("loading")}...
               </div>
             ) : plistData ? (
-              <PlistView data={plistData} expanded={true} />
+              <PlistTreeView data={plistData} expanded={true} />
             ) : (
               <div className="flex items-center justify-center h-full text-gray-500">
                 {t("no_content")}

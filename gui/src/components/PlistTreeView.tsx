@@ -151,7 +151,7 @@ function PlistNode({
   );
 }
 
-interface PlistViewProps {
+interface PlistTreeProps {
   data:
     | string
     | number
@@ -161,7 +161,7 @@ interface PlistViewProps {
   expanded: boolean;
 }
 
-export default function PlistView({ data, expanded }: PlistViewProps) {
+export default function PlistTreeView({ data, expanded }: PlistTreeProps) {
   const tree = buildTree(data);
 
   return tree.children ? (
