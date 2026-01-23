@@ -23,7 +23,7 @@ export interface ModuleDetailParams {
   path: string;
 }
 
-type TabKey = "dependencies" | "sections" | "symbols" | "imported" | "exported" | "classes";
+type TabKey = "dependencies" | "sections" | "symbols" | "exported" | "classes";
 
 interface SymbolLike {
   name: string;
@@ -35,12 +35,12 @@ interface TabData {
   dependencies: string[] | null;
   sections: Section[] | null;
   symbols: SymbolLike[] | null;
-  imported: SymbolLike[] | null;
   exported: SymbolLike[] | null;
   classes: string[] | null;
+  importedData: Record<string, SymbolLike[] | null>;
 }
 
-type SymbolTabKey = "symbols" | "imported" | "exported";
+type SymbolTabKey = "symbols" | "exported";
 
 function SymbolTable({
   items,
@@ -111,7 +111,6 @@ export function ModuleDetailTab({
   const [activeTab, setActiveTab] = useState<TabKey>("sections");
   const [searchState, setSearchState] = useState<Record<SymbolTabKey | "classes", string>>({
     symbols: "",
-    imported: "",
     exported: "",
     classes: "",
   });
@@ -119,7 +118,6 @@ export function ModuleDetailTab({
     dependencies: false,
     sections: false,
     symbols: false,
-    imported: false,
     exported: false,
     classes: false,
   });
@@ -127,10 +125,12 @@ export function ModuleDetailTab({
     dependencies: null,
     sections: null,
     symbols: null,
-    imported: null,
     exported: null,
     classes: null,
+    importedData: {},
   });
+  const [expandedDeps, setExpandedDeps] = useState<Set<string>>(new Set());
+  const [importsLoading, setImportsLoading] = useState<Set<string>>(new Set());
 
   const loadTabData = useCallback(
     async (tab: TabKey) => {
@@ -150,9 +150,7 @@ export function ModuleDetailTab({
           case "symbols":
             result = await api.symbol.symbols(params.path);
             break;
-          case "imported":
-            result = await api.symbol.imports(params.path);
-            break;
+          
           case "exported":
             result = await api.symbol.exports(params.path);
             break;
@@ -258,6 +256,61 @@ export function ModuleDetailTab({
     );
   };
 
+  const loadImportsForDep = useCallback(
+    async (dep: string) => {
+      if (status !== Status.Ready || !api) return;
+      if (data.importedData[dep] !== undefined) return;
+
+      setImportsLoading((prev) => new Set(prev).add(dep));
+      try {
+        const result = await api.symbol.imports(params.path, dep);
+        setData((prev) => ({
+          ...prev,
+          importedData: { ...prev.importedData, [dep]: result },
+        }));
+      } catch (err) {
+        console.error(`Failed to load imports for ${dep}:`, err);
+        setData((prev) => ({
+          ...prev,
+          importedData: { ...prev.importedData, [dep]: [] },
+        }));
+      } finally {
+        setImportsLoading((prev) => {
+          const next = new Set(prev);
+          next.delete(dep);
+          return next;
+        });
+      }
+    },
+    [api, status, params.path, data.importedData],
+  );
+
+  const toggleDep = (dep: string) => {
+    const newExpanded = new Set(expandedDeps);
+    if (newExpanded.has(dep)) {
+      newExpanded.delete(dep);
+    } else {
+      newExpanded.add(dep);
+      loadImportsForDep(dep);
+    }
+    setExpandedDeps(newExpanded);
+  };
+
+  const expandAll = () => {
+    if (!data.dependencies) return;
+    const newExpanded = new Set<string>(data.dependencies);
+    data.dependencies.forEach((dep) => {
+      if (data.importedData[dep] === undefined) {
+        loadImportsForDep(dep);
+      }
+    });
+    setExpandedDeps(newExpanded);
+  };
+
+  const collapseAll = () => {
+    setExpandedDeps(new Set());
+  };
+
   const renderDependencies = () => {
     if (loading.dependencies) {
       return (
@@ -275,19 +328,73 @@ export function ModuleDetailTab({
       );
     }
     return (
-      <ul className="p-2 space-y-1">
-        {deps.map((dep) => (
-          <li key={dep}>
-            <button
-              type="button"
-              className="text-sm text-blue-600 dark:text-blue-400 hover:underline cursor-pointer text-left"
-              onClick={() => openModuleTab(dep)}
-            >
-              {dep}
-            </button>
-          </li>
-        ))}
-      </ul>
+      <div className="flex flex-col h-full">
+        <div className="flex items-center gap-2 mb-2">
+          <button
+            type="button"
+            className="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer"
+            onClick={expandAll}
+          >
+            {t("expand_all")}
+          </button>
+          <button
+            type="button"
+            className="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer"
+            onClick={collapseAll}
+          >
+            {t("collapse_all")}
+          </button>
+        </div>
+        <div className="overflow-auto flex-1">
+          <ul className="p-2 space-y-1">
+            {deps.map((dep) => {
+              const isExpanded = expandedDeps.has(dep);
+              const imports = data.importedData[dep];
+              const isLoading = importsLoading.has(dep);
+
+              return (
+                <li key={dep}>
+                  <div className="flex items-start gap-1">
+                    <button
+                      type="button"
+                      className="mt-0.5 w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer"
+                      onClick={() => toggleDep(dep)}
+                    >
+                      {isExpanded ? "▼" : "▶"}
+                    </button>
+                    <div className="flex-1">
+                      <button
+                        type="button"
+                        className="text-sm text-blue-600 dark:text-blue-400 hover:underline cursor-pointer text-left"
+                        onClick={() => openModuleTab(dep)}
+                      >
+                        {dep}
+                      </button>
+                      {isExpanded && (
+                        <div className="ml-4 mt-1">
+                          {isLoading ? (
+                            <span className="text-xs text-gray-500">{t("loading")}...</span>
+                          ) : imports && imports.length > 0 ? (
+                            <ul className="space-y-0.5">
+                              {imports.map((imp, idx) => (
+                                <li key={idx} className="text-xs font-mono text-gray-700 dark:text-gray-300">
+                                  {imp.name}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <span className="text-xs text-gray-500">{t("no_results")}</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </div>
     );
   };
 
@@ -410,7 +517,7 @@ export function ModuleDetailTab({
             <TabsTrigger value="sections">{t("sections")}</TabsTrigger>
             <TabsTrigger value="classes">{t("classes")}</TabsTrigger>
             <TabsTrigger value="symbols">{t("symbols")}</TabsTrigger>
-            <TabsTrigger value="imported">{t("imported")}</TabsTrigger>
+            
             <TabsTrigger value="exported">{t("exported")}</TabsTrigger>
           </TabsList>
           <h2 className="text-sm font-thin truncate">{params.path}</h2>
@@ -427,9 +534,7 @@ export function ModuleDetailTab({
         <TabsContent value="symbols" className="flex-1">
           {renderSymbolTab("symbols")}
         </TabsContent>
-        <TabsContent value="imported" className="flex-1">
-          {renderSymbolTab("imported")}
-        </TabsContent>
+        
         <TabsContent value="exported" className="flex-1">
           {renderSymbolTab("exported")}
         </TabsContent>

@@ -154,17 +154,10 @@ export interface Imported {
   type: SymbolType | undefined;
 }
 
-export function imports(path: string): Imported[] {
-  const unique = new Set<number>();
+export function imports(path: string, belongs: string): Imported[] {
   return getModule(path)
     .enumerateImports()
-    .filter((imp) => {
-      if (!imp.address) return false;
-      const k = imp.address.toInt32();
-      if (unique.has(k)) return false;
-      unique.add(k);
-      return true;
-    })
+    .filter((imp) => imp.module === belongs)
     .map(({ name, address, type }) => {
       const demangled = tryDemangle(name);
       let t: SymbolType | undefined = undefined;
