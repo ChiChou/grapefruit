@@ -1,7 +1,10 @@
+#! /usr/bin/env bun
+
 import path from "node:path";
 import cp from "node:child_process";
-import { promises as fs, globSync } from "node:fs";
+
 import { $ } from "bun";
+import { patch } from "./utils";
 
 const bunTargets: Record<string, [string, string]> = {
   "bun-linux-x64": ["linux", "x64"],
@@ -50,7 +53,7 @@ function bunBuild(target?: string) {
     [
       "build",
       ...targetArgs,
-      path.join(root, "src", "index.bun.ts"),
+      path.join(root, "src", "index.ts"),
       path.join(root, "assets.tgz"),
       "--compile",
       "--outfile",
@@ -73,23 +76,27 @@ async function main() {
     process.exit(1);
   }
 
-  // generate a script for assets
-  const nodeEntry = Bun.file(path.join(root, "src", "index.ts"));
-  const bunEntry = Bun.file(path.join(root, "src", "index.bun.ts"));
-  if (await bunEntry.exists()) {
-    await bunEntry.delete();
-  }
-  const writer = bunEntry.writer();
+  await $`bun i`;
+  await $`bun run install:bun`;
 
+  // will trigger a weird bug
+  //
+  //     path: "./igf/undefined",
+  //  syscall: "open",
+  //    errno: -2,
+  //     code: "ENOENT"
+  //
+  // for (const cwd of [".", "gui", "agent"]) {
+  //   await $`bun i`.cwd(cwd);
+  // }
+
+  // bun patch only works when node_modules is empty
+
+  await patch("frida", true);
+  await patch("frida16", true);
+
+  // Not tested on Windows. This script is only intended for CI
   await $`tar czf assets.tgz gui/dist agent/dist`;
-
-  await writer.write("\n");
-  const original = await nodeEntry.text();
-  // hack
-  // .replaceAll('from "./', 'from "./src/')
-  await writer.write(original);
-  await writer.end();
-  // await writer.flush();
 
   for (const name of ["frida", "frida16"]) {
     const cwd = path.join(root, "node_modules", name);

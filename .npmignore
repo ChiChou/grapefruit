@@ -1,5 +1,6 @@
-!agent/dist/**/*
-!gui/dist/**/*
+!agent/dist
+!gui/dist
+!dist
 
 # do not include build/Release, it's only for GitHub CI
 # to release bun single file executable

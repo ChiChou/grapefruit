@@ -11,6 +11,7 @@
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "baseUrl": ".",
+    "outDir": "dist",
     "paths": {
       "@shared/*": ["./shared/*"],
     },

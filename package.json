@@ -2,12 +2,12 @@
   "name": "igf",
   "version": "0.20.0",
   "description": "",
-  "main": "src/index.ts",
+  "main": "dist/index.mjs",
   "bin": {
     "igf": "bin/igf"
   },
   "files": [
-    "./src",
+    "./dist",
     "./gui/dist",
     "./agent/dist"
   ],
@@ -16,9 +16,14 @@
     "dev": "bun --watch src/index.ts",
     "start": "bun src/index.ts",
     "test": "bun --test",
-    "prepare": "cd agent && bun i && cd .. && cd gui && bun i && bun run build",
-    "package": "bun scripts/cross-build.ts",
-    "package:all": "bun scripts/cross-build.ts cross"
+    "prepack": "npm run build:npm",
+    "install:bun": "cd agent && bun i && cd .. && cd gui && bun i",
+    "build:gui": "cd gui && bun run build",
+    "build:agent": "cd agent && bun run build",
+    "build:assets": "bun run build:gui && bun run build:agent",
+    "build:npm": "node scripts/build-npm.ts && tsdown --env.NODE_ENV=production",
+    "build:cli": "bun scripts/build-bun.ts",
+    "build:cross": "bun scripts/build-bun.ts cross"
   },
   "keywords": [],
   "author": "",
@@ -40,6 +45,7 @@
   "devDependencies": {
     "@types/node": "^24.10.0",
     "socket.io-client": "^4.8.1",
+    "tsdown": "^0.20.1",
     "typescript": "^5.9.3"
   },
   "patchedDependencies": {

@@ -15,7 +15,7 @@ import { asset } from "./lib/assets.ts";
   // bug: when compiled by bun single-file executable, the runtime will set
   // NODE_ENV to "development". Does it make any sense?
 
-  if (env.singleFile || !env.dev) {
+  if (env.bunSEA || !env.dev) {
     serveWeb(await asset("gui", "dist"));
   }
 }

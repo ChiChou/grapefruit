@@ -6,10 +6,12 @@ import paths from "./paths";
 import { readFile } from "node:fs/promises";
 
 // bun does not support embedded directory as a tree
-// extract assets when it's missing
-//
+// extract assets when it's not present
+
 async function extract(): Promise<string> {
-  // @ts-ignore embed file has not typing
+  if (!globalThis.Bun) throw new Error("bun runtime required");
+
+  // @ts-ignore embed file has no typing
   const tar: { default: string } = await import("../../assets.tgz", {
     with: { type: "file" },
   });
@@ -38,9 +40,13 @@ async function extract(): Promise<string> {
 let assetsRoot: string | null = null;
 export async function asset(...components: string[]) {
   if (assetsRoot == null) {
-    assetsRoot = env.singleFile
-      ? await extract()
-      : new URL(`../../`, import.meta.url).pathname;
+    if (env.bunSEA) {
+      assetsRoot = await extract();
+    } else {
+      // workaround: tsdown flattens directory structure
+      const basePath = env.production ? "../" : "../../";
+      assetsRoot = new URL(basePath, import.meta.url).pathname;
+    }
   }
 
   return path.join(assetsRoot, ...components);
