@@ -142,7 +142,7 @@ export function parse(signature: string) {
       // Special case: ^v is void*
       if (typeStr === "^v") return "void*";
       // Special case: ^@ is usually NSError** (pointer to object)
-      if (typeStr === "^@") return "NSObject**"; // Or generic pointer
+      if (typeStr === "^@") return "id*"; // Or generic pointer
 
       const inner = decodeType(typeStr.substring(1));
       // If inner is unknown (like a struct), strict parsing says keep it unknown,
@@ -182,7 +182,7 @@ export function parse(signature: string) {
         // Extract Class Name: @"NSString" -> NSString*
         return typeStr.substring(2, typeStr.length - 1) + "*";
       }
-      return "NSObject*"; // Plain id
+      return "id"; // Plain id
     }
 
     // --- Primitives ---

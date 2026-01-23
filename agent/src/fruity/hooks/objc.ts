@@ -30,7 +30,7 @@ export function swizzle(cls: string, sel: string) {
   const { types } = method;
   const parsed = parse(types);
   const format = (t: string, v: NativePointer) =>
-    t === "NSObject*" ? new ObjC.Object(v).toString() : `${v}`;
+    t === "id" ? new ObjC.Object(v).toString() : `${v}`;
 
   const listener = Interceptor.attach(method.implementation, {
     onEnter(args) {
