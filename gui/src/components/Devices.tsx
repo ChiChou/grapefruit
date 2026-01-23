@@ -1,5 +1,5 @@
 import io from "socket.io-client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Link, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { TriangleAlert, RefreshCw, Plus, X } from "lucide-react";
@@ -25,7 +25,7 @@ export function Devices() {
   const { udid } = useParams();
   const { t } = useTranslation();
 
-  const loadDevices = () => {
+  const loadDevices = useCallback(() => {
     console.log("load devices");
     fetch("/api/devices")
       .then((res) => {
@@ -42,7 +42,7 @@ export function Devices() {
         setError(err.message);
         setLoading(false);
       });
-  };
+  }, [t]);
 
   const handleAddRemoteDevice = async () => {
     if (!ipAddress.trim()) return;
@@ -87,7 +87,9 @@ export function Devices() {
     };
   }, [loadDevices]);
 
-  useEffect(loadDevices, [t]);
+  useEffect(() => {
+    loadDevices();
+  }, [t, loadDevices]);
 
   if (loading) {
     return (
