@@ -2,6 +2,7 @@ import ObjC from "frida-objc-bridge";
 
 import cf from "../native/corefoundation.js";
 import { NSData } from "../typings.js";
+import { dump, toJSON, toXML } from "../lib/plist.js";
 
 const kSecCSDefaultFlags = 0;
 // const kSecCSInternalInformation = 1 << 0;
@@ -83,38 +84,11 @@ function fromPath(path?: string) {
   return dictionary(url);
 }
 
-function dataToString(data: NSData): string {
-  const NSUTF8StringEncoding = 4;
-  const nsstr = ObjC.classes.NSString.alloc().initWithData_encoding_(
-    data,
-    NSUTF8StringEncoding,
-  );
-  return nsstr.toString();
-}
-
-export function json(path?: string): string {
+export function plist(path?: string) {
   const dict = fromPath(path);
-  const data =
-    ObjC.classes.NSJSONSerialization.dataWithJSONObject_options_error_(
-      dict,
-      0,
-      NULL,
-    );
-  cf().CFRelease(dict);
-  return dataToString(data);
-}
-
-export function xml(path?: string): string {
-  const NSPropertyListXMLFormat_v1_0 = 100;
-  const dict = fromPath(path);
-  const data =
-    ObjC.classes.NSPropertyListSerialization.dataWithPropertyList_format_options_error_(
-      dict,
-      NSPropertyListXMLFormat_v1_0,
-      0,
-      NULL,
-    );
-
-  cf().CFRelease(dict);
-  return dataToString(data);
+  try {
+    return dump(new ObjC.Object(dict));
+  } finally {
+    cf().CFRelease(dict);
+  }
 }

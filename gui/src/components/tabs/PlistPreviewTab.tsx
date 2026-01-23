@@ -31,8 +31,8 @@ export function PlistPreviewTab({
     setError(null);
 
     try {
-      const result = await api.fs.plist(fullPath);
-      setData(result);
+      const { xml, value } = await api.fs.plist(fullPath);
+      setData(value);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load plist");
       setData(null);

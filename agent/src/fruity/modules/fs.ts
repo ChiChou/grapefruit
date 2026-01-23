@@ -11,6 +11,7 @@ import type {
 } from "../typings.js";
 
 import { toJS } from "../bridge/object.js";
+import { dump } from "../lib/plist.js";
 
 export interface Item {
   type: "file" | "directory" | "symlink";
@@ -214,7 +215,7 @@ export function attrs(path: string) {
 }
 
 export function plist(path: string) {
-  return toJS(ObjC.classes.NSDictionary.dictionaryWithContentsOfFile_(path));
+  return dump(ObjC.classes.NSDictionary.dictionaryWithContentsOfFile_(path));
 }
 
 const NSUTF8StringEncoding = 4;

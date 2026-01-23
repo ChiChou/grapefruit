@@ -8,6 +8,7 @@ import type {
 } from "../typings.js";
 
 import { toJsArray, toJS } from "../bridge/object.js";
+import { dump } from "../lib/plist.js";
 
 export interface URLScheme {
   name: string;
@@ -102,22 +103,5 @@ export function urls(): URLScheme[] {
 }
 
 export function plist() {
-  return toJS(ObjC.classes.NSBundle.mainBundle().infoDictionary());
-}
-
-export function plistReadable() {
-  const NSPropertyListXMLFormat_v1_0 = 100;
-  const NSUTF8StringEncoding = 4;
-  const dict = ObjC.classes.NSBundle.mainBundle().infoDictionary();
-  const xml =
-    ObjC.classes.NSPropertyListSerialization.dataWithPropertyList_format_options_error_(
-      dict,
-      NSPropertyListXMLFormat_v1_0,
-      0,
-      NULL,
-    ) as NSData;
-
-  return ObjC.classes.NSString.alloc()
-    .initWithData_encoding_(xml, NSUTF8StringEncoding)
-    .toString() as string;
+  return dump(ObjC.classes.NSBundle.mainBundle().infoDictionary());
 }
