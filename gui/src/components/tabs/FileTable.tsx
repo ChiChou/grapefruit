@@ -5,7 +5,7 @@ import {
   Download,
   Pencil,
   Trash2,
-  EllipsisVertical,
+  SquareArrowOutUpRight,
 } from "lucide-react";
 import {
   Table,
@@ -145,19 +145,19 @@ export function FileTable({
                         className="h-7 w-7"
                         title={t("open_with")}
                       >
-                        <EllipsisVertical className="h-4 w-4" />
+                        <SquareArrowOutUpRight className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start">
                       <DropdownMenuItem
-                        onClick={() => onPreview(item.name, "hex")}
-                      >
-                        {t("hex_view")}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
                         onClick={() => onPreview(item.name, "text")}
                       >
                         {t("text_editor")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => onPreview(item.name, "hex")}
+                      >
+                        {t("hex_view")}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => onPreview(item.name, "sqlite")}
