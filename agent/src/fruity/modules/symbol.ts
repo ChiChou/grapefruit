@@ -197,6 +197,15 @@ export function sections(path: string): Section[] {
     });
 }
 
+export function symbolicate(p: string) {
+  const { moduleName, lineNumber, fileName } = DebugSymbol.fromAddress(ptr(p));
+  return {
+    file: fileName,
+    line: lineNumber,
+    mod: moduleName,
+  };
+}
+
 export interface Symbol {
   name: string;
   addr: string;

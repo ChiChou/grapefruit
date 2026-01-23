@@ -158,5 +158,6 @@
   "simulated_location": "Simulated Location",
   "uploading": "Uploading",
   "completed": "Completed",
-  "drop_files_here": "Drop files here to upload"
+  "drop_files_here": "Drop files here to upload",
+  "type_encoding": "Type Encoding"
 }
