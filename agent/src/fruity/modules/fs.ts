@@ -10,7 +10,7 @@ import type {
   NSData,
 } from "../typings.js";
 
-import { toJS } from "../bridge/dictionary.js";
+import { toJS } from "../bridge/object.js";
 
 export interface Item {
   type: "file" | "directory" | "symlink";

@@ -1,5 +1,5 @@
 import ObjC from "frida-objc-bridge";
-import { toJS } from "../bridge/dictionary.js";
+import { toJS } from "../bridge/object.js";
 import getSecurityApi from "../native/security.js";
 
 function kSec(suffix: string) {

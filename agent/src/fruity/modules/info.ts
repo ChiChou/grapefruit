@@ -7,7 +7,7 @@ import type {
   NSData,
 } from "../typings.js";
 
-import { toJsArray, toJS } from "../bridge/dictionary.js";
+import { toJsArray, toJS } from "../bridge/object.js";
 
 export interface URLScheme {
   name: string;

@@ -10,7 +10,7 @@ import type {
   NSMutableDictionary,
   NSString,
 } from "../typings.js";
-import { toJsArray } from "../bridge/dictionary.js";
+import { toJsArray } from "../bridge/object.js";
 
 export type CookiePredicate = Partial<{
   name: string;

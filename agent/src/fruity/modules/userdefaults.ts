@@ -9,7 +9,7 @@ import {
   NSDictionary,
 } from "../typings.js";
 
-import { toJS } from "../bridge/dictionary.js";
+import { toJS } from "../bridge/object.js";
 
 /**
  * A default object must be a property list—that is, an instance of (or for collections,

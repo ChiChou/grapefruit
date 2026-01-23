@@ -8,7 +8,7 @@ import {
   NSString,
 } from "../typings.js";
 
-import * as Dictionary from "../bridge/dictionary.js";
+import * as Dictionary from "../bridge/object.js";
 import { iterateNSArray } from "../bridge/nsarray.js";
 
 interface JSContext extends NSObject {
