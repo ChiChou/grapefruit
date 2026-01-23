@@ -37,9 +37,10 @@ async function extract(): Promise<string> {
   return output;
 }
 
-let assetsRoot: string | null = null;
+let assetsRoot: string;
+
 export async function asset(...components: string[]) {
-  if (assetsRoot == null) {
+  if (!assetsRoot) {
     if (env.bunSEA) {
       assetsRoot = await extract();
     } else {
