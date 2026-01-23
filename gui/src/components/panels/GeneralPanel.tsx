@@ -8,6 +8,7 @@ import {
   FolderKey,
   Cookie,
   Layout,
+  Shield,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -102,6 +103,14 @@ export function GeneralPanel() {
       id: "ui_dump_tab",
       component: "uiDump",
       title: t("inspect_ui"),
+    });
+  };
+
+  const openEntitlementsTab = () => {
+    openSingletonPanel({
+      id: "entitlements_tab",
+      component: "entitlements",
+      title: "Entitlements",
     });
   };
 
@@ -264,6 +273,10 @@ export function GeneralPanel() {
               <Button variant="outline" size="sm" onClick={openKeyChainTab}>
                 <FolderKey className="w-4 h-4 mr-2" />
                 KeyChain
+              </Button>
+              <Button variant="outline" size="sm" onClick={openEntitlementsTab}>
+                <Shield className="w-4 h-4 mr-2" />
+                Entitlements
               </Button>
               <Button variant="outline" size="sm" onClick={openUIDumpTab}>
                 <Layout className="w-4 h-4 mr-2" />

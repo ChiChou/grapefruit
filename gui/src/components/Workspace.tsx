@@ -22,6 +22,7 @@ import SessionProvider from "./SessionProvider";
 import { useTheme } from "./theme-provider";
 import { HandlesTab } from "./tabs/HandlesTab";
 import { InfoPlistTab } from "./tabs/InfoPlistTab";
+import { EntitlementsTab } from "./tabs/EntitlementsTab";
 import { ModuleDetailTab } from "./tabs/ModuleDetailTab";
 import { ClassDetailTab } from "./tabs/ClassDetailTab";
 import { FinderTab } from "./tabs/FinderTab";
@@ -83,6 +84,7 @@ function WorkspaceContent() {
   const components = {
     handles: HandlesTab,
     infoPlist: InfoPlistTab,
+    entitlements: EntitlementsTab,
     moduleDetail: ModuleDetailTab,
     classDetail: ClassDetailTab,
     finder: FinderTab,
@@ -132,6 +134,12 @@ function WorkspaceContent() {
       id: "info_plist_tab",
       component: "infoPlist",
       title: "Info.plist",
+    });
+
+    dockApi.addPanel({
+      id: "entitlements_tab",
+      component: "entitlements",
+      title: "Entitlements",
     });
   };
 

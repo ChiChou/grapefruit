@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
-import { Status, useSession } from "@/context/SessionContext";
 import { Loader2 } from "lucide-react";
+
+import { Status, useSession } from "@/context/SessionContext";
 import { PlistView } from "@/components/UnifiedPlistViewer";
 import { type PlistValue } from "@/components/PlistTreeView";
 
