@@ -84,20 +84,6 @@ async function get(handle: string): Promise<NSObject> {
   throw new Error(`Unable to find WebView for handle ${handle}`);
 }
 
-export async function watch(handle: string) {
-  const webview = await get(handle);
-  Interceptor.attach(webview.dealloc.implementation, {
-    onLeave() {
-      send({
-        event: "dealloc",
-        handle,
-      });
-    },
-  });
-
-  return true;
-}
-
 export async function run(handle: string, js: string): Promise<string> {
   const webview = await get(handle);
   return evaluate(webview as WebView, js);
