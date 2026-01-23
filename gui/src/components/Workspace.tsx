@@ -28,7 +28,7 @@ import { FinderTab } from "./tabs/FinderTab";
 import { ImagePreviewTab } from "./tabs/ImagePreviewTab";
 import { HexPreviewTab } from "./tabs/HexPreviewTab";
 import { TextEditorTab } from "./tabs/TextEditorTab";
-import { PlistPreviewTab } from "./tabs/PlistPreviewTab";
+import { PlistFilePreviewTab } from "./tabs/PlistFilePreviewTab";
 import { SQLiteEditorTab } from "./tabs/SQLiteEditorTab";
 import { FontPreviewTab } from "./tabs/FontPreviewTab";
 import { BinaryCookieTab } from "./tabs/BinaryCookieTab";
@@ -89,7 +89,7 @@ function WorkspaceContent() {
     imagePreview: ImagePreviewTab,
     hexPreview: HexPreviewTab,
     textEditor: TextEditorTab,
-    plistPreview: PlistPreviewTab,
+    plistPreview: PlistFilePreviewTab,
     sqliteEditor: SQLiteEditorTab,
     fontPreview: FontPreviewTab,
     binaryCookie: BinaryCookieTab,
