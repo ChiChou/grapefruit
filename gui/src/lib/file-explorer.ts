@@ -71,6 +71,7 @@ export function typeFor(filename: string): string {
       return "image";
 
     case "strings":
+    case "loctable":
     case "xcprivacy":
     case "archiver":
     case "plist":
