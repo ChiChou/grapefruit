@@ -238,7 +238,7 @@ api
       const ico = icons.find((i) => i.format === "png");
       if (ico && ico.image) {
         c.header("Content-Type", "image/png");
-        c.header("Cache-Control", "public, max-age=3600");
+        c.header("Cache-Control", "public, max-age=604800"); // 7 days
         return c.body(new Uint8Array(ico.image));
       }
     }
