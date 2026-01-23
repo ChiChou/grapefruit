@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Status, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 
-import type { BasicInfo } from "../../../../agent/types/fruity/modules/info";
+import type { BasicInfo, URLScheme } from "../../../../agent/types/fruity/modules/info";
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -256,6 +256,32 @@ export function GeneralPanel() {
               <span className="text-sm">{t("na")}</span>
             )}
           </div>
+          {basicInfo.urls && basicInfo.urls.length > 0 && (
+            <div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                URL Schemes
+              </div>
+              <div className="space-y-2">
+                {basicInfo.urls.map((scheme: URLScheme, index: number) => (
+                  <div key={index} className="text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{scheme.name}</span>
+                      <Badge variant="outline" className="text-xs">
+                        {scheme.role}
+                      </Badge>
+                    </div>
+                    <div className="mt-1 ml-1 space-y-1">
+                      {scheme.schemes.map((s, i) => (
+                        <div key={i} className="font-mono text-xs text-muted-foreground">
+                          {s}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" onClick={openHandlesTab}>
