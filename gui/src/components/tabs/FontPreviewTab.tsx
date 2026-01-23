@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, useRef } from "react";
 import { Italic, Bold, Underline } from "lucide-react";
 import type { IDockviewPanelProps } from "dockview";
+import { useTranslation } from "react-i18next";
 
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Slider } from "@/components/ui/slider";
@@ -17,11 +18,13 @@ export function FontPreviewTab({
   params,
 }: IDockviewPanelProps<FontPreviewTabParams>) {
   const { pid, device } = useSession();
+  const { t } = useTranslation();
 
   const fullPath = params?.path || "";
   const fontUrl = `/api/download/${device}/${pid}?path=${encodeURIComponent(fullPath)}`;
 
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
   const [isBold, setIsBold] = useState(false);
   const [isUnderline, setIsUnderline] = useState(false);
@@ -37,12 +40,16 @@ export function FontPreviewTab({
 
   useEffect(() => {
     const loadFont = async () => {
+      setHasError(false);
+      setIsLoading(true);
       try {
         const fontFace = new FontFace("PreviewFont", `url('${fontUrl}')`);
         await fontFace.load();
         document.fonts.add(fontFace);
-        setIsLoading(false);
-      } catch {
+      } catch (e) {
+        console.error("Failed to load font preview", e);
+        setHasError(true);
+      } finally {
         setIsLoading(false);
       }
     };
@@ -101,6 +108,14 @@ export function FontPreviewTab({
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
         Loading...
+      </div>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <div className="flex items-center justify-center h-full text-destructive">
+        {t("failed_to_load_font_preview")}
       </div>
     );
   }

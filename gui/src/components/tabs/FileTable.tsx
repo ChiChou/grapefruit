@@ -6,6 +6,12 @@ import {
   Pencil,
   Trash2,
   SquareArrowOutUpRight,
+  FileText,
+  Binary,
+  Database,
+  FileJson,
+  FileImage,
+  Type,
 } from "lucide-react";
 import {
   Table,
@@ -152,31 +158,37 @@ export function FileTable({
                       <DropdownMenuItem
                         onClick={() => onPreview(item.name, "text")}
                       >
+                        <FileText className="mr-2 h-4 w-4" />
                         {t("text_editor")}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => onPreview(item.name, "hex")}
                       >
+                        <Binary className="mr-2 h-4 w-4" />
                         {t("hex_view")}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => onPreview(item.name, "sqlite")}
                       >
+                        <Database className="mr-2 h-4 w-4" />
                         {t("sqlite_editor")}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => onPreview(item.name, "image")}
                       >
+                        <FileImage className="mr-2 h-4 w-4" />
                         {t("image_preview")}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => onPreview(item.name, "plist")}
                       >
+                        <FileJson className="mr-2 h-4 w-4" />
                         {t("plist_preview")}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => onPreview(item.name, "font")}
                       >
+                        <Type className="mr-2 h-4 w-4" />
                         {t("font_preview")}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
