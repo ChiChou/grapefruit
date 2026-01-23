@@ -8,8 +8,8 @@ import {
   NSString,
 } from "../typings.js";
 
-import * as Array from "../bridge/nsarray.js";
 import * as Dictionary from "../bridge/dictionary.js";
+import { iterateNSArray } from "../bridge/nsarray.js";
 
 interface JSContext extends NSObject {
   evaluateScript_(script: StringLike): NSObject;
@@ -81,7 +81,7 @@ export async function dump(handle: string) {
     .toArray() as NSArray<NSString>;
   const funcClass = jsc.evaluateScript_("Function");
   const result = new Map<string, unknown>();
-  for (const key of Array.values(topKeys)) {
+  for (const key of iterateNSArray(topKeys)) {
     const val = jsc.objectForKeyedSubscript_(key as NSString);
     if (!val.isObject()) continue;
     const obj = val.toObject();

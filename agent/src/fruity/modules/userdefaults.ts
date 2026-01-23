@@ -9,7 +9,7 @@ import {
   NSDictionary,
 } from "../typings.js";
 
-import { valueOf } from "../bridge/dictionary.js";
+import { toJS } from "../bridge/dictionary.js";
 
 /**
  * A default object must be a property list—that is, an instance of (or for collections,
@@ -85,7 +85,7 @@ export function enumerate() {
         {
           type: typeName(value),
           readable: value.toString(),
-          value: valueOf(value),
+          value: toJS(value),
         },
       ];
     }

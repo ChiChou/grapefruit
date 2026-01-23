@@ -10,7 +10,7 @@ import type {
   NSData,
 } from "../typings.js";
 
-import { valueOf } from "../bridge/dictionary.js";
+import { toJS } from "../bridge/dictionary.js";
 
 export interface Item {
   type: "file" | "directory" | "symlink";
@@ -93,7 +93,7 @@ function contentsOf(pError: NativePointer, url: NSURL) {
     return Object.fromEntries(
       Object.entries(NSURL_RESOURCE_KEYS).map(([jsKey, key]) => [
         jsKey,
-        valueOf(nsdict.objectForKey_(key)),
+        toJS(nsdict.objectForKey_(key)),
       ]),
     ) as MetaData;
   }
@@ -207,14 +207,14 @@ export function attrs(path: string) {
       foundation.getExportByName(nsKey).readPointer(),
     ) as NSString;
     const value = attrs.objectForKey_(k);
-    result[jsKey] = valueOf(value);
+    result[jsKey] = toJS(value);
   }
 
   return result as FileAttributes;
 }
 
 export function plist(path: string) {
-  return valueOf(ObjC.classes.NSDictionary.dictionaryWithContentsOfFile_(path));
+  return toJS(ObjC.classes.NSDictionary.dictionaryWithContentsOfFile_(path));
 }
 
 const NSUTF8StringEncoding = 4;

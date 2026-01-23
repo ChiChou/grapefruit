@@ -7,7 +7,7 @@ import type {
   NSData,
 } from "../typings.js";
 
-import { toJsArray, valueOf } from "../bridge/dictionary.js";
+import { toJsArray, toJS } from "../bridge/dictionary.js";
 
 export interface URLScheme {
   name: string;
@@ -102,7 +102,7 @@ export function urls(): URLScheme[] {
 }
 
 export function plist() {
-  return valueOf(ObjC.classes.NSBundle.mainBundle().infoDictionary());
+  return toJS(ObjC.classes.NSBundle.mainBundle().infoDictionary());
 }
 
 export function plistReadable() {

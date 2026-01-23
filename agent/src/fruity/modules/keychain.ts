@@ -1,5 +1,5 @@
 import ObjC from "frida-objc-bridge";
-import { valueOf } from "../bridge/dictionary.js";
+import { toJS } from "../bridge/dictionary.js";
 import getSecurityApi from "../native/security.js";
 
 function kSec(suffix: string) {
@@ -234,7 +234,7 @@ export function list(withBiometricId = false): KeyChainItem[] {
         const v = item.objectForKey_(attr);
         if (v) {
           (readable as Partial<Record<keyof KeyChainItem, unknown>>)[key] =
-            valueOf(v);
+            toJS(v);
         }
       }
 

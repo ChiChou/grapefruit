@@ -1,7 +1,7 @@
 import ObjC from "frida-objc-bridge";
 import type { NSArray, NSObject } from "../typings.js";
 
-export function* values(arr: NSArray<NSObject>) {
+export function* iterateNSArray(arr: NSArray<NSObject>) {
   if (!arr.isKindOfClass_(ObjC.classes.NSArray))
     throw new Error(`Unexpected class ${arr.$className}`);
 

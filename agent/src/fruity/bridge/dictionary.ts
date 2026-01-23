@@ -1,17 +1,17 @@
 import ObjC from "frida-objc-bridge";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { _Nullable, NSArray, NSDictionary, NSObject } from "../typings.js";
-import * as Array from "./nsarray.js";
+import { iterateNSArray } from "./nsarray.js";
 
 const NSPropertyListImmutable = 0;
 
 export function* keys(dict: NSDictionary<NSObject, NSObject>) {
   if (!dict.isKindOfClass_(ObjC.classes.NSDictionary))
     throw new Error(`Unexpected class ${dict.$className}`);
-  Array.values(dict.allKeys());
+  iterateNSArray(dict.allKeys());
 }
 
-export function valueOf(value: _Nullable<ObjC.Object>): any {
+export function toJS(value: _Nullable<ObjC.Object>): any {
   if (!value) return null;
 
   const { NSArray, NSDictionary, NSNumber, __NSCFBoolean, NSDate } =
@@ -38,7 +38,7 @@ export function toJsDict(
   for (let i = 0; i < count; i++) {
     const key = keys.objectAtIndex_(i);
     const value = nsDict.objectForKey_(key);
-    jsDict[key.toString()] = valueOf(value);
+    jsDict[key.toString()] = toJS(value);
   }
 
   return jsDict;
@@ -76,7 +76,7 @@ export function toJsArray(
   const len = Number.isNaN(limit) ? Math.min(count, limit) : count;
   for (let i = 0; i < len; i++) {
     const val = original.objectAtIndex_(i);
-    arr.push(valueOf(val));
+    arr.push(toJS(val));
   }
   return arr;
 }
