@@ -174,13 +174,13 @@ export function GeneralPanel() {
             />
             <div className="flex-1 min-w-0">
               <div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
                   {t("app_name")}
                 </div>
                 <div className="text-sm">{basicInfo.label || t("na")}</div>
               </div>
               <div className="mt-2">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
                   {t("bundle_id")}
                 </div>
                 <div className="text-sm font-mono break-all">
@@ -190,7 +190,7 @@ export function GeneralPanel() {
             </div>
           </div>
           <div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+            <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
               {t("version")}
             </div>
             <div className="flex items-center gap-2 text-sm">
