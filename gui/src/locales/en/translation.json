@@ -60,7 +60,6 @@
   "file_descriptor": "File Descriptor",
   "type": "Type",
   "details": "Details",
-  "active_file_handles": "Active File Handles",
   "never": "Never",
   "1s": "1 second",
   "10s": "10 seconds",

@@ -19,9 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Status, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 
-import type {
-  BasicInfo,
-} from "../../../../agent/types/fruity/modules/info";
+import type { BasicInfo } from "../../../../agent/types/fruity/modules/info";
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -72,7 +70,7 @@ export function GeneralPanel() {
     openSingletonPanel({
       id: "handles_tab",
       component: "handles",
-      title: t("active_file_handles"),
+      title: "lsof",
     });
   };
 
@@ -262,7 +260,7 @@ export function GeneralPanel() {
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" onClick={openHandlesTab}>
                 <FolderOpen className="w-4 h-4 mr-2" />
-                {t("active_file_handles")}
+                lsof
               </Button>
               <Button variant="outline" size="sm" onClick={openInfoPlistTab}>
                 <FileText className="w-4 h-4 mr-2" />

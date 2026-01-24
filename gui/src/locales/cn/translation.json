@@ -60,7 +60,6 @@
   "file_descriptor": "文件描述符",
   "type": "类型",
   "details": "详情",
-  "active_file_handles": "活动文件句柄",
   "never": "从不",
   "1s": "1 秒",
   "10s": "10 秒",

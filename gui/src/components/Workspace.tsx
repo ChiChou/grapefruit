@@ -99,7 +99,10 @@ function WorkspaceContent() {
     memory: MemoryPreviewTab,
   };
 
-  const getLayoutKey = (device: string | null | undefined, bundle: string | null | undefined) => {
+  const getLayoutKey = (
+    device: string | null | undefined,
+    bundle: string | null | undefined,
+  ) => {
     if (!device || !bundle) return null;
     return `workspace-dockview-layout:${device}:${bundle}`;
   };
@@ -108,7 +111,9 @@ function WorkspaceContent() {
     setDockApi(event.api);
 
     const layoutKey = getLayoutKey(device, bundle);
-    const savedLayoutWithMeta = layoutKey ? localStorage.getItem(layoutKey) : null;
+    const savedLayoutWithMeta = layoutKey
+      ? localStorage.getItem(layoutKey)
+      : null;
 
     if (savedLayoutWithMeta) {
       try {
@@ -138,7 +143,7 @@ function WorkspaceContent() {
     dockApi.addPanel({
       id: "handles_tab",
       component: "handles",
-      title: t("active_file_handles"),
+      title: "lsof",
     });
 
     dockApi.addPanel({
