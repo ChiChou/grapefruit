@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
 import { Loader2 } from "lucide-react";
 
-import { Status, useSession } from "@/context/SessionContext";
+import { useSession } from "@/context/SessionContext";
 import { PlistView } from "@/components/UnifiedPlistViewer";
 import { type PlistValue } from "@/components/PlistTreeView";
 
@@ -14,7 +14,7 @@ export interface PlistFilePreviewTabParams {
 export function PlistFilePreviewTab({
   params,
 }: IDockviewPanelProps<PlistFilePreviewTabParams>) {
-  const { api, status } = useSession();
+  const { api } = useSession();
   const { t } = useTranslation();
   const [xml, setXml] = useState<string>("");
   const [value, setValue] = useState<PlistValue | null>(null);
@@ -24,7 +24,7 @@ export function PlistFilePreviewTab({
   const fullPath = params?.path || "";
 
   const loadContent = useCallback(async () => {
-    if (!api || status !== Status.Ready) return;
+    if (!api) return;
 
     setIsLoading(true);
     setError(null);
@@ -40,7 +40,7 @@ export function PlistFilePreviewTab({
     } finally {
       setIsLoading(false);
     }
-  }, [api, fullPath, status]);
+  }, [api, fullPath]);
 
   useEffect(() => {
     loadContent();

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
 
-import { Status, useSession } from "@/context/SessionContext";
+import { useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 import {
   Table,
@@ -33,7 +33,7 @@ export interface ClassDetailParams {
 export function ClassDetailTab({
   params,
 }: IDockviewPanelProps<ClassDetailParams>) {
-  const { api, status } = useSession();
+  const { api } = useSession();
   const { openFilePanel } = useDock();
   const { t } = useTranslation();
   const { theme } = useTheme();
@@ -45,7 +45,7 @@ export function ClassDetailTab({
   const [protocolSearch, setProtocolSearch] = useState("");
 
   useEffect(() => {
-    if (status !== Status.Ready || !api) return;
+    if (!api) return;
 
     setIsLoading(true);
     api.classdump
@@ -56,7 +56,7 @@ export function ClassDetailTab({
         setClassInfo(null);
       })
       .finally(() => setIsLoading(false));
-  }, [api, status, params.className]);
+  }, [api, params.className]);
 
   const openModuleTab = (path: string) => {
     const name = path.split("/").pop() || path;

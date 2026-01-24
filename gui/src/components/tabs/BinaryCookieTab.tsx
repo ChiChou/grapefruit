@@ -79,10 +79,8 @@ export function BinaryCookieTab() {
   }, [api]);
 
   useEffect(() => {
-    if (api && status === Status.Ready) {
-      loadCookies();
-    }
-  }, [api, status, loadCookies]);
+    loadCookies();
+  }, [loadCookies]);
 
   const confirmClear = async () => {
     if (!api) return;

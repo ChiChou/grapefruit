@@ -4,7 +4,7 @@ import Editor from "@monaco-editor/react";
 
 import type { DumpResult } from "../../../../agent/types/common/sqlite";
 
-import { useSession, Status } from "@/context/SessionContext";
+import { useSession } from "@/context/SessionContext";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
@@ -31,7 +31,7 @@ export function SQLiteEditorTab({
   params,
 }: IDockviewPanelProps<SQLiteEditorTabParams>) {
   const { theme } = useTheme();
-  const { api, status } = useSession();
+  const { api } = useSession();
 
   const [tables, setTables] = useState<string[]>([]);
   const [filteredTables, setFilteredTables] = useState<string[]>([]);
@@ -42,10 +42,9 @@ export function SQLiteEditorTab({
   const [error, setError] = useState<string | null>(null);
 
   const fullPath = params?.path || "";
-  const apiReady = status === Status.Ready && !!api;
 
   const loadContent = useCallback(async () => {
-    if (!apiReady || !fullPath) return;
+    if (!api || !fullPath) return;
 
     setLoading(true);
     setError(null);
@@ -59,11 +58,11 @@ export function SQLiteEditorTab({
     } finally {
       setLoading(false);
     }
-  }, [api, apiReady, fullPath]);
+  }, [api, fullPath]);
 
   const loadTableData = useCallback(
     async (tableName: string) => {
-      if (!apiReady || !fullPath) return;
+      if (!api || !fullPath) return;
 
       try {
         const result = await api.sqlite.dump(fullPath, tableName);
@@ -75,7 +74,7 @@ export function SQLiteEditorTab({
         );
       }
     },
-    [api, apiReady, fullPath],
+    [api, fullPath],
   );
 
   useEffect(() => {

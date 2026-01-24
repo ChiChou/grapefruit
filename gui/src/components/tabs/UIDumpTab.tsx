@@ -5,7 +5,7 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable";
-import { Status, useSession } from "@/context/SessionContext";
+import { useSession } from "@/context/SessionContext";
 import { RefreshCw, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -218,7 +218,7 @@ function calculateBounds(node: UIDumpNode): {
 
 export function UIDumpTab() {
   const { t } = useTranslation();
-  const { api, status } = useSession();
+  const { api } = useSession();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<UIDumpNode | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -226,7 +226,7 @@ export function UIDumpTab() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const fetchData = useCallback(async () => {
-    if (!api || status !== Status.Ready) return;
+    if (!api) return;
 
     setLoading(true);
     setError(null);
@@ -239,7 +239,7 @@ export function UIDumpTab() {
     } finally {
       setLoading(false);
     }
-  }, [api, status]);
+  }, [api]);
 
   useEffect(() => {
     fetchData();
@@ -297,7 +297,7 @@ export function UIDumpTab() {
           variant="outline"
           size="sm"
           onClick={fetchData}
-          disabled={loading || status !== Status.Ready}
+          disabled={loading}
         >
           <RefreshCw
             className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}

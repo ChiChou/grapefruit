@@ -25,10 +25,10 @@ export function BottomPanelView() {
   const logTerminalRef = useRef<XTerm | null>(null);
 
   useEffect(() => {
-    if (api && status === Status.Ready) api.syslog.start();
+    api?.syslog.start();
 
     return () => {
-      if (api && status === Status.Ready) api.syslog.stop();
+      api?.syslog.stop();
     };
   }, [api, status, socket]);
 
@@ -58,7 +58,11 @@ export function BottomPanelView() {
   }, [activeTab]);
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+    <Tabs
+      value={activeTab}
+      onValueChange={setActiveTab}
+      className="h-full flex flex-col"
+    >
       <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0">
         <TabsTrigger
           value="logs"

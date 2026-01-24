@@ -1,4 +1,4 @@
-import { Status, useSession } from "@/context/SessionContext";
+import { useSession } from "@/context/SessionContext";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
@@ -11,13 +11,13 @@ export interface EntitlementsTabParams {
 
 export function EntitlementsTab({ params }: IDockviewPanelProps<EntitlementsTabParams>) {
   const { t } = useTranslation();
-  const { api, status } = useSession();
+  const { api } = useSession();
   const [loading, setLoading] = useState<boolean>(false);
   const [xml, setXml] = useState<string>("");
   const [plistData, setPlistData] = useState<PlistValue | null>(null);
 
   useEffect(() => {
-    if (!api || status !== Status.Ready) return;
+    if (!api) return;
 
     setLoading(true);
     api.entitlements
@@ -27,7 +27,7 @@ export function EntitlementsTab({ params }: IDockviewPanelProps<EntitlementsTabP
         setPlistData(value);
       })
       .finally(() => setLoading(false));
-  }, [status, api, params?.path]);
+  }, [api, params?.path]);
 
   if (loading) {
     return (

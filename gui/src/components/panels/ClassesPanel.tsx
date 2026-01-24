@@ -6,7 +6,7 @@ import { List, type RowComponentProps } from "react-window";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Status, useSession } from "@/context/SessionContext";
+import { useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 
 const ITEM_HEIGHT = 32;
@@ -15,7 +15,7 @@ type ScopeType = "__main__" | "__app__" | "__global__";
 
 export function ClassesPanel() {
   const { t } = useTranslation();
-  const { api, status } = useSession();
+  const { api } = useSession();
   const { openFilePanel } = useDock();
   const [isLoading, setIsLoading] = useState(false);
   const [classes, setClasses] = useState<string[]>([]);
@@ -24,7 +24,7 @@ export function ClassesPanel() {
 
   const loadClasses = useCallback(
     async (scopeValue: ScopeType) => {
-      if (status !== Status.Ready || !api) return;
+      if (!api) return;
 
       setIsLoading(true);
       try {
@@ -37,7 +37,7 @@ export function ClassesPanel() {
         setIsLoading(false);
       }
     },
-    [api, status],
+    [api],
   );
 
   useEffect(() => {

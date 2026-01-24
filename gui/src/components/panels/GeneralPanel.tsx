@@ -124,7 +124,7 @@ export function GeneralPanel() {
   };
 
   useEffect(() => {
-    if (!api || status !== Status.Ready) return;
+    if (!api) return;
 
     setIsLoading(true);
     setError(null);
@@ -137,7 +137,7 @@ export function GeneralPanel() {
       .finally(() => {
         setIsLoading(false);
       });
-  }, [status, api]);
+  }, [api]);
 
   return (
     <div className="h-full p-4 overflow-auto">

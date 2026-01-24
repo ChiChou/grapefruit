@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Status, useSession } from "@/context/SessionContext";
+import { useSession } from "@/context/SessionContext";
 import { SymbolsTableView } from "../SymbolsTableView";
 
 import type { Symbol } from "../../../../agent/types/fruity/modules/symbol";
@@ -9,12 +9,12 @@ interface ExportedListViewProps {
 }
 
 export function ExportedListView({ path }: ExportedListViewProps) {
-  const { api, status } = useSession();
+  const { api } = useSession();
   const [exported, setExported] = useState<Symbol[] | null>(null);
   const [loading, setLoading] = useState(false);
 
   const loadExported = useCallback(async () => {
-    if (status !== Status.Ready || !api) return;
+    if (!api) return;
     if (exported !== null) return;
 
     setLoading(true);
@@ -27,7 +27,7 @@ export function ExportedListView({ path }: ExportedListViewProps) {
     } finally {
       setLoading(false);
     }
-  }, [api, status, path, exported]);
+  }, [api, path, exported]);
 
   useEffect(() => {
     loadExported();

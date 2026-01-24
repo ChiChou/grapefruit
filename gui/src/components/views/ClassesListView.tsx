@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useDock } from "@/context/DockContext";
-import { Status, useSession } from "@/context/SessionContext";
+import { useSession } from "@/context/SessionContext";
 
 interface ClassesListViewProps {
   path: string;
@@ -12,7 +12,7 @@ interface ClassesListViewProps {
 export function ClassesListView({
   path,
 }: ClassesListViewProps) {
-  const { api, status } = useSession();
+  const { api } = useSession();
   const { openFilePanel } = useDock();
   const { t } = useTranslation();
   const [classes, setClasses] = useState<string[] | null>(null);
@@ -20,7 +20,7 @@ export function ClassesListView({
   const [searchValue, setSearchValue] = useState("");
 
   const loadClasses = useCallback(async () => {
-    if (status !== Status.Ready || !api) return;
+    if (!api) return;
     if (classes !== null) return;
 
     setLoading(true);
@@ -33,7 +33,7 @@ export function ClassesListView({
     } finally {
       setLoading(false);
     }
-  }, [api, status, path, classes]);
+  }, [api, path, classes]);
 
   useEffect(() => {
     loadClasses();

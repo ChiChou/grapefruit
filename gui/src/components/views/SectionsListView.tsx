@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Section } from "../../../../agent/types/fruity/modules/symbol";
 import { useDock } from "@/context/DockContext";
-import { Status, useSession } from "@/context/SessionContext";
+import { useSession } from "@/context/SessionContext";
 import {
   Table,
   TableBody,
@@ -19,14 +19,14 @@ interface SectionsListViewProps {
 export function SectionsListView({
   path,
 }: SectionsListViewProps) {
-  const { api, status } = useSession();
+  const { api } = useSession();
   const { openFilePanel } = useDock();
   const { t } = useTranslation();
   const [sections, setSections] = useState<Section[] | null>(null);
   const [loading, setLoading] = useState(false);
 
   const loadSections = useCallback(async () => {
-    if (status !== Status.Ready || !api) return;
+    if (!api) return;
     if (sections !== null) return;
 
     setLoading(true);
@@ -39,7 +39,7 @@ export function SectionsListView({
     } finally {
       setLoading(false);
     }
-  }, [api, status, path, sections]);
+  }, [api, path, sections]);
 
   useEffect(() => {
     loadSections();

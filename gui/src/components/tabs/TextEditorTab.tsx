@@ -103,7 +103,7 @@ export function TextEditorTab({
   params,
 }: IDockviewPanelProps<TextEditorTabParams>) {
   const { t } = useTranslation();
-  const { api, status } = useSession();
+  const { api } = useSession();
   const { theme } = useTheme();
   const { openSingletonPanel } = useDock();
   const [content, setContent] = useState<string | null>(null);
@@ -148,8 +148,7 @@ export function TextEditorTab({
   );
 
   const loadContent = useCallback(async () => {
-    const apiReady = status === "ready" && !!api;
-    if (!apiReady || !fullPath) return;
+    if (!api || !fullPath) return;
 
     setIsLoading(true);
     setError(null);
@@ -173,7 +172,7 @@ export function TextEditorTab({
     } finally {
       setIsLoading(false);
     }
-  }, [status, api, fullPath, detectSyntaxFromBytes]);
+  }, [api, fullPath, detectSyntaxFromBytes]);
 
   useEffect(() => {
     loadContent();

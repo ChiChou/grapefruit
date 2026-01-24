@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { IDockviewPanelProps } from "dockview";
 
-import { Status, useSession } from "@/context/SessionContext";
+import { useSession } from "@/context/SessionContext";
 
 import HexView from "../HexView";
 
@@ -13,7 +13,7 @@ export interface MemoryPreviewTabParams {
 export function MemoryPreviewTab({
   params,
 }: IDockviewPanelProps<MemoryPreviewTabParams>) {
-  const { api, status } = useSession();
+  const { api } = useSession();
 
   const address = params?.address;
   const size = params?.size;
@@ -23,7 +23,7 @@ export function MemoryPreviewTab({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!api || status !== Status.Ready || !address || !size) return;
+    if (!api || !address || !size) return;
 
     const loadMemory = async () => {
       setLoading(true);
@@ -41,7 +41,7 @@ export function MemoryPreviewTab({
     };
 
     loadMemory();
-  }, [address, api, size, status]);
+  }, [address, api, size]);
 
   if (loading) {
     return (

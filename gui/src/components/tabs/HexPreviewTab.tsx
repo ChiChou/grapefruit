@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { IDockviewPanelProps } from "dockview";
 
-import { Status, useSession } from "@/context/SessionContext";
+import { useSession } from "@/context/SessionContext";
 import HexView, { type Stride } from "@/components/HexView";
 
 export interface HexPreviewTabParams {
@@ -11,7 +11,7 @@ export interface HexPreviewTabParams {
 export function HexPreviewTab({
   params,
 }: IDockviewPanelProps<HexPreviewTabParams>) {
-  const { api, status, device, pid } = useSession();
+  const { api, device, pid } = useSession();
   const [content, setContent] = useState<Uint8Array | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +21,7 @@ export function HexPreviewTab({
   const fileUrl = `/api/download/${device}/${pid}?path=${encodeURIComponent(fullPath)}`;
 
   const loadContent = useCallback(async () => {
-    if (!api || status != Status.Ready || !fullPath) return;
+    if (!api || !fullPath) return;
 
     setIsLoading(true);
     setError(null);
@@ -36,7 +36,7 @@ export function HexPreviewTab({
     } finally {
       setIsLoading(false);
     }
-  }, [api, status, fullPath, fileUrl]);
+  }, [api, fullPath, fileUrl]);
 
   useEffect(() => {
     loadContent();

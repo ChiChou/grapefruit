@@ -36,7 +36,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Status, useSession } from "@/context/SessionContext";
+import { useSession } from "@/context/SessionContext";
 
 import type { KeyChainItem } from "../../../../agent/types/fruity/modules/keychain";
 
@@ -81,7 +81,7 @@ function hexDump(base64Data: string | undefined): string {
 
 export function KeyChainTab() {
   const { t } = useTranslation();
-  const { api, status } = useSession();
+  const { api } = useSession();
   const [items, setItems] = useState<KeyChainItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [withBiometricId, setWithBiometricId] = useState(false);
@@ -111,10 +111,8 @@ export function KeyChainTab() {
   }, [api, withBiometricId]);
 
   useEffect(() => {
-    if (api && status === Status.Ready) {
-      loadItems();
-    }
-  }, [api, status, loadItems]);
+    loadItems();
+  }, [api, loadItems]);
 
   const requestDelete = (item: KeyChainItem) => {
     setPendingDeleteItem(item);

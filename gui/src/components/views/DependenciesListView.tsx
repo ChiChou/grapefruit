@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Status, useSession } from "@/context/SessionContext";
+import { useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 import { SymbolsTableView } from "../SymbolsTableView";
 
@@ -11,7 +11,7 @@ interface DependenciesListViewProps {
 }
 
 export function DependenciesListView({ path }: DependenciesListViewProps) {
-  const { api, status } = useSession();
+  const { api } = useSession();
   const { openFilePanel } = useDock();
   const { t } = useTranslation();
   const [dependencies, setDependencies] = useState<string[] | null>(null);
@@ -23,7 +23,7 @@ export function DependenciesListView({ path }: DependenciesListViewProps) {
   >({});
 
   const loadDependencies = useCallback(async () => {
-    if (status !== Status.Ready || !api) return;
+    if (!api) return;
     if (dependencies !== null) return;
 
     setLoading(true);
@@ -36,7 +36,7 @@ export function DependenciesListView({ path }: DependenciesListViewProps) {
     } finally {
       setLoading(false);
     }
-  }, [api, status, path, dependencies]);
+  }, [api, path, dependencies]);
 
   useEffect(() => {
     loadDependencies();
@@ -44,7 +44,7 @@ export function DependenciesListView({ path }: DependenciesListViewProps) {
 
   const loadImportsForDep = useCallback(
     async (dep: string) => {
-      if (status !== Status.Ready || !api) return;
+      if (!api) return;
       if (importedData[dep] !== undefined) return;
 
       setImportsLoading((prev) => new Set(prev).add(dep));
@@ -62,7 +62,7 @@ export function DependenciesListView({ path }: DependenciesListViewProps) {
         });
       }
     },
-    [api, status, path, importedData],
+    [api, path, importedData],
   );
 
   const toggleDep = (dep: string) => {
