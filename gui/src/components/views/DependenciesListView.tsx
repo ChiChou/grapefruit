@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ExternalLink } from "lucide-react";
 import { useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 import { SymbolsTableView } from "../SymbolsTableView";
@@ -119,68 +120,85 @@ export function DependenciesListView({ path }: DependenciesListViewProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center gap-2 mb-3">
         <button
           type="button"
-          className="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer"
+          className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer transition"
           onClick={expandAll}
         >
+          <span>⤢</span>
           {t("expand_all")}
         </button>
         <button
           type="button"
-          className="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer"
+          className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer transition"
           onClick={collapseAll}
         >
+          <span>⤡</span>
           {t("collapse_all")}
         </button>
       </div>
-      <div className="overflow-auto flex-1">
-        <ul className="p-2 space-y-1">
+      <div className="overflow-auto flex-1 rounded-lg border border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 p-3 shadow-inner">
+        <ul className="space-y-2">
           {dependencies.map((dep) => {
             const isExpanded = expandedDeps.has(dep);
             const imports = importedData[dep];
             const isLoading = importsLoading.has(dep);
+            const importCount = imports?.length ?? 0;
+            const hasLoaded = imports !== undefined;
 
             return (
-              <li key={dep}>
-                <div className="flex items-start gap-1">
-                  <button
-                    type="button"
-                    className="mt-0.5 w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer"
-                    onClick={() => toggleDep(dep)}
-                  >
-                    {isExpanded ? "▼" : "▶"}
-                  </button>
-                  <div className="flex-1">
+              <li
+                key={dep}
+                className="rounded-md border border-gray-100 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-900/40 px-3 py-2 transition hover:border-blue-200 dark:hover:border-blue-500/50"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      className="text-sm text-blue-600 dark:text-blue-400 hover:underline cursor-pointer text-left"
-                      onClick={() => openModuleTab(dep)}
+                      aria-expanded={isExpanded}
+                      className="flex flex-1 items-center gap-2 px-3 py-2 text-sm font-medium text-gray-900 dark:text-gray-100 rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-500/60 hover:text-blue-600 dark:hover:text-blue-300 transition"
+                      onClick={() => toggleDep(dep)}
                     >
-                      {dep}
+                      <span className="text-base font-semibold text-gray-600 dark:text-gray-300">
+                        {isExpanded ? "–" : "+"}
+                      </span>
+                      <span className="truncate">{dep}</span>
                     </button>
-                    {isExpanded && (
-                      <div className="ml-4 mt-1">
-                        {isLoading ? (
-                          <span className="text-xs text-gray-500">
-                            {t("loading")}...
-                          </span>
-                        ) : imports && imports.length > 0 ? (
-                          <div className="mt-1">
-                            <SymbolsTableView
-                              symbols={imports}
-                              loading={false}
-                            />
-                          </div>
-                        ) : (
-                          <span className="text-xs text-gray-500">
-                            {t("no_results")}
-                          </span>
-                        )}
-                      </div>
+                    {hasLoaded && (
+                      <span className="px-2 py-0.5 text-[10px] uppercase tracking-wide rounded-md bg-blue-50 text-blue-600 dark:bg-blue-500/20 dark:text-blue-200 font-semibold">
+                        {importCount} {t("items")}
+                      </span>
                     )}
+                    <button
+                      type="button"
+                      className="p-2 rounded-md border border-transparent text-gray-500 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-300 hover:border-blue-200 dark:hover:border-blue-500/50 transition"
+                      onClick={() => openModuleTab(dep)}
+                      aria-label={t("open_details", {
+                        defaultValue: "Open details",
+                      })}
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </button>
                   </div>
+                  {isExpanded && (
+                    <div className="relative pl-4 border-l border-dashed border-gray-200 dark:border-gray-700">
+                      {isLoading ? (
+                        <span className="text-xs text-gray-500 flex items-center gap-2 mt-1">
+                          <span className="w-2 h-2 rounded-full bg-gray-400 animate-pulse" />
+                          {t("loading")}...
+                        </span>
+                      ) : imports && imports.length > 0 ? (
+                        <div className="mt-2 rounded-md bg-white dark:bg-gray-950/40 border border-gray-100 dark:border-gray-800 px-2 py-1.5 shadow-sm">
+                          <SymbolsTableView symbols={imports} loading={false} />
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-500 mt-1 block">
+                          {t("no_results")}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </li>
             );
