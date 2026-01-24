@@ -34,7 +34,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Status, useSession } from "@/context/SessionContext";
+import { useSession } from "@/context/SessionContext";
 import type {
   Cookie,
   CookiePredicate,
@@ -47,7 +47,7 @@ function formatDate(date: Date | null): string {
 
 export function BinaryCookieTab() {
   const { t } = useTranslation();
-  const { api, status } = useSession();
+  const { api } = useSession();
   const [cookies, setCookies] = useState<Cookie[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [pendingDeleteCookie, setPendingDeleteCookie] = useState<Cookie | null>(
