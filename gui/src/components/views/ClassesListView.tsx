@@ -1,3 +1,6 @@
+const escapeRegExp = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Search } from "lucide-react";
@@ -37,8 +40,38 @@ export function ClassesListView({ path }: ClassesListViewProps) {
     loadClasses();
   }, [loadClasses]);
 
+  const searchTerm = searchValue.trim();
+  const searchLower = searchTerm.toLowerCase();
+
   const filtered = classes?.filter((c) =>
-    c.toLowerCase().includes(searchValue.toLowerCase()),
+    c.toLowerCase().includes(searchLower),
+  );
+
+  const highlightMatch = useCallback(
+    (className: string) => {
+      if (!searchTerm) {
+        return className;
+      }
+
+      const regex = new RegExp(`(${escapeRegExp(searchTerm)})`, "ig");
+      const parts = className.split(regex);
+
+      return parts.map((part, index) => {
+        if (part.toLowerCase() === searchLower && part.length > 0) {
+          return (
+            <span
+              key={`${className}-${index}`}
+              className="rounded bg-yellow-200 px-0.5 text-gray-900 dark:bg-yellow-400/70 dark:text-gray-900"
+            >
+              {part}
+            </span>
+          );
+        }
+
+        return <span key={`${className}-${index}-plain`}>{part}</span>;
+      });
+    },
+    [searchLower, searchTerm],
   );
 
   const openClassTab = useCallback(
@@ -90,7 +123,7 @@ export function ClassesListView({ path }: ClassesListViewProps) {
                 className="cursor-pointer rounded-md hover:border-blue-200 border-transparent bg-transparent px-4 py-2 text-sm font-medium text-blue-800 shadow-sm transition  hover:bg-blue-50 dark:border-blue-900 dark:bg-transparent dark:text-blue-200 dark:hover:border-blue-700 dark:hover:bg-blue-900/70"
                 onClick={() => openClassTab(className)}
               >
-                {className}
+                {highlightMatch(className)}
               </button>
             ))}
           </div>
