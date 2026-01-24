@@ -21,7 +21,6 @@ import { useDock } from "@/context/DockContext";
 
 import type {
   BasicInfo,
-  URLScheme,
 } from "../../../../agent/types/fruity/modules/info";
 
 function CopyButton({ text }: { text: string }) {
@@ -163,138 +162,103 @@ export function GeneralPanel() {
           <Skeleton className="h-4 w-3/4" />
         </div>
       ) : basicInfo ? (
-        <div className="h-full flex flex-col">
-          <div className="shrink-0">
-            <div className="flex gap-4">
-              <img
-                src={`/api/device/${device}/icon/${bundle}`}
-                alt={basicInfo.label}
-                loading="lazy"
-                className="h-16 w-16 rounded-xl shrink-0"
-                onError={(e) => {
-                  e.currentTarget.src =
-                    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' fill='%23ddd'/%3E%3C/svg%3E";
-                }}
-              />
-              <div className="flex-1 min-w-0">
-                <div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                    {t("app_name")}
-                  </div>
-                  <div className="text-sm">{basicInfo.label || t("na")}</div>
-                </div>
-                <div className="mt-2">
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                    {t("bundle_id")}
-                  </div>
-                  <div className="text-sm font-mono break-all">
-                    {basicInfo.id || t("na")}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="flex-1 overflow-auto space-y-4">
-            <div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                {t("version")}
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <span>{basicInfo.version || t("na")}</span>
-                <Badge variant="secondary" className="text-xs">
-                  {basicInfo.semVer || t("na")}
-                </Badge>
-              </div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                {t("min_os")}
-              </div>
-              <Badge variant="outline">{basicInfo.minOS || t("na")}</Badge>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                {t("bundle_path")}
-              </div>
-              {basicInfo.path ? (
-                <div className="flex items-start">
-                  <PathDisplay
-                    path={basicInfo.path}
-                    onClick={() => openFinderTab("!")}
-                  />
-                  <CopyButton text={basicInfo.path} />
-                </div>
-              ) : (
-                <span className="text-sm">{t("na")}</span>
-              )}
-            </div>
-            <div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                {t("executable")}
-              </div>
-              <div className="flex items-center text-sm font-mono break-all">
-                <span className="text-xs">{basicInfo.main || t("na")}</span>
-                {basicInfo.main && <CopyButton text={basicInfo.main} />}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                {t("tmp_dir")}
-              </div>
-              <div className="flex items-center text-sm font-mono break-all">
-                <span className="text-xs">{basicInfo.tmp || t("na")}</span>
-                {basicInfo.tmp && <CopyButton text={basicInfo.tmp} />}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                {t("home_dir")}
-              </div>
-              {basicInfo.home ? (
-                <div className="flex items-start">
-                  <PathDisplay
-                    path={basicInfo.home}
-                    onClick={() => openFinderTab("~")}
-                  />
-                  <CopyButton text={basicInfo.home} />
-                </div>
-              ) : (
-                <span className="text-sm">{t("na")}</span>
-              )}
-            </div>
-            {basicInfo.urls && basicInfo.urls.length > 0 && (
+        <div className="space-y-4 pb-4">
+          <div className="flex gap-4">
+            <img
+              src={`/api/device/${device}/icon/${bundle}`}
+              alt={basicInfo.label}
+              loading="lazy"
+              className="h-16 w-16 rounded-xl shrink-0"
+              onError={(e) => {
+                e.currentTarget.src =
+                  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' fill='%23ddd'/%3E%3C/svg%3E";
+              }}
+            />
+            <div className="flex-1 min-w-0">
               <div>
                 <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                  URL Schemes
+                  {t("app_name")}
                 </div>
-                <div className="space-y-2">
-                  {basicInfo.urls.map((scheme: URLScheme, index: number) => (
-                    <div key={index} className="text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">
-                          {scheme.name || "''"}
-                        </span>
-                        <Badge variant="outline" className="text-xs">
-                          {scheme.role}
-                        </Badge>
-                      </div>
-                      <div className="mt-1 ml-1 space-y-1">
-                        {scheme.schemes.map((s, i) => (
-                          <div
-                            key={i}
-                            className="font-mono text-xs text-muted-foreground"
-                          >
-                            {s}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                <div className="text-sm">{basicInfo.label || t("na")}</div>
+              </div>
+              <div className="mt-2">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                  {t("bundle_id")}
+                </div>
+                <div className="text-sm font-mono break-all">
+                  {basicInfo.id || t("na")}
                 </div>
               </div>
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+              {t("version")}
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span>{basicInfo.version || t("na")}</span>
+              <Badge variant="secondary" className="text-xs">
+                {basicInfo.semVer || t("na")}
+              </Badge>
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+              {t("min_os")}
+            </div>
+            <Badge variant="outline">{basicInfo.minOS || t("na")}</Badge>
+          </div>
+          <div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+              {t("bundle_path")}
+            </div>
+            {basicInfo.path ? (
+              <div className="flex items-start">
+                <PathDisplay
+                  path={basicInfo.path}
+                  onClick={() => openFinderTab("!")}
+                />
+                <CopyButton text={basicInfo.path} />
+              </div>
+            ) : (
+              <span className="text-sm">{t("na")}</span>
             )}
           </div>
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700 shrink-0">
+          <div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+              {t("executable")}
+            </div>
+            <div className="flex items-center text-sm font-mono break-all">
+              <span className="text-xs">{basicInfo.main || t("na")}</span>
+              {basicInfo.main && <CopyButton text={basicInfo.main} />}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+              {t("tmp_dir")}
+            </div>
+            <div className="flex items-center text-sm font-mono break-all">
+              <span className="text-xs">{basicInfo.tmp || t("na")}</span>
+              {basicInfo.tmp && <CopyButton text={basicInfo.tmp} />}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+              {t("home_dir")}
+            </div>
+            {basicInfo.home ? (
+              <div className="flex items-start">
+                <PathDisplay
+                  path={basicInfo.home}
+                  onClick={() => openFinderTab("~")}
+                />
+                <CopyButton text={basicInfo.home} />
+              </div>
+            ) : (
+              <span className="text-sm">{t("na")}</span>
+            )}
+          </div>
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" onClick={openHandlesTab}>
                 <FolderOpen className="w-4 h-4 mr-2" />

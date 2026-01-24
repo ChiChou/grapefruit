@@ -160,5 +160,10 @@
   "completed": "Completed",
   "drop_files_here": "Drop files here to upload",
   "type_encoding": "Type Encoding",
-  "failed_to_load_font_preview": "Failed to load font preview"
+  "failed_to_load_font_preview": "Failed to load font preview",
+  "plain_text": "Plain Text",
+  "javascript": "JavaScript",
+  "send": "Send",
+  "enter_url_scheme": "Enter URL scheme...",
+  "reset": "Reset"
 }

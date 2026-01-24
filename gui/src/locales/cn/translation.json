@@ -158,5 +158,10 @@
   "completed": "已完成",
   "drop_files_here": "将文件拖放到此处上传",
   "type_encoding": "类型编码",
-  "failed_to_load_font_preview": "无法加载字体预览"
+  "failed_to_load_font_preview": "无法加载字体预览",
+  "plain_text": "纯文本",
+  "javascript": "JavaScript",
+  "send": "发送",
+  "enter_url_scheme": "输入 URL scheme...",
+  "reset": "重置"
 }

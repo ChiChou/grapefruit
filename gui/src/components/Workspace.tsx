@@ -5,7 +5,6 @@ import {
   type DockviewApi,
   DockviewReact,
   type DockviewReadyEvent,
-  type SerializedDockview,
   themeLight,
 } from "dockview";
 
@@ -40,7 +39,7 @@ import { MemoryPreviewTab } from "./tabs/MemoryPreviewTab";
 import { DockContext, useDockActions } from "@/context/DockContext";
 
 function WorkspaceContent() {
-  const { status, bundle } = useSession();
+  const { status, bundle, device } = useSession();
   const { theme } = useTheme();
 
   useEffect(() => {
@@ -100,17 +99,26 @@ function WorkspaceContent() {
     memory: MemoryPreviewTab,
   };
 
+  const getLayoutKey = (device: string | null | undefined, bundle: string | null | undefined) => {
+    if (!device || !bundle) return null;
+    return `workspace-dockview-layout:${device}:${bundle}`;
+  };
+
   const onReady = (event: DockviewReadyEvent) => {
     setDockApi(event.api);
 
-    const savedLayout = localStorage.getItem("workspace-dockview-layout");
-    if (savedLayout) {
+    const layoutKey = getLayoutKey(device, bundle);
+    const savedLayoutWithMeta = layoutKey ? localStorage.getItem(layoutKey) : null;
+
+    if (savedLayoutWithMeta) {
       try {
-        const layout: SerializedDockview = JSON.parse(savedLayout);
+        const { layout } = JSON.parse(savedLayoutWithMeta);
         event.api.fromJSON(layout);
       } catch (e) {
         console.error("Failed to restore dockview layout:", e);
-        localStorage.removeItem("workspace-dockview-layout");
+        if (layoutKey) {
+          localStorage.removeItem(layoutKey);
+        }
         createDefaultLayout(event.api);
       }
     } else {
@@ -119,7 +127,10 @@ function WorkspaceContent() {
 
     event.api.onDidLayoutChange(() => {
       const layout = event.api.toJSON();
-      localStorage.setItem("workspace-dockview-layout", JSON.stringify(layout));
+      const key = getLayoutKey(device, bundle);
+      if (key) {
+        localStorage.setItem(key, JSON.stringify({ device, bundle, layout }));
+      }
     });
   };
 

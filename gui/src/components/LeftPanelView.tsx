@@ -1,6 +1,6 @@
 import { Link, NavLink, Outlet } from "react-router";
 import { t } from "i18next";
-import { Info, Package, Braces } from "lucide-react";
+import { Info, Package, Braces, Globe } from "lucide-react";
 
 import {
   Tooltip,
@@ -77,6 +77,24 @@ export function LeftPanelView() {
                 <Braces className="h-5 w-5" />
               </TooltipTrigger>
               <TooltipContent side="right">{t("classes")}</TooltipContent>
+            </Tooltip>
+          </NavLink>
+
+          <NavLink
+            to={`/workspace/${device}/${bundle}/urls`}
+            className={({ isActive }) =>
+              `p-2 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors ${
+                isActive
+                  ? "bg-gray-200 dark:bg-gray-800 border-l-2 border-primary"
+                  : ""
+              }`
+            }
+          >
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Globe className="h-5 w-5" />
+              </TooltipTrigger>
+              <TooltipContent side="right">URL Schemes</TooltipContent>
             </Tooltip>
           </NavLink>
         </div>

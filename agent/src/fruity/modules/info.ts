@@ -4,16 +4,15 @@ import type {
   NSObject,
   StringLike,
   NSArray,
-  NSData,
 } from "../typings.js";
 
-import { toJsArray, toJS } from "../bridge/object.js";
+import { toJsArray } from "../bridge/object.js";
 import { dump } from "../lib/plist.js";
 
 export interface URLScheme {
-  name: string;
-  schemes: string[];
-  role: string;
+  name?: string;
+  schemes?: string[];
+  role?: string;
 }
 
 export interface BasicInfo {
@@ -26,7 +25,6 @@ export interface BasicInfo {
   version: string;
   semVer: string;
   minOS: string;
-  urls: URLScheme[];
 }
 
 function getLabel(info: NSDictionary<StringLike, NSObject>) {
@@ -84,7 +82,6 @@ export function basics(): BasicInfo {
     id: main.bundleIdentifier().toString(),
     path: main.bundlePath().toString(),
     main: main.executablePath().toString(),
-    urls: urls(),
     ...versions,
   };
 }
