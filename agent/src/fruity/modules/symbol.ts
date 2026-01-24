@@ -145,13 +145,20 @@ function getModule(path: string) {
   throw new Error(`Module not found: ${path}`);
 }
 
-type SymbolType = "f" | "v";
-
-export interface Imported {
+export interface Symbol {
   name: string;
   addr: string;
   demangled: string | null;
-  type: SymbolType | undefined;
+}
+
+type SymbolType = "f" | "v";
+
+export interface Imported extends Symbol {
+  type?: SymbolType;
+}
+
+export interface Exported extends Symbol {
+  type?: SymbolType;
 }
 
 export function imports(path: string, belongs: string): Imported[] {
@@ -206,12 +213,6 @@ export function symbolicate(p: string) {
   };
 }
 
-export interface Symbol {
-  name: string;
-  addr: string;
-  demangled: string | null;
-}
-
 export function symbols(path: string): Symbol[] {
   return getModule(path)
     .enumerateSymbols()
@@ -226,13 +227,6 @@ export function symbols(path: string): Symbol[] {
         demangled,
       };
     });
-}
-
-export interface Exported {
-  name: string;
-  addr: string;
-  demangled: string | null;
-  type: SymbolType;
 }
 
 export function exports(path: string): Exported[] {
