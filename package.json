@@ -13,6 +13,7 @@
     "./agent/types"
   ],
   "scripts": {
+    "dev:setup": "bun scripts/setup-dev.ts",
     "dev:both": "bun scripts/dev.ts",
     "dev": "bun --watch src/index.ts",
     "start": "bun src/index.ts",

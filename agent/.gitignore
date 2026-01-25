@@ -1,7 +1,4 @@
-/node_modules/
-_agent.js
+node_modules/
 dist/*.js
 
-/patched/
-
-/types/
+types/
