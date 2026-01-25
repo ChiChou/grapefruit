@@ -52,22 +52,6 @@ async function main() {
     process.exit(1);
   }
 
-  await $`bun i`;
-  await $`bun run install:bun`;
-
-  // will trigger a weird bug
-  //
-  //     path: "./igf/undefined",
-  //  syscall: "open",
-  //    errno: -2,
-  //     code: "ENOENT"
-  //
-  // for (const cwd of [".", "gui", "agent"]) {
-  //   await $`bun i`.cwd(cwd);
-  // }
-
-  // bun patch only works when node_modules is empty
-
   await patch("frida", true);
   await patch("frida16", true);
 

@@ -19,7 +19,6 @@
     "start": "bun src/index.ts",
     "test": "bun --test",
     "prepack": "npm run build:npm",
-    "install:bun": "cd agent && bun i && cd .. && cd gui && bun i",
     "build:gui": "cd gui && bun run build",
     "build:agent": "cd agent && bun run build",
     "build:assets": "bun run build:gui && bun run build:agent",

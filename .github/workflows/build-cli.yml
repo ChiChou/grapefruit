@@ -2,10 +2,15 @@ name: Build Single Executable Tool
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+      - dev
+    tags:
+      - "v*"
 
 jobs:
   build:
-    # todo: runs on new git tags
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,20 +20,42 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Create directories
-        run: mkdir -p build/Release agent/dist gui/dist
-
-      - name: Install dependencies
+      - name: Setup build env
         run: |
           bun install
-          bun run install:bun
+          bun run dev:setup
 
-      - name: Build Cross
+      - name: Generate agent types
+        run: bun run type
+        working-directory: agent
+
+      - name: Build frontend assets
+        run: bun run build
+        working-directory: gui
+
+      - name: Build binaries
         run: bun run build:cross
 
-      - name: Upload build artifacts
+      - name: Upload linux-x64
         uses: actions/upload-artifact@v4
         with:
-          name: builds
-          path: |
-            build/Release/
+          name: linux-x64
+          path: build/Release/igf-linux-x64
+
+      - name: Upload windows-x64
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64
+          path: build/Release/igf-windows-x64.exe
+
+      - name: Upload darwin-x64
+        uses: actions/upload-artifact@v4
+        with:
+          name: darwin-x64
+          path: build/Release/igf-darwin-x64
+
+      - name: Upload darwin-arm64
+        uses: actions/upload-artifact@v4
+        with:
+          name: darwin-arm64
+          path: build/Release/igf-darwin-arm64
