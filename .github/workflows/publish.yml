@@ -17,6 +17,11 @@ jobs:
           node-version: "24"
           cache: "npm"
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
       - name: Reset node_modules
         run: rm -rf node_modules
 

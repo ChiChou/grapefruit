@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 
 const isWindows = os.platform() === "win32";
-const npm = isWindows ? "npm.exe" : "npm";
+const runner = process.env.npm_execpath || "bun";
 const args = ["run", "dev"];
 
 const subprojects = ["gui", "."] as const;
@@ -29,7 +29,7 @@ function tmux() {
 function wt() {
   const argv: string[] = [];
   for (const cwd of subdirs) {
-    argv.push("-d", cwd, npm);
+    argv.push("-d", cwd, runner);
     argv.push(...args);
     argv.push(";", "new-tab");
   }

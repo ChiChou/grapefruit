@@ -13,7 +13,7 @@
     "./agent/types"
   ],
   "scripts": {
-    "prepare": "node scripts/prepare.ts && npm run install:agent && npm run install:gui",
+    "prepare": "bun scripts/prepare.ts",
     "dev": "node scripts/dev.ts",
     "dev:server": "bun --watch src/index.ts",
     "start": "bun src/index.ts",
