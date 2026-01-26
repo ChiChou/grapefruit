@@ -20,21 +20,8 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Setup build env
-        run: |
-          bun install
-          bun run dev:setup
-
-      - name: Generate agent types
-        run: bun run type
-        working-directory: agent
-
-      - name: Build frontend assets
-        run: bun run build
-        working-directory: gui
-
       - name: Build binaries
-        run: bun run build:cross
+        run: bun run build:all
 
       - name: Upload linux-x64
         uses: actions/upload-artifact@v4
