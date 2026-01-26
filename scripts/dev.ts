@@ -14,7 +14,7 @@ const subdirs = subprojects.map((name) =>
 function tmux() {
   const argv = ["new-session"];
   for (const cwd of subdirs) {
-    argv.push("-c", cwd, process.argv0);
+    argv.push("-c", cwd, runner);
     argv.push(...args);
     argv.push(";", "split-window", "-h");
   }

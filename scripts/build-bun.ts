@@ -15,9 +15,14 @@ const bunTargets: Record<string, [string, string]> = {
 
 const root = path.join(import.meta.dirname, "..");
 
-async function prebuild(cwd: string, platform?: string, arch?: string) {
+async function prebuild(
+  cwd: string,
+  platform: string = process.platform,
+  arch: string = process.arch,
+) {
+  console.log("prebuild", cwd, "for", platform, arch);
   const binary = path.join(root, "node_modules", ".bin", "prebuild-install");
-  await $`${process.execPath} ${binary} -r napi --arch ${arch || process.arch} --platform ${platform || process.platform}`.cwd(
+  await $`${process.execPath} ${binary} -r napi --arch ${arch} --platform ${platform}`.cwd(
     cwd,
   );
 }
@@ -41,7 +46,8 @@ async function pack(dst: string, ...inputs: string[]) {
 
   for (const src of inputs) {
     for await (const file of glob.scan(src)) {
-      files[file] = Bun.file(`${src}/${file}`);
+      const name = `./${src}/${file}`;
+      files[name] = Bun.file(name);
     }
   }
 
@@ -75,8 +81,6 @@ async function main() {
 
     if (cross) {
       for (const [target, [platform, arch]] of Object.entries(bunTargets)) {
-        console.log("install prebuild for:", target, platform, arch);
-
         await prebuild(cwd, platform, arch);
         await bunBuild(target);
       }

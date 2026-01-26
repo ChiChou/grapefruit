@@ -14,8 +14,8 @@
   ],
   "scripts": {
     "prepare": "bun scripts/prepare.ts",
-    "dev": "node scripts/dev.ts",
-    "dev:server": "bun --watch src/index.ts",
+    "dev:both": "node scripts/dev.ts",
+    "dev": "bun --watch src/index.ts",
     "start": "bun src/index.ts",
     "test": "bun --test",
     "prepack": "npm run build:npm",
@@ -56,7 +56,7 @@
     "typescript": "^5.9.3"
   },
   "patchedDependencies": {
-    "frida@17.6.1": "patches/frida@17.6.1.patch",
+    "frida@17.6.2": "patches/frida@17.6.2.patch",
     "frida@16.7.19": "patches/frida@16.7.19.patch"
   },
   "trustedDependencies": [
