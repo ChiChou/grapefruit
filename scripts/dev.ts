@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 
 const isWindows = os.platform() === "win32";
-const npm = isWindows ? "bun.exe" : "bun";
+const npm = isWindows ? "npm.exe" : "npm";
 const args = ["run", "dev"];
 
 const subprojects = ["gui", "."] as const;
@@ -14,7 +14,7 @@ const subdirs = subprojects.map((name) =>
 function tmux() {
   const argv = ["new-session"];
   for (const cwd of subdirs) {
-    argv.push("-c", cwd, "bun");
+    argv.push("-c", cwd, process.argv0);
     argv.push(...args);
     argv.push(";", "split-window", "-h");
   }

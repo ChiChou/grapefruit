@@ -13,16 +13,15 @@
     "./agent/types"
   ],
   "scripts": {
-    "prepare": "bun scripts/prepare.ts",
-    "dev": "bun scripts/dev.ts",
+    "prepare": "node scripts/prepare.ts && npm run install:agent && npm run install:gui",
+    "dev": "node scripts/dev.ts",
     "dev:server": "bun --watch src/index.ts",
     "start": "bun src/index.ts",
     "test": "bun --test",
     "prepack": "npm run build:npm",
-    "build:gui": "cd gui && bun run build",
-    "build:agent": "cd agent && bun run prepare",
-    "build:assets": "bun run build:agent && bun run build:gui",
-    "build:npm": "npm i && && npm run build:assets && node scripts/build-npm.ts && tsdown --env.NODE_ENV=production",
+    "install:gui": "cd gui && npm i",
+    "install:agent": "cd agent && npm i",
+    "build:npm": "node scripts/build-npm.ts && tsdown --env.NODE_ENV=production",
     "build:cli": "bun i && bun scripts/build-bun.ts",
     "build:all": "bun i && bun scripts/build-bun.ts cross"
   },

@@ -1,0 +1,34 @@
+name: npm package
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Reset node_modules
+        run: rm -rf node_modules
+
+      - run: npm ci
+
+      - name: Package
+        run: npm package
+
+      - name: Upload Archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: igf.tgz
+          path: build/igf-*.tgz
+
+      # todo: npm publish

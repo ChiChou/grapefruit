@@ -1,6 +1,6 @@
-import { $ } from "bun";
+import { mkdir } from "node:fs/promises";
 
-await Bun.write("./agent/dist/.create", "");
+const resolve = (relative: string) =>
+  new URL(relative, import.meta.url).pathname;
 
-await $`bun i`.cwd("agent");
-await $`bun i`.cwd("gui");
+await mkdir(resolve("../agent/dist"), { recursive: true });
