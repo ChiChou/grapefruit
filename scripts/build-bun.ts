@@ -40,30 +40,7 @@ async function bunBuild(target?: string) {
   await $`${process.execPath} build ${targetArgs} ${path.join(root, "src", "index.ts")} ${path.join(root, "assets.tgz")} --compile --outfile ${path.join(root, "build", "Release", name)}`;
 }
 
-async function pack(dst: string, ...inputs: string[]) {
-  const glob = new Glob("**/*");
-  const files: Record<string, BunFile> = {};
-
-  for (const src of inputs) {
-    for await (const file of glob.scan(src)) {
-      const name = `./${src}/${file}`;
-      files[name] = Bun.file(name);
-    }
-  }
-
-  const archive = new Bun.Archive(files, {
-    compress: "gzip",
-  });
-
-  await Bun.write(dst, archive);
-}
-
 async function main() {
-  if (process.platform === "win32") {
-    console.error("Windows is not supported");
-    process.exit(1);
-  }
-
   console.warn("this script is experimental and not well tested");
 
   const mode = process.argv[2] ?? "current";
@@ -74,7 +51,7 @@ async function main() {
     process.exit(1);
   }
 
-  await pack("assets.tgz", "gui/dist", "agent/dist");
+  await $`tar cvf assets.tgz gui/dist agent/dist`;
 
   for (const name of ["frida", "frida16"]) {
     const cwd = path.join(root, "node_modules", name);

@@ -13,8 +13,14 @@ const frida = envAsNumber("FRIDA_VERSION", 17);
 if (frida !== 16 && frida !== 17)
   throw new Error("Invalid FRIDA_VERSION, must be 16 or 17");
 
+const { dirname } = import.meta;
+const bunSEA =
+  process.platform === "win32"
+    ? dirname?.includes("\\~BUN\\root")
+    : dirname?.includes("/$bunfs/root");
+
 export default {
-  bunSEA: import.meta.dirname?.includes("/$bunfs/root"),
+  bunSEA,
   frida,
   dev,
   production,
