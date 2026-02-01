@@ -316,9 +316,7 @@ export function header(info: ClassDumpInfo): string {
     const realArgs = parsed.args.slice(2);
 
     // Split selector by ':' to map arguments
-    const selParts = cleanSel
-      .split(":")
-      .filter((s) => s.length > 0 || cleanSel.endsWith(":"));
+    const selParts = cleanSel.split(":").filter((s) => s.length > 0);
 
     // Reconstruct Method definition
     let methodLine = `${methodSymbol} (${parsed.ret}) `;
