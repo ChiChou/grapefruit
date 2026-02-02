@@ -53,21 +53,30 @@ async function main() {
 
   await $`tar cvf assets.tgz gui/dist agent/dist`;
 
-  for (const name of ["frida", "frida16"]) {
-    const cwd = path.join(root, "node_modules", name);
+  const fridaModules = ["frida", "frida16"];
 
-    if (cross) {
-      for (const [target, [platform, arch]] of Object.entries(bunTargets)) {
+  if (cross) {
+    for (const [target, [platform, arch]] of Object.entries(bunTargets)) {
+      // Prebuild BOTH frida modules for this target
+      for (const name of fridaModules) {
+        const cwd = path.join(root, "node_modules", name);
         await prebuild(cwd, platform, arch);
-        await bunBuild(target);
       }
+      // Now build with both modules having correct prebuilds
+      await bunBuild(target);
     }
 
-    // restore prebuild
-    await prebuild(cwd);
-  }
-
-  if (!cross) {
+    // Restore both prebuilds for host platform
+    for (const name of fridaModules) {
+      const cwd = path.join(root, "node_modules", name);
+      await prebuild(cwd);
+    }
+  } else {
+    // For non-cross build, just prebuild for current platform and build
+    for (const name of fridaModules) {
+      const cwd = path.join(root, "node_modules", name);
+      await prebuild(cwd);
+    }
     await bunBuild();
   }
 }
