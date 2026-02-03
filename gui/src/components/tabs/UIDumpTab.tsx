@@ -5,9 +5,11 @@ import { useDock } from "@/context/DockContext";
 import { RefreshCw, Copy, Check, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Slider } from "@/components/ui/slider";
 import { ButtonGroup } from "@/components/ui/button-group";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useRpcQuery } from "@/lib/queries";
+
+const FONT_SIZES = [0.75, 1, 1.25, 1.5] as const;
 
 import type { UIDumpNode } from "../../../../agent/types/fruity/modules/ui";
 
@@ -258,48 +260,67 @@ export function UIDumpTab() {
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-2 w-48">
-          <span className="text-xs text-gray-500">
-            {Math.round(scale * 100)}%
-          </span>
-          <Slider
-            min={20}
-            max={200}
-            step={5}
-            value={[scale * 100]}
-            onValueChange={([v]) => setScale(v / 100)}
-            className="flex-1"
-          />
-        </div>
         <ButtonGroup>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => refetch()}
-            disabled={isLoading}
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
-            />
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleExpandAll}>
-            <ChevronsUpDown className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleCollapseAll}>
-            <ChevronsDownUp className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCopy}
-            className={copied ? "text-green-600 border-green-600 dark:text-green-400 dark:border-green-400" : ""}
-          >
-            {copied ? (
-              <Check className="h-4 w-4" />
-            ) : (
-              <Copy className="h-4 w-4" />
-            )}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refetch()}
+                disabled={isLoading}
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+                />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t("reload")}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="sm" onClick={handleExpandAll}>
+                <ChevronsUpDown className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t("expand_all")}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="sm" onClick={handleCollapseAll}>
+                <ChevronsDownUp className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t("collapse_all")}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopy}
+                className={copied ? "text-green-600 border-green-600 dark:text-green-400 dark:border-green-400" : ""}
+              >
+                {copied ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{copied ? t("copied") : t("copy")}</TooltipContent>
+          </Tooltip>
+        </ButtonGroup>
+        <ButtonGroup>
+          {FONT_SIZES.map((s) => (
+            <Button
+              key={s}
+              variant={scale === s ? "default" : "outline"}
+              size="sm"
+              onClick={() => setScale(s)}
+            >
+              {Math.round(s * 100)}%
+            </Button>
+          ))}
         </ButtonGroup>
       </div>
 
