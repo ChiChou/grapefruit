@@ -1,9 +1,7 @@
-import { useEffect, useState } from "react";
 import type { IDockviewPanelProps } from "dockview";
 
-import { useSession } from "@/context/SessionContext";
-
 import HexView from "../HexView";
+import { useRpcQuery } from "@/lib/queries";
 
 export interface MemoryPreviewTabParams {
   address: string;
@@ -13,37 +11,20 @@ export interface MemoryPreviewTabParams {
 export function MemoryPreviewTab({
   params,
 }: IDockviewPanelProps<MemoryPreviewTabParams>) {
-  const { api } = useSession();
-
   const address = params?.address;
   const size = params?.size;
 
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<Uint8Array | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: rawData,
+    isLoading,
+    error,
+  } = useRpcQuery<ArrayBuffer>(
+    ["memory", address ?? "", String(size ?? 0)],
+    (api) => api.memory.dump(address!, size!),
+    { enabled: !!address && !!size }
+  );
 
-  useEffect(() => {
-    if (!api || !address || !size) return;
-
-    const loadMemory = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const result = await api.memory.dump(address, size);
-        const buffer = result as ArrayBuffer;
-        setData(new Uint8Array(buffer));
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to read memory");
-        setData(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadMemory();
-  }, [address, api, size]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full text-gray-500">
         Loading...
@@ -54,12 +35,12 @@ export function MemoryPreviewTab({
   if (error) {
     return (
       <div className="flex items-center justify-center h-full text-red-500">
-        {error}
+        {(error as Error).message}
       </div>
     );
   }
 
-  if (!data) {
+  if (!rawData) {
     return (
       <div className="flex items-center justify-center h-full text-gray-500">
         No data
@@ -67,5 +48,5 @@ export function MemoryPreviewTab({
     );
   }
 
-  return <HexView data={data} stride={16} />;
+  return <HexView data={new Uint8Array(rawData)} stride={16} />;
 }

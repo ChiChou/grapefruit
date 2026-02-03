@@ -6,7 +6,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useTheme } from "@/components/theme-provider";
-import { useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useRpcQuery } from "@/lib/queries";
 
 const LANGUAGES = [
   { value: "javascript", label: "JavaScript", ext: ["js", "mjs", "cjs"] },
@@ -103,12 +103,9 @@ export function TextEditorTab({
   params,
 }: IDockviewPanelProps<TextEditorTabParams>) {
   const { t } = useTranslation();
-  const { api } = useSession();
   const { theme } = useTheme();
   const { openSingletonPanel } = useDock();
   const [content, setContent] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isInvalidUtf8, setIsInvalidUtf8] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<string>("");
 
@@ -147,36 +144,35 @@ export function TextEditorTab({
     [magika],
   );
 
-  const loadContent = useCallback(async () => {
-    if (!api || !fullPath) return;
+  const {
+    data: rawData,
+    isLoading,
+    error,
+  } = useRpcQuery<ArrayBuffer>(
+    ["filePreview", fullPath],
+    (api) => api.fs.preview(fullPath),
+    { enabled: !!fullPath }
+  );
 
-    setIsLoading(true);
-    setError(null);
-    setIsInvalidUtf8(false);
+  useEffect(() => {
+    if (!rawData) return;
 
-    try {
-      const result = await api.fs.preview(fullPath);
-      const u8 = new Uint8Array(result);
+    const processData = async () => {
+      const u8 = new Uint8Array(rawData);
       setSelectedLanguage(await detectSyntaxFromBytes(u8));
 
       try {
         const text = new TextDecoder("utf-8", { fatal: true }).decode(u8);
         setContent(text);
+        setIsInvalidUtf8(false);
       } catch {
         setContent(null);
         setIsInvalidUtf8(true);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load file");
-      setContent(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [api, fullPath, detectSyntaxFromBytes]);
+    };
 
-  useEffect(() => {
-    loadContent();
-  }, [loadContent]);
+    processData();
+  }, [rawData, detectSyntaxFromBytes]);
 
   const handleOpenInHexPreview = useCallback(() => {
     openSingletonPanel({
@@ -199,7 +195,7 @@ export function TextEditorTab({
   if (error) {
     return (
       <div className="flex items-center justify-center h-full text-destructive">
-        {error}
+        {(error as Error).message}
       </div>
     );
   }

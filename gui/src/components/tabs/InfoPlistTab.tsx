@@ -1,30 +1,16 @@
-import { useSession } from "@/context/SessionContext";
-import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { PlistView, type PlistValue } from "@/components/UnifiedPlistViewer";
+import { useRpcQuery } from "@/lib/queries";
 
 export function InfoPlistTab() {
   const { t } = useTranslation();
-  const { api } = useSession();
-  const [loading, setLoading] = useState<boolean>(false);
-  const [xml, setXml] = useState<string>("");
-  const [plistData, setPlistData] = useState<PlistValue | null>(null);
 
-  useEffect(() => {
-    if (!api) return;
+  const { data, isLoading } = useRpcQuery(["infoPlist"], (api) =>
+    api.info.plist()
+  );
 
-    setLoading(true);
-    api.info
-      .plist()
-      .then(({ xml, value }) => {
-        setXml(xml);
-        setPlistData(value);
-      })
-      .finally(() => setLoading(false));
-  }, [api]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
         {t("loading")}
@@ -32,5 +18,11 @@ export function InfoPlistTab() {
     );
   }
 
-  return <PlistView xml={xml} value={plistData} filename="Info.plist" />;
+  return (
+    <PlistView
+      xml={data?.xml ?? ""}
+      value={(data?.value as PlistValue) ?? null}
+      filename="Info.plist"
+    />
+  );
 }

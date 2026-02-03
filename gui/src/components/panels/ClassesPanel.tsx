@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Search } from "lucide-react";
 import { List, type RowComponentProps } from "react-window";
@@ -6,8 +6,8 @@ import { List, type RowComponentProps } from "react-window";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
+import { useRpcQuery } from "@/lib/queries";
 
 const ITEM_HEIGHT = 32;
 
@@ -15,34 +15,14 @@ type ScopeType = "__main__" | "__app__" | "__global__";
 
 export function ClassesPanel() {
   const { t } = useTranslation();
-  const { api } = useSession();
   const { openFilePanel } = useDock();
-  const [isLoading, setIsLoading] = useState(false);
-  const [classes, setClasses] = useState<string[]>([]);
   const [scope, setScope] = useState<ScopeType>("__app__");
   const [search, setSearch] = useState("");
 
-  const loadClasses = useCallback(
-    async (scopeValue: ScopeType) => {
-      if (!api) return;
-
-      setIsLoading(true);
-      try {
-        const result = await api.classdump.list(scopeValue);
-        setClasses(result as unknown as string[]);
-      } catch (err) {
-        console.error("Failed to load classes:", err);
-        setClasses([]);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [api],
+  const { data: classes = [], isLoading } = useRpcQuery(
+    ["classes", scope],
+    (api) => api.classdump.list(scope) as Promise<string[]>
   );
-
-  useEffect(() => {
-    loadClasses(scope);
-  }, [scope, loadClasses]);
 
   const filteredClasses = useMemo(() => {
     if (!search.trim()) return classes;

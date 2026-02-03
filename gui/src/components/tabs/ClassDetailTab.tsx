@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
 
-import { useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 import {
   Table,
@@ -19,6 +18,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import Editor, { loader } from "@monaco-editor/react";
 import { useTheme } from "@/components/theme-provider";
 import { header, type ClassDumpInfo } from "../../lib/classdump-header.ts";
+import { useRpcQuery } from "@/lib/queries";
 
 import type { ClassDetail } from "../../../../agent/types/fruity/modules/classdump";
 
@@ -33,30 +33,18 @@ export interface ClassDetailParams {
 export function ClassDetailTab({
   params,
 }: IDockviewPanelProps<ClassDetailParams>) {
-  const { api } = useSession();
   const { openFilePanel } = useDock();
   const { t } = useTranslation();
   const { theme } = useTheme();
-  const [isLoading, setIsLoading] = useState(false);
-  const [classInfo, setClassInfo] = useState<ClassDetail | null>(null);
   const [showInherited, setShowInherited] = useState(false);
   const [methodSearch, setMethodSearch] = useState("");
   const [activeTab, setActiveTab] = useState("methods");
   const [protocolSearch, setProtocolSearch] = useState("");
 
-  useEffect(() => {
-    if (!api) return;
-
-    setIsLoading(true);
-    api.classdump
-      .inspect(params.className)
-      .then((result) => setClassInfo(result))
-      .catch((err) => {
-        console.error("Failed to load class info:", err);
-        setClassInfo(null);
-      })
-      .finally(() => setIsLoading(false));
-  }, [api, params.className]);
+  const { data: classInfo, isLoading } = useRpcQuery<ClassDetail>(
+    ["classDetail", params.className],
+    (api) => api.classdump.inspect(params.className)
+  );
 
   const openModuleTab = (path: string) => {
     const name = path.split("/").pop() || path;

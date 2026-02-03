@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Copy,
@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 
 import { Status, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
+import { useRpcQuery } from "@/lib/queries";
 
 import type { BasicInfo } from "../../../../agent/types/fruity/modules/info";
 
@@ -60,11 +61,14 @@ function PathDisplay({ path, onClick }: { path: string; onClick: () => void }) {
 
 export function GeneralPanel() {
   const { t } = useTranslation();
-  const { api, status, device, bundle } = useSession();
+  const { status, device, bundle } = useSession();
   const { openSingletonPanel } = useDock();
-  const [basicInfo, setBasicInfo] = useState<BasicInfo | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  const {
+    data: basicInfo,
+    isLoading,
+    error,
+  } = useRpcQuery<BasicInfo>(["appInfo"], (api) => api.info.basics());
 
   const openHandlesTab = () => {
     openSingletonPanel({
@@ -123,28 +127,12 @@ export function GeneralPanel() {
     });
   };
 
-  useEffect(() => {
-    if (!api) return;
-
-    setIsLoading(true);
-    setError(null);
-    api.info
-      .basics()
-      .then((info) => setBasicInfo(info))
-      .catch((error) => {
-        setError(error?.message);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, [api]);
-
   return (
     <div className="h-full p-4 overflow-auto">
       {error && (
         <Alert variant="destructive" className="mb-4">
           <AlertTitle>{t("error")}</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{(error as Error)?.message}</AlertDescription>
         </Alert>
       )}
       {isLoading ? (

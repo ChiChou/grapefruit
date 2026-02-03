@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   RotateCcw,
@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { useSession } from "@/context/SessionContext";
+import { useRpcQuery, useRpcMutation, useQueryClient } from "@/lib/queries";
 import type {
   Cookie,
   CookiePredicate,
@@ -48,8 +49,7 @@ function formatDate(date: Date | null): string {
 export function BinaryCookieTab() {
   const { t } = useTranslation();
   const { api } = useSession();
-  const [cookies, setCookies] = useState<Cookie[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
   const [pendingDeleteCookie, setPendingDeleteCookie] = useState<Cookie | null>(
     null,
   );
@@ -65,27 +65,32 @@ export function BinaryCookieTab() {
   const [expiresDate, setExpiresDate] = useState<Date>(new Date());
   const [isExpiresPopoverOpen, setIsExpiresPopoverOpen] = useState(false);
 
-  const loadCookies = useCallback(async () => {
-    if (!api) return;
-    setIsLoading(true);
-    try {
-      const list = await api.cookies.list();
-      setCookies(list);
-    } catch {
-      setCookies([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [api]);
+  const {
+    data: cookies = [],
+    isLoading,
+    refetch,
+  } = useRpcQuery<Cookie[]>(["cookies"], (api) => api.cookies.list());
 
-  useEffect(() => {
-    loadCookies();
-  }, [loadCookies]);
+  const clearMutation = useRpcMutation<void, void>(
+    (api) => api.cookies.clear(),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["cookies"] });
+      },
+    }
+  );
+
+  const removeMutation = useRpcMutation<boolean, CookiePredicate>(
+    (api, predicate) => api.cookies.remove(predicate),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["cookies"] });
+      },
+    }
+  );
 
   const confirmClear = async () => {
-    if (!api) return;
-    await api.cookies.clear();
-    setCookies([]);
+    await clearMutation.mutateAsync();
     setPendingDeleteCookie(null);
     setIsDialogOpen(false);
     setIsClearMode(false);
@@ -99,15 +104,11 @@ export function BinaryCookieTab() {
   };
 
   const handleRemove = async (cookie: Cookie) => {
-    if (!api) return;
-    const success = await api.cookies.remove({
+    await removeMutation.mutateAsync({
       name: cookie.name,
       domain: cookie.domain,
       path: cookie.path,
     } as CookiePredicate);
-    if (success) {
-      setCookies((prev) => prev.filter((c) => c.name !== cookie.name));
-    }
   };
 
   const requestDelete = (cookie: Cookie) => {
@@ -146,15 +147,7 @@ export function BinaryCookieTab() {
       };
       const success = await api.cookies.update(predicate, "value", editValue);
       if (success) {
-        setCookies((prev) =>
-          prev.map((c) =>
-            c.name === editingCookie.name &&
-            c.domain === editingCookie.domain &&
-            c.path === editingCookie.path
-              ? { ...c, value: editValue }
-              : c,
-          ),
-        );
+        queryClient.invalidateQueries({ queryKey: ["cookies"] });
         setEditingCookie(null);
         setEditValue("");
       }
@@ -191,15 +184,7 @@ export function BinaryCookieTab() {
         expiresDate.getTime(),
       );
       if (success) {
-        setCookies((prev) =>
-          prev.map((c) =>
-            c.name === editingExpiresCookie.name &&
-            c.domain === editingExpiresCookie.domain &&
-            c.path === editingExpiresCookie.path
-              ? { ...c, expiresDate: new Date(expiresDate.getTime()) }
-              : c,
-          ),
-        );
+        queryClient.invalidateQueries({ queryKey: ["cookies"] });
         setEditingExpiresCookie(null);
         setIsExpiresPopoverOpen(false);
       }
@@ -214,7 +199,7 @@ export function BinaryCookieTab() {
         <Button
           variant="outline"
           size="sm"
-          onClick={loadCookies}
+          onClick={() => refetch()}
           disabled={isLoading}
         >
           <RotateCcw className="w-4 h-4 mr-2" />

@@ -1,8 +1,9 @@
 import io from "socket.io-client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { TriangleAlert, RefreshCw, Plus, X } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Spinner } from "@/components/ui/spinner";
 import { Separator } from "@/components/ui/separator";
@@ -16,80 +17,74 @@ import {
 import { type Device } from "@shared/schema";
 
 export function Devices() {
-  const [devices, setDevices] = useState<Device[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [ipAddress, setIpAddress] = useState("");
-  const [isAdding, setIsAdding] = useState(false);
   const { udid } = useParams();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
-  const loadDevices = useCallback(() => {
-    console.log("load devices");
-    fetch("/api/devices")
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(t("failed_to_fetch_devices"));
-        }
-        return res.json();
-      })
-      .then((data) => {
-        setDevices(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
-  }, [t]);
+  const {
+    data: devices = [],
+    isLoading: loading,
+    error,
+    refetch,
+  } = useQuery<Device[], Error>({
+    queryKey: ["devices"],
+    queryFn: async () => {
+      const res = await fetch("/api/devices");
+      if (!res.ok) {
+        throw new Error(t("failed_to_fetch_devices"));
+      }
+      return res.json();
+    },
+  });
 
-  const handleAddRemoteDevice = async () => {
-    if (!ipAddress.trim()) return;
-
-    setIsAdding(true);
-    try {
-      const response = await fetch(`/api/devices/remote/${ipAddress}`, {
+  const addDeviceMutation = useMutation({
+    mutationFn: async (ip: string) => {
+      const response = await fetch(`/api/devices/remote/${ip}`, {
         method: "PUT",
       });
-
-      if (response.status === 204) {
-        setAddMenuOpen(false);
-        setIpAddress("");
-        loadDevices();
+      if (response.status !== 204) {
+        throw new Error("Failed to add remote device");
       }
-    } catch (err) {
-      console.error("Failed to add remote device:", err);
-    } finally {
-      setIsAdding(false);
-    }
-  };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["devices"] });
+      setAddMenuOpen(false);
+      setIpAddress("");
+    },
+  });
 
-  const handleDeleteRemoteDevice = async (ip: string) => {
-    try {
+  const deleteDeviceMutation = useMutation({
+    mutationFn: async (ip: string) => {
       await fetch(`/api/devices/remote/${ip}`, {
         method: "DELETE",
       });
-      loadDevices();
-    } catch (err) {
-      console.error("Failed to delete remote device:", err);
-    }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["devices"] });
+    },
+  });
+
+  const handleAddRemoteDevice = () => {
+    if (!ipAddress.trim()) return;
+    addDeviceMutation.mutate(ipAddress);
+  };
+
+  const handleDeleteRemoteDevice = (ip: string) => {
+    deleteDeviceMutation.mutate(ip);
   };
 
   useEffect(() => {
     const socket = io("/devices").on("change", () => {
       console.log("device changed");
-      loadDevices();
+      queryClient.invalidateQueries({ queryKey: ["devices"] });
     });
 
     return () => {
       socket.disconnect();
     };
-  }, [loadDevices]);
-
-  useEffect(() => {
-    loadDevices();
-  }, [t, loadDevices]);
+  }, [queryClient]);
 
   if (loading) {
     return (
@@ -113,7 +108,7 @@ export function Devices() {
     return (
       <>
         <p className="text-sm text-red-500 dark:text-red-400">
-          {t("error")}: {error}
+          {t("error")}: {error.message}
         </p>
       </>
     );
@@ -125,7 +120,7 @@ export function Devices() {
         <Button
           variant="outline"
           size="icon-sm"
-          onClick={loadDevices}
+          onClick={() => refetch()}
           title={t("reload")}
         >
           <RefreshCw className="h-4 w-4" />
@@ -155,7 +150,7 @@ export function Devices() {
                 <Button
                   size="sm"
                   onClick={handleAddRemoteDevice}
-                  disabled={isAdding || !ipAddress.trim()}
+                  disabled={addDeviceMutation.isPending || !ipAddress.trim()}
                 >
                   {t("confirm")}
                 </Button>

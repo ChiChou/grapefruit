@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import type { IDockviewPanelProps } from "dockview";
+import { useQuery } from "@tanstack/react-query";
 
 import { useSession } from "@/context/SessionContext";
 import HexView, { type Stride } from "@/components/HexView";
@@ -12,35 +13,24 @@ export function HexPreviewTab({
   params,
 }: IDockviewPanelProps<HexPreviewTabParams>) {
   const { api, device, pid } = useSession();
-  const [content, setContent] = useState<Uint8Array | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [stride, setStride] = useState<Stride>(16);
   const fullPath = params?.path || "";
 
   const fileUrl = `/api/download/${device}/${pid}?path=${encodeURIComponent(fullPath)}`;
 
-  const loadContent = useCallback(async () => {
-    if (!api || !fullPath) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
+  const {
+    data: content,
+    isLoading,
+    error,
+  } = useQuery<Uint8Array, Error>({
+    queryKey: ["hexPreview", device, pid, fullPath],
+    queryFn: async () => {
       const r = await fetch(fileUrl);
-      const uint8Array = await r.bytes();
-      setContent(uint8Array);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load file");
-      setContent(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [api, fullPath, fileUrl]);
-
-  useEffect(() => {
-    loadContent();
-  }, [loadContent]);
+      if (!r.ok) throw new Error("Failed to load file");
+      return new Uint8Array(await r.arrayBuffer());
+    },
+    enabled: !!api && !!fullPath,
+  });
 
   if (isLoading) {
     return (
@@ -53,7 +43,7 @@ export function HexPreviewTab({
   if (error) {
     return (
       <div className="flex items-center justify-center h-full text-destructive">
-        {error}
+        {error.message}
       </div>
     );
   }

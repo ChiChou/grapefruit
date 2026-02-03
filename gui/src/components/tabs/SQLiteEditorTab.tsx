@@ -22,6 +22,7 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable";
+import { useRpcQuery } from "@/lib/queries";
 
 export interface SQLiteEditorTabParams {
   path: string;
@@ -33,32 +34,26 @@ export function SQLiteEditorTab({
   const { theme } = useTheme();
   const { api } = useSession();
 
-  const [tables, setTables] = useState<string[]>([]);
   const [filteredTables, setFilteredTables] = useState<string[]>([]);
   const [tableSearch, setTableSearch] = useState("");
-  const [loading, setLoading] = useState(true);
   const [sql, setSQL] = useState("SELECT * FROM ");
   const [dumpResult, setDumpResult] = useState<DumpResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const fullPath = params?.path || "";
 
-  const loadContent = useCallback(async () => {
-    if (!api || !fullPath) return;
+  const {
+    data: tables = [],
+    isLoading,
+    error,
+  } = useRpcQuery<string[]>(
+    ["sqliteTables", fullPath],
+    (api) => api.sqlite.tables(fullPath),
+    { enabled: !!fullPath }
+  );
 
-    setLoading(true);
-    setError(null);
-
-    try {
-      const tableList = await api.sqlite.tables(fullPath);
-      setTables(tableList);
-      setFilteredTables(tableList);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load file");
-    } finally {
-      setLoading(false);
-    }
-  }, [api, fullPath]);
+  useEffect(() => {
+    setFilteredTables(tables);
+  }, [tables]);
 
   const loadTableData = useCallback(
     async (tableName: string) => {
@@ -69,17 +64,11 @@ export function SQLiteEditorTab({
         setDumpResult(result);
         setSQL(`SELECT * FROM "${tableName}" LIMIT 100;`);
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to load table data",
-        );
+        console.error("Failed to load table data:", err);
       }
     },
     [api, fullPath],
   );
-
-  useEffect(() => {
-    loadContent();
-  }, [loadContent]);
 
   useEffect(() => {
     if (tableSearch.trim() === "") {
@@ -90,7 +79,7 @@ export function SQLiteEditorTab({
     }
   }, [tableSearch, tables]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
         Loading...
@@ -101,7 +90,7 @@ export function SQLiteEditorTab({
   if (error) {
     return (
       <div className="flex items-center justify-center h-full text-destructive">
-        {error}
+        {(error as Error).message}
       </div>
     );
   }

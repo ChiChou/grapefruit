@@ -1,32 +1,24 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Search } from "lucide-react";
 import { List, type RowComponentProps } from "react-window";
 
-import { useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 import { Input } from "@/components/ui/input";
+import { useRpcQuery } from "@/lib/queries";
 import type { ModuleInfo } from "../../../../agent/types/fruity/modules/symbol";
 
 const ITEM_HEIGHT = 72;
 
 export function ModulesPanel() {
   const { t } = useTranslation();
-  const { api } = useSession();
   const { openFilePanel } = useDock();
-  const [isLoading, setIsLoading] = useState(false);
-  const [modules, setModules] = useState<ModuleInfo[]>([]);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    if (!api) return;
-
-    setIsLoading(true);
-    api.symbol
-      .modules()
-      .then((mods) => setModules(mods))
-      .finally(() => setIsLoading(false));
-  }, [api]);
+  const { data: modules = [], isLoading } = useRpcQuery(
+    ["modules"],
+    (api) => api.symbol.modules()
+  );
 
   const filteredModules = useMemo(() => {
     if (!search.trim()) return modules;

@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Section } from "../../../../agent/types/fruity/modules/symbol";
 import { useDock } from "@/context/DockContext";
-import { useSession } from "@/context/SessionContext";
+import { useRpcQuery } from "@/lib/queries";
 import {
   Table,
   TableBody,
@@ -19,31 +18,13 @@ interface SectionsListViewProps {
 export function SectionsListView({
   path,
 }: SectionsListViewProps) {
-  const { api } = useSession();
   const { openFilePanel } = useDock();
   const { t } = useTranslation();
-  const [sections, setSections] = useState<Section[] | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  const loadSections = useCallback(async () => {
-    if (!api) return;
-    if (sections !== null) return;
-
-    setLoading(true);
-    try {
-      const result = await api.symbol.sections(path);
-      setSections(result);
-    } catch (err) {
-      console.error("Failed to load sections:", err);
-      setSections([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [api, path, sections]);
-
-  useEffect(() => {
-    loadSections();
-  }, [loadSections]);
+  const { data: sections, isLoading: loading } = useRpcQuery<Section[]>(
+    ["sections", path],
+    (api) => api.symbol.sections(path)
+  );
 
   const openMemoryPreviewTab = (address: string, size: number) => {
     openFilePanel({

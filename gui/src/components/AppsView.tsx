@@ -1,7 +1,7 @@
 import { useParams, Link } from "react-router";
-import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AlertCircleIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -84,53 +84,38 @@ function AppCard({ app, udid }: AppCardProps) {
 
 export function AppsView() {
   const { udid } = useParams();
-  const [apps, setApps] = useState<Application[]>([]);
-  const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation();
 
-  useEffect(() => {
-    if (!udid) return;
+  const {
+    data: apps = [],
+    isLoading: appsLoading,
+    error: appsError,
+  } = useQuery<Application[], Error>({
+    queryKey: ["apps", udid],
+    queryFn: async ({ signal }) => {
+      const res = await fetch(`/api/device/${udid}/apps`, { signal });
+      if (!res.ok) throw new Error(t("failed_to_fetch_apps"));
+      return res.json();
+    },
+    enabled: !!udid,
+  });
 
-    setLoading(true);
-    setError(null);
+  const {
+    data: deviceInfo,
+    isLoading: infoLoading,
+    error: infoError,
+  } = useQuery<DeviceInfo, Error>({
+    queryKey: ["deviceInfo", udid],
+    queryFn: async ({ signal }) => {
+      const res = await fetch(`/api/device/${udid}/info`, { signal });
+      if (!res.ok) throw new Error(t("failed_to_fetch_device_info"));
+      return res.json();
+    },
+    enabled: !!udid,
+  });
 
-    const abortController = new AbortController();
-
-    Promise.all([
-      fetch(`/api/device/${udid}/apps`, {
-        signal: abortController.signal,
-      }).then((res) => {
-        if (!res.ok) throw new Error(t("failed_to_fetch_apps"));
-        return res.json();
-      }),
-      fetch(`/api/device/${udid}/info`, {
-        signal: abortController.signal,
-      }).then((res) => {
-        if (!res.ok) throw new Error(t("failed_to_fetch_device_info"));
-        return res.json();
-      }),
-    ])
-      .then(([appsData, infoData]) => {
-        setApps(appsData);
-        setDeviceInfo(infoData);
-      })
-      .catch((err) => {
-        if (err.name === "AbortError") {
-          // Request was cancelled, don't update state
-          return;
-        }
-        setError(err.message);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-
-    return () => {
-      abortController.abort();
-    };
-  }, [udid, t]);
+  const loading = appsLoading || infoLoading;
+  const error = appsError || infoError;
 
   if (loading) {
     return (
@@ -154,7 +139,7 @@ export function AppsView() {
           <AlertCircleIcon />
           <AlertTitle>{t("error")}</AlertTitle>
           <AlertDescription>
-            <p>{error}</p>
+            <p>{error.message}</p>
           </AlertDescription>
         </Alert>
       </div>

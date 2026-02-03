@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ExternalLink } from "lucide-react";
 import { useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 import { SymbolsTableView } from "../SymbolsTableView";
+import { useRpcQuery } from "@/lib/queries";
 
 import type { Symbol } from "../../../../agent/types/fruity/modules/symbol";
 
@@ -15,33 +16,16 @@ export function DependenciesListView({ path }: DependenciesListViewProps) {
   const { api } = useSession();
   const { openFilePanel } = useDock();
   const { t } = useTranslation();
-  const [dependencies, setDependencies] = useState<string[] | null>(null);
-  const [loading, setLoading] = useState(false);
   const [expandedDeps, setExpandedDeps] = useState<Set<string>>(new Set());
   const [importsLoading, setImportsLoading] = useState<Set<string>>(new Set());
   const [importedData, setImportedData] = useState<
     Record<string, Symbol[] | null>
   >({});
 
-  const loadDependencies = useCallback(async () => {
-    if (!api) return;
-    if (dependencies !== null) return;
-
-    setLoading(true);
-    try {
-      const result = await api.symbol.dependencies(path);
-      setDependencies(result);
-    } catch (err) {
-      console.error("Failed to load dependencies:", err);
-      setDependencies([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [api, path, dependencies]);
-
-  useEffect(() => {
-    loadDependencies();
-  }, [loadDependencies]);
+  const { data: dependencies, isLoading: loading } = useRpcQuery<string[]>(
+    ["dependencies", path],
+    (api) => api.symbol.dependencies(path)
+  );
 
   const loadImportsForDep = useCallback(
     async (dep: string) => {

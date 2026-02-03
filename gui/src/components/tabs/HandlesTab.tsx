@@ -1,5 +1,5 @@
 import { useSession } from "@/context/SessionContext";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +20,7 @@ import {
 import { ArrowDown, ArrowUp, ArrowUpDown, RefreshCw } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { useRpcQuery } from "@/lib/queries";
 
 import type {
   FileDescriptor,
@@ -47,9 +48,7 @@ type SortOrder = "asc" | "desc";
 
 export function HandlesTab() {
   const { t } = useTranslation();
-  const { api, pid, device } = useSession();
-  const [loading, setLoading] = useState(false);
-  const [handles, setHandles] = useState<FileDescriptor[]>([]);
+  const { pid, device } = useSession();
   const [sortKey, setSortKey] = useState<SortKey>("fd");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [reloadInterval, setReloadInterval] = useState(0);
@@ -57,17 +56,11 @@ export function HandlesTab() {
   const [showSocket, setShowSocket] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const fetchHandles = useCallback(() => {
-    if (!api) return;
-
-    setLoading(true);
-    api.lsof
-      .fds()
-      .then((fds) => setHandles(fds))
-      .finally(() => setLoading(false));
-  }, [api]);
-
-  useEffect(() => fetchHandles(), [fetchHandles]);
+  const {
+    data: handles = [],
+    isLoading,
+    refetch,
+  } = useRpcQuery<FileDescriptor[]>(["handles"], (api) => api.lsof.fds());
 
   useEffect(() => {
     if (intervalRef.current) {
@@ -76,7 +69,7 @@ export function HandlesTab() {
     }
 
     if (reloadInterval > 0) {
-      intervalRef.current = setInterval(fetchHandles, reloadInterval * 1000);
+      intervalRef.current = setInterval(() => refetch(), reloadInterval * 1000);
     }
 
     return () => {
@@ -84,7 +77,7 @@ export function HandlesTab() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [reloadInterval, fetchHandles]);
+  }, [reloadInterval, refetch]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -171,18 +164,18 @@ export function HandlesTab() {
           <Button
             variant="outline"
             size="sm"
-            onClick={fetchHandles}
-            disabled={loading}
+            onClick={() => refetch()}
+            disabled={isLoading}
           >
             <RefreshCw
-              className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+              className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
             />
             {t("reload")}
           </Button>
         </div>
       </div>
       <div className="flex-1 overflow-auto border-t border-gray-300 dark:border-gray-700">
-        {loading && handles.length === 0 ? (
+        {isLoading && handles.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-500">
             {t("loading")}...
           </div>
@@ -244,7 +237,7 @@ export function HandlesTab() {
                   </TableCell>
                 </TableRow>
               ))}
-              {handles.length === 0 && !loading && (
+              {handles.length === 0 && !isLoading && (
                 <TableRow>
                   <TableCell colSpan={3} className="text-center text-gray-500">
                     {t("no_results")}

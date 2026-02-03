@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ResizablePanelGroup,
@@ -10,6 +10,7 @@ import { RefreshCw, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useRpcQuery } from "@/lib/queries";
 
 import type { UIDumpNode } from "../../../../agent/types/fruity/modules/ui";
 
@@ -219,31 +220,18 @@ function calculateBounds(node: UIDumpNode): {
 export function UIDumpTab() {
   const { t } = useTranslation();
   const { api } = useSession();
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<UIDumpNode | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<UIDumpNode | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const fetchData = useCallback(async () => {
-    if (!api) return;
-
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await api.ui.dump(true);
-      console.debug(data);
-      setData(data);
-    } catch (err) {
-      setError((err as Error)?.message || "Failed to dump UI");
-    } finally {
-      setLoading(false);
-    }
-  }, [api]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const {
+    data,
+    isLoading,
+    error,
+    refetch,
+  } = useRpcQuery<UIDumpNode>(
+    ["uiDump"],
+    (api) => api.ui.dump(true) as unknown as Promise<UIDumpNode>
+  );
 
   const handleSelect = useCallback(
     (node: UIDumpNode) => {
@@ -296,11 +284,11 @@ export function UIDumpTab() {
         <Button
           variant="outline"
           size="sm"
-          onClick={fetchData}
-          disabled={loading}
+          onClick={() => refetch()}
+          disabled={isLoading}
         >
           <RefreshCw
-            className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+            className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
           />
           {t("reload")}
         </Button>
@@ -308,7 +296,7 @@ export function UIDumpTab() {
 
       {error && (
         <div className="p-4 text-sm text-red-500 dark:text-red-400">
-          {error}
+          {(error as Error)?.message || "Failed to dump UI"}
         </div>
       )}
 
@@ -320,7 +308,7 @@ export function UIDumpTab() {
                 {t("visual_preview")}
               </div>
               <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900 relative">
-                {loading && !data ? (
+                {isLoading && !data ? (
                   <div className="flex items-center justify-center h-full text-gray-500">
                     {t("loading")}
                   </div>
@@ -346,7 +334,7 @@ export function UIDumpTab() {
               </div>
               <ScrollArea className="flex-1">
                 <div className="p-2">
-                  {loading && !data ? (
+                  {isLoading && !data ? (
                     <div className="text-sm text-gray-500">Loading...</div>
                   ) : filteredData ? (
                     <TreeNode

@@ -1,44 +1,26 @@
 const escapeRegExp = (value: string) =>
   value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useDock } from "@/context/DockContext";
-import { useSession } from "@/context/SessionContext";
+import { useRpcQuery } from "@/lib/queries";
 
 interface ClassesListViewProps {
   path: string;
 }
 
 export function ClassesListView({ path }: ClassesListViewProps) {
-  const { api } = useSession();
   const { openFilePanel } = useDock();
   const { t } = useTranslation();
-  const [classes, setClasses] = useState<string[] | null>(null);
-  const [loading, setLoading] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
-  const loadClasses = useCallback(async () => {
-    if (!api) return;
-    if (classes !== null) return;
-
-    setLoading(true);
-    try {
-      const result = await api.classdump.classesForModule(path);
-      setClasses(result);
-    } catch (err) {
-      console.error("Failed to load classes:", err);
-      setClasses([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [api, path, classes]);
-
-  useEffect(() => {
-    loadClasses();
-  }, [loadClasses]);
+  const { data: classes, isLoading: loading } = useRpcQuery<string[]>(
+    ["moduleClasses", path],
+    (api) => api.classdump.classesForModule(path)
+  );
 
   const searchTerm = searchValue.trim();
   const searchLower = searchTerm.toLowerCase();

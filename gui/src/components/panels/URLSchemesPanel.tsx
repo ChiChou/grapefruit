@@ -12,41 +12,25 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable";
 
-import { useSession } from "@/context/SessionContext";
 import { URLSendView } from "@/components/URLSendView";
+import { useRpcQuery } from "@/lib/queries";
 
 import type { URLScheme } from "../../../../agent/types/fruity/modules/info";
 
 export function URLSchemesPanel() {
   const { t } = useTranslation();
-  const { api, status } = useSession();
-  const [urlSchemes, setUrlSchemes] = useState<URLScheme[] | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedScheme, setSelectedScheme] = useState<string | null>(null);
+
+  const {
+    data: urlSchemes,
+    isLoading,
+    error,
+  } = useRpcQuery(["urlSchemes"], (api) => api.info.urls());
+
   const [filteredSchemes, setFilteredSchemes] = useState<URLScheme[] | null>(
     null,
   );
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedScheme, setSelectedScheme] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!api) return;
-
-    setIsLoading(true);
-    setError(null);
-    api.info
-      .urls()
-      .then((schemes) => {
-        setUrlSchemes(schemes);
-        setFilteredSchemes(schemes);
-      })
-      .catch((error) => {
-        setError(error?.message);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, [status, api]);
 
   useEffect(() => {
     if (!urlSchemes) {
@@ -88,7 +72,7 @@ export function URLSchemesPanel() {
               {error && (
                 <Alert variant="destructive">
                   <AlertTitle>{t("error")}</AlertTitle>
-                  <AlertDescription>{error}</AlertDescription>
+                  <AlertDescription>{(error as Error)?.message}</AlertDescription>
                 </Alert>
               )}
               {isLoading ? (
@@ -143,7 +127,7 @@ export function URLSchemesPanel() {
           {error && (
             <Alert variant="destructive">
               <AlertTitle>{t("error")}</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{(error as Error)?.message}</AlertDescription>
             </Alert>
           )}
           {isLoading ? (

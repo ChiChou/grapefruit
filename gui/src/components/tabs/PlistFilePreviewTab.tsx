@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
 import { Loader2 } from "lucide-react";
 
-import { useSession } from "@/context/SessionContext";
 import { PlistView } from "@/components/UnifiedPlistViewer";
 import { type PlistValue } from "@/components/PlistTreeView";
+import { useRpcQuery } from "@/lib/queries";
 
 export interface PlistFilePreviewTabParams {
   path: string;
@@ -14,37 +13,19 @@ export interface PlistFilePreviewTabParams {
 export function PlistFilePreviewTab({
   params,
 }: IDockviewPanelProps<PlistFilePreviewTabParams>) {
-  const { api } = useSession();
   const { t } = useTranslation();
-  const [xml, setXml] = useState<string>("");
-  const [value, setValue] = useState<PlistValue | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const fullPath = params?.path || "";
 
-  const loadContent = useCallback(async () => {
-    if (!api) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const result = await api.fs.plist(fullPath);
-      setXml(result.xml);
-      setValue(result.value);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load plist");
-      setXml("");
-      setValue(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [api, fullPath]);
-
-  useEffect(() => {
-    loadContent();
-  }, [loadContent]);
+  const {
+    data,
+    isLoading,
+    error,
+  } = useRpcQuery(
+    ["plistPreview", fullPath],
+    (api) => api.fs.plist(fullPath),
+    { enabled: !!fullPath }
+  );
 
   if (isLoading) {
     return (
@@ -58,15 +39,15 @@ export function PlistFilePreviewTab({
   if (error) {
     return (
       <div className="flex items-center justify-center h-full text-destructive">
-        {error}
+        {(error as Error).message}
       </div>
     );
   }
 
   return (
     <PlistView
-      xml={xml}
-      value={value}
+      xml={data?.xml ?? ""}
+      value={(data?.value as PlistValue) ?? null}
       filename={fullPath.split("/").pop() || "plist"}
     />
   );

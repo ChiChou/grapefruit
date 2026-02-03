@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   RotateCcw,
@@ -36,7 +36,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useSession } from "@/context/SessionContext";
+import { useRpcQuery, useRpcMutation, useQueryClient } from "@/lib/queries";
 
 import type { KeyChainItem } from "../../../../agent/types/fruity/modules/keychain";
 
@@ -81,9 +81,7 @@ function hexDump(base64Data: string | undefined): string {
 
 export function KeyChainTab() {
   const { t } = useTranslation();
-  const { api } = useSession();
-  const [items, setItems] = useState<KeyChainItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
   const [withBiometricId, setWithBiometricId] = useState(false);
   const [pendingDeleteItem, setPendingDeleteItem] =
     useState<KeyChainItem | null>(null);
@@ -97,22 +95,23 @@ export function KeyChainTab() {
   );
   const [selectedProts, setSelectedProts] = useState<Set<string>>(new Set());
 
-  const loadItems = useCallback(async () => {
-    if (!api) return;
-    setIsLoading(true);
-    try {
-      const list = await api.keychain.list(withBiometricId);
-      setItems(list);
-    } catch {
-      setItems([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [api, withBiometricId]);
+  const {
+    data: items = [],
+    isLoading,
+    refetch,
+  } = useRpcQuery<KeyChainItem[]>(
+    ["keychain", String(withBiometricId)],
+    (api) => api.keychain.list(withBiometricId)
+  );
 
-  useEffect(() => {
-    loadItems();
-  }, [api, loadItems]);
+  const removeMutation = useRpcMutation<void, { service: string; account: string }>(
+    (api, { service, account }) => api.keychain.remove(service, account),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["keychain"] });
+      },
+    }
+  );
 
   const requestDelete = (item: KeyChainItem) => {
     setPendingDeleteItem(item);
@@ -120,13 +119,10 @@ export function KeyChainTab() {
   };
 
   const confirmDelete = async () => {
-    if (!api || !pendingDeleteItem) return;
+    if (!pendingDeleteItem) return;
     const service = pendingDeleteItem.service || "";
     const account = pendingDeleteItem.account || "";
-    await api.keychain.remove(service, account);
-    setItems((prev) =>
-      prev.filter((i) => !(i.service === service && i.account === account)),
-    );
+    await removeMutation.mutateAsync({ service, account });
     setPendingDeleteItem(null);
     setIsDialogOpen(false);
   };
@@ -230,7 +226,7 @@ export function KeyChainTab() {
         <Button
           variant="outline"
           size="sm"
-          onClick={loadItems}
+          onClick={() => refetch()}
           disabled={isLoading}
         >
           <RotateCcw className="w-4 h-4 mr-2" />
