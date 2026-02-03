@@ -86,7 +86,7 @@ export function KeyChainTab() {
   const [pendingDeleteItem, setPendingDeleteItem] =
     useState<KeyChainItem | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const [expandedIndices, setExpandedIndices] = useState<Set<number>>(new Set());
   const [copySuccessIndex, setCopySuccessIndex] = useState<number | null>(null);
   const [classFilterOpen, setClassFilterOpen] = useState(false);
   const [protFilterOpen, setProtFilterOpen] = useState(false);
@@ -128,7 +128,15 @@ export function KeyChainTab() {
   };
 
   const toggleExpand = (index: number) => {
-    setExpandedIndex(expandedIndex === index ? null : index);
+    setExpandedIndices((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
   };
 
   const downloadRaw = (item: KeyChainItem) => {
@@ -402,7 +410,7 @@ export function KeyChainTab() {
                     onClick={() => toggleExpand(index)}
                   >
                     <TableCell>
-                      {expandedIndex === index ? (
+                      {expandedIndices.has(index) ? (
                         <ChevronDown className="w-4 h-4" />
                       ) : (
                         <ChevronRight className="w-4 h-4" />
@@ -461,7 +469,7 @@ export function KeyChainTab() {
                       </div>
                     </TableCell>
                   </TableRow>
-                  {expandedIndex === index && (
+                  {expandedIndices.has(index) && (
                     <TableRow key={`detail-${index}`}>
                       <TableCell
                         colSpan={9}
