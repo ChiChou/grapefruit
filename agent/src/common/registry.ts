@@ -34,7 +34,7 @@ export type RPCRoute<T> = T;
 export type RemoteRPC<T extends Record<string, Record<string, unknown>>> = {
   [K in keyof T]: {
     [M in keyof T[K]]: T[K][M] extends (...args: infer A) => infer R
-      ? (...args: A) => Promise<R>
+      ? (...args: A) => Promise<Awaited<R>>
       : never;
   };
 };

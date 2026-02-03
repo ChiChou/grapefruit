@@ -1,241 +1,210 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/components/ui/resizable";
 import { useSession } from "@/context/SessionContext";
-import { RefreshCw, Search } from "lucide-react";
+import { useDock } from "@/context/DockContext";
+import { RefreshCw, Copy, Check, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Slider } from "@/components/ui/slider";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { useRpcQuery } from "@/lib/queries";
 
 import type { UIDumpNode } from "../../../../agent/types/fruity/modules/ui";
 
+// Tokenizer for description syntax highlighting
+function* tokenize(text: string, delimiters: string): IterableIterator<string> {
+  let left = 0;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text.charAt(i);
+    if (delimiters.includes(ch)) {
+      if (left < i) yield text.substring(left, i);
+      yield ch;
+      left = i + 1;
+    }
+  }
+  yield text.substring(left);
+}
+
+interface Token {
+  type: string;
+  word: string;
+}
+
+function* scan(text: string): IterableIterator<Token> {
+  const delimiters = "'<>: ;=()";
+  let prev: string | undefined;
+  let type: string;
+  const operators = "<,>;:=";
+  const booleanValues = ["YES", "NO"];
+  const tokens = tokenize(text, delimiters);
+
+  for (const token of tokens) {
+    if (token === "'") {
+      let word = token;
+      for (const next of tokens) {
+        word += next;
+        if (next === "'") break;
+      }
+      yield { type: "str", word };
+      continue;
+    }
+    if (token.match(/^0x?[\da-fA-F]+$/)) {
+      type = "hex";
+    } else if (token.match(/^[\d.]+$/)) {
+      type = "num";
+    } else if (operators.includes(token)) {
+      type = "op";
+    } else if (prev === "<") {
+      type = "clazz";
+    } else if (booleanValues.includes(token)) {
+      type = "bool";
+    } else {
+      type = "";
+    }
+    yield { type, word: token };
+    prev = token;
+  }
+}
+
+// Description component with syntax highlighting
+function Description({ text }: { text: string }) {
+  const tokens = [...scan(text)];
+
+  const typeToClass: Record<string, string> = {
+    num: "text-blue-600 dark:text-blue-400",
+    str: "text-purple-600 dark:text-purple-400",
+    hex: "text-yellow-600 dark:text-yellow-500",
+    bool: "text-green-600 dark:text-green-500",
+    op: "text-teal-600 dark:text-teal-400",
+    clazz: "text-pink-600 dark:text-pink-500 cursor-pointer hover:bg-black/10 dark:hover:bg-black/20",
+  };
+
+  return (
+    <span className="text-gray-600 dark:text-gray-400">
+      {tokens.map((token, i) => {
+        if (!token.type) return token.word;
+        return (
+          <span key={i} className={typeToClass[token.type] || ""}>
+            {token.word}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
 interface TreeNodeProps {
   node: UIDumpNode;
   depth?: number;
-  onSelect?: (node: UIDumpNode) => void;
-  selectedNode?: UIDumpNode | null;
+  defaultExpanded?: boolean;
+  onHighlight?: (node: UIDumpNode) => void;
+  onDismissHighlight?: () => void;
+  onOpenClass?: (className: string) => void;
 }
 
-function TreeNode({ node, depth = 0, onSelect, selectedNode }: TreeNodeProps) {
-  const [expanded, setExpanded] = useState(depth < 2);
+function TreeNode({
+  node,
+  depth = 0,
+  defaultExpanded = true,
+  onHighlight,
+  onDismissHighlight,
+  onOpenClass,
+}: TreeNodeProps) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const hasChildren = node.children && node.children.length > 0;
-  const isSelected = selectedNode === node;
 
   return (
-    <div className="font-mono text-xs">
-      <div
-        className={`flex items-start gap-1 hover:bg-gray-100 dark:hover:bg-gray-800 py-0.5 px-1 cursor-pointer ${
-          isSelected ? "bg-blue-100 dark:bg-blue-900" : ""
-        }`}
-        onClick={() => onSelect?.(node)}
-        style={{ paddingLeft: `${depth * 12 + 4}px` }}
+    <li className="font-mono text-xs list-none">
+      <p
+        className="flex items-start gap-1 py-0.5 cursor-pointer transition-colors duration-200 whitespace-nowrap hover:bg-gray-200 dark:hover:bg-white/10"
+        style={{ paddingLeft: `${(depth + 1) * 16}px` }}
+        onMouseEnter={() => onHighlight?.(node)}
+        onMouseLeave={() => onDismissHighlight?.()}
       >
         {hasChildren ? (
-          <button
+          <span
             onClick={(e) => {
               e.stopPropagation();
               setExpanded(!expanded);
             }}
-            className="mt-0.5 w-3 h-3 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+            className="cursor-pointer text-gray-400 hover:text-gray-900 dark:hover:text-white select-none w-4"
           >
-            {expanded ? "▼" : "▶"}
-          </button>
+            {expanded ? "−" : "+"}
+          </span>
         ) : (
-          <span className="w-3 h-3" />
+          <span className="text-gray-600 w-4">·</span>
         )}
-        <span className="text-blue-600 dark:text-blue-400">{node.clazz}</span>
-        {node.frame && (
-          <span className="text-gray-500">
-            [{String(node.frame[0][0].toFixed(0))},{" "}
-            {String(node.frame[0][1].toFixed(0))};{" "}
-            {String(node.frame[1][0].toFixed(0))}x
-            {String(node.frame[1][1].toFixed(0))}]
+        {node.description ? (
+          <Description text={node.description} />
+        ) : (
+          <span className="text-blue-600 dark:text-blue-400">{node.clazz}</span>
+        )}
+        {node.delegate?.name && (
+          <span
+            className="ml-4 text-yellow-700 dark:text-yellow-200 bg-gray-200 dark:bg-gray-800 px-1 cursor-pointer hover:text-yellow-600 dark:hover:text-yellow-400"
+            title={node.delegate.name}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (node.delegate?.name) {
+                onOpenClass?.(node.delegate.name);
+              }
+            }}
+          >
+            delegate: {node.delegate.description || node.delegate.name}
           </span>
         )}
-      </div>
+      </p>
       {expanded && hasChildren && (
-        <div>
+        <ul>
           {node.children!.map((child, i) => (
             <TreeNode
               key={i}
               node={child}
               depth={depth + 1}
-              onSelect={onSelect}
-              selectedNode={selectedNode}
+              defaultExpanded={defaultExpanded}
+              onHighlight={onHighlight}
+              onDismissHighlight={onDismissHighlight}
+              onOpenClass={onOpenClass}
             />
           ))}
-        </div>
+        </ul>
       )}
-    </div>
+    </li>
   );
 }
 
-interface UIVisualizerProps {
-  node: UIDumpNode;
-  onSelect?: (node: UIDumpNode) => void;
-  selectedNode?: UIDumpNode | null;
-}
-
-function UIVisualizer({ node, onSelect, selectedNode }: UIVisualizerProps) {
-  const renderNode = (
-    n: UIDumpNode,
-    depth: number = 0,
-    index: number = 0,
-  ): React.ReactNode => {
-    const isSelected = selectedNode === n;
-    if (n.preview) {
-      const i = new Image();
-      i.setAttribute("src", `data:image/png;base64,${n.preview}`);
-      document.body.appendChild(i);
-      document.body.removeChild(i);
+// Recursively collect descriptions from tree
+function collectDescriptions(node: UIDumpNode, depth: number = 0): string[] {
+  const lines: string[] = [];
+  const indent = "  ".repeat(depth);
+  const text = node.description || node.clazz;
+  const delegate = node.delegate?.description || node.delegate?.name;
+  lines.push(indent + text + (delegate ? ` [delegate: ${delegate}]` : ""));
+  if (node.children) {
+    for (const child of node.children) {
+      lines.push(...collectDescriptions(child, depth + 1));
     }
-    const hasPreview = n.preview && n.preview.length > 0;
-    const patternId = `preview-${depth}-${index}`;
-
-    return (
-      <g key={`${n.clazz}-${depth}-${index}`}>
-        {n.frame && hasPreview && (
-          <pattern
-            id={patternId}
-            patternUnits="userSpaceOnUse"
-            x={n.frame![0][0]}
-            y={n.frame![0][1]}
-            width={n.frame![1][0]}
-            height={n.frame![1][1]}
-          >
-            <image
-              href={`data:image/png;base64,${n.preview}`}
-              x={0}
-              y={0}
-              width={n.frame![1][0]}
-              height={n.frame![1][1]}
-              preserveAspectRatio="none"
-            />
-          </pattern>
-        )}
-        {n.frame && (
-          <rect
-            x={n.frame![0][0]}
-            y={n.frame![0][1]}
-            width={n.frame![1][0]}
-            height={n.frame![1][1]}
-            fill={
-              hasPreview
-                ? `url(#${patternId})`
-                : isSelected
-                  ? "rgba(59, 130, 246, 0.3)"
-                  : "transparent"
-            }
-            stroke={isSelected ? "#3b82f6" : "#94a3b8"}
-            strokeWidth={isSelected ? 2 : 1}
-            fillOpacity={hasPreview ? 1 : 0.1}
-            className="cursor-pointer transition-all duration-150"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelect?.(n);
-            }}
-          />
-        )}
-        {n.frame && depth < 3 && (
-          <text
-            x={n.frame![0][0] + 4}
-            y={n.frame![0][1] + 14}
-            fontSize={10}
-            fill={isSelected ? "#1d4ed8" : "#475569"}
-            className="pointer-events-none"
-          >
-            {n.clazz}
-          </text>
-        )}
-        {n.children?.map((child, i) => renderNode(child, depth + 1, i))}
-      </g>
-    );
-  };
-
-  const bounds = calculateBounds(node);
-
-  return (
-    <svg
-      width={bounds.width}
-      height={bounds.height}
-      viewBox={`${bounds.x} ${bounds.y} ${bounds.width} ${bounds.height}`}
-      className="w-full h-full bg-gray-50 dark:bg-gray-900"
-    >
-      <rect
-        x={bounds.x}
-        y={bounds.y}
-        width={bounds.width}
-        height={bounds.height}
-        fill="transparent"
-      />
-      {renderNode(node)}
-    </svg>
-  );
-}
-
-function calculateBounds(node: UIDumpNode): {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-} {
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-
-  const traverse = (n: UIDumpNode) => {
-    if (n.frame) {
-      const [point, size] = n.frame;
-      minX = Math.min(minX, point[0]);
-      minY = Math.min(minY, point[1]);
-      maxX = Math.max(maxX, point[0] + size[0]);
-      maxY = Math.max(maxY, point[1] + size[1]);
-    }
-    n.children?.forEach(traverse);
-  };
-
-  traverse(node);
-
-  if (minX === Infinity) {
-    minX = 0;
-    minY = 0;
-    maxX = 375;
-    maxY = 812;
   }
-
-  return {
-    x: minX - 10,
-    y: minY - 10,
-    width: maxX - minX + 20,
-    height: maxY - minY + 20,
-  };
+  return lines;
 }
 
 export function UIDumpTab() {
   const { t } = useTranslation();
   const { api } = useSession();
-  const [selectedNode, setSelectedNode] = useState<UIDumpNode | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const { openFilePanel } = useDock();
+  const [scale, setScale] = useState(1);
+  const [expandKey, setExpandKey] = useState(0);
+  const [allExpanded, setAllExpanded] = useState(true);
+  const [copied, setCopied] = useState(false);
 
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-  } = useRpcQuery<UIDumpNode>(
+  const { data, isLoading, error, refetch } = useRpcQuery<UIDumpNode>(
     ["uiDump"],
-    (api) => api.ui.dump(true) as unknown as Promise<UIDumpNode>
+    // Don't include preview (screenshots) - it's slow
+    (api) => api.ui.dump(),
   );
 
-  const handleSelect = useCallback(
+  const handleHighlight = useCallback(
     (node: UIDumpNode) => {
-      setSelectedNode(node);
       if (api && node.frame) {
         api.ui.highlight(node.frame).catch(() => {});
       }
@@ -243,55 +212,95 @@ export function UIDumpTab() {
     [api],
   );
 
-  const filteredData =
-    searchQuery && data ? filterNodes(data, searchQuery.toLowerCase()) : data;
-
-  function filterNodes(node: UIDumpNode, query: string): UIDumpNode | null {
-    const matches =
-      node.clazz.toLowerCase().includes(query) ||
-      node.description?.toLowerCase().includes(query);
-
-    if (node.children) {
-      const filteredChildren = node.children
-        .map((child) => filterNodes(child, query))
-        .filter((child): child is UIDumpNode => child !== null);
-
-      if (matches || filteredChildren.length > 0) {
-        return {
-          ...node,
-          children: matches ? node.children : filteredChildren,
-        };
-      }
+  const handleDismissHighlight = useCallback(() => {
+    if (api) {
+      api.ui.dismissHighlight().catch(() => {});
     }
+  }, [api]);
 
-    return matches ? node : null;
-  }
+  const handleCopy = useCallback(() => {
+    if (!data) return;
+    const text = collectDescriptions(data).join("\n");
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+    }).catch(() => {});
+  }, [data]);
+
+  useEffect(() => {
+    if (copied) {
+      const timer = setTimeout(() => setCopied(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [copied]);
+
+  const handleExpandAll = useCallback(() => {
+    setAllExpanded(true);
+    setExpandKey((k) => k + 1);
+  }, []);
+
+  const handleCollapseAll = useCallback(() => {
+    setAllExpanded(false);
+    setExpandKey((k) => k + 1);
+  }, []);
+
+  const handleOpenClass = useCallback(
+    (className: string) => {
+      openFilePanel({
+        id: `class_${className}`,
+        component: "classDetail",
+        title: className,
+        params: { className },
+      });
+    },
+    [openFilePanel],
+  );
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder={t("search_ui_elements")}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 w-64 h-8 text-xs"
-            />
-          </div>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => refetch()}
-          disabled={isLoading}
-        >
-          <RefreshCw
-            className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+      <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-2 w-48">
+          <span className="text-xs text-gray-500">
+            {Math.round(scale * 100)}%
+          </span>
+          <Slider
+            min={20}
+            max={200}
+            step={5}
+            value={[scale * 100]}
+            onValueChange={([v]) => setScale(v / 100)}
+            className="flex-1"
           />
-          {t("reload")}
-        </Button>
+        </div>
+        <ButtonGroup>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isLoading}
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+            />
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleExpandAll}>
+            <ChevronsUpDown className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleCollapseAll}>
+            <ChevronsDownUp className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCopy}
+            className={copied ? "text-green-600 border-green-600 dark:text-green-400 dark:border-green-400" : ""}
+          >
+            {copied ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              <Copy className="h-4 w-4" />
+            )}
+          </Button>
+        </ButtonGroup>
       </div>
 
       {error && (
@@ -300,85 +309,34 @@ export function UIDumpTab() {
         </div>
       )}
 
-      <div className="flex-1 overflow-hidden">
-        <ResizablePanelGroup direction="horizontal">
-          <ResizablePanel defaultSize={60} minSize={30}>
-            <div className="h-full flex flex-col">
-              <div className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
-                {t("visual_preview")}
+      <div className="flex-1 overflow-auto">
+        <ScrollArea className="h-full">
+          <ul
+            className="p-2"
+            style={{
+              transform: `scale(${scale})`,
+              transformOrigin: "top left",
+            }}
+          >
+            {isLoading && !data ? (
+              <div className="text-sm text-gray-500">{t("loading")}</div>
+            ) : data ? (
+              <TreeNode
+                key={expandKey}
+                node={data}
+                defaultExpanded={allExpanded}
+                onHighlight={handleHighlight}
+                onDismissHighlight={handleDismissHighlight}
+                onOpenClass={handleOpenClass}
+              />
+            ) : (
+              <div className="text-sm text-gray-500">
+                {t("no_data")}
               </div>
-              <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900 relative">
-                {isLoading && !data ? (
-                  <div className="flex items-center justify-center h-full text-gray-500">
-                    {t("loading")}
-                  </div>
-                ) : data ? (
-                  <UIVisualizer
-                    node={data}
-                    onSelect={handleSelect}
-                    selectedNode={selectedNode}
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-gray-500">
-                    {t("no_data")}
-                  </div>
-                )}
-              </div>
-            </div>
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={40} minSize={20}>
-            <div className="h-full flex flex-col">
-              <div className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
-                {t("ui_hierarchy")}
-              </div>
-              <ScrollArea className="flex-1">
-                <div className="p-2">
-                  {isLoading && !data ? (
-                    <div className="text-sm text-gray-500">Loading...</div>
-                  ) : filteredData ? (
-                    <TreeNode
-                      node={filteredData}
-                      onSelect={handleSelect}
-                      selectedNode={selectedNode}
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-500">
-                      {t("no_result_found")}
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-            </div>
-          </ResizablePanel>
-        </ResizablePanelGroup>
+            )}
+          </ul>
+        </ScrollArea>
       </div>
-
-      {selectedNode && (
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-          <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-            {t("selected_element")}
-          </div>
-          <div className="text-sm font-mono">
-            <div className="text-blue-600 dark:text-blue-400">
-              {selectedNode.clazz}
-            </div>
-            {selectedNode.frame && (
-              <div className="text-gray-600 dark:text-gray-300 mt-1">
-                Frame: ({selectedNode.frame[0][0].toFixed(1)},{" "}
-                {selectedNode.frame[0][1].toFixed(1)}){" "}
-                {selectedNode.frame[1][0].toFixed(1)}x
-                {selectedNode.frame[1][1].toFixed(1)}
-              </div>
-            )}
-            {selectedNode.delegate?.name && (
-              <div className="text-gray-600 dark:text-gray-300">
-                Delegate: {selectedNode.delegate.name}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
