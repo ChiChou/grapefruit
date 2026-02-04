@@ -17,7 +17,7 @@ export function ClassesListView({ path }: ClassesListViewProps) {
   const { t } = useTranslation();
   const [searchValue, setSearchValue] = useState("");
 
-  const { data: classes, isLoading: loading } = useRpcQuery<string[]>(
+  const { data: classes, isLoading: loading } = useRpcQuery(
     ["moduleClasses", path],
     (api) => api.classdump.classesForModule(path)
   );

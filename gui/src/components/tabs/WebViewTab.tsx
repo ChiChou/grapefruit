@@ -101,29 +101,25 @@ document.title`);
     data: wkWebviews = [],
     isLoading: isLoadingWK,
     refetch: refetchWK,
-  } = useRpcQuery<WKWebViewInfo[]>(["webviews", "wk"], (api) =>
-    api.webview.listWK()
-  );
+  } = useRpcQuery(["webviews", "wk"], (api) => api.webview.listWK());
 
   const {
     data: uiWebviews = [],
     isLoading: isLoadingUI,
     refetch: refetchUI,
-  } = useRpcQuery<UIWebViewInfo[]>(["webviews", "ui"], (api) =>
-    api.webview.listUI()
-  );
+  } = useRpcQuery(["webviews", "ui"], (api) => api.webview.listUI());
 
   const isLoading = isLoadingWK || isLoadingUI;
 
-  const evaluateMutation = useRpcMutation<
-    unknown,
-    { kind: WebViewKind; handle: string; js: string }
-  >((api, { kind, handle, js }) => api.webview.evaluate(kind, handle, js));
+  const evaluateMutation = useRpcMutation(
+    (api, { kind, handle, js }: { kind: WebViewKind; handle: string; js: string }) =>
+      api.webview.evaluate(kind, handle, js)
+  );
 
-  const navigateMutation = useRpcMutation<
-    void,
-    { kind: WebViewKind; handle: string; url: string }
-  >((api, { kind, handle, url }) => api.webview.navigate(kind, handle, url));
+  const navigateMutation = useRpcMutation(
+    (api, { kind, handle, url }: { kind: WebViewKind; handle: string; url: string }) =>
+      api.webview.navigate(kind, handle, url)
+  );
 
   const entries: WebViewEntry[] = [...wkWebviews, ...uiWebviews];
   const selectedEntry = entries.find((e) => e.handle === selectedHandle) ?? null;

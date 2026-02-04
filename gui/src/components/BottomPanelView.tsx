@@ -12,7 +12,7 @@ import { GeoHookView } from "./views/GeoHookView";
 const BOTTOM_PANEL_TAB_STATE = "BOTTOM_PANEL_TAB_STATE";
 
 export function BottomPanelView() {
-  const { api, status, socket } = useSession();
+  const { fruity, status, socket } = useSession();
   const [activeTab, setActiveTab] = useState<string>(() => {
     try {
       return localStorage.getItem(BOTTOM_PANEL_TAB_STATE) || "logs";
@@ -25,12 +25,12 @@ export function BottomPanelView() {
   const logTerminalRef = useRef<XTerm | null>(null);
 
   useEffect(() => {
-    api?.syslog.start();
+    fruity?.syslog.start();
 
     return () => {
-      api?.syslog.stop();
+      fruity?.syslog.stop();
     };
-  }, [api, status, socket]);
+  }, [fruity, status, socket]);
 
   useEffect(() => {
     const handleSyslog = (message: string) => {

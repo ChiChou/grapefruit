@@ -16,7 +16,7 @@ export function URLSendView({ scheme }: URLSendViewProps) {
   const [url, setURL] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const { api } = useSession();
+  const { fruity } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +26,7 @@ export function URLSendView({ scheme }: URLSendViewProps) {
   }, [scheme]);
 
   const handleSend = async () => {
-    if (isLoading || !api) {
+    if (isLoading || !fruity) {
       return;
     }
 
@@ -34,7 +34,7 @@ export function URLSendView({ scheme }: URLSendViewProps) {
     setIsLoading(true);
 
     try {
-      await api.url.open(url);
+      await fruity.url.open(url);
     } catch (e) {
       setError(`${e}`);
     } finally {

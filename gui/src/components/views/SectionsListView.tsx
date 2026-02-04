@@ -1,5 +1,4 @@
 import { useTranslation } from "react-i18next";
-import type { Section } from "../../../../agent/types/fruity/modules/symbol";
 import { useDock } from "@/context/DockContext";
 import { useRpcQuery } from "@/lib/queries";
 import {
@@ -21,7 +20,7 @@ export function SectionsListView({
   const { openFilePanel } = useDock();
   const { t } = useTranslation();
 
-  const { data: sections, isLoading: loading } = useRpcQuery<Section[]>(
+  const { data: sections, isLoading: loading } = useRpcQuery(
     ["sections", path],
     (api) => api.symbol.sections(path)
   );

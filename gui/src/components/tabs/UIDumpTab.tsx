@@ -192,14 +192,14 @@ function collectDescriptions(node: UIDumpNode, depth: number = 0): string[] {
 
 export function UIDumpTab() {
   const { t } = useTranslation();
-  const { api } = useSession();
+  const { fruity } = useSession();
   const { openFilePanel } = useDock();
   const [scale, setScale] = useState(1);
   const [expandKey, setExpandKey] = useState(0);
   const [allExpanded, setAllExpanded] = useState(true);
   const [copied, setCopied] = useState(false);
 
-  const { data, isLoading, error, refetch } = useRpcQuery<UIDumpNode>(
+  const { data, isLoading, error, refetch } = useRpcQuery(
     ["uiDump"],
     // Don't include preview (screenshots) - it's slow
     (api) => api.ui.dump(),
@@ -207,18 +207,18 @@ export function UIDumpTab() {
 
   const handleHighlight = useCallback(
     (node: UIDumpNode) => {
-      if (api && node.frame) {
-        api.ui.highlight(node.frame).catch(() => {});
+      if (fruity && node.frame) {
+        fruity.ui.highlight(node.frame).catch(() => {});
       }
     },
-    [api],
+    [fruity],
   );
 
   const handleDismissHighlight = useCallback(() => {
-    if (api) {
-      api.ui.dismissHighlight().catch(() => {});
+    if (fruity) {
+      fruity.ui.dismissHighlight().catch(() => {});
     }
-  }, [api]);
+  }, [fruity]);
 
   const handleCopy = useCallback(() => {
     if (!data) return;
