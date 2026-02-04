@@ -13,6 +13,7 @@ import frida, { type Device } from "./lib/xvii.ts";
 import {
   app as serializeApp,
   device as serializeDevice,
+  process as serializeProcess,
 } from "./lib/serializer.ts";
 import { agent } from "./lib/assets.ts";
 
@@ -208,6 +209,11 @@ api
     const device = c.get("device");
     const apps = await device.enumerateApplications();
     return c.json(apps.map(serializeApp));
+  })
+  .get("/device/:device/processes", getDeviceMiddleware, async (c) => {
+    const device = c.get("device");
+    const processes = await device.enumerateProcesses();
+    return c.json(processes.map(serializeProcess));
   })
   .get("/device/:device/icon/:bundle", async (c) => {
     const deviceId = c.req.param("device");

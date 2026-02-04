@@ -11,6 +11,11 @@ export interface Application {
   pid: number;
 }
 
+export interface Process {
+  name: string;
+  pid: number;
+}
+
 export interface DeviceInfo {
   arch: string;
   os: {
