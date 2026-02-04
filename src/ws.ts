@@ -252,7 +252,8 @@ export default function attach(server: ServerType) {
       // there is a weird bug that first time calling socket.io
       // the query params are empty
       socket.emit("invalid");
-      socket.disconnect(true);
+      // Give client time to receive the event before disconnecting
+      setTimeout(() => socket.disconnect(true), 100);
     }
   });
 

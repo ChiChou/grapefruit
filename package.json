@@ -18,6 +18,8 @@
     "dev": "bun --watch src/index.ts",
     "start": "bun src/index.ts",
     "test": "bun --test",
+    "test:coverage": "bun test --coverage --coverage-reporter=lcov --coverage-dir=coverage",
+    "test:coverage:text": "bun test --coverage",
     "prepack": "npm run build:npm",
     "install:gui": "cd gui && npm i",
     "install:agent": "cd agent && npm i",
