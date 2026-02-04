@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Outlet } from "react-router";
 import { t } from "i18next";
 
 import {
@@ -16,7 +17,7 @@ import {
 
 import { LeftPanelView } from "./LeftPanelView";
 import { BottomPanelView } from "./BottomPanelView";
-import { Status, useSession } from "@/context/SessionContext";
+import { Status, Platform, Mode, useSession } from "@/context/SessionContext";
 import SessionProvider from "./SessionProvider";
 import { useTheme } from "./theme-provider";
 import { HandlesTab } from "./tabs/HandlesTab";
@@ -42,12 +43,18 @@ import { UserDefaultsTab } from "./tabs/UserDefaultsTab";
 import { DockContext, useDockActions } from "@/context/DockContext";
 
 function WorkspaceContent() {
-  const { status, bundle, device } = useSession();
+  const { status, bundle, device, platform, mode, pid } = useSession();
+
+  // Show full workspace (left panel + dockview) for iOS app and daemon modes
+  const isFruityApp = platform === Platform.Fruity && mode === Mode.App;
+  const isFruityDaemon = platform === Platform.Fruity && mode === Mode.Daemon;
+  const showFullWorkspace = isFruityApp || isFruityDaemon;
   const { theme } = useTheme();
 
   useEffect(() => {
-    document.title = "Grapefruit" + (bundle ? ` - ${bundle}` : "");
-  }, [bundle]);
+    const target = bundle || (pid ? `PID ${pid}` : "");
+    document.title = "Grapefruit" + (target ? ` - ${target}` : "");
+  }, [bundle, pid]);
 
   const getStatusColor = () => {
     switch (status) {
@@ -105,18 +112,17 @@ function WorkspaceContent() {
     userdefaults: UserDefaultsTab,
   };
 
-  const getLayoutKey = (
-    device: string | null | undefined,
-    bundle: string | null | undefined,
-  ) => {
-    if (!device || !bundle) return null;
-    return `workspace-dockview-layout:${device}:${bundle}`;
+  const getLayoutKey = () => {
+    if (!device) return null;
+    const target = bundle || pid;
+    if (!target) return null;
+    return `workspace-dockview-layout:${device}:${mode}:${target}`;
   };
 
   const onReady = (event: DockviewReadyEvent) => {
     setDockApi(event.api);
 
-    const layoutKey = getLayoutKey(device, bundle);
+    const layoutKey = getLayoutKey();
     const savedLayoutWithMeta = layoutKey
       ? localStorage.getItem(layoutKey)
       : null;
@@ -138,31 +144,42 @@ function WorkspaceContent() {
 
     event.api.onDidLayoutChange(() => {
       const layout = event.api.toJSON();
-      const key = getLayoutKey(device, bundle);
+      const key = getLayoutKey();
       if (key) {
-        localStorage.setItem(key, JSON.stringify({ device, bundle, layout }));
+        localStorage.setItem(key, JSON.stringify({ device, mode, target: bundle || pid, layout }));
       }
     });
   };
 
   const createDefaultLayout = (dockApi: DockviewApi) => {
-    dockApi.addPanel({
-      id: "handles_tab",
-      component: "handles",
-      title: "lsof",
-    });
+    if (isFruityApp) {
+      // iOS App mode - default tabs
+      dockApi.addPanel({
+        id: "handles_tab",
+        component: "handles",
+        title: "lsof",
+      });
 
-    dockApi.addPanel({
-      id: "info_plist_tab",
-      component: "infoPlist",
-      title: "Info.plist",
-    });
+      dockApi.addPanel({
+        id: "info_plist_tab",
+        component: "infoPlist",
+        title: "Info.plist",
+      });
 
-    dockApi.addPanel({
-      id: "entitlements_tab",
-      component: "entitlements",
-      title: "Entitlements",
-    });
+      dockApi.addPanel({
+        id: "entitlements_tab",
+        component: "entitlements",
+        title: "Entitlements",
+      });
+    } else if (isFruityDaemon) {
+      // iOS Daemon mode - Finder tab
+      dockApi.addPanel({
+        id: "finder_tab",
+        component: "finder",
+        title: "Finder",
+        params: { path: "/" },
+      });
+    }
   };
 
   return (
@@ -182,26 +199,32 @@ function WorkspaceContent() {
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel>
-            <ResizablePanelGroup
-              direction="vertical"
-              className="h-full"
-              autoSaveId="workspace-bottom-split"
-            >
-              <ResizablePanel>
-                <DockviewReact
-                  // workaround: theme must not be empty, otherwise
-                  //  Dockview will always insert abyss className
-                  theme={themeLight}
-                  className={dockViewClazz}
-                  onReady={onReady}
-                  components={components}
-                />
-              </ResizablePanel>
-              <ResizableHandle />
-              <ResizablePanel defaultSize={30}>
-                <BottomPanelView />
-              </ResizablePanel>
-            </ResizablePanelGroup>
+            {showFullWorkspace ? (
+              <ResizablePanelGroup
+                direction="vertical"
+                className="h-full"
+                autoSaveId="workspace-bottom-split"
+              >
+                <ResizablePanel>
+                  <DockviewReact
+                    // workaround: theme must not be empty, otherwise
+                    //  Dockview will always insert abyss className
+                    theme={themeLight}
+                    className={dockViewClazz}
+                    onReady={onReady}
+                    components={components}
+                  />
+                </ResizablePanel>
+                <ResizableHandle />
+                <ResizablePanel defaultSize={30}>
+                  <BottomPanelView />
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            ) : (
+              <div className="h-full overflow-auto">
+                <Outlet />
+              </div>
+            )}
           </ResizablePanel>
         </ResizablePanelGroup>
         <footer className={`${getStatusColor()} px-4 py-1 text-xs text-white`}>
