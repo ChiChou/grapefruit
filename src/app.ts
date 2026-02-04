@@ -5,10 +5,13 @@ import { logger } from "hono/logger";
 import { prettyJSON } from "hono/pretty-json";
 import { stream } from "hono/streaming";
 import { Readable } from "node:stream";
+import fs from "node:fs/promises";
+import nodePath from "node:path";
 
 import getVersion from "./lib/version.ts";
 import env from "./lib/env.ts";
 import frida, { type Device } from "./lib/xvii.ts";
+import paths from "./lib/paths.ts";
 
 import {
   app as serializeApp,
@@ -296,6 +299,42 @@ api
     } else {
       return c.json({ error: "remote device not found" }, 404);
     }
+  })
+  .get("/logs/:device/:identifier/:type", async (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+    const type = c.req.param("type");
+
+    if (type !== "syslog" && type !== "agent") {
+      return c.text("invalid log type", 400);
+    }
+
+    const filename = type === "syslog" ? "syslog.log" : "agent.log";
+    const logPath = nodePath.join(
+      paths.data,
+      "logs",
+      deviceId,
+      identifier,
+      filename,
+    );
+
+    try {
+      const limit = parseInt(c.req.query("limit") || "5000", 10);
+      const content = await fs.readFile(logPath, "utf-8");
+      const lines = content.split("\n").filter((line) => line.length > 0);
+      return c.text(lines.slice(-limit).join("\n"));
+    } catch {
+      return c.text("");
+    }
+  })
+  .delete("/logs/:device/:identifier", async (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+
+    const logsDir = nodePath.join(paths.data, "logs", deviceId, identifier);
+    await fs.rm(logsDir, { recursive: true, force: true });
+
+    return c.body(null, 204);
   });
 
 app.route("/api", api);
