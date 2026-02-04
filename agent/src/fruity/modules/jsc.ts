@@ -1,5 +1,4 @@
 import ObjC from "frida-objc-bridge";
-import { get as getInstance } from "../lib/choose.js";
 import {
   NSObject,
   StringLike,
@@ -10,29 +9,73 @@ import {
 
 import * as Dictionary from "../bridge/object.js";
 import { iterateNSArray } from "../bridge/nsarray.js";
+import { AliveTracker } from "../lib/alive.js";
 
 interface JSContext extends NSObject {
   evaluateScript_(script: StringLike): NSObject;
   objectForKeyedSubscript_(key: StringLike): NSObject;
 }
 
+let tracker: AliveTracker | null = null;
+
+function getTracker(): AliveTracker {
+  if (!tracker) {
+    tracker = new AliveTracker(ObjC.classes.JSContext);
+  }
+  return tracker;
+}
+
 export function list() {
+  const t = getTracker();
   const result = new Map<string, string>();
   for (const instance of ObjC.chooseSync(ObjC.classes.JSContext)) {
-    result.set(instance.handle.toString(), instance.toString());
+    const handle = instance.handle.toString();
+    t.track(handle);
+    result.set(handle, instance.toString());
   }
   return Object.fromEntries(result);
 }
 
-function get(handle: string) {
-  return getInstance(
-    ObjC.classes.JSContext as JSContext,
-    handle,
-  ) as Promise<JSContext>;
+function get(handle: string): JSContext {
+  return getTracker().get(handle) as JSContext;
 }
 
-function serialize(obj: NSObject) {
-  if (!obj) return obj;
+type BridgedClass = {
+  type: "class";
+  clazz: string;
+};
+
+type BridgedInstance = {
+  type: "instance";
+  clazz: string;
+  handle: string;
+  methods: { [name: string]: string }; // name -> signature
+  properties: { [name: string]: string }; // name -> signature
+};
+
+type BridgedArray = {
+  type: "array";
+  size: number;
+};
+
+type BridgedDict = {
+  type: "dict";
+  keys: string[];
+  size: number;
+};
+
+type BridgedValue =
+  | null
+  | boolean
+  | number
+  | string
+  | BridgedClass
+  | BridgedInstance
+  | BridgedArray
+  | BridgedDict;
+
+function serialize(obj: NSObject | null): BridgedValue {
+  if (!obj) return null;
   if (obj.isKindOfClass_(ObjC.classes.__NSCFBoolean)) return obj.boolValue();
   if (obj.isKindOfClass_(ObjC.classes.NSNumber))
     return parseFloat(obj.toString());
@@ -46,7 +89,9 @@ function serialize(obj: NSObject) {
   if (obj.isKindOfClass_(ObjC.classes.NSDictionary))
     return {
       type: "dict",
-      keys: Dictionary.keys(obj as NSDictionary<NSObject, NSObject>),
+      keys: [...Dictionary.keys(obj as NSDictionary<NSObject, NSObject>)].map(
+        (k) => `${k}`,
+      ),
       size: obj.count(),
     };
 
@@ -55,7 +100,7 @@ function serialize(obj: NSObject) {
     return {
       type: "instance",
       clazz: obj.$className,
-      handle: obj.handle,
+      handle: obj.handle.toString(),
       methods,
       properties,
     };
@@ -68,40 +113,73 @@ function serialize(obj: NSObject) {
 }
 
 function findJSExport(obj: ObjC.Object) {
-  for (const prot of Object.values(obj.$protocols))
-    if ("JSExport" in prot.protocols) return prot;
+  for (const prot of Object.values(obj.$protocols)) {
+    if ("JSExport" in prot.protocols) {
+      const { methods, properties } = prot;
+
+      return {
+        methods: Object.fromEntries(
+          Object.entries(methods).map(([name, desc]) => [name, desc.types]),
+        ),
+        properties: Object.fromEntries(
+          Object.entries(properties).map(([name, prop]) => [name, prop["T"]]),
+        ),
+      };
+    }
+  }
 
   throw new Error(`${obj} does not confirm to JSExport`);
 }
 
-export async function dump(handle: string) {
-  const jsc = await get(handle);
+export type BridgedBlock = {
+  type: "block";
+  handle: string;
+  invoke: string;
+};
+
+export type JsFunction = {
+  type: "function";
+  source: string;
+};
+
+export type FunctionLikeDump = BridgedBlock | JsFunction;
+export type DumpValue = BridgedValue | FunctionLikeDump;
+
+export function dump(handle: string) {
+  const jsc = get(handle);
   const topKeys = jsc
     .evaluateScript_("Object.keys(this)")
     .toArray() as NSArray<NSString>;
   const funcClass = jsc.evaluateScript_("Function");
-  const result = new Map<string, unknown>();
+
+  const result = new Map<string, DumpValue>();
   for (const key of iterateNSArray(topKeys)) {
     const val = jsc.objectForKeyedSubscript_(key as NSString);
     if (!val.isObject()) continue;
     const obj = val.toObject();
     if (val.isInstanceOf_(funcClass)) {
-      const funcValue = obj.isKindOfClass_(ObjC.classes.NSBlock)
-        ? {
-            type: "block",
-            handle: obj.handle,
-            invoke: obj.handle.add(Process.pointerSize * 2).readPointer(),
-          }
-        : {
-            type: "function",
-            source: val.toString(),
-          };
+      if (obj.isKindOfClass_(ObjC.classes.NSBlock)) {
+        const p = obj.handle.add(Process.pointerSize * 2).readPointer();
+        const { moduleName, name } = DebugSymbol.fromAddress(p);
+        const fallback = name ?? `0x${p.toString(16)}`;
+        const invoke = moduleName ? `${moduleName}!${fallback}` : fallback;
 
-      result.set(`${key}`, funcValue);
+        result.set(`${key}`, {
+          type: "block",
+          handle: `${obj.handle}`,
+          invoke,
+        });
+      } else {
+        result.set(`${key}`, {
+          type: "function",
+          source: val.toString(),
+        });
+      }
 
       if (val.toString().includes("[native code]")) {
         console.log(obj.$className);
       }
+
       continue;
     }
     result.set(`${key}`, serialize(obj));
@@ -110,8 +188,8 @@ export async function dump(handle: string) {
   return Object.fromEntries(result);
 }
 
-export async function run(handle: string, js: string) {
-  const jsc = await get(handle);
+export function run(handle: string, js: string) {
+  const jsc = get(handle);
   const val = jsc.evaluateScript_(js);
   if (val.isUndefined() && jsc.exception()) return jsc.exception().toString();
   return val.toString();

@@ -8,7 +8,7 @@ const NSPropertyListImmutable = 0;
 export function* keys(dict: NSDictionary<NSObject, NSObject>) {
   if (!dict.isKindOfClass_(ObjC.classes.NSDictionary))
     throw new Error(`Unexpected class ${dict.$className}`);
-  iterateNSArray(dict.allKeys());
+  yield* iterateNSArray(dict.allKeys());
 }
 
 export function toJS(value: _Nullable<ObjC.Object>): any {

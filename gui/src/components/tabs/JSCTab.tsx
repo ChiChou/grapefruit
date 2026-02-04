@@ -1,11 +1,20 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import Editor, { type Monaco } from "@monaco-editor/react";
+import type { editor } from "monaco-editor";
 import {
   RefreshCw,
   Play,
-  ChevronDown,
   ChevronRight,
+  ChevronDown,
+  Braces,
+  Brackets,
+  Hash,
+  Type,
+  ToggleLeft,
+  Box,
   FileCode,
+  Terminal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -17,20 +26,256 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@/components/ui/resizable";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useTheme } from "@/components/theme-provider";
 import { useRpcQuery, useRpcMutation } from "@/lib/queries";
+
+// Configure Monaco for JSC JavaScript (no DOM, just ESNext)
+function handleEditorWillMount(monaco: Monaco) {
+  monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
+    target: monaco.languages.typescript.ScriptTarget.ESNext,
+    allowNonTsExtensions: true,
+    lib: ["esnext"],
+  });
+
+  monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+    noSemanticValidation: false,
+    noSyntaxValidation: false,
+  });
+}
 
 interface JSCEntry {
   handle: string;
   description: string;
 }
 
+function ValueIcon({ value }: { value: unknown }) {
+  if (value === null || value === undefined) {
+    return <span className="text-gray-400">null</span>;
+  }
+  if (typeof value === "boolean") {
+    return <ToggleLeft className="w-3 h-3 text-purple-500" />;
+  }
+  if (typeof value === "number") {
+    return <Hash className="w-3 h-3 text-blue-500" />;
+  }
+  if (typeof value === "string") {
+    return <Type className="w-3 h-3 text-green-500" />;
+  }
+  if (Array.isArray(value)) {
+    return <Brackets className="w-3 h-3 text-orange-500" />;
+  }
+  if (typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    if (obj.type === "function" || obj.type === "block") {
+      return <FileCode className="w-3 h-3 text-yellow-500" />;
+    }
+    if (obj.type === "instance" || obj.type === "class") {
+      return <Box className="w-3 h-3 text-pink-500" />;
+    }
+    return <Braces className="w-3 h-3 text-cyan-500" />;
+  }
+  return null;
+}
+
+function ValuePreview({ value }: { value: unknown }) {
+  if (value === null) return <span className="text-gray-400">null</span>;
+  if (value === undefined)
+    return <span className="text-gray-400">undefined</span>;
+  if (typeof value === "boolean") {
+    return (
+      <span className="text-purple-600 dark:text-purple-400">
+        {value ? "true" : "false"}
+      </span>
+    );
+  }
+  if (typeof value === "number") {
+    return <span className="text-blue-600 dark:text-blue-400">{value}</span>;
+  }
+  if (typeof value === "string") {
+    return (
+      <span className="text-green-600 dark:text-green-400 break-all">
+        "{value}"
+      </span>
+    );
+  }
+  if (Array.isArray(value)) {
+    return (
+      <span className="text-orange-600 dark:text-orange-400">
+        Array[{value.length}]
+      </span>
+    );
+  }
+  if (typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    if (obj.type === "function") {
+      return (
+        <span className="text-yellow-600 dark:text-yellow-400">ƒ function</span>
+      );
+    }
+    if (obj.type === "block") {
+      return (
+        <span className="text-yellow-600 dark:text-yellow-400">
+          ƒ block @ {String(obj.handle)}
+        </span>
+      );
+    }
+    if (obj.type === "instance") {
+      return (
+        <span className="text-pink-600 dark:text-pink-400">
+          {String(obj.clazz)} @ {String(obj.handle)}
+        </span>
+      );
+    }
+    if (obj.type === "class") {
+      return (
+        <span className="text-pink-600 dark:text-pink-400">
+          class {String(obj.clazz)}
+        </span>
+      );
+    }
+    if (obj.type === "array") {
+      return (
+        <span className="text-orange-600 dark:text-orange-400">
+          NSArray[{String(obj.size)}]
+        </span>
+      );
+    }
+    if (obj.type === "dict") {
+      return (
+        <span className="text-cyan-600 dark:text-cyan-400">
+          NSDictionary[{String(obj.size)}]
+        </span>
+      );
+    }
+    const keys = Object.keys(obj);
+    return (
+      <span className="text-cyan-600 dark:text-cyan-400">
+        {`{${keys.length} keys}`}
+      </span>
+    );
+  }
+  return <span>{String(value)}</span>;
+}
+
+function TreeNode({
+  name,
+  value,
+  depth = 0,
+}: {
+  name: string;
+  value: unknown;
+  depth?: number;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const isExpandable =
+    value !== null &&
+    typeof value === "object" &&
+    Object.keys(value as object).length > 0;
+
+  const obj = value as Record<string, unknown> | null;
+  const childEntries = isExpandable ? Object.entries(obj!) : [];
+
+  return (
+    <div className="font-mono text-xs">
+      <div
+        className={`flex items-center gap-1 py-0.5 px-1 hover:bg-accent rounded ${
+          isExpandable ? "cursor-pointer" : ""
+        }`}
+        style={{ paddingLeft: `${depth * 16 + 4}px` }}
+        onClick={() => isExpandable && setExpanded(!expanded)}
+      >
+        {isExpandable ? (
+          expanded ? (
+            <ChevronDown className="w-3 h-3 shrink-0" />
+          ) : (
+            <ChevronRight className="w-3 h-3 shrink-0" />
+          )
+        ) : (
+          <span className="w-3" />
+        )}
+        <ValueIcon value={value} />
+        <span className="font-medium text-foreground">{name}</span>
+        <span className="text-muted-foreground">:</span>
+        <span className="ml-1 truncate">
+          <ValuePreview value={value} />
+        </span>
+      </div>
+      {expanded && isExpandable && (
+        <div>
+          {childEntries.map(([key, val]) => (
+            <TreeNode key={key} name={key} value={val} depth={depth + 1} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DumpView({
+  data,
+  t,
+}: {
+  data: Record<string, unknown>;
+  t: (key: string, options?: Record<string, unknown>) => string;
+}) {
+  const entries = Object.entries(data);
+  const [filter, setFilter] = useState("");
+
+  const filteredEntries = filter
+    ? entries.filter(([key]) =>
+        key.toLowerCase().includes(filter.toLowerCase()),
+      )
+    : entries;
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="p-2 border-b">
+        <input
+          type="text"
+          placeholder={t("filter_by_name")}
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="w-full px-2 py-1 text-sm border rounded bg-background"
+        />
+      </div>
+      <div className="flex-1 overflow-auto p-2">
+        {filteredEntries.length === 0 ? (
+          <div className="text-center text-muted-foreground py-4">
+            {filter ? t("no_matching_entries") : t("no_global_objects")}
+          </div>
+        ) : (
+          filteredEntries.map(([key, value]) => (
+            <TreeNode key={key} name={key} value={value} />
+          ))
+        )}
+      </div>
+      <div className="p-2 border-t text-xs text-muted-foreground">
+        {t("entries_count", {
+          filtered: filteredEntries.length,
+          total: entries.length,
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function JSCTab() {
   const { t } = useTranslation();
-  const [expandedHandle, setExpandedHandle] = useState<string | null>(null);
+  const { theme } = useTheme();
+  const [selectedHandle, setSelectedHandle] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("dump");
   const [jsCode, setJsCode] = useState("1 + 1");
   const [jsResult, setJsResult] = useState<string | null>(null);
-  const [dumpResult, setDumpResult] = useState<Record<string, unknown> | null>(null);
+  const [dumpResult, setDumpResult] = useState<Record<string, unknown> | null>(
+    null,
+  );
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
   const {
     data: contexts,
@@ -39,12 +284,13 @@ export function JSCTab() {
   } = useRpcQuery<Record<string, string>>(["jsc"], (api) => api.jsc.list());
 
   const runMutation = useRpcMutation<string, { handle: string; js: string }>(
-    (api, { handle, js }) => api.jsc.run(handle, js)
+    (api, { handle, js }) => api.jsc.run(handle, js),
   );
 
-  const dumpMutation = useRpcMutation<Record<string, unknown>, { handle: string }>(
-    (api, { handle }) => api.jsc.dump(handle)
-  );
+  const dumpMutation = useRpcMutation<
+    Record<string, unknown>,
+    { handle: string }
+  >((api, { handle }) => api.jsc.dump(handle));
 
   const entries: JSCEntry[] = [];
   if (contexts) {
@@ -53,15 +299,25 @@ export function JSCTab() {
     }
   }
 
-  const toggleExpand = async (handle: string) => {
-    if (expandedHandle === handle) {
-      setExpandedHandle(null);
+  const selectedEntry =
+    entries.find((e) => e.handle === selectedHandle) ?? null;
+
+  const selectEntry = async (handle: string) => {
+    if (selectedHandle === handle) {
+      setSelectedHandle(null);
       setJsResult(null);
       setDumpResult(null);
     } else {
-      setExpandedHandle(handle);
+      setSelectedHandle(handle);
       setJsResult(null);
       setDumpResult(null);
+      // Load globals immediately
+      try {
+        const result = await dumpMutation.mutateAsync({ handle });
+        setDumpResult(result);
+      } catch (e) {
+        console.error("Failed to dump:", e);
+      }
     }
   };
 
@@ -74,13 +330,8 @@ export function JSCTab() {
     }
   };
 
-  const doDump = async (handle: string) => {
-    try {
-      const result = await dumpMutation.mutateAsync({ handle });
-      setDumpResult(result);
-    } catch (e) {
-      console.error("Failed to dump:", e);
-    }
+  const handleEditorDidMount = (editor: editor.IStandaloneCodeEditor) => {
+    editorRef.current = editor;
   };
 
   return (
@@ -92,145 +343,169 @@ export function JSCTab() {
           onClick={() => refetch()}
           disabled={isLoading}
         >
-          <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+          <RefreshCw
+            className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+          />
           {t("reload")}
         </Button>
         <span className="text-sm text-muted-foreground ml-auto">
-          {entries.length} JSContext(s)
+          {t("jsc_contexts", { count: entries.length })}
         </span>
       </div>
-      <div className="flex-1 overflow-auto">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-full gap-2 text-gray-500">
-            <Spinner className="w-5 h-5" />
-            <span>{t("loading")}...</span>
-          </div>
-        ) : entries.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-gray-500">
-            No JSContext found
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-8"></TableHead>
-                <TableHead className="w-40">Handle</TableHead>
-                <TableHead>Description</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {entries.map((entry) => (
-                <>
-                  <TableRow
-                    key={entry.handle}
-                    className="cursor-pointer"
-                    onClick={() => toggleExpand(entry.handle)}
-                  >
-                    <TableCell>
-                      {expandedHandle === entry.handle ? (
-                        <ChevronDown className="w-4 h-4" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4" />
-                      )}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {entry.handle}
-                    </TableCell>
-                    <TableCell className="font-mono text-sm truncate max-w-[400px]" title={entry.description}>
-                      {entry.description}
-                    </TableCell>
-                  </TableRow>
-                  {expandedHandle === entry.handle && (
-                    <TableRow key={`detail-${entry.handle}`}>
-                      <TableCell
-                        colSpan={3}
-                        className="bg-gray-50 dark:bg-gray-900 p-4"
-                      >
-                        <div className="space-y-4">
-                          <div>
-                            <div className="text-sm font-medium mb-2">Execute JavaScript</div>
-                            <Textarea
-                              placeholder="1 + 1"
-                              value={jsCode}
-                              onChange={(e) => setJsCode(e.target.value)}
-                              className="font-mono text-sm mb-2"
-                              rows={3}
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  executeJs(entry.handle);
-                                }}
-                                disabled={runMutation.isPending}
-                              >
-                                <Play className="w-4 h-4 mr-2" />
-                                Run
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  doDump(entry.handle);
-                                }}
-                                disabled={dumpMutation.isPending}
-                              >
-                                <FileCode className="w-4 h-4 mr-2" />
-                                Dump Global Objects
-                              </Button>
-                            </div>
-                            {jsResult !== null && (
-                              <div className="mt-2">
-                                <div className="text-sm text-muted-foreground mb-1">Result:</div>
-                                <pre className="font-mono text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded overflow-x-auto max-h-40">
-                                  {jsResult}
-                                </pre>
-                              </div>
-                            )}
-                          </div>
-                          {dumpResult && (
-                            <div>
-                              <div className="text-sm font-medium mb-2">Global Objects</div>
-                              <div className="max-h-80 overflow-auto">
-                                <Table>
-                                  <TableHeader>
-                                    <TableRow>
-                                      <TableHead className="w-40">Name</TableHead>
-                                      <TableHead>Value</TableHead>
-                                    </TableRow>
-                                  </TableHeader>
-                                  <TableBody>
-                                    {Object.entries(dumpResult).map(([key, value]) => (
-                                      <TableRow key={key}>
-                                        <TableCell className="font-mono text-xs font-medium">
-                                          {key}
-                                        </TableCell>
-                                        <TableCell className="font-mono text-xs">
-                                          <pre className="whitespace-pre-wrap max-w-[400px] overflow-hidden">
-                                            {typeof value === "object"
-                                              ? JSON.stringify(value, null, 2)
-                                              : String(value)}
-                                          </pre>
-                                        </TableCell>
-                                      </TableRow>
-                                    ))}
-                                  </TableBody>
-                                </Table>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
+      <div className="flex-1 overflow-hidden">
+        <ResizablePanelGroup direction="horizontal">
+          {/* Left Panel - JSContext List */}
+          <ResizablePanel defaultSize={35} minSize={20}>
+            <div className="h-full overflow-auto">
+              {isLoading ? (
+                <div className="flex items-center justify-center h-full gap-2 text-gray-500">
+                  <Spinner className="w-5 h-5" />
+                  <span>{t("loading")}...</span>
+                </div>
+              ) : entries.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  {t("no_jscontext_found")}
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t("handle")}</TableHead>
+                      <TableHead>{t("description")}</TableHead>
                     </TableRow>
-                  )}
-                </>
-              ))}
-            </TableBody>
-          </Table>
-        )}
+                  </TableHeader>
+                  <TableBody>
+                    {entries.map((entry) => (
+                      <TableRow
+                        key={entry.handle}
+                        className={`cursor-pointer ${
+                          selectedHandle === entry.handle ? "bg-accent" : ""
+                        }`}
+                        onClick={() => selectEntry(entry.handle)}
+                      >
+                        <TableCell className="font-mono text-xs">
+                          {entry.handle}
+                        </TableCell>
+                        <TableCell
+                          className="font-mono text-sm truncate max-w-[200px]"
+                          title={entry.description}
+                        >
+                          {entry.description}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
+
+          {/* Right Panel - Detail View */}
+          <ResizablePanel defaultSize={65} minSize={30}>
+            <div className="h-full overflow-hidden">
+              {selectedEntry ? (
+                <Tabs
+                  value={activeTab}
+                  onValueChange={setActiveTab}
+                  className="flex flex-col h-full"
+                >
+                  <div className="flex items-center justify-between p-2 border-b">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-1 text-xs rounded bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                        {t("jscontext")}
+                      </span>
+                      <span className="font-mono text-xs text-muted-foreground">
+                        {selectedEntry.handle}
+                      </span>
+                    </div>
+                    <TabsList>
+                      <TabsTrigger value="dump">
+                        <Braces className="w-4 h-4 mr-1" />
+                        {t("globals")}
+                      </TabsTrigger>
+                      <TabsTrigger value="repl">
+                        <Terminal className="w-4 h-4 mr-1" />
+                        {t("repl")}
+                      </TabsTrigger>
+                    </TabsList>
+                  </div>
+
+                  <TabsContent value="dump" className="flex-1 min-h-0">
+                    {dumpMutation.isPending ? (
+                      <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
+                        <Spinner className="w-5 h-5" />
+                        <span>{t("loading_globals")}</span>
+                      </div>
+                    ) : dumpResult ? (
+                      <DumpView data={dumpResult} t={t} />
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-muted-foreground">
+                        {t("failed_to_load_globals")}
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="repl" className="flex-1 min-h-0">
+                    <div className="flex flex-col h-full p-4 gap-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">
+                          {t("execute_javascript")}
+                        </span>
+                        <Button
+                          size="sm"
+                          onClick={() => executeJs(selectedEntry.handle)}
+                          disabled={runMutation.isPending}
+                        >
+                          <Play className="w-4 h-4 mr-2" />
+                          {t("run")}
+                        </Button>
+                      </div>
+                      <div className="flex-1 min-h-0 border rounded overflow-hidden">
+                        <Editor
+                          height="100%"
+                          language="javascript"
+                          value={jsCode}
+                          onChange={(value) => setJsCode(value || "")}
+                          beforeMount={handleEditorWillMount}
+                          onMount={handleEditorDidMount}
+                          theme={theme === "dark" ? "vs-dark" : "light"}
+                          options={{
+                            minimap: { enabled: false },
+                            scrollBeyondLastLine: false,
+                            fontSize: 13,
+                            lineNumbers: "on",
+                            folding: true,
+                            automaticLayout: true,
+                            tabSize: 2,
+                            wordWrap: "on",
+                            suggestOnTriggerCharacters: true,
+                            quickSuggestions: true,
+                          }}
+                        />
+                      </div>
+                      {jsResult !== null && (
+                        <div className="shrink-0">
+                          <div className="text-sm text-muted-foreground mb-1">
+                            {t("result")}:
+                          </div>
+                          <pre className="font-mono text-xs bg-gray-100 dark:bg-gray-800 p-3 rounded overflow-x-auto max-h-40 whitespace-pre-wrap">
+                            {jsResult}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  {t("select_jscontext")}
+                </div>
+              )}
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
     </div>
   );
