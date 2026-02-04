@@ -48,6 +48,7 @@ import { WebViewTab } from "./tabs/WebViewTab";
 import { JSCTab } from "./tabs/JSCTab";
 import { UserDefaultsTab } from "./tabs/UserDefaultsTab";
 import { QuickStartTab } from "./tabs/QuickStartTab";
+import { NoCloseTabHeader } from "./tabs/NoCloseTabHeader";
 
 import { DockContext, useDockActions } from "@/context/DockContext";
 
@@ -156,6 +157,10 @@ function WorkspaceContent() {
     userdefaults: UserDefaultsTab,
   };
 
+  const tabComponents = {
+    noClose: NoCloseTabHeader,
+  };
+
   const getLayoutKey = () => {
     if (!device) return null;
     const target = bundle || pid;
@@ -201,6 +206,7 @@ function WorkspaceContent() {
       dockApi.addPanel({
         id: "quickstart_tab",
         component: "quickstart",
+        tabComponent: "noClose",
         title: t("quickstart"),
       });
     } else if (isFruityDaemon) {
@@ -246,6 +252,7 @@ function WorkspaceContent() {
                       className={dockViewClazz}
                       onReady={onReady}
                       components={components}
+                      tabComponents={tabComponents}
                     />
                   </ResizablePanel>
                   <ResizableHandle />
@@ -259,6 +266,7 @@ function WorkspaceContent() {
                   className={dockViewClazz}
                   onReady={onReady}
                   components={components}
+                  tabComponents={tabComponents}
                 />
               )
             ) : (
