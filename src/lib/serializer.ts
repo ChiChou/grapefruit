@@ -1,8 +1,9 @@
-import frida, { type Device, type Application } from "./xvii.ts";
+import frida, { type Device, type Application, type Process } from "./xvii.ts";
 
 import type {
   Device as DeviceSchema,
   Application as ApplicationSchema,
+  Process as ProcessSchema,
 } from "@shared/schema.d.ts";
 
 function isRemovable(dev: Device): boolean {
@@ -24,6 +25,14 @@ export function app(app: Application): ApplicationSchema {
   return {
     name,
     identifier,
+    pid,
+  };
+}
+
+export function process(proc: Process): ProcessSchema {
+  const { name, pid } = proc;
+  return {
+    name,
     pid,
   };
 }

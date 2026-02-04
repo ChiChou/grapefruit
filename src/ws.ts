@@ -1,6 +1,6 @@
 import { type ServerType } from "@hono/node-server";
 import { Server, type Socket } from "socket.io";
-import { SessionDetachReason, type SpawnOptions } from "frida";
+import { SessionDetachReason, type SpawnOptions, type Device } from "frida";
 
 import frida from "./lib/xvii.ts";
 import env from "./lib/env.ts";
@@ -10,6 +10,17 @@ import type { Message as ObjCHookMessage } from "../agent/types/fruity/hooks/obj
 import type { Message as SQLiteHookMessage } from "../agent/types/fruity/hooks/sqlite.js";
 import type { Message as CryptoHookMessage } from "../agent/types/fruity/hooks/crypto.js";
 
+type Platform = "fruity" | "droid";
+type Mode = "app" | "daemon";
+
+interface SessionParams {
+  platform: Platform;
+  mode: Mode;
+  deviceId: string;
+  bundle?: string;
+  pid?: number;
+}
+
 interface ServerToClientEvents {
   ready: (pid: number) => void;
   change: () => void;
@@ -17,7 +28,7 @@ interface ServerToClientEvents {
   log: (level: string, text: string) => void;
   syslog: (text: string) => void;
   invalid: () => void;
-  lifecycle: (event: 'inactive'| 'active' | 'forerground' | 'background') => void;
+  lifecycle: (event: "inactive" | "active" | "forerground" | "background") => void;
   hook: (msg: ObjCHookMessage | SQLiteHookMessage | CryptoHookMessage) => void;
 }
 
@@ -32,12 +43,14 @@ interface ClientToServerEvents {
 
 const manager = frida.getDeviceManager();
 
-async function onConnection(
-  socket: Socket<ClientToServerEvents, ServerToClientEvents>,
-  deviceId: string,
+/**
+ * Resolve target PID for app mode - spawn if not frontmost
+ */
+async function resolveAppPid(
+  device: Device,
   bundleId: string,
-) {
-  const device = await manager.getDeviceById(deviceId, env.timeout);
+  platform: Platform,
+): Promise<number> {
   const match = await device.enumerateApplications({
     identifiers: [bundleId],
     scope: frida.Scope.Full,
@@ -47,42 +60,31 @@ async function onConnection(
     throw new Error(`Application ${bundleId} not found on device`);
 
   const app = match.at(0)!;
-  const start = async () => {
-    const frontmost = await device.getFrontmostApplication();
-    if (frontmost?.pid === app.pid) return Promise.resolve(app.pid);
+  const frontmost = await device.getFrontmostApplication();
+  if (frontmost?.pid === app.pid) return app.pid;
 
-    const devParams = await device.querySystemParameters();
-    const opt: SpawnOptions = {};
+  const devParams = await device.querySystemParameters();
+  const opt: SpawnOptions = {};
+
+  // Platform-specific spawn options
+  if (platform === "fruity") {
     if (devParams.access === "full" && devParams.os.id === "ios") {
       opt.env = {
-        DISABLE_TWEAKS: "1", // workaround for ellekit crash. todo: move to preferences
+        DISABLE_TWEAKS: "1", // workaround for ellekit crash
       };
     }
+  }
 
-    return device.spawn(bundleId, opt);
-  };
+  return device.spawn(bundleId, opt);
+}
 
-  const pid = await start();
-  const session = await device.attach(pid);
-  await device.resume(pid);
-  const script = await session.createScript(await agent(`fruity`));
-
-  session.detached.connect((reason, crash) => {
-    console.error("session detached:", reason, crash);
-    switch (reason) {
-      case SessionDetachReason.ApplicationRequested:
-        break;
-      case SessionDetachReason.DeviceLost:
-        console.error("device lost");
-        break;
-      case SessionDetachReason.ProcessTerminated:
-      case SessionDetachReason.ProcessReplaced:
-        console.error("app was terminated or replaced");
-    }
-    socket.emit("detached", reason as string);
-    socket.disconnect(true);
-  });
-
+/**
+ * Setup socket event handlers for script messages
+ */
+function setupScriptHandlers(
+  socket: Socket<ClientToServerEvents, ServerToClientEvents>,
+  script: Awaited<ReturnType<typeof import("frida").Session.prototype.createScript>>,
+) {
   script.destroyed.connect(() => {
     console.error("script is destroyed");
     socket.disconnect(true);
@@ -99,10 +101,10 @@ async function onConnection(
       } else {
         if (subject === "hook") {
           socket.emit(subject, payload);
-        } else if (subject === 'lifecycle') {
+        } else if (subject === "lifecycle") {
           socket.emit(subject, payload.event);
         } else {
-          console.debug('send', payload);
+          console.debug("send", payload);
         }
       }
     } else if (message.type === "error") {
@@ -114,8 +116,31 @@ async function onConnection(
     console.log(`[agent][${level}] ${text}`);
     socket.emit("log", level, text);
   };
+}
 
-  await script.load();
+/**
+ * Setup socket RPC and lifecycle handlers
+ */
+function setupSocketHandlers(
+  socket: Socket<ClientToServerEvents, ServerToClientEvents>,
+  script: Awaited<ReturnType<typeof import("frida").Session.prototype.createScript>>,
+  session: Awaited<ReturnType<typeof import("frida").Device.prototype.attach>>,
+) {
+  session.detached.connect((reason, crash) => {
+    console.error("session detached:", reason, crash);
+    switch (reason) {
+      case SessionDetachReason.ApplicationRequested:
+        break;
+      case SessionDetachReason.DeviceLost:
+        console.error("device lost");
+        break;
+      case SessionDetachReason.ProcessTerminated:
+      case SessionDetachReason.ProcessReplaced:
+        console.error("process was terminated or replaced");
+    }
+    socket.emit("detached", reason as string);
+    socket.disconnect(true);
+  });
 
   socket
     .on("rpc", (ns, method, args, ack) => {
@@ -144,8 +169,61 @@ async function onConnection(
         await session.detach();
       } finally {
       }
-    })
-    .emit("ready", session.pid);
+    });
+}
+
+async function onConnection(
+  socket: Socket<ClientToServerEvents, ServerToClientEvents>,
+  params: SessionParams,
+) {
+  const { platform, mode, deviceId, bundle, pid: targetPid } = params;
+  const device = await manager.getDeviceById(deviceId, env.timeout);
+
+  // Resolve the target PID based on mode
+  let pid: number;
+  if (mode === "app") {
+    if (!bundle) throw new Error("bundle is required for app mode");
+    pid = await resolveAppPid(device, bundle, platform);
+  } else {
+    if (!targetPid) throw new Error("pid is required for daemon mode");
+    pid = targetPid;
+  }
+
+  const session = await device.attach(pid);
+
+  // Resume only for app mode (spawned processes need resume)
+  if (mode === "app") {
+    await device.resume(pid);
+  }
+
+  const script = await session.createScript(await agent(platform));
+
+  setupScriptHandlers(socket, script);
+  setupSocketHandlers(socket, script, session);
+
+  await script.load();
+  socket.emit("ready", session.pid);
+}
+
+function parseSessionParams(query: Record<string, unknown>): SessionParams | null {
+  const { device, platform, mode, bundle, pid } = query;
+
+  // Validate required params
+  if (typeof device !== "string") return null;
+  if (platform !== "fruity" && platform !== "droid") return null;
+  if (mode !== "app" && mode !== "daemon") return null;
+
+  // Validate mode-specific params
+  if (mode === "app" && typeof bundle !== "string") return null;
+  if (mode === "daemon" && typeof pid !== "string") return null;
+
+  return {
+    deviceId: device,
+    platform: platform as Platform,
+    mode: mode as Mode,
+    bundle: mode === "app" ? (bundle as string) : undefined,
+    pid: mode === "daemon" ? parseInt(pid as string, 10) : undefined,
+  };
 }
 
 export default function attach(server: ServerType) {
@@ -163,14 +241,14 @@ export default function attach(server: ServerType) {
 
   io.of("/devices");
   io.of("/session").on("connection", (socket) => {
-    const { device, bundle } = socket.handshake.query;
-    if (typeof device === "string" && typeof bundle === "string") {
-      onConnection(socket, device, bundle).catch((ex) => {
+    const params = parseSessionParams(socket.handshake.query);
+    if (params) {
+      onConnection(socket, params).catch((ex) => {
         console.error(ex);
         socket.disconnect(true);
       });
     } else {
-      console.error("invalid param:", device, bundle);
+      console.error("invalid params:", socket.handshake.query);
       // there is a weird bug that first time calling socket.io
       // the query params are empty
       socket.emit("invalid");

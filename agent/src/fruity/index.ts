@@ -26,11 +26,11 @@ Process.setExceptionHandler((detail) => {
   return false;
 });
 
-if (ObjC.available) {
+if (ObjC.available && ObjC.classes.UIApplication) {
   // disable autolock
   ObjC.schedule(ObjC.mainQueue, () => {
     try {
-      ObjC.classes.UIApplication.sharedApplication().setIdleTimerDisabled_(
+      ObjC.classes.UIApplication.sharedApplication()?.setIdleTimerDisabled_(
         ptr(1),
       );
     } finally {

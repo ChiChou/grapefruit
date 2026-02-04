@@ -33,5 +33,14 @@ describe("API tests", () => {
     const apps = await r3.json();
     console.debug("apps", apps.slice(0, 10));
     assert(Array.isArray(apps), "Apps should be an array");
+
+    const r4 = await app.request(`/api/device/${udid}/processes`);
+    const processes = (await r4.json()) as { name: string; pid: number }[];
+    console.debug("processes", processes.slice(0, 10));
+    assert(Array.isArray(processes), "Processes should be an array");
+    if (processes.length > 0) {
+      assert("name" in processes[0], "Process should have name");
+      assert("pid" in processes[0], "Process should have pid");
+    }
   });
 });
