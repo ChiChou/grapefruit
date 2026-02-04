@@ -1,8 +1,17 @@
 import frida from "frida";
 import { describe, it } from "node:test";
-import { agent } from "src/lib/assets.ts";
+import assert from "node:assert";
+import { agent } from "../lib/assets.ts";
 
 describe("load agent", () => {
+  ["fruity", "droid", "transport"].forEach((variant) => {
+    it(`should load ${variant} agent source`, async () => {
+      const source = await agent(variant);
+      assert(typeof source === "string", "Agent source should be a string");
+      assert(source.length > 0, "Agent source should not be empty");
+    });
+  });
+
   it("should spawn app", async () => {
     const deviceId = process.env.UDID;
     if (!deviceId) {
@@ -37,6 +46,7 @@ describe("load agent", () => {
       await dev.kill(pid);
     } catch (ex) {
       console.error(ex);
+      throw ex;
     }
   });
 });
