@@ -9,12 +9,100 @@ import {
 } from "@/components/ui/tooltip";
 import { DarkmodeToggle } from "./DarkmodeToggle";
 import { LanguageSelector } from "./LanguageSelector";
-import { useSession } from "@/context/SessionContext";
+import { useSession, Platform, Mode } from "@/context/SessionContext";
 
 import logo from "../assets/grapefruit.svg";
 
+interface NavItemProps {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+}
+
+function NavItem({ to, icon, label }: NavItemProps) {
+  return (
+    <NavLink
+      to={to}
+      className={({ isActive }) =>
+        `p-2 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors ${
+          isActive
+            ? "bg-gray-200 dark:bg-gray-800 border-l-2 border-primary"
+            : ""
+        }`
+      }
+    >
+      <Tooltip>
+        <TooltipTrigger asChild>{icon}</TooltipTrigger>
+        <TooltipContent side="right">{label}</TooltipContent>
+      </Tooltip>
+    </NavLink>
+  );
+}
+
 export function LeftPanelView() {
-  const { device, bundle } = useSession();
+  const { device, bundle, platform, mode, pid } = useSession();
+
+  // Determine the target for URL (bundle for app mode, pid for daemon mode)
+  const target = mode === Mode.App ? bundle : pid;
+  const basePath = `/workspace/${platform}/${device}/${mode}/${target}`;
+
+  // Determine which navigation to show based on platform and mode
+  const isFruityApp = platform === Platform.Fruity && mode === Mode.App;
+  const isFruityDaemon = platform === Platform.Fruity && mode === Mode.Daemon;
+
+  const renderNavigation = () => {
+    if (isFruityApp) {
+      // iOS App mode - full features
+      return (
+        <div className="flex-1 flex flex-col gap-1 pt-2">
+          <NavItem
+            to={`${basePath}/general`}
+            icon={<Info className="h-5 w-5" />}
+            label={t("general")}
+          />
+          <NavItem
+            to={`${basePath}/modules`}
+            icon={<Package className="h-5 w-5" />}
+            label={t("modules")}
+          />
+          <NavItem
+            to={`${basePath}/classes`}
+            icon={<Braces className="h-5 w-5" />}
+            label={t("classes")}
+          />
+          <NavItem
+            to={`${basePath}/urls`}
+            icon={<Globe className="h-5 w-5" />}
+            label="URL Schemes"
+          />
+        </div>
+      );
+    }
+
+    if (isFruityDaemon) {
+      // iOS Daemon mode - modules, classes
+      return (
+        <div className="flex-1 flex flex-col gap-1 pt-2">
+          <NavItem
+            to={`${basePath}/modules`}
+            icon={<Package className="h-5 w-5" />}
+            label={t("modules")}
+          />
+          <NavItem
+            to={`${basePath}/classes`}
+            icon={<Braces className="h-5 w-5" />}
+            label={t("classes")}
+          />
+        </div>
+      );
+    }
+
+    // Other modes - no navigation yet
+    return <div className="flex-1" />;
+  };
+
+  // Show panel content for modes with full workspace (left panel + tabs area)
+  const showPanelContent = isFruityApp || isFruityDaemon;
 
   return (
     <div className="flex h-full">
@@ -25,79 +113,7 @@ export function LeftPanelView() {
           </Link>
         </div>
 
-        <div className="flex-1 flex flex-col gap-1 pt-2">
-          <NavLink
-            to={`/workspace/${device}/${bundle}/general`}
-            className={({ isActive }) =>
-              `p-2 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors ${
-                isActive
-                  ? "bg-gray-200 dark:bg-gray-800 border-l-2 border-primary"
-                  : ""
-              }`
-            }
-          >
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Info className="h-5 w-5" />
-              </TooltipTrigger>
-              <TooltipContent side="right">{t("general")}</TooltipContent>
-            </Tooltip>
-          </NavLink>
-
-          <NavLink
-            to={`/workspace/${device}/${bundle}/modules`}
-            className={({ isActive }) =>
-              `p-2 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors ${
-                isActive
-                  ? "bg-gray-200 dark:bg-gray-800 border-l-2 border-primary"
-                  : ""
-              }`
-            }
-          >
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Package className="h-5 w-5" />
-              </TooltipTrigger>
-              <TooltipContent side="right">{t("modules")}</TooltipContent>
-            </Tooltip>
-          </NavLink>
-
-          <NavLink
-            to={`/workspace/${device}/${bundle}/classes`}
-            className={({ isActive }) =>
-              `p-2 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors ${
-                isActive
-                  ? "bg-gray-200 dark:bg-gray-800 border-l-2 border-primary"
-                  : ""
-              }`
-            }
-          >
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Braces className="h-5 w-5" />
-              </TooltipTrigger>
-              <TooltipContent side="right">{t("classes")}</TooltipContent>
-            </Tooltip>
-          </NavLink>
-
-          <NavLink
-            to={`/workspace/${device}/${bundle}/urls`}
-            className={({ isActive }) =>
-              `p-2 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors ${
-                isActive
-                  ? "bg-gray-200 dark:bg-gray-800 border-l-2 border-primary"
-                  : ""
-              }`
-            }
-          >
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Globe className="h-5 w-5" />
-              </TooltipTrigger>
-              <TooltipContent side="right">URL Schemes</TooltipContent>
-            </Tooltip>
-          </NavLink>
-        </div>
+        {renderNavigation()}
 
         {/* Settings at bottom */}
         <div className="flex flex-col gap-1 py-2 items-center">
@@ -106,10 +122,12 @@ export function LeftPanelView() {
         </div>
       </div>
 
-      {/* Tab content */}
-      <div className="flex-1 overflow-auto">
-        <Outlet />
-      </div>
+      {/* Tab content for modes with panel + tabs layout */}
+      {showPanelContent && (
+        <div className="flex-1 overflow-auto">
+          <Outlet />
+        </div>
+      )}
     </div>
   );
 }

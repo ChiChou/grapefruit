@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router";
+import { Routes, Route } from "react-router";
 import { useTranslation } from "react-i18next";
 
 import "dockview/dist/styles/dockview.css";
@@ -7,12 +7,15 @@ import "./App.css";
 import { WelcomePage } from "./components/WelcomePage";
 import { DefaultMessage } from "./components/DefaultMessage";
 import { AppsView } from "./components/AppsView";
+import { ProcessesView } from "./components/ProcessesView";
 import { Workspace } from "./components/Workspace";
+import { WorkspaceIndex } from "./components/WorkspaceIndex";
 
 import { GeneralPanel } from "./components/panels/GeneralPanel";
 import { ModulesPanel } from "./components/panels/ModulesPanel";
 import { ClassesPanel } from "./components/panels/ClassesPanel";
 import { URLSchemesPanel } from "./components/panels/URLSchemesPanel";
+import { PlaceholderPanel } from "./components/panels/PlaceholderPanel";
 
 import { AlertTriangle } from "lucide-react";
 
@@ -28,16 +31,26 @@ function App() {
         </div>
       </div>
       <Routes>
+        {/* Welcome page with device list */}
         <Route path="/" element={<WelcomePage />}>
           <Route index element={<DefaultMessage />} />
+          {/* Apps list for a device (with platform query param) */}
           <Route path="apps/:udid" element={<AppsView />} />
+          {/* Processes list for a device */}
+          <Route path="processes/:udid" element={<ProcessesView />} />
         </Route>
-        <Route path="/workspace/:device/:bundle" element={<Workspace />}>
-          <Route index element={<Navigate to="general" replace />} />
+
+        {/* Workspace with platform and mode as route params */}
+        <Route path="/workspace/:platform/:device/:mode/:target" element={<Workspace />}>
+          {/* Default view based on platform/mode */}
+          <Route index element={<WorkspaceIndex />} />
+          {/* iOS App/Daemon mode panels */}
           <Route path="general" element={<GeneralPanel />} />
           <Route path="modules" element={<ModulesPanel />} />
           <Route path="classes" element={<ClassesPanel />} />
           <Route path="urls" element={<URLSchemesPanel />} />
+          {/* Placeholder for unsupported modes */}
+          <Route path="placeholder" element={<PlaceholderPanel />} />
         </Route>
       </Routes>
     </>
