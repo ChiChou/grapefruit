@@ -162,5 +162,22 @@
   "javascript": "JavaScript",
   "send": "发送",
   "enter_url_scheme": "输入 URL scheme...",
-  "reset": "重置"
+  "reset": "重置",
+  "jsc_contexts": "{{count}} 个 JSContext",
+  "no_jscontext_found": "未找到 JSContext",
+  "handle": "句柄",
+  "description": "描述",
+  "jscontext": "JSContext",
+  "repl": "REPL",
+  "globals": "全局对象",
+  "execute_javascript": "执行 JavaScript",
+  "loading_globals": "正在加载全局对象...",
+  "failed_to_load_globals": "加载全局对象失败",
+  "select_jscontext": "选择一个 JSContext 进行检查",
+  "filter_by_name": "按名称过滤...",
+  "no_matching_entries": "无匹配项",
+  "no_global_objects": "未找到全局对象",
+  "entries_count": "{{filtered}} / {{total}} 项",
+  "run": "运行",
+  "result": "结果"
 }

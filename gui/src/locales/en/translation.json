@@ -164,5 +164,22 @@
   "javascript": "JavaScript",
   "send": "Send",
   "enter_url_scheme": "Enter URL scheme...",
-  "reset": "Reset"
+  "reset": "Reset",
+  "jsc_contexts": "{{count}} JSContext(s)",
+  "no_jscontext_found": "No JSContext found",
+  "handle": "Handle",
+  "description": "Description",
+  "jscontext": "JSContext",
+  "repl": "REPL",
+  "globals": "Globals",
+  "execute_javascript": "Execute JavaScript",
+  "loading_globals": "Loading globals...",
+  "failed_to_load_globals": "Failed to load globals",
+  "select_jscontext": "Select a JSContext to inspect",
+  "filter_by_name": "Filter by name...",
+  "no_matching_entries": "No matching entries",
+  "no_global_objects": "No global objects found",
+  "entries_count": "{{filtered}} of {{total}} entries",
+  "run": "Run",
+  "result": "Result"
 }

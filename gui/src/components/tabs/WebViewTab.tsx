@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import Editor, { loader } from "@monaco-editor/react";
+import Editor, { type Monaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import {
   RotateCcw,
@@ -44,7 +44,7 @@ type WebViewKind = "UI" | "WK";
 type WebViewEntry = WKWebViewInfo | UIWebViewInfo;
 
 // Configure Monaco to include DOM types for JavaScript
-loader.init().then((monaco) => {
+function handleEditorWillMount(monaco: Monaco) {
   monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
     target: monaco.languages.typescript.ScriptTarget.ESNext,
     allowNonTsExtensions: true,
@@ -55,7 +55,7 @@ loader.init().then((monaco) => {
     noSemanticValidation: false,
     noSyntaxValidation: false,
   });
-});
+}
 
 function isWKWebView(entry: WebViewEntry): entry is WKWebViewInfo {
   return entry.kind === "WK";
@@ -371,6 +371,7 @@ document.title`);
                         language="javascript"
                         value={jsCode}
                         onChange={(value) => setJsCode(value || "")}
+                        beforeMount={handleEditorWillMount}
                         onMount={handleEditorDidMount}
                         theme={theme === "dark" ? "vs-dark" : "light"}
                         options={{
