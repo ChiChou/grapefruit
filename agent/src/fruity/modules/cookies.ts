@@ -170,6 +170,7 @@ interface NSHTTPCookieStorage extends NSObject {
   cookies(): NSArray<NSHTTPCookie>;
   setCookie_(cookie: NSHTTPCookie): void;
   deleteCookie_(cookie: NSHTTPCookie): void;
+  removeCookiesSinceDate_(date: NSDate): void;
 }
 
 function shared() {
@@ -252,7 +253,6 @@ export function remove(predicate: CookiePredicate) {
 
 export function clear() {
   const storage = shared();
-  for (const cookie of iter(storage)) {
-    storage.deleteCookie_(cookie);
-  }
+  const since = ObjC.classes.NSDate.dateWithTimeIntervalSince1970_(0);
+  storage.removeCookiesSinceDate_(since);
 }
