@@ -355,155 +355,157 @@ export function JSCTab() {
         </span>
       </div>
       <div className="flex-1 overflow-hidden">
-        <ResizablePanelGroup direction="horizontal">
-          {/* Left Panel - JSContext List */}
-          <ResizablePanel defaultSize={35} minSize={20}>
-            <div className="h-full overflow-auto">
-              {isLoading ? (
-                <div className="flex items-center justify-center h-full gap-2 text-gray-500">
-                  <Spinner className="w-5 h-5" />
-                  <span>{t("loading")}...</span>
-                </div>
-              ) : entries.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                  {t("no_jscontext_found")}
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t("handle")}</TableHead>
-                      <TableHead>{t("description")}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {entries.map((entry) => (
-                      <TableRow
-                        key={entry.handle}
-                        className={`cursor-pointer ${
-                          selectedHandle === entry.handle ? "bg-accent" : ""
-                        }`}
-                        onClick={() => selectEntry(entry.handle)}
-                      >
-                        <TableCell className="font-mono text-xs">
-                          {entry.handle}
-                        </TableCell>
-                        <TableCell
-                          className="font-mono text-sm truncate max-w-[200px]"
-                          title={entry.description}
-                        >
-                          {entry.description}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </div>
-          </ResizablePanel>
-
-          <ResizableHandle withHandle />
-
-          {/* Right Panel - Detail View */}
-          <ResizablePanel defaultSize={65} minSize={30}>
-            <div className="h-full overflow-hidden">
-              {selectedEntry ? (
-                <Tabs
-                  value={activeTab}
-                  onValueChange={setActiveTab}
-                  className="flex flex-col h-full"
-                >
-                  <div className="flex items-center justify-between p-2 border-b">
-                    <TabsList>
-                      <TabsTrigger value="dump">
-                        <Braces className="w-4 h-4 mr-1" />
-                        {t("globals")}
-                      </TabsTrigger>
-                      <TabsTrigger value="repl">
-                        <Terminal className="w-4 h-4 mr-1" />
-                        {t("repl")}
-                      </TabsTrigger>
-                    </TabsList>
+        {!isLoading && entries.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-gray-500">
+            {t("no_jscontext_found")}
+          </div>
+        ) : (
+          <ResizablePanelGroup direction="horizontal">
+            {/* Left Panel - JSContext List */}
+            <ResizablePanel defaultSize={35} minSize={20}>
+              <div className="h-full overflow-auto">
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-full gap-2 text-gray-500">
+                    <Spinner className="w-5 h-5" />
+                    <span>{t("loading")}...</span>
                   </div>
-
-                  <TabsContent value="dump" className="flex-1 min-h-0">
-                    {dumpMutation.isPending ? (
-                      <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
-                        <Spinner className="w-5 h-5" />
-                        <span>{t("loading_globals")}</span>
-                      </div>
-                    ) : dumpResult ? (
-                      <DumpView data={dumpResult} t={t} />
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-muted-foreground">
-                        {t("failed_to_load_globals")}
-                      </div>
-                    )}
-                  </TabsContent>
-
-                  <TabsContent value="repl" className="flex-1 min-h-0">
-                    <div className="flex flex-col h-full p-4 gap-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">
-                          {t("execute_javascript")}
-                        </span>
-                        <Button
-                          size="sm"
-                          onClick={() => executeJs(selectedEntry.handle)}
-                          disabled={runMutation.isPending}
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t("handle")}</TableHead>
+                        <TableHead>{t("description")}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {entries.map((entry) => (
+                        <TableRow
+                          key={entry.handle}
+                          className={`cursor-pointer ${
+                            selectedHandle === entry.handle ? "bg-accent" : ""
+                          }`}
+                          onClick={() => selectEntry(entry.handle)}
                         >
-                          <Play className="w-4 h-4 mr-2" />
-                          {t("run")}
-                        </Button>
-                      </div>
-                      <div className="flex-1 min-h-0 border rounded overflow-hidden">
-                        <Editor
-                          height="100%"
-                          language="javascript"
-                          value={jsCode}
-                          onChange={(value) => {
-                            const code = value || "";
-                            setJsCode(code);
-                            localStorage.setItem("jsc-repl-code", code);
-                          }}
-                          beforeMount={handleEditorWillMount}
-                          onMount={handleEditorDidMount}
-                          theme={theme === "dark" ? "vs-dark" : "light"}
-                          options={{
-                            minimap: { enabled: false },
-                            scrollBeyondLastLine: false,
-                            fontSize: 13,
-                            lineNumbers: "on",
-                            folding: true,
-                            automaticLayout: true,
-                            tabSize: 2,
-                            wordWrap: "on",
-                            suggestOnTriggerCharacters: true,
-                            quickSuggestions: true,
-                          }}
-                        />
-                      </div>
-                      {jsResult !== null && (
-                        <div className="shrink-0">
-                          <div className="text-sm text-muted-foreground mb-1">
-                            {t("result")}:
-                          </div>
-                          <pre className="font-mono text-xs bg-gray-100 dark:bg-gray-800 p-3 rounded overflow-x-auto max-h-40 whitespace-pre-wrap">
-                            {jsResult}
-                          </pre>
+                          <TableCell className="font-mono text-xs">
+                            {entry.handle}
+                          </TableCell>
+                          <TableCell
+                            className="font-mono text-sm truncate max-w-[200px]"
+                            title={entry.description}
+                          >
+                            {entry.description}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </div>
+            </ResizablePanel>
+
+            <ResizableHandle withHandle />
+
+            {/* Right Panel - Detail View */}
+            <ResizablePanel defaultSize={65} minSize={30}>
+              <div className="h-full overflow-hidden">
+                {selectedEntry ? (
+                  <Tabs
+                    value={activeTab}
+                    onValueChange={setActiveTab}
+                    className="flex flex-col h-full"
+                  >
+                    <div className="flex items-center justify-between p-2 border-b">
+                      <TabsList>
+                        <TabsTrigger value="dump">
+                          <Braces className="w-4 h-4 mr-1" />
+                          {t("globals")}
+                        </TabsTrigger>
+                        <TabsTrigger value="repl">
+                          <Terminal className="w-4 h-4 mr-1" />
+                          {t("repl")}
+                        </TabsTrigger>
+                      </TabsList>
+                    </div>
+
+                    <TabsContent value="dump" className="flex-1 min-h-0">
+                      {dumpMutation.isPending ? (
+                        <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
+                          <Spinner className="w-5 h-5" />
+                          <span>{t("loading_globals")}</span>
+                        </div>
+                      ) : dumpResult ? (
+                        <DumpView data={dumpResult} t={t} />
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-muted-foreground">
+                          {t("failed_to_load_globals")}
                         </div>
                       )}
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
-                  {t("select_jscontext")}
-                </div>
-              )}
-            </div>
-          </ResizablePanel>
-        </ResizablePanelGroup>
+                    </TabsContent>
+
+                    <TabsContent value="repl" className="flex-1 min-h-0">
+                      <div className="flex flex-col h-full p-4 gap-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">
+                            {t("execute_javascript")}
+                          </span>
+                          <Button
+                            size="sm"
+                            onClick={() => executeJs(selectedEntry.handle)}
+                            disabled={runMutation.isPending}
+                          >
+                            <Play className="w-4 h-4 mr-2" />
+                            {t("run")}
+                          </Button>
+                        </div>
+                        <div className="flex-1 min-h-0 border rounded overflow-hidden">
+                          <Editor
+                            height="100%"
+                            language="javascript"
+                            value={jsCode}
+                            onChange={(value) => {
+                              const code = value || "";
+                              setJsCode(code);
+                              localStorage.setItem("jsc-repl-code", code);
+                            }}
+                            beforeMount={handleEditorWillMount}
+                            onMount={handleEditorDidMount}
+                            theme={theme === "dark" ? "vs-dark" : "light"}
+                            options={{
+                              minimap: { enabled: false },
+                              scrollBeyondLastLine: false,
+                              fontSize: 13,
+                              lineNumbers: "on",
+                              folding: true,
+                              automaticLayout: true,
+                              tabSize: 2,
+                              wordWrap: "on",
+                              suggestOnTriggerCharacters: true,
+                              quickSuggestions: true,
+                            }}
+                          />
+                        </div>
+                        {jsResult !== null && (
+                          <div className="shrink-0">
+                            <div className="text-sm text-muted-foreground mb-1">
+                              {t("result")}:
+                            </div>
+                            <pre className="font-mono text-xs bg-gray-100 dark:bg-gray-800 p-3 rounded overflow-x-auto max-h-40 whitespace-pre-wrap">
+                              {jsResult}
+                            </pre>
+                          </div>
+                        )}
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-muted-foreground">
+                    {t("select_jscontext")}
+                  </div>
+                )}
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        )}
       </div>
     </div>
   );
