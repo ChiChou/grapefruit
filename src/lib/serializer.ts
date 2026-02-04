@@ -30,9 +30,19 @@ export function app(app: Application): ApplicationSchema {
 }
 
 export function process(proc: Process): ProcessSchema {
-  const { name, pid } = proc;
+  const { name, pid, parameters } = proc;
+  const params = parameters as {
+    path?: string;
+    user?: string;
+    ppid?: number;
+    started?: string;
+  };
   return {
     name,
     pid,
+    path: params.path,
+    user: params.user,
+    ppid: params.ppid,
+    started: params.started,
   };
 }
