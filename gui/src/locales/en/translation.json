@@ -210,5 +210,7 @@
   "no_apps_matching_search": "No apps matching your search",
   "no_processes_matching_search": "No processes matching your search",
   "user": "User",
-  "select_all": "Select All"
+  "select_all": "Select All",
+  "hide_panel": "Hide Panel",
+  "show_panel": "Show Panel"
 }
