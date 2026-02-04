@@ -1,13 +1,28 @@
 import { useState, useMemo } from "react";
 import { useParams, Link } from "react-router";
 import { useTranslation } from "react-i18next";
-import { AlertCircleIcon, ArrowUpDown, Search } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { AlertCircleIcon, ArrowUpDown, Search, XCircle } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import type { DeviceInfo, Process } from "@shared/schema";
 
@@ -45,8 +60,26 @@ function getPlatformFromDeviceInfo(info: DeviceInfo | undefined): "fruity" | "dr
 export function ProcessesView() {
   const { udid } = useParams();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [sort, setSort] = useState<SortState>({ field: "pid", direction: "asc" });
+
+  const handleKillProcess = async (pid: number, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      const res = await fetch(`/api/device/${udid}/kill/${pid}`, { method: "POST" });
+      if (res.ok) {
+        toast.success(t("process_killed", { pid }));
+        queryClient.invalidateQueries({ queryKey: ["processes", udid] });
+      } else {
+        toast.error(t("failed_to_kill_process"));
+      }
+    } catch (err) {
+      console.error("Failed to kill process:", err);
+      toast.error(t("failed_to_kill_process"));
+    }
+  };
 
   const {
     data: processes = [],
@@ -130,16 +163,16 @@ export function ProcessesView() {
     return sorted;
   }, [processes, searchQuery, sort]);
 
-  const SortHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
-    <th
-      className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 select-none"
+  const SortableHead = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
+    <TableHead
+      className="cursor-pointer hover:bg-muted/50 select-none"
       onClick={() => handleSort(field)}
     >
       <div className="flex items-center gap-1">
         {children}
-        <ArrowUpDown className={`h-3 w-3 ${sort.field === field ? "text-blue-500" : "text-gray-400"}`} />
+        <ArrowUpDown className={`h-3 w-3 ${sort.field === field ? "text-blue-500" : "text-muted-foreground"}`} />
       </div>
-    </th>
+    </TableHead>
   );
 
   if (loading) {
@@ -197,52 +230,75 @@ export function ProcessesView() {
       </div>
 
       {filteredAndSortedProcesses.length === 0 ? (
-        <p className="text-center text-gray-500 dark:text-gray-400">
+        <p className="text-center text-muted-foreground">
           {searchQuery ? t("no_processes_matching_search") : t("no_processes_found")}
         </p>
       ) : (
-        <div className="rounded-md border dark:border-gray-700">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-                <SortHeader field="pid">PID</SortHeader>
-                <SortHeader field="name">{t("name")}</SortHeader>
-                <SortHeader field="user">{t("user")}</SortHeader>
-                <SortHeader field="path">{t("path")}</SortHeader>
-              </tr>
-            </thead>
-            <tbody>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <SortableHead field="pid">PID</SortableHead>
+                <SortableHead field="name">{t("name")}</SortableHead>
+                <SortableHead field="user">{t("user")}</SortableHead>
+                <SortableHead field="path">{t("path")}</SortableHead>
+                <TableHead className="w-12"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {filteredAndSortedProcesses.map((process) => (
-                <tr
-                  key={process.pid}
-                  className="border-b last:border-b-0 dark:border-gray-700 hover:bg-amber-50 dark:hover:bg-gray-800 cursor-pointer"
-                >
-                  <td className="px-4 py-2">
+                <TableRow key={process.pid} className="cursor-pointer">
+                  <TableCell>
                     <Link
                       to={`/workspace/${platform}/${udid}/daemon/${process.pid}`}
-                      className="block text-blue-600 dark:text-blue-400 hover:underline"
+                      className="text-blue-600 dark:text-blue-400 hover:underline"
                     >
                       {process.pid}
                     </Link>
-                  </td>
-                  <td className="px-4 py-2 dark:text-gray-100">
+                  </TableCell>
+                  <TableCell>
                     <Link
                       to={`/workspace/${platform}/${udid}/daemon/${process.pid}`}
                       className="block"
                     >
                       {process.name}
                     </Link>
-                  </td>
-                  <td className="px-4 py-2 text-gray-600 dark:text-gray-400">
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
                     {process.user ?? "-"}
-                  </td>
-                  <td className="px-4 py-2 text-gray-500 dark:text-gray-500 text-xs font-mono truncate max-w-xs" title={process.path}>
+                  </TableCell>
+                  <TableCell
+                    className="text-muted-foreground text-xs font-mono truncate max-w-xs"
+                    title={process.path}
+                  >
                     {process.path ?? "-"}
-                  </td>
-                </tr>
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={(e) => e.stopPropagation()}
+                          className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-muted-foreground hover:text-red-500 transition-colors"
+                          title={t("kill_process")}
+                        >
+                          <XCircle className="w-4 h-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={(e) => handleKillProcess(process.pid, e)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          {t("kill_process")}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>
