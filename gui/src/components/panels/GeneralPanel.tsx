@@ -9,6 +9,9 @@ import {
   Cookie,
   Layout,
   Shield,
+  Globe,
+  Code,
+  Settings,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -124,6 +127,30 @@ export function GeneralPanel() {
       component: "finder",
       title: t("finder"),
       params: { path },
+    });
+  };
+
+  const openWebViewTab = () => {
+    openSingletonPanel({
+      id: "webview_tab",
+      component: "webview",
+      title: "WebViews",
+    });
+  };
+
+  const openJSCTab = () => {
+    openSingletonPanel({
+      id: "jsc_tab",
+      component: "jsc",
+      title: "JSContext",
+    });
+  };
+
+  const openUserDefaultsTab = () => {
+    openSingletonPanel({
+      id: "userdefaults_tab",
+      component: "userdefaults",
+      title: "UserDefaults",
     });
   };
 
@@ -269,6 +296,18 @@ export function GeneralPanel() {
               <Button variant="outline" size="sm" onClick={openUIDumpTab}>
                 <Layout className="w-4 h-4 mr-2" />
                 {t("inspect_ui")}
+              </Button>
+              <Button variant="outline" size="sm" onClick={openWebViewTab}>
+                <Globe className="w-4 h-4 mr-2" />
+                WebViews
+              </Button>
+              <Button variant="outline" size="sm" onClick={openJSCTab}>
+                <Code className="w-4 h-4 mr-2" />
+                JSContext
+              </Button>
+              <Button variant="outline" size="sm" onClick={openUserDefaultsTab}>
+                <Settings className="w-4 h-4 mr-2" />
+                UserDefaults
               </Button>
             </div>
           </div>
