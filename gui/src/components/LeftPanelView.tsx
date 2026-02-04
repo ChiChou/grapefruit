@@ -1,6 +1,6 @@
 import { Link, NavLink, Outlet } from "react-router";
 import { t } from "i18next";
-import { Info, Package, Braces, Globe } from "lucide-react";
+import { Info, Package, Braces, Link as LinkIcon } from "lucide-react";
 
 import {
   Tooltip,
@@ -72,7 +72,7 @@ export function LeftPanelView() {
           />
           <NavItem
             to={`${basePath}/urls`}
-            icon={<Globe className="h-5 w-5" />}
+            icon={<LinkIcon className="h-5 w-5" />}
             label="URL Schemes"
           />
         </div>
