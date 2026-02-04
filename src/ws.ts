@@ -1,10 +1,13 @@
 import { type ServerType } from "@hono/node-server";
 import { Server, type Socket } from "socket.io";
 import { SessionDetachReason, type SpawnOptions, type Device } from "frida";
+import fs from "node:fs/promises";
+import path from "node:path";
 
 import frida from "./lib/xvii.ts";
 import env from "./lib/env.ts";
 import { agent } from "./lib/assets.ts";
+import paths from "./lib/paths.ts";
 
 import type { Message as ObjCHookMessage } from "../agent/types/fruity/hooks/objc.js";
 import type { Message as SQLiteHookMessage } from "../agent/types/fruity/hooks/sqlite.js";
@@ -28,7 +31,9 @@ interface ServerToClientEvents {
   log: (level: string, text: string) => void;
   syslog: (text: string) => void;
   invalid: () => void;
-  lifecycle: (event: "inactive" | "active" | "forerground" | "background") => void;
+  lifecycle: (
+    event: "inactive" | "active" | "forerground" | "background",
+  ) => void;
   hook: (msg: ObjCHookMessage | SQLiteHookMessage | CryptoHookMessage) => void;
 }
 
@@ -42,6 +47,27 @@ interface ClientToServerEvents {
 }
 
 const manager = frida.getDeviceManager();
+
+/**
+ * Get log directory and file paths for a session
+ */
+async function getLogPaths(deviceId: string, identifier: string) {
+  const logsDir = path.join(paths.data, "logs", deviceId, identifier);
+  await fs.mkdir(logsDir, { recursive: true });
+  return {
+    syslog: path.join(logsDir, "syslog.log"),
+    agentLog: path.join(logsDir, "agent.log"),
+  };
+}
+
+/**
+ * Append a line to a log file
+ */
+function appendLog(filePath: string, line: string) {
+  fs.appendFile(filePath, line + "\n").catch((err) => {
+    console.error("Failed to write log:", err);
+  });
+}
 
 /**
  * Resolve target PID for app mode - spawn if not frontmost
@@ -83,7 +109,10 @@ async function resolveAppPid(
  */
 function setupScriptHandlers(
   socket: Socket<ClientToServerEvents, ServerToClientEvents>,
-  script: Awaited<ReturnType<typeof import("frida").Session.prototype.createScript>>,
+  script: Awaited<
+    ReturnType<typeof import("frida").Session.prototype.createScript>
+  >,
+  logPaths: { syslog: string; agentLog: string },
 ) {
   script.destroyed.connect(() => {
     console.error("script is destroyed");
@@ -98,6 +127,7 @@ function setupScriptHandlers(
         const text = data.toString();
         console.log(`[syslog]`, text);
         socket.emit("syslog", text);
+        appendLog(logPaths.syslog, text);
       } else {
         if (subject === "hook") {
           socket.emit(subject, payload);
@@ -115,6 +145,7 @@ function setupScriptHandlers(
   script.logHandler = (level, text) => {
     console.log(`[agent][${level}] ${text}`);
     socket.emit("log", level, text);
+    appendLog(logPaths.agentLog, `[${level}] ${text}`);
   };
 }
 
@@ -123,7 +154,9 @@ function setupScriptHandlers(
  */
 function setupSocketHandlers(
   socket: Socket<ClientToServerEvents, ServerToClientEvents>,
-  script: Awaited<ReturnType<typeof import("frida").Session.prototype.createScript>>,
+  script: Awaited<
+    ReturnType<typeof import("frida").Session.prototype.createScript>
+  >,
   session: Awaited<ReturnType<typeof import("frida").Device.prototype.attach>>,
 ) {
   session.detached.connect((reason, crash) => {
@@ -196,16 +229,21 @@ async function onConnection(
     await device.resume(pid);
   }
 
+  // Get log file paths based on device and identifier
+  const identifier = mode === "app" ? bundle! : `pid-${pid}`;
+  const logPaths = await getLogPaths(deviceId, identifier);
   const script = await session.createScript(await agent(platform));
 
-  setupScriptHandlers(socket, script);
+  setupScriptHandlers(socket, script, logPaths);
   setupSocketHandlers(socket, script, session);
 
   await script.load();
   socket.emit("ready", session.pid);
 }
 
-function parseSessionParams(query: Record<string, unknown>): SessionParams | null {
+function parseSessionParams(
+  query: Record<string, unknown>,
+): SessionParams | null {
   const { device, platform, mode, bundle, pid } = query;
 
   // Validate required params
