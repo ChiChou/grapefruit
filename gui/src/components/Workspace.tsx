@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Outlet } from "react-router";
 import { t } from "i18next";
+import { PanelBottomClose, PanelBottomOpen } from "lucide-react";
 
 import {
   type DockviewApi,
@@ -71,6 +72,19 @@ function WorkspaceContent() {
   const [dockViewClazz, setDockViewClazz] = useState<string>(
     "dockview-theme-light",
   );
+
+  const [bottomPanelVisible, setBottomPanelVisible] = useState(() => {
+    try {
+      const saved = localStorage.getItem("workspace-bottom-panel-visible");
+      return saved !== null ? JSON.parse(saved) : true;
+    } catch {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("workspace-bottom-panel-visible", JSON.stringify(bottomPanelVisible));
+  }, [bottomPanelVisible]);
 
   useEffect(() => {
     setDockViewClazz(
@@ -200,26 +214,35 @@ function WorkspaceContent() {
           <ResizableHandle withHandle />
           <ResizablePanel>
             {showFullWorkspace ? (
-              <ResizablePanelGroup
-                direction="vertical"
-                className="h-full"
-                autoSaveId="workspace-bottom-split"
-              >
-                <ResizablePanel>
-                  <DockviewReact
-                    // workaround: theme must not be empty, otherwise
-                    //  Dockview will always insert abyss className
-                    theme={themeLight}
-                    className={dockViewClazz}
-                    onReady={onReady}
-                    components={components}
-                  />
-                </ResizablePanel>
-                <ResizableHandle />
-                <ResizablePanel defaultSize={30}>
-                  <BottomPanelView />
-                </ResizablePanel>
-              </ResizablePanelGroup>
+              bottomPanelVisible ? (
+                <ResizablePanelGroup
+                  direction="vertical"
+                  className="h-full"
+                  autoSaveId="workspace-bottom-split"
+                >
+                  <ResizablePanel>
+                    <DockviewReact
+                      // workaround: theme must not be empty, otherwise
+                      //  Dockview will always insert abyss className
+                      theme={themeLight}
+                      className={dockViewClazz}
+                      onReady={onReady}
+                      components={components}
+                    />
+                  </ResizablePanel>
+                  <ResizableHandle />
+                  <ResizablePanel defaultSize={30}>
+                    <BottomPanelView />
+                  </ResizablePanel>
+                </ResizablePanelGroup>
+              ) : (
+                <DockviewReact
+                  theme={themeLight}
+                  className={dockViewClazz}
+                  onReady={onReady}
+                  components={components}
+                />
+              )
             ) : (
               <div className="h-full overflow-auto">
                 <Outlet />
@@ -227,10 +250,26 @@ function WorkspaceContent() {
             )}
           </ResizablePanel>
         </ResizablePanelGroup>
-        <footer className={`${getStatusColor()} px-4 py-1 text-xs text-white`}>
-          {status === Status.Ready && t("connected")}
-          {status === Status.Connecting && t("connecting")}
-          {status === Status.Disconnected && t("disconnected")}
+        <footer className={`${getStatusColor()} px-4 py-1 text-xs text-white flex items-center justify-between`}>
+          <span>
+            {status === Status.Ready && t("connected")}
+            {status === Status.Connecting && t("connecting")}
+            {status === Status.Disconnected && t("disconnected")}
+          </span>
+          {showFullWorkspace && (
+            <button
+              type="button"
+              onClick={() => setBottomPanelVisible(!bottomPanelVisible)}
+              className="p-0.5 hover:bg-white/20 rounded transition-colors"
+              title={bottomPanelVisible ? t("hide_panel") : t("show_panel")}
+            >
+              {bottomPanelVisible ? (
+                <PanelBottomClose className="w-4 h-4" />
+              ) : (
+                <PanelBottomOpen className="w-4 h-4" />
+              )}
+            </button>
+          )}
         </footer>
       </div>
     </DockContext.Provider>

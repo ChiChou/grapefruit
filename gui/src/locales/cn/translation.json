@@ -208,5 +208,7 @@
   "no_apps_matching_search": "未找到匹配的应用",
   "no_processes_matching_search": "未找到匹配的进程",
   "user": "用户",
-  "select_all": "全选"
+  "select_all": "全选",
+  "hide_panel": "隐藏面板",
+  "show_panel": "显示面板"
 }
