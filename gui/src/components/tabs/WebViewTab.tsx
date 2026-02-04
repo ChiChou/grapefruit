@@ -12,6 +12,7 @@ import {
   Navigation,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -61,7 +62,7 @@ function isWKWebView(entry: WebViewEntry): entry is WKWebViewInfo {
   return entry.kind === "WK";
 }
 
-function BooleanBadge({ value, label }: { value: boolean | undefined; label: string }) {
+function BooleanBadge({ value, label, t }: { value: boolean | undefined; label: string; t: (key: string) => string }) {
   if (value === undefined) return null;
   return (
     <Tooltip>
@@ -78,7 +79,7 @@ function BooleanBadge({ value, label }: { value: boolean | undefined; label: str
         </span>
       </TooltipTrigger>
       <TooltipContent>
-        {label}: {value ? "Enabled" : "Disabled"}
+        {label}: {value ? t("enabled") : t("disabled")}
       </TooltipContent>
     </Tooltip>
   );
@@ -209,7 +210,7 @@ document.title`);
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-24">{t("type")}</TableHead>
-                      <TableHead>{t("title")} / URL</TableHead>
+                      <TableHead>{t("title")} / {t("url")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -281,24 +282,28 @@ document.title`);
                     <div>
                       <div className="text-sm font-medium mb-2">{t("configuration")}</div>
                       <div className="flex flex-wrap gap-2">
-                        <BooleanBadge value={selectedEntry.js} label="JavaScript" />
+                        <BooleanBadge value={selectedEntry.js} label={t("javascript")} t={t} />
                         <BooleanBadge
                           value={selectedEntry.contentJs}
-                          label="Content JS"
+                          label={t("content_js")}
+                          t={t}
                         />
                         <BooleanBadge
                           value={selectedEntry.jsAutoOpenWindow}
-                          label="Auto-Open Windows"
+                          label={t("auto_open_windows")}
+                          t={t}
                         />
                         <BooleanBadge
                           value={selectedEntry.fileURLAccess}
-                          label="File URL Access"
+                          label={t("file_url_access")}
+                          t={t}
                         />
                         <BooleanBadge
                           value={selectedEntry.universalFileAccess}
-                          label="Universal File Access"
+                          label={t("universal_file_access")}
+                          t={t}
                         />
-                        <BooleanBadge value={selectedEntry.secure} label="Secure" />
+                        <BooleanBadge value={selectedEntry.secure} label={t("secure")} t={t} />
                       </div>
                     </div>
                   )}
@@ -329,7 +334,7 @@ document.title`);
                   {/* Navigate */}
                   <div>
                     <div className="text-sm font-medium mb-2">{t("navigate_to_url")}</div>
-                    <div className="flex gap-2">
+                    <ButtonGroup className="w-full">
                       <Input
                         placeholder="https://example.com"
                         value={navigateUrl}
@@ -342,14 +347,14 @@ document.title`);
                         className="flex-1"
                       />
                       <Button
-                        size="sm"
+                        variant="outline"
                         onClick={() => doNavigate(selectedEntry)}
                         disabled={!navigateUrl || navigateMutation.isPending}
+                        title={t("navigate")}
                       >
-                        <Navigation className="w-4 h-4 mr-2" />
-                        {t("navigate")}
+                        <Navigation className="w-4 h-4" />
                       </Button>
-                    </div>
+                    </ButtonGroup>
                   </div>
 
                   {/* Execute JavaScript - fills remaining space */}

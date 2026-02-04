@@ -181,5 +181,21 @@
   "no_global_objects": "No global objects found",
   "entries_count": "{{filtered}} of {{total}} entries",
   "run": "Run",
-  "result": "Result"
+  "result": "Result",
+  "enabled": "Enabled",
+  "disabled": "Disabled",
+  "content_js": "Content JS",
+  "auto_open_windows": "Auto-Open Windows",
+  "file_url_access": "File URL Access",
+  "universal_file_access": "Universal File Access",
+  "webviews": "WebView(s)",
+  "no_webviews": "No WebViews found",
+  "title": "Title",
+  "configuration": "Configuration",
+  "current_url": "Current URL",
+  "navigate_to_url": "Navigate to URL",
+  "navigate": "Navigate",
+  "select_webview": "Select a WebView to inspect",
+  "url": "URL",
+  "key": "Key"
 }
