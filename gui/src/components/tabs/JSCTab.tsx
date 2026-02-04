@@ -270,7 +270,9 @@ export function JSCTab() {
   const { theme } = useTheme();
   const [selectedHandle, setSelectedHandle] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("dump");
-  const [jsCode, setJsCode] = useState("1 + 1");
+  const [jsCode, setJsCode] = useState(
+    () => localStorage.getItem("jsc-repl-code") ?? "1 + 1",
+  );
   const [jsResult, setJsResult] = useState<string | null>(null);
   const [dumpResult, setDumpResult] = useState<Record<string, unknown> | null>(
     null,
@@ -412,14 +414,6 @@ export function JSCTab() {
                   className="flex flex-col h-full"
                 >
                   <div className="flex items-center justify-between p-2 border-b">
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-1 text-xs rounded bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                        {t("jscontext")}
-                      </span>
-                      <span className="font-mono text-xs text-muted-foreground">
-                        {selectedEntry.handle}
-                      </span>
-                    </div>
                     <TabsList>
                       <TabsTrigger value="dump">
                         <Braces className="w-4 h-4 mr-1" />
@@ -467,7 +461,11 @@ export function JSCTab() {
                           height="100%"
                           language="javascript"
                           value={jsCode}
-                          onChange={(value) => setJsCode(value || "")}
+                          onChange={(value) => {
+                            const code = value || "";
+                            setJsCode(code);
+                            localStorage.setItem("jsc-repl-code", code);
+                          }}
                           beforeMount={handleEditorWillMount}
                           onMount={handleEditorDidMount}
                           theme={theme === "dark" ? "vs-dark" : "light"}
