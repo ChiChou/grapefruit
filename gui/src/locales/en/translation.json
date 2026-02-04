@@ -204,5 +204,11 @@
   "key": "Key",
   "daemon": "Daemon",
   "mode": "Mode",
-  "feature_coming_soon": "This feature is coming soon"
+  "feature_coming_soon": "This feature is coming soon",
+  "search_apps": "Search apps...",
+  "search_processes": "Search processes...",
+  "no_apps_matching_search": "No apps matching your search",
+  "no_processes_matching_search": "No processes matching your search",
+  "user": "User",
+  "select_all": "Select All"
 }
