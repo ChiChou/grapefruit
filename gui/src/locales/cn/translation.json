@@ -202,5 +202,11 @@
   "key": "键",
   "daemon": "守护进程",
   "mode": "模式",
-  "feature_coming_soon": "此功能即将推出"
+  "feature_coming_soon": "此功能即将推出",
+  "search_apps": "搜索应用...",
+  "search_processes": "搜索进程...",
+  "no_apps_matching_search": "未找到匹配的应用",
+  "no_processes_matching_search": "未找到匹配的进程",
+  "user": "用户",
+  "select_all": "全选"
 }
