@@ -179,5 +179,21 @@
   "no_global_objects": "未找到全局对象",
   "entries_count": "{{filtered}} / {{total}} 项",
   "run": "运行",
-  "result": "结果"
+  "result": "结果",
+  "enabled": "已启用",
+  "disabled": "已禁用",
+  "content_js": "内容 JS",
+  "auto_open_windows": "自动打开窗口",
+  "file_url_access": "文件 URL 访问",
+  "universal_file_access": "通用文件访问",
+  "webviews": "个 WebView",
+  "no_webviews": "未找到 WebView",
+  "title": "标题",
+  "configuration": "配置",
+  "current_url": "当前 URL",
+  "navigate_to_url": "导航至 URL",
+  "navigate": "导航",
+  "select_webview": "选择一个 WebView 进行检查",
+  "url": "URL",
+  "key": "键"
 }

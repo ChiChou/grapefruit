@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Send } from "lucide-react";
+import { Send, Eraser } from "lucide-react";
 
 import { useSession } from "@/context/SessionContext";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -76,12 +76,12 @@ export function URLSendView({ scheme }: URLSendViewProps) {
               <Button
                 size="sm"
                 onClick={reset}
-                className="gap-2"
                 variant="outline"
                 disabled={isLoading}
+                title={t("reset")}
+                className="px-2"
               >
-                <Send className="size-4" />
-                {t("reset")}
+                <Eraser className="size-4" />
               </Button>
               <Button
                 size="sm"
