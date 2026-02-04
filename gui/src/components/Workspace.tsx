@@ -47,6 +47,7 @@ import { MemoryPreviewTab } from "./tabs/MemoryPreviewTab";
 import { WebViewTab } from "./tabs/WebViewTab";
 import { JSCTab } from "./tabs/JSCTab";
 import { UserDefaultsTab } from "./tabs/UserDefaultsTab";
+import { QuickStartTab } from "./tabs/QuickStartTab";
 
 import { DockContext, useDockActions } from "@/context/DockContext";
 
@@ -133,6 +134,7 @@ function WorkspaceContent() {
   );
 
   const components = {
+    quickstart: QuickStartTab,
     handles: HandlesTab,
     infoPlist: InfoPlistTab,
     entitlements: EntitlementsTab,
@@ -195,23 +197,11 @@ function WorkspaceContent() {
 
   const createDefaultLayout = (dockApi: DockviewApi) => {
     if (isFruityApp) {
-      // iOS App mode - default tabs
+      // iOS App mode - Quick Start tab
       dockApi.addPanel({
-        id: "handles_tab",
-        component: "handles",
-        title: "lsof",
-      });
-
-      dockApi.addPanel({
-        id: "info_plist_tab",
-        component: "infoPlist",
-        title: "Info.plist",
-      });
-
-      dockApi.addPanel({
-        id: "entitlements_tab",
-        component: "entitlements",
-        title: "Entitlements",
+        id: "quickstart_tab",
+        component: "quickstart",
+        title: t("quickstart"),
       });
     } else if (isFruityDaemon) {
       // iOS Daemon mode - Finder tab
