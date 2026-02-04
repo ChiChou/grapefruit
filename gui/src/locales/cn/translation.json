@@ -17,6 +17,10 @@
   "failed_to_fetch_devices": "获取设备列表失败",
   "failed_to_fetch_device_info": "获取设备信息失败",
   "no_apps_found": "未找到应用",
+  "no_processes_found": "未找到进程",
+  "apps": "应用",
+  "processes": "进程",
+  "failed_to_fetch_processes": "获取进程列表失败",
   "please_select_device": "请选择一个设备",
   "desktop_only_warning": "Grapefruit 仅适用于桌面浏览器",
   "search_commands": "搜索命令",
@@ -195,5 +199,8 @@
   "navigate": "导航",
   "select_webview": "选择一个 WebView 进行检查",
   "url": "URL",
-  "key": "键"
+  "key": "键",
+  "daemon": "守护进程",
+  "mode": "模式",
+  "feature_coming_soon": "此功能即将推出"
 }
