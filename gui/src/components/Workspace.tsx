@@ -1,14 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Outlet, useNavigate } from "react-router";
+import { Outlet } from "react-router";
 import { t } from "i18next";
-import { PanelBottomClose, PanelBottomOpen, RefreshCw, XCircle, Unplug } from "lucide-react";
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { StatusBar } from "./StatusBar";
 
 import {
   type DockviewApi,
@@ -25,7 +18,7 @@ import {
 
 import { LeftPanelView } from "./LeftPanelView";
 import { BottomPanelView } from "./BottomPanelView";
-import { Status, Platform, Mode, useSession } from "@/context/SessionContext";
+import { Platform, Mode, useSession } from "@/context/SessionContext";
 import SessionProvider from "./SessionProvider";
 import { useTheme } from "./theme-provider";
 import { HandlesTab } from "./tabs/HandlesTab";
@@ -53,8 +46,7 @@ import { NoCloseTabHeader } from "./tabs/NoCloseTabHeader";
 import { DockContext, useDockActions } from "@/context/DockContext";
 
 function WorkspaceContent() {
-  const { status, bundle, device, platform, mode, pid } = useSession();
-  const navigate = useNavigate();
+  const { bundle, device, platform, mode, pid } = useSession();
 
   // Show full workspace (left panel + dockview) for iOS app and daemon modes
   const isFruityApp = platform === Platform.Fruity && mode === Mode.App;
@@ -66,38 +58,6 @@ function WorkspaceContent() {
     const target = bundle || (pid ? `PID ${pid}` : "");
     document.title = "Grapefruit" + (target ? ` - ${target}` : "");
   }, [bundle, pid]);
-
-  const getStatusColor = () => {
-    switch (status) {
-      case Status.Ready:
-        return "bg-green-500";
-      case Status.Disconnected:
-        return "bg-orange-500";
-      case Status.Connecting:
-      default:
-        return "bg-gray-600";
-    }
-  };
-
-  const handleReloadPage = () => {
-    window.location.reload();
-  };
-
-  const handleKillProcess = async () => {
-    if (!device || !pid) return;
-    try {
-      await fetch(`/api/device/${device}/kill/${pid}`, { method: "POST" });
-      navigate(`/list/${device}/apps`);
-    } catch (e) {
-      console.error("Failed to kill process:", e);
-    }
-  };
-
-  const handleDetach = () => {
-    if (device) {
-      navigate(`/list/${device}/apps`);
-    }
-  };
 
   const [dockViewClazz, setDockViewClazz] = useState<string>(
     "dockview-theme-light",
@@ -276,51 +236,11 @@ function WorkspaceContent() {
             )}
           </ResizablePanel>
         </ResizablePanelGroup>
-        <footer className={`${getStatusColor()} px-4 py-1 text-xs text-white flex items-center justify-between`}>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="hover:bg-white/20 px-1 py-0.5 rounded transition-colors cursor-pointer"
-              >
-                {status === Status.Ready && t("connected")}
-                {status === Status.Connecting && t("connecting")}
-                {status === Status.Disconnected && t("disconnected")}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem onClick={handleReloadPage}>
-                <RefreshCw className="w-4 h-4 mr-2" />
-                {t("reload_page")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={handleKillProcess}
-                disabled={status !== Status.Ready}
-              >
-                <XCircle className="w-4 h-4 mr-2" />
-                {t("kill_process")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleDetach}>
-                <Unplug className="w-4 h-4 mr-2" />
-                {t("detach")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          {showFullWorkspace && (
-            <button
-              type="button"
-              onClick={() => setBottomPanelVisible(!bottomPanelVisible)}
-              className="p-0.5 hover:bg-white/20 rounded transition-colors"
-              title={bottomPanelVisible ? t("hide_panel") : t("show_panel")}
-            >
-              {bottomPanelVisible ? (
-                <PanelBottomClose className="w-4 h-4" />
-              ) : (
-                <PanelBottomOpen className="w-4 h-4" />
-              )}
-            </button>
-          )}
-        </footer>
+        <StatusBar
+          showFullWorkspace={showFullWorkspace}
+          bottomPanelVisible={bottomPanelVisible}
+          setBottomPanelVisible={setBottomPanelVisible}
+        />
       </div>
     </DockContext.Provider>
   );
