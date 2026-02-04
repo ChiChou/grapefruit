@@ -12,7 +12,7 @@ export interface HexPreviewTabParams {
 export function HexPreviewTab({
   params,
 }: IDockviewPanelProps<HexPreviewTabParams>) {
-  const { api, device, pid } = useSession();
+  const { fruity, device, pid } = useSession();
   const [stride, setStride] = useState<Stride>(16);
   const fullPath = params?.path || "";
 
@@ -29,7 +29,7 @@ export function HexPreviewTab({
       if (!r.ok) throw new Error("Failed to load file");
       return new Uint8Array(await r.arrayBuffer());
     },
-    enabled: !!api && !!fullPath,
+    enabled: !!fruity && !!fullPath,
   });
 
   if (isLoading) {

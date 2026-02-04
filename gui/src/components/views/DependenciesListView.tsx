@@ -13,7 +13,7 @@ interface DependenciesListViewProps {
 }
 
 export function DependenciesListView({ path }: DependenciesListViewProps) {
-  const { api } = useSession();
+  const { fruity } = useSession();
   const { openFilePanel } = useDock();
   const { t } = useTranslation();
   const [expandedDeps, setExpandedDeps] = useState<Set<string>>(new Set());
@@ -22,19 +22,19 @@ export function DependenciesListView({ path }: DependenciesListViewProps) {
     Record<string, Symbol[] | null>
   >({});
 
-  const { data: dependencies, isLoading: loading } = useRpcQuery<string[]>(
+  const { data: dependencies, isLoading: loading } = useRpcQuery(
     ["dependencies", path],
     (api) => api.symbol.dependencies(path)
   );
 
   const loadImportsForDep = useCallback(
     async (dep: string) => {
-      if (!api) return;
+      if (!fruity) return;
       if (importedData[dep] !== undefined) return;
 
       setImportsLoading((prev) => new Set(prev).add(dep));
       try {
-        const result = await api.symbol.imports(path, dep);
+        const result = await fruity.symbol.imports(path, dep);
         setImportedData((prev) => ({ ...prev, [dep]: result }));
       } catch (err) {
         console.error(`Failed to load imports for ${dep}:`, err);
@@ -47,7 +47,7 @@ export function DependenciesListView({ path }: DependenciesListViewProps) {
         });
       }
     },
-    [api, path, importedData],
+    [fruity, path, importedData],
   );
 
   const toggleDep = (dep: string) => {

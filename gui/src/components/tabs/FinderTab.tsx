@@ -28,7 +28,7 @@ const PREFIXES = {
 } as const;
 
 export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
-  const { api, status, pid, device } = useSession();
+  const { fruity, status, pid, device } = useSession();
   const { t } = useTranslation();
   const { openSingletonPanel } = useDock();
 
@@ -45,7 +45,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploadFiles, setUploadFiles] = useState<UploadFile[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
-  const apiReady = status === Status.Ready && !!api;
+  const apiReady = status === Status.Ready && !!fruity;
 
   const loadDirectory = useCallback(
     async (
@@ -53,10 +53,10 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
     ): Promise<
       import("../../../../agent/types/fruity/modules/fs.ts").DirectoryListing
     > => {
-      if (!api) return { cwd: "", list: [] };
-      return api.fs.ls(path);
+      if (!fruity) return { cwd: "", list: [] };
+      return fruity.fs.ls(path);
     },
-    [api],
+    [fruity],
   );
 
   const handleDirectorySelect = useCallback(

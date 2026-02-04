@@ -48,7 +48,7 @@ function formatDate(date: Date | null): string {
 
 export function BinaryCookieTab() {
   const { t } = useTranslation();
-  const { api } = useSession();
+  const { fruity } = useSession();
   const queryClient = useQueryClient();
   const [pendingDeleteCookie, setPendingDeleteCookie] = useState<Cookie | null>(
     null,
@@ -137,7 +137,7 @@ export function BinaryCookieTab() {
   };
 
   const saveValue = async () => {
-    if (!api || !editingCookie) return;
+    if (!fruity || !editingCookie) return;
     setIsSaving(true);
     try {
       const predicate: CookiePredicate = {
@@ -145,7 +145,7 @@ export function BinaryCookieTab() {
         domain: editingCookie.domain,
         path: editingCookie.path,
       };
-      const success = await api.cookies.update(predicate, "value", editValue);
+      const success = await fruity.cookies.update(predicate, "value", editValue);
       if (success) {
         queryClient.invalidateQueries({ queryKey: ["cookies"] });
         setEditingCookie(null);
@@ -170,7 +170,7 @@ export function BinaryCookieTab() {
   };
 
   const saveExpiresDate = async () => {
-    if (!api || !editingExpiresCookie) return;
+    if (!fruity || !editingExpiresCookie) return;
     setIsSaving(true);
     try {
       const predicate: CookiePredicate = {
@@ -178,7 +178,7 @@ export function BinaryCookieTab() {
         domain: editingExpiresCookie.domain,
         path: editingExpiresCookie.path,
       };
-      const success = await api.cookies.update(
+      const success = await fruity.cookies.update(
         predicate,
         "expiresDate",
         expiresDate.getTime(),

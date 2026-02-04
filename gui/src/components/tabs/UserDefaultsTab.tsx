@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/dialog";
 import { useRpcQuery, useRpcMutation, useQueryClient } from "@/lib/queries";
 
-import type { UserDefaultsDict, UserDefaultsEntry } from "../../../../agent/types/fruity/modules/userdefaults";
+import type { UserDefaultsEntry } from "../../../../agent/types/fruity/modules/userdefaults";
 
 interface UserDefaultsItem extends UserDefaultsEntry {
   key: string;
@@ -91,24 +91,23 @@ export function UserDefaultsTab() {
     data: defaults,
     isLoading,
     refetch,
-  } = useRpcQuery<UserDefaultsDict>(["userdefaults"], (api) =>
-    api.userdefaults.enumerate()
-  );
+  } = useRpcQuery(["userdefaults"], (api) => api.userdefaults.enumerate());
 
-  const removeMutation = useRpcMutation<void, { key: string }>(
-    (api, { key }) => api.userdefaults.remove(key),
+  const removeMutation = useRpcMutation(
+    (api, { key }: { key: string }) => api.userdefaults.remove(key),
     {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["userdefaults"] });
+        queryClient.invalidateQueries({ queryKey: ["fruity", "userdefaults"] });
       },
     }
   );
 
-  const updateMutation = useRpcMutation<void, { key: string; value: string | number }>(
-    (api, { key, value }) => api.userdefaults.update(key, value),
+  const updateMutation = useRpcMutation(
+    (api, { key, value }: { key: string; value: string | number }) =>
+      api.userdefaults.update(key, value),
     {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["userdefaults"] });
+        queryClient.invalidateQueries({ queryKey: ["fruity", "userdefaults"] });
         setEditingKey(null);
       },
     }

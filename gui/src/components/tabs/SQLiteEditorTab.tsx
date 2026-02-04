@@ -32,7 +32,7 @@ export function SQLiteEditorTab({
   params,
 }: IDockviewPanelProps<SQLiteEditorTabParams>) {
   const { theme } = useTheme();
-  const { api } = useSession();
+  const { fruity } = useSession();
 
   const [filteredTables, setFilteredTables] = useState<string[]>([]);
   const [tableSearch, setTableSearch] = useState("");
@@ -57,17 +57,17 @@ export function SQLiteEditorTab({
 
   const loadTableData = useCallback(
     async (tableName: string) => {
-      if (!api || !fullPath) return;
+      if (!fruity || !fullPath) return;
 
       try {
-        const result = await api.sqlite.dump(fullPath, tableName);
+        const result = await fruity.sqlite.dump(fullPath, tableName);
         setDumpResult(result);
         setSQL(`SELECT * FROM "${tableName}" LIMIT 100;`);
       } catch (err) {
         console.error("Failed to load table data:", err);
       }
     },
-    [api, fullPath],
+    [fruity, fullPath],
   );
 
   useEffect(() => {

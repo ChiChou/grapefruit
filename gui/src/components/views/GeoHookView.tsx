@@ -32,7 +32,7 @@ function storeView(center: [number, number], zoom: number): void {
 
 export function GeoHookView() {
   const { t } = useTranslation();
-  const { api, status } = useSession();
+  const { fruity, status } = useSession();
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
@@ -40,9 +40,9 @@ export function GeoHookView() {
   const markerRef = useRef<L.Marker | null>(null);
 
   const stopSimulation = useCallback(async () => {
-    if (!api) return;
+    if (!fruity) return;
     try {
-      await api.geolocation.dismiss();
+      await fruity.geolocation.dismiss();
     } catch (err) {
       console.error("Failed to dismiss geolocation simulation:", err);
     }
@@ -52,18 +52,18 @@ export function GeoHookView() {
       markerRef.current.remove();
       markerRef.current = null;
     }
-  }, [api]);
+  }, [fruity]);
 
   const fakeGeolocation = useCallback(
     async (lat: number, lng: number) => {
-      if (!api) return;
+      if (!fruity) return;
       try {
-        await api.geolocation.fake(lat, lng);
+        await fruity.geolocation.fake(lat, lng);
       } catch (err) {
         console.error("Failed to fake geolocation:", err);
       }
     },
-    [api],
+    [fruity],
   );
 
   const setupMap = useCallback(() => {
