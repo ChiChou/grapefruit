@@ -33,6 +33,7 @@
   "new_to_grapefruit": "需要快速上手？请查阅",
   "connected": "已连接",
   "disconnected": "连接断开",
+  "disconnect": "断开连接",
   "connecting": "正在连接",
   "reload": "刷新",
   "add_device": "添加设备",
@@ -113,6 +114,10 @@
   "delete_cookie_confirmation": "确定要删除 cookie {{name}} 吗？",
   "clear": "清空",
   "no_cookies": "无 Cookie",
+  "cookies_cleared": "Cookie 已清空",
+  "failed_to_clear_cookies": "清空 Cookie 失败",
+  "cookie_removed": "Cookie 已删除",
+  "failed_to_remove_cookie": "删除 Cookie 失败",
   "domain": "域名",
   "value": "值",
   "expires": "过期时间",
@@ -210,5 +215,11 @@
   "user": "用户",
   "select_all": "全选",
   "hide_panel": "隐藏面板",
-  "show_panel": "显示面板"
+  "show_panel": "显示面板",
+  "session_menu": "会话菜单",
+  "reload_page": "刷新页面",
+  "kill_process": "终止进程",
+  "process_killed": "进程 {{pid}} 已终止",
+  "failed_to_kill_process": "终止进程失败",
+  "detach": "分离"
 }
