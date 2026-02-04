@@ -33,6 +33,7 @@
   "new_to_grapefruit": "New to Grapefruit? Check them out",
   "connected": "Connected",
   "disconnected": "Disconnected",
+  "disconnect": "Disconnect",
   "connecting": "Connecting",
   "reload": "Reload",
   "add_device": "Add device",
@@ -113,6 +114,10 @@
   "delete_cookie_confirmation": "Are you sure to delete cookie {{name}}?",
   "clear": "Clear",
   "no_cookies": "No cookies",
+  "cookies_cleared": "Cookies cleared",
+  "failed_to_clear_cookies": "Failed to clear cookies",
+  "cookie_removed": "Cookie removed",
+  "failed_to_remove_cookie": "Failed to remove cookie",
   "domain": "Domain",
   "value": "Value",
   "expires": "Expires",
@@ -212,5 +217,11 @@
   "user": "User",
   "select_all": "Select All",
   "hide_panel": "Hide Panel",
-  "show_panel": "Show Panel"
+  "show_panel": "Show Panel",
+  "session_menu": "Session Menu",
+  "reload_page": "Reload Page",
+  "kill_process": "Kill Process",
+  "process_killed": "Process {{pid}} killed",
+  "failed_to_kill_process": "Failed to kill process",
+  "detach": "Detach"
 }
