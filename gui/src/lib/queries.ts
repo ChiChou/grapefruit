@@ -25,6 +25,8 @@ export function useRpcQuery<T>(
     queryKey: ["fruity", ...key],
     queryFn: () => queryFn(fruity!),
     enabled: !!fruity && (options?.enabled ?? true),
+    staleTime: 0,
+    gcTime: 0,
     ...options,
   });
 }
@@ -46,6 +48,8 @@ export function useDroidRpcQuery<T>(
     queryKey: ["droid", ...key],
     queryFn: () => queryFn(droid!),
     enabled: !!droid && (options?.enabled ?? true),
+    staleTime: 0,
+    gcTime: 0,
     ...options,
   });
 }
