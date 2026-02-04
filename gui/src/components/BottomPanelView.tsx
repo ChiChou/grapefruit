@@ -1,17 +1,16 @@
 import { useEffect, useState, useRef } from "react";
 import { t } from "i18next";
 import { FileText, Activity } from "lucide-react";
-import { Terminal as XTerm } from "@xterm/xterm";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Status, useSession } from "@/context/SessionContext";
+import { Status, Mode, useSession } from "@/context/SessionContext";
 
-import { Terminal } from "./Terminal";
+import { LogViewer, type LogViewerHandle } from "./LogViewer";
 
 const BOTTOM_PANEL_TAB_STATE = "BOTTOM_PANEL_TAB_STATE";
 
 export function BottomPanelView() {
-  const { fruity, status, socket } = useSession();
+  const { fruity, status, socket, device, bundle, pid, mode } = useSession();
   const [activeTab, setActiveTab] = useState<string>(() => {
     try {
       return localStorage.getItem(BOTTOM_PANEL_TAB_STATE) || "logs";
@@ -20,8 +19,36 @@ export function BottomPanelView() {
     }
   });
 
-  const syslogTerminalRef = useRef<XTerm | null>(null);
-  const logTerminalRef = useRef<XTerm | null>(null);
+  const syslogRef = useRef<LogViewerHandle>(null);
+  const logRef = useRef<LogViewerHandle>(null);
+  const historyLoadedRef = useRef(false);
+
+  // Load historical logs on initialization
+  useEffect(() => {
+    if (!device || historyLoadedRef.current) return;
+
+    const identifier = mode === Mode.App ? bundle : `pid-${pid}`;
+    if (!identifier) return;
+
+    historyLoadedRef.current = true;
+
+    const loadLogs = async (type: "syslog" | "agent", ref: React.RefObject<LogViewerHandle | null>) => {
+      try {
+        const res = await fetch(`/api/logs/${device}/${identifier}/${type}?limit=5000`);
+        if (res.ok) {
+          const text = await res.text();
+          if (text.length > 0) {
+            ref.current?.append(text);
+          }
+        }
+      } catch (e) {
+        console.error(`Failed to load ${type} history:`, e);
+      }
+    };
+
+    loadLogs("syslog", syslogRef);
+    loadLogs("agent", logRef);
+  }, [device, bundle, pid, mode]);
 
   useEffect(() => {
     fruity?.syslog.start();
@@ -33,10 +60,10 @@ export function BottomPanelView() {
 
   useEffect(() => {
     const handleSyslog = (message: string) => {
-      syslogTerminalRef.current?.writeln(message);
+      syslogRef.current?.append(message);
     };
     const handleLog = (level: string, message: string) => {
-      logTerminalRef.current?.writeln(`[${level}] ${message}`);
+      logRef.current?.append(`[${level}] ${message}`);
     };
 
     if (status === Status.Ready && socket) {
@@ -85,13 +112,11 @@ export function BottomPanelView() {
           {t("agent_logs")}
         </TabsTrigger>
       </TabsList>
-      <TabsContent value="logs" className="flex-1 overflow-hidden mt-0">
-        <Terminal
-          onTerminalReady={(term) => (syslogTerminalRef.current = term)}
-        />
+      <TabsContent value="logs" className="flex-1 overflow-hidden mt-0" forceMount hidden={activeTab !== "logs"}>
+        <LogViewer ref={syslogRef} />
       </TabsContent>
-      <TabsContent value="agent-logs" className="flex-1 overflow-hidden mt-0">
-        <Terminal onTerminalReady={(term) => (logTerminalRef.current = term)} />
+      <TabsContent value="agent-logs" className="flex-1 overflow-hidden mt-0" forceMount hidden={activeTab !== "agent-logs"}>
+        <LogViewer ref={logRef} />
       </TabsContent>
     </Tabs>
   );
