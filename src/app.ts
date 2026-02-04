@@ -215,7 +215,12 @@ api
     const processes = await device.enumerateProcesses({
       scope: frida.Scope.Metadata,
     });
-    return c.json(processes.map(serializeProcess));
+    // filter out launchd for safety
+    return c.json(
+      processes
+        .filter((proc) => proc.pid !== 1 && proc.name !== "launchd")
+        .map(serializeProcess),
+    );
   })
   .get("/device/:device/icon/:bundle", async (c) => {
     const deviceId = c.req.param("device");
@@ -256,6 +261,20 @@ api
   .get("/device/:device/info", getDeviceMiddleware, async (c) => {
     const device = c.get("device");
     return c.json(await device.querySystemParameters());
+  })
+  .post("/device/:device/kill/:pid", getDeviceMiddleware, async (c) => {
+    const device = c.get("device");
+    const pid = parseInt(c.req.param("pid"), 10);
+    if (isNaN(pid)) {
+      return c.json({ error: "invalid pid" }, 400);
+    }
+    try {
+      await device.kill(pid);
+      return c.body(null, 204);
+    } catch (e) {
+      console.error("Failed to kill process:", e);
+      return c.json({ error: "failed to kill process" }, 500);
+    }
   })
   .put("/devices/remote/:hostname", async (c) => {
     const hostname = c.req.param("hostname");
