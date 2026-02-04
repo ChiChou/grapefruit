@@ -30,7 +30,7 @@ function storeView(center: [number, number], zoom: number): void {
   localStorage.setItem(MAP_PICKER_STATE, JSON.stringify({ center, zoom }));
 }
 
-export function GeoHookView() {
+export function GeolocationPanel() {
   const { t } = useTranslation();
   const { fruity, status } = useSession();
   const [lat, setLat] = useState<number | null>(null);

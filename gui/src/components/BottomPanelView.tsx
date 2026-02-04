@@ -1,13 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import { t } from "i18next";
-import { FileText, Activity, Earth } from "lucide-react";
+import { FileText, Activity } from "lucide-react";
 import { Terminal as XTerm } from "@xterm/xterm";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Status, useSession } from "@/context/SessionContext";
 
 import { Terminal } from "./Terminal";
-import { GeoHookView } from "./views/GeoHookView";
 
 const BOTTOM_PANEL_TAB_STATE = "BOTTOM_PANEL_TAB_STATE";
 
@@ -85,13 +84,6 @@ export function BottomPanelView() {
           <Activity className="h-4 w-4" />
           {t("agent_logs")}
         </TabsTrigger>
-        <TabsTrigger
-          value="geolocation"
-          className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary flex items-center gap-2"
-        >
-          <Earth className="h-4 w-4" />
-          {t("geolocation_simulation")}
-        </TabsTrigger>
       </TabsList>
       <TabsContent value="logs" className="flex-1 overflow-hidden mt-0">
         <Terminal
@@ -100,9 +92,6 @@ export function BottomPanelView() {
       </TabsContent>
       <TabsContent value="agent-logs" className="flex-1 overflow-hidden mt-0">
         <Terminal onTerminalReady={(term) => (logTerminalRef.current = term)} />
-      </TabsContent>
-      <TabsContent value="geolocation" className="flex-1 p-4 mt-0">
-        <GeoHookView />
       </TabsContent>
     </Tabs>
   );
