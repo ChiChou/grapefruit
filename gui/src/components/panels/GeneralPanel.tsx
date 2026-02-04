@@ -1,23 +1,10 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Copy,
-  Check,
-  FileText,
-  FolderOpen,
-  FolderKey,
-  Cookie,
-  Layout,
-  Shield,
-  Globe,
-  Code,
-  Settings,
-} from "lucide-react";
+import { Copy, Check } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 
 import { Status, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
@@ -73,84 +60,12 @@ export function GeneralPanel() {
     error,
   } = useRpcQuery<BasicInfo>(["appInfo"], (api) => api.info.basics());
 
-  const openHandlesTab = () => {
-    openSingletonPanel({
-      id: "handles_tab",
-      component: "handles",
-      title: "lsof",
-    });
-  };
-
-  const openInfoPlistTab = () => {
-    openSingletonPanel({
-      id: "info_plist_tab",
-      component: "infoPlist",
-      title: "Info.plist",
-    });
-  };
-
-  const openBinaryCookieTab = () => {
-    openSingletonPanel({
-      id: "binary_cookie_tab",
-      component: "binaryCookie",
-      title: "Binary Cookies",
-    });
-  };
-
-  const openKeyChainTab = () => {
-    openSingletonPanel({
-      id: "keychain_tab",
-      component: "keychain",
-      title: "KeyChain",
-    });
-  };
-
-  const openUIDumpTab = () => {
-    openSingletonPanel({
-      id: "ui_dump_tab",
-      component: "uiDump",
-      title: t("inspect_ui"),
-    });
-  };
-
-  const openEntitlementsTab = () => {
-    openSingletonPanel({
-      id: "entitlements_tab",
-      component: "entitlements",
-      title: "Entitlements",
-    });
-  };
-
   const openFinderTab = (path: string) => {
     openSingletonPanel({
       id: "finder_tab",
       component: "finder",
       title: t("finder"),
       params: { path },
-    });
-  };
-
-  const openWebViewTab = () => {
-    openSingletonPanel({
-      id: "webview_tab",
-      component: "webview",
-      title: "WebViews",
-    });
-  };
-
-  const openJSCTab = () => {
-    openSingletonPanel({
-      id: "jsc_tab",
-      component: "jsc",
-      title: "JSContext",
-    });
-  };
-
-  const openUserDefaultsTab = () => {
-    openSingletonPanel({
-      id: "userdefaults_tab",
-      component: "userdefaults",
-      title: "UserDefaults",
     });
   };
 
@@ -270,46 +185,6 @@ export function GeneralPanel() {
             ) : (
               <span className="text-sm">{t("na")}</span>
             )}
-          </div>
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" onClick={openHandlesTab}>
-                <FolderOpen className="w-4 h-4 mr-2" />
-                lsof
-              </Button>
-              <Button variant="outline" size="sm" onClick={openInfoPlistTab}>
-                <FileText className="w-4 h-4 mr-2" />
-                Info.plist
-              </Button>
-              <Button variant="outline" size="sm" onClick={openBinaryCookieTab}>
-                <Cookie className="w-4 h-4 mr-2" />
-                Binary Cookies
-              </Button>
-              <Button variant="outline" size="sm" onClick={openKeyChainTab}>
-                <FolderKey className="w-4 h-4 mr-2" />
-                KeyChain
-              </Button>
-              <Button variant="outline" size="sm" onClick={openEntitlementsTab}>
-                <Shield className="w-4 h-4 mr-2" />
-                Entitlements
-              </Button>
-              <Button variant="outline" size="sm" onClick={openUIDumpTab}>
-                <Layout className="w-4 h-4 mr-2" />
-                {t("inspect_ui")}
-              </Button>
-              <Button variant="outline" size="sm" onClick={openWebViewTab}>
-                <Globe className="w-4 h-4 mr-2" />
-                WebViews
-              </Button>
-              <Button variant="outline" size="sm" onClick={openJSCTab}>
-                <Code className="w-4 h-4 mr-2" />
-                JSContext
-              </Button>
-              <Button variant="outline" size="sm" onClick={openUserDefaultsTab}>
-                <Settings className="w-4 h-4 mr-2" />
-                UserDefaults
-              </Button>
-            </div>
           </div>
         </div>
       ) : status === Status.Ready ? (
