@@ -35,6 +35,9 @@ import { BinaryCookieTab } from "./tabs/BinaryCookieTab";
 import { KeyChainTab } from "./tabs/KeyChainTab";
 import { UIDumpTab } from "./tabs/UIDumpTab";
 import { MemoryPreviewTab } from "./tabs/MemoryPreviewTab";
+import { WebViewTab } from "./tabs/WebViewTab";
+import { JSCTab } from "./tabs/JSCTab";
+import { UserDefaultsTab } from "./tabs/UserDefaultsTab";
 
 import { DockContext, useDockActions } from "@/context/DockContext";
 
@@ -97,6 +100,9 @@ function WorkspaceContent() {
     keychain: KeyChainTab,
     uiDump: UIDumpTab,
     memory: MemoryPreviewTab,
+    webview: WebViewTab,
+    jsc: JSCTab,
+    userdefaults: UserDefaultsTab,
   };
 
   const getLayoutKey = (

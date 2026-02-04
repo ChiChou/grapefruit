@@ -15,39 +15,10 @@ export interface UIDumpNode {
   description?: string;
   children?: UIDumpNode[];
   frame: Frame | null;
-  preview: string | null; // base64 encoded png
   delegate?: UIDelegate;
 }
 
-const CGFloat = Process.pointerSize === 4 ? "float" : "double";
-const CGSize: NativeFunctionArgumentType = [CGFloat, CGFloat];
-
-export function dump(includingPreview = false) {
-  const UIKit = Process.getModuleByName("UIKit");
-  const UIGraphicsBeginImageContextWithOptions = new NativeFunction(
-    UIKit.findExportByName("UIGraphicsBeginImageContextWithOptions")!,
-    "void",
-    [CGSize, "bool", CGFloat],
-  );
-
-  const UIGraphicsGetImageFromCurrentImageContext = new NativeFunction(
-    UIKit.findExportByName("UIGraphicsGetImageFromCurrentImageContext")!,
-    "pointer",
-    [],
-  );
-
-  const UIGraphicsEndImageContext = new NativeFunction(
-    UIKit.findExportByName("UIGraphicsEndImageContext")!,
-    "void",
-    [],
-  );
-
-  const UIImagePNGRepresentation = new NativeFunction(
-    UIKit.findExportByName("UIImagePNGRepresentation")!,
-    "pointer",
-    ["pointer"],
-  );
-
+export async function dump() {
   const { UIWindow } = ObjC.classes;
   const win = UIWindow.keyWindow();
 
@@ -72,23 +43,6 @@ export function dump(includingPreview = false) {
 
     const children: UIDumpNode[] = [];
 
-    let preview: string | null = null;
-    if (includingPreview) {
-      // preview
-      const bounds = view.bounds();
-      const size = bounds[1];
-      UIGraphicsBeginImageContextWithOptions(size, 0, 0);
-      view.drawViewHierarchyInRect_afterScreenUpdates_(bounds, true);
-
-      const image = UIGraphicsGetImageFromCurrentImageContext();
-      UIGraphicsEndImageContext();
-      const png = UIImagePNGRepresentation(image) as NativePointer;
-      if (!png.isNull()) {
-        const data = new ObjC.Object(png);
-        preview = data.base64EncodedStringWithOptions_(0).toString() as string;
-      }
-    }
-
     for (let i = 0; i < subviews.count(); i++) {
       const child = recursive(subviews.objectAtIndex_(i));
       if (child) children.push(child);
@@ -99,14 +53,12 @@ export function dump(includingPreview = false) {
       children,
       frame,
       delegate,
-      preview,
       clazz,
     };
   };
 
-  return dismissHighlight().then(() =>
-    performOnMainThread(() => recursive(win)),
-  );
+  await dismissHighlight();
+  return performOnMainThread(() => recursive(win));
 }
 
 let overlay: ObjC.Object | null = null;

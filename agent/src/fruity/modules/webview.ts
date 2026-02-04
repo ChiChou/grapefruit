@@ -2,12 +2,10 @@ import ObjC from "frida-objc-bridge";
 import type { NSObject, StringLike, NSURL, NSString } from "../typings.js";
 
 import { performOnMainThread } from "../lib/dispatch.js";
-import { get as getInstance } from "../lib/choose.js";
 
 const WebViewKinds = ["UI", "WK"] as const;
 
 type Kind = (typeof WebViewKinds)[number];
-type WebViewsCollection = Record<Kind, { [handle: string]: string }>;
 
 interface NSURLRequest extends NSObject {
   initWithURL_(url: NSURL): NSURLRequest;
@@ -18,9 +16,6 @@ interface WKPreferences extends NSObject {
   siteSpecificQuirksModeEnabled(): boolean;
   fraudulentWebsiteWarningEnabled(): boolean;
 
-  /**
-   * @deprecated in iOS 14.0
-   */
   javaScriptEnabled(): boolean;
 }
 
@@ -41,6 +36,8 @@ interface WKWebView extends NSObject {
     js: StringLike,
     handler: ObjC.Block,
   ): void;
+  URL(): NSURL;
+  loadRequest_(req: NSURLRequest): void;
 }
 
 interface WebScriptObject extends NSObject {
@@ -54,131 +51,261 @@ interface UIWebView extends NSObject {
   stringByEvaluatingJavaScriptFromString_(js: StringLike): NSString;
   valueForKeyPath_(key: StringLike): NSObject;
   windowScriptObject(): WebScriptObject;
+  loadRequest_(req: NSURLRequest): void;
 }
 
 type WebView = UIWebView | WKWebView;
 
-export async function list(): Promise<WebViewsCollection> {
-  const result: WebViewsCollection = { WK: {}, UI: {} };
-  for (const kind of WebViewKinds) {
-    const clazz = ObjC.classes[`${kind}WebView`];
+export interface WebViewInfo {
+  handle: string;
+  kind: Kind;
+  title?: string;
+  url?: string;
+}
 
-    for (const instance of ObjC.chooseSync(clazz)) {
-      const title = await evaluate(instance as WebView, "document.title");
+export interface WKWebViewInfo extends WebViewInfo {
+  js: boolean; // javaScriptEnabled
+  contentJs?: boolean; // allowsContentJavaScript
+  fileURLAccess?: boolean; // allowFileAccessFromFileURLs
+  universalFileAccess?: boolean; // allowUniversalAccessFromFileURLs
+  secure?: boolean; // iOS 16.4+ contentBlockersEnabled
+  jsAutoOpenWindow: boolean; // javaScriptCanOpenWindowsAutomatically
+}
+
+export type UIWebViewInfo = WebViewInfo;
+
+function choose(clazz: ObjC.Object): Promise<ObjC.Object[]> {
+  return new Promise((resolve) => {
+    const instances: ObjC.Object[] = [];
+    ObjC.choose(clazz, {
+      onMatch(instance) {
+        instances.push(instance);
+      },
+      onComplete() {
+        resolve(instances);
+      },
+    });
+  });
+}
+
+// track alive WebViews
+const handles = new Map<Kind, Set<string>>();
+
+function trackDealloc(clazz: ObjC.Object) {
+  return Interceptor.attach(clazz["- dealloc"].implementation, {
+    onEnter(args) {
+      const handle = args[0].toString();
+      const kind = clazz.$className.startsWith("WK") ? "WK" : "UI";
+      const alive = handles.get(kind);
+      if (alive) alive.delete(handle.toString());
+    },
+  });
+}
+
+export async function listWK(): Promise<WKWebViewInfo[]> {
+  const { WKWebView } = ObjC.classes;
+  if (!WKWebView) return [];
+
+  const kind = "WK";
+
+  if (!handles.has(kind)) {
+    handles.set(kind, new Set());
+    const listener = trackDealloc(WKWebView);
+    Script.bindWeak(globalThis, listener.detach.bind(listener));
+  }
+
+  const alive = handles.get(kind)!;
+
+  const instances = await choose(WKWebView);
+
+  return Promise.all(
+    instances.map((instance) => {
+      const webview = instance as WKWebView;
       const handle = instance.handle.toString();
-      result[kind][handle] = title;
-    }
+
+      alive.add(handle);
+
+      const conf = webview.configuration() as WKWebViewConfiguration;
+      const pref = conf.preferences();
+      const webpagePref = conf.defaultWebpagePreferences();
+
+      return performOnMainThread(async () => {
+        const url = webview.URL()?.toString() ?? "";
+        const title = await WKGetTitle(webview);
+
+        return {
+          handle,
+          kind,
+          url,
+          title,
+          js: pref.javaScriptEnabled(),
+          contentJs: webpagePref.allowsContentJavaScript(),
+          jsAutoOpenWindow: pref.javaScriptCanOpenWindowsAutomatically(),
+        } as WKWebViewInfo;
+      });
+    }),
+  );
+}
+
+export async function listUI(): Promise<UIWebViewInfo[]> {
+  const { UIWebView } = ObjC.classes;
+  if (!UIWebView) return [];
+
+  const kind = "UI";
+  if (!handles.has(kind)) {
+    handles.set(kind, new Set());
+    const listener = trackDealloc(UIWebView);
+    Script.bindWeak(globalThis, listener.detach.bind(listener));
   }
 
-  return result;
+  const alive = handles.get(kind)!;
+
+  const instances = await choose(UIWebView);
+
+  return Promise.all(
+    instances.map((instance) => {
+      const webview = instance as UIWebView;
+      const handle = instance.handle.toString();
+
+      alive.add(handle);
+
+      return performOnMainThread(() => {
+        const req = webview.request();
+        const url = req?.mainDocumentURL()?.toString() ?? "";
+        const title = UIGetTitle(webview);
+
+        return {
+          handle,
+          kind,
+          url,
+          title,
+        } as UIWebViewInfo;
+      });
+    }),
+  );
 }
 
-async function get(handle: string): Promise<NSObject> {
-  for (const kind of WebViewKinds) {
-    const clazz = ObjC.classes[`${kind}WebView`] as NSObject;
-    try {
-      return await getInstance(clazz, handle);
-    } catch (_) {}
-  }
+function WKGetTitle(webview: WKWebView) {
+  if (!ObjC.classes.NSThread.isMainThread()) throw new Error("Invalid thread");
 
-  throw new Error(`Unable to find WebView for handle ${handle}`);
+  return new Promise<string>((resolve, reject) =>
+    webview.evaluateJavaScript_completionHandler_(
+      "document.title",
+      new ObjC.Block({
+        retType: "void",
+        argTypes: ["object", "object"],
+        implementation(result: ObjC.Object, error: ObjC.Object) {
+          if (error) reject(new Error(`Unable to get title. ${error}`));
+          else resolve("" + result);
+        },
+      }),
+    ),
+  );
 }
 
-export async function run(handle: string, js: string): Promise<string> {
-  const webview = await get(handle);
-  return evaluate(webview as WebView, js);
-}
+function UIGetTitle(webview: UIWebView) {
+  if (!ObjC.classes.NSThread.isMainThread()) throw new Error("Invalid thread");
 
-async function evaluate(webview: WebView, js: string): Promise<string> {
-  if (webview.isKindOfClass_(ObjC.classes.UIWebView))
-    return performOnMainThread(
-      () =>
-        (webview as UIWebView).stringByEvaluatingJavaScriptFromString_(js) + "",
+  try {
+    return (
+      webview.stringByEvaluatingJavaScriptFromString_("document.title") + ""
     );
+  } catch (e) {
+    throw new Error(`Unable to get title. ${e}`);
+  }
+}
+
+function getInstance(kind: Kind, handle: string): WebView {
+  const alive = handles.get(kind);
+  if (!alive || !alive.has(handle))
+    throw new Error(`${kind}WebView ${handle} not found`);
+
+  return new ObjC.Object(ptr(handle)) as WebView;
+}
+
+export async function evaluate(kind: Kind, handle: string, js: string) {
+  const instance = getInstance(kind, handle);
+
+  if (kind === "UI") {
+    return performOnMainThread(() => {
+      const webview = instance as UIWebView;
+      return webview.stringByEvaluatingJavaScriptFromString_(js) + "";
+    });
+  }
 
   return new Promise((resolve, reject) => {
-    performOnMainThread(() =>
-      webview.evaluateJavaScript_completionHandler_(
-        js,
-        new ObjC.Block({
-          retType: "void",
-          argTypes: ["object", "object"],
-          implementation(result: ObjC.Object, error: ObjC.Object) {
-            if (error)
-              reject(new Error(`Unable to execute Javascript. ${error}`));
-            else resolve("" + result);
-          },
-        }),
-      ),
+    const webview = instance as WKWebView;
+    webview.evaluateJavaScript_completionHandler_(
+      js,
+      new ObjC.Block({
+        retType: "void",
+        argTypes: ["object", "object"],
+        implementation(result: ObjC.Object, error: ObjC.Object) {
+          if (error)
+            reject(new Error(`Unable to execute Javascript. ${error}`));
+          else resolve("" + result);
+        },
+      }),
     );
   });
 }
 
-export async function url(handle: string) {
-  const webview = await get(handle);
-  if (webview.isKindOfClass_(ObjC.classes.UIWebView))
-    return webview.request().mainDocumentURL() + "";
-  return webview.URL() + "";
-}
+export async function navigate(
+  kind: Kind,
+  handle: string,
+  url: string,
+): Promise<void> {
+  const instance = getInstance(kind, handle);
 
-export async function navigate(handle: string, url: string) {
-  const webview = (await get(handle)) as WKWebView;
+  if (kind === "UI") {
+    return performOnMainThread(() => {
+      const webview = instance as UIWebView;
+      const u = ObjC.classes.NSURL.URLWithString_(url);
+      const req = ObjC.classes.NSURLRequest.requestWithURL_(u);
+      webview.loadRequest_(req);
+    });
+  }
+
   return performOnMainThread(() => {
-    // WARNING: performOnMainThread could lead to use after free
+    const webview = instance as WKWebView;
     const u = ObjC.classes.NSURL.URLWithString_(url);
     const req = ObjC.classes.NSURLRequest.requestWithURL_(u);
     webview.loadRequest_(req);
   });
 }
 
-export async function dump(handle: string) {
-  const webview = (await get(handle)) as UIWebView;
-  if (!webview.isKindOfClass_(ObjC.classes.UIWebView))
-    throw new Error(`invalid UIWebView ${webview}`);
+// export async function dump(handle: string): Promise<Record<string, string>> {
+//   return performOnMainThread(() => {
+//     const webview = findWebViewSync(handle, "UI") as UIWebView | null;
+//     if (!webview) throw new Error(`UIWebView ${handle} not found`);
 
-  return new Promise((resolve) => {
-    performOnMainThread(() => {
-      const jsc = webview.valueForKeyPath_(
-        "documentView.webView.mainFrame.javaScriptContext",
-      );
-      const window = webview.windowScriptObject();
-      const keys = window.evaluateWebScript_("Object.keys(this)");
-      const count = keys.valueForKey_("length");
-      const result = new Map<string, string>();
-      for (let i = 0; i < count; i++) {
-        const key = keys.webScriptValueAtIndex_(i).toString();
-        if (!jsc.objectForKeyedSubscript_(key).isObject()) continue;
-        const obj = window.valueForKey_(key);
-        if (!obj.isKindOfClass_(ObjC.classes.WebScriptObject))
-          result.set(key, `<${obj.$className} ${obj.handle}>`);
-      }
-      resolve({ ...result });
-    });
-  });
-}
+//     const jsc = webview.valueForKeyPath_(
+//       "documentView.webView.mainFrame.javaScriptContext",
+//     );
+//     const window = webview.windowScriptObject();
+//     const keys = window.evaluateWebScript_("Object.keys(this)");
+//     const count = (
+//       keys as unknown as { valueForKey_(k: string): number }
+//     ).valueForKey_("length");
+//     const result: Record<string, string> = {};
 
-export async function prefs(handle: string) {
-  const webview = await get(handle);
-  if (!webview.isKindOfClass_(ObjC.classes.WKWebView))
-    throw new Error(`${webview} is not a WKWebView`);
+//     for (let i = 0; i < count; i++) {
+//       const key = (
+//         keys as unknown as { webScriptValueAtIndex_(i: number): NSObject }
+//       )
+//         .webScriptValueAtIndex_(i)
+//         .toString();
+//       if (
+//         !(jsc as unknown as { objectForKeyedSubscript_(k: string): NSObject })
+//           .objectForKeyedSubscript_(key)
+//           .isObject()
+//       )
+//         continue;
+//       const obj = window.valueForKey_(key);
+//       if (!obj.isKindOfClass_(ObjC.classes.WebScriptObject))
+//         result[key] = `<${obj.$className} ${obj.handle}>`;
+//     }
 
-  const conf = webview.configuration();
-  const pref = conf.preferences();
-
-  const result = {
-    customUserAgent: webview.customUserAgent().toString(),
-    javaScriptEnabled: pref.javaScriptEnabled(),
-    allowsContentJavaScript: undefined,
-    jsAutoOpenWindow: pref.javaScriptCanOpenWindowsAutomatically(),
-  };
-
-  // > iOS 13
-  if (typeof conf.defaultWebpagePreferences === "function") {
-    // todo: get preference per natigation
-    result["allowsContentJavaScript"] = conf
-      .defaultWebpagePreferences()
-      .allowsContentJavaScript();
-  }
-
-  return result;
-}
+//     return result;
+//   });
+// }
