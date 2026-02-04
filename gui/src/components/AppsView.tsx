@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router";
+import { useParams, Link, useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { AlertCircleIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 import type { Application, DeviceInfo } from "@shared/schema";
 
@@ -39,15 +40,25 @@ function DeviceHeader({ deviceInfo: info }: { deviceInfo: DeviceInfo }) {
   );
 }
 
+function getPlatformFromDeviceInfo(info: DeviceInfo | undefined): "fruity" | "droid" {
+  // Determine platform based on OS name
+  if (info?.os?.name?.toLowerCase().includes("android")) {
+    return "droid";
+  }
+  // Default to fruity (iOS) for now
+  return "fruity";
+}
+
 interface AppCardProps {
   app: Application;
   udid: string;
+  platform: "fruity" | "droid";
 }
 
-function AppCard({ app, udid }: AppCardProps) {
+function AppCard({ app, udid, platform }: AppCardProps) {
   return (
     <Link
-      to={`/workspace/${udid}/${app.identifier}`}
+      to={`/workspace/${platform}/${udid}/app/${app.identifier}`}
       className="block rounded-lg py-6 px-2 transition-colors  hover:bg-amber-100 dark:hover:bg-gray-800"
     >
       <div className="relative mb-3 flex items-center justify-center">
@@ -85,15 +96,20 @@ function AppCard({ app, udid }: AppCardProps) {
 export function AppsView() {
   const { udid } = useParams();
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
+  const platformParam = searchParams.get("platform");
 
   const {
     data: apps = [],
     isLoading: appsLoading,
     error: appsError,
   } = useQuery<Application[], Error>({
-    queryKey: ["apps", udid],
+    queryKey: ["apps", udid, platformParam],
     queryFn: async ({ signal }) => {
-      const res = await fetch(`/api/device/${udid}/apps`, { signal });
+      const url = platformParam
+        ? `/api/device/${udid}/apps?platform=${platformParam}`
+        : `/api/device/${udid}/apps`;
+      const res = await fetch(url, { signal });
       if (!res.ok) throw new Error(t("failed_to_fetch_apps"));
       return res.json();
     },
@@ -114,14 +130,20 @@ export function AppsView() {
     enabled: !!udid,
   });
 
-  const loading = appsLoading || infoLoading;
-  const error = appsError || infoError;
+  const platform = platformParam as "fruity" | "droid" | null || getPlatformFromDeviceInfo(deviceInfo);
+  const loading = infoLoading || appsLoading;
+  const error = infoError || appsError;
 
   if (loading) {
     return (
       <div className="p-6">
         <Skeleton className="mb-2 h-8 w-48" />
         <Skeleton className="mb-6 h-4 w-96" />
+
+        <div className="mb-6 flex gap-2">
+          <Skeleton className="h-9 w-16" />
+          <Skeleton className="h-9 w-24" />
+        </div>
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
           {Array.from({ length: 12 }).map((_, i) => (
@@ -150,9 +172,18 @@ export function AppsView() {
     <div className="p-6">
       {deviceInfo ? <DeviceHeader deviceInfo={deviceInfo} /> : <></>}
 
+      <div className="mb-6 flex gap-2">
+        <Button variant="default" size="sm">
+          {t("apps")}
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link to={`/processes/${udid}`}>{t("processes")}</Link>
+        </Button>
+      </div>
+
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
         {apps.map((app) => (
-          <AppCard key={app.identifier} app={app} udid={udid!} />
+          <AppCard key={app.identifier} app={app} udid={udid!} platform={platform} />
         ))}
       </div>
 
