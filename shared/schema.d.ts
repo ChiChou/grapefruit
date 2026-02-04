@@ -14,6 +14,10 @@ export interface Application {
 export interface Process {
   name: string;
   pid: number;
+  path?: string;
+  user?: string;
+  ppid?: number;
+  started?: string;
 }
 
 export interface DeviceInfo {

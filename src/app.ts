@@ -212,7 +212,9 @@ api
   })
   .get("/device/:device/processes", getDeviceMiddleware, async (c) => {
     const device = c.get("device");
-    const processes = await device.enumerateProcesses();
+    const processes = await device.enumerateProcesses({
+      scope: frida.Scope.Metadata,
+    });
     return c.json(processes.map(serializeProcess));
   })
   .get("/device/:device/icon/:bundle", async (c) => {
