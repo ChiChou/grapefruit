@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { TriangleAlert, RefreshCw, Plus, X } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { Spinner } from "@/components/ui/spinner";
 import { Separator } from "@/components/ui/separator";
@@ -53,16 +54,25 @@ export function Devices() {
       setAddMenuOpen(false);
       setIpAddress("");
     },
+    onError: (error) => {
+      toast.error(error.message);
+    },
   });
 
   const deleteDeviceMutation = useMutation({
     mutationFn: async (ip: string) => {
-      await fetch(`/api/devices/remote/${ip}`, {
+      const response = await fetch(`/api/devices/remote/${ip}`, {
         method: "DELETE",
       });
+      if (!response.ok) {
+        throw new Error("Failed to remove remote device");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["devices"] });
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
@@ -178,14 +188,15 @@ export function Devices() {
       ) : (
         <ul className="flex flex-col gap-2">
           {devices.map((device) => (
-            <li key={device.id} className="flex items-center gap-2">
+            <li key={device.id} className="flex items-center gap-2 min-w-0">
               <Link
-                to={`/apps/${device.id}`}
-                className={`flex-1 block rounded-md px-3 py-2 text-sm transition-colors hover:bg-gray-200 dark:hover:bg-gray-700 ${
+                to={`/list/${device.id}/apps`}
+                className={`flex-1 block rounded-md px-3 py-2 text-sm transition-colors hover:bg-gray-200 dark:hover:bg-gray-700 min-w-0 truncate ${
                   udid === device.id
                     ? "bg-gray-300 font-medium dark:bg-gray-700 dark:text-gray-100"
                     : "text-gray-700 dark:text-gray-300"
                 }`}
+                title={device.name || device.id}
               >
                 {device.name || device.id}
               </Link>
@@ -195,7 +206,7 @@ export function Devices() {
                   size="icon-sm"
                   onClick={() => handleDeleteRemoteDevice(device.id)}
                   title={t("delete")}
-                  className="shrink-0"
+                  className="shrink-0 flex-none"
                 >
                   <X className="h-4 w-4" />
                 </Button>
