@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  RotateCcw,
+  RefreshCw,
   Trash2,
   Key,
   User,
@@ -237,7 +237,7 @@ export function KeyChainTab() {
           onClick={() => refetch()}
           disabled={isLoading}
         >
-          <RotateCcw className="w-4 h-4 mr-2" />
+          <RefreshCw className="w-4 h-4 mr-2" />
           {t("reload")}
         </Button>
         <div className="flex items-center gap-2 ml-auto">

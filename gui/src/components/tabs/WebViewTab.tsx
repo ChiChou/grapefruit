@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import Editor, { type Monaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import {
-  RotateCcw,
+  RefreshCw,
   Play,
   Globe,
   ExternalLink,
@@ -180,7 +180,7 @@ document.title`);
           onClick={() => refetch()}
           disabled={isLoading}
         >
-          <RotateCcw className="w-4 h-4 mr-2" />
+          <RefreshCw className="w-4 h-4 mr-2" />
           {t("reload")}
         </Button>
         <span className="text-sm text-muted-foreground ml-auto">

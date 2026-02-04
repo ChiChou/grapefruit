@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  RotateCcw,
+  RefreshCw,
   Trash2,
   Shield,
   Globe,
@@ -202,7 +202,7 @@ export function BinaryCookieTab() {
           onClick={() => refetch()}
           disabled={isLoading}
         >
-          <RotateCcw className="w-4 h-4 mr-2" />
+          <RefreshCw className="w-4 h-4 mr-2" />
           {t("reload")}
         </Button>
         <Button
