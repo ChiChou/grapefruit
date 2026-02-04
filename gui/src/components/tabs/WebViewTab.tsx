@@ -188,21 +188,21 @@ document.title`);
         </span>
       </div>
       <div className="flex-1 overflow-hidden">
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full gap-2 text-gray-500">
+            <Spinner className="w-5 h-5" />
+            <span>{t("loading")}...</span>
+          </div>
+        ) : entries.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-gray-500">
+            {t("no_webviews")}
+          </div>
+        ) : (
         <ResizablePanelGroup direction="horizontal">
           {/* Left Panel - WebView List */}
           <ResizablePanel defaultSize={40} minSize={25}>
             <div className="h-full overflow-auto">
-              {isLoading ? (
-                <div className="flex items-center justify-center h-full gap-2 text-gray-500">
-                  <Spinner className="w-5 h-5" />
-                  <span>{t("loading")}...</span>
-                </div>
-              ) : entries.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                  {t("no_webviews")}
-                </div>
-              ) : (
-                <Table>
+              <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-24">{t("type")}</TableHead>
@@ -246,7 +246,6 @@ document.title`);
                     ))}
                   </TableBody>
                 </Table>
-              )}
             </div>
           </ResizablePanel>
 
@@ -409,6 +408,7 @@ document.title`);
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
+        )}
       </div>
     </div>
   );
