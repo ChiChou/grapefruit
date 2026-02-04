@@ -21,7 +21,7 @@ export function list() {
   for (const instance of ObjC.chooseSync(ObjC.classes.JSContext)) {
     result.set(instance.handle.toString(), instance.toString());
   }
-  return { ...result };
+  return Object.fromEntries(result);
 }
 
 function get(handle: string) {
@@ -107,7 +107,7 @@ export async function dump(handle: string) {
     result.set(`${key}`, serialize(obj));
     console.log(key, Dictionary.description(obj));
   }
-  return { ...result };
+  return Object.fromEntries(result);
 }
 
 export async function run(handle: string, js: string) {
