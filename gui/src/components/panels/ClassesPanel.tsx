@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
+import { useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Search } from "lucide-react";
 import { List, type RowComponentProps } from "react-window";
 
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useDock } from "@/context/DockContext";
 import { useRpcQuery } from "@/lib/queries";
 
@@ -15,8 +15,10 @@ type ScopeType = "__main__" | "__app__" | "__global__";
 
 export function ClassesPanel() {
   const { t } = useTranslation();
+  const { mode } = useParams();
   const { openFilePanel } = useDock();
-  const [scope, setScope] = useState<ScopeType>("__app__");
+  const isDaemon = mode === "daemon";
+  const [scope, setScope] = useState<ScopeType>(isDaemon ? "__main__" : "__app__");
   const [search, setSearch] = useState("");
 
   const { data: classes = [], isLoading } = useRpcQuery(
@@ -31,36 +33,26 @@ export function ClassesPanel() {
   }, [classes, search]);
 
   const handleScopeChange = (value: string) => {
-    setScope(value as ScopeType);
+    if (value) setScope(value as ScopeType);
   };
 
   return (
     <div className="h-full flex flex-col">
       <div className="p-4 space-y-4">
-        <RadioGroup
+        <ToggleGroup
+          type="single"
           value={scope}
           onValueChange={handleScopeChange}
-          className="flex flex-row gap-4"
+          variant="outline"
+          size="sm"
+          className="w-full"
         >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="__main__" id="scope-main" />
-            <Label htmlFor="scope-main" className="cursor-pointer">
-              {t("main")}
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="__app__" id="scope-app" />
-            <Label htmlFor="scope-app" className="cursor-pointer">
-              {t("app")}
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="__global__" id="scope-global" />
-            <Label htmlFor="scope-global" className="cursor-pointer">
-              {t("global")}
-            </Label>
-          </div>
-        </RadioGroup>
+          <ToggleGroupItem value="__main__" className="flex-1">{t("main")}</ToggleGroupItem>
+          {!isDaemon && (
+            <ToggleGroupItem value="__app__" className="flex-1">{t("app")}</ToggleGroupItem>
+          )}
+          <ToggleGroupItem value="__global__" className="flex-1">{t("global")}</ToggleGroupItem>
+        </ToggleGroup>
         {!isLoading && (
           <>
             <div className="relative">
