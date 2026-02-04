@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -201,15 +202,26 @@ export function Devices() {
                 {device.name || device.id}
               </Link>
               {device.type === "remote" && (
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => handleDeleteRemoteDevice(device.id)}
-                  title={t("delete")}
-                  className="shrink-0 flex-none"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      title={t("delete")}
+                      className="shrink-0 flex-none"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => handleDeleteRemoteDevice(device.id)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      {t("disconnect")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </li>
           ))}

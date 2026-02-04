@@ -21,19 +21,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { toast } from "sonner";
 import { useSession } from "@/context/SessionContext";
 import { useRpcQuery, useRpcMutation, useQueryClient } from "@/lib/queries";
 import type {
@@ -50,12 +49,6 @@ export function BinaryCookieTab() {
   const { t } = useTranslation();
   const { fruity } = useSession();
   const queryClient = useQueryClient();
-  const [pendingDeleteCookie, setPendingDeleteCookie] = useState<Cookie | null>(
-    null,
-  );
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [dialogMessage, setDialogMessage] = useState<string | null>(null);
-  const [isClearMode, setIsClearMode] = useState(false);
 
   const [editingCookie, setEditingCookie] = useState<Cookie | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -89,40 +82,28 @@ export function BinaryCookieTab() {
     }
   );
 
-  const confirmClear = async () => {
-    await clearMutation.mutateAsync();
-    setPendingDeleteCookie(null);
-    setIsDialogOpen(false);
-    setIsClearMode(false);
-    setDialogMessage(null);
-  };
-
-  const requestClear = () => {
-    setDialogMessage(t("clear_all_cookies_confirmation"));
-    setIsClearMode(true);
-    setIsDialogOpen(true);
+  const handleClear = async () => {
+    try {
+      await clearMutation.mutateAsync();
+      toast.success(t("cookies_cleared"));
+      refetch();
+    } catch (err) {
+      console.error("Failed to clear cookies:", err);
+      toast.error(t("failed_to_clear_cookies"));
+    }
   };
 
   const handleRemove = async (cookie: Cookie) => {
-    await removeMutation.mutateAsync({
-      name: cookie.name,
-      domain: cookie.domain,
-      path: cookie.path,
-    } as CookiePredicate);
-  };
-
-  const requestDelete = (cookie: Cookie) => {
-    setPendingDeleteCookie(cookie);
-    setIsClearMode(false);
-    setDialogMessage(null);
-    setIsDialogOpen(true);
-  };
-
-  const confirmDelete = async () => {
-    if (pendingDeleteCookie) {
-      await handleRemove(pendingDeleteCookie);
-      setPendingDeleteCookie(null);
-      setIsDialogOpen(false);
+    try {
+      await removeMutation.mutateAsync({
+        name: cookie.name,
+        domain: cookie.domain,
+        path: cookie.path,
+      } as CookiePredicate);
+      toast.success(t("cookie_removed"));
+    } catch (err) {
+      console.error("Failed to remove cookie:", err);
+      toast.error(t("failed_to_remove_cookie"));
     }
   };
 
@@ -205,15 +186,26 @@ export function BinaryCookieTab() {
           <RefreshCw className="w-4 h-4 mr-2" />
           {t("reload")}
         </Button>
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={requestClear}
-          disabled={isLoading || cookies.length === 0}
-        >
-          <Trash2 className="w-4 h-4 mr-2" />
-          {t("clear")}
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={isLoading || cookies.length === 0}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              {t("clear")}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem
+              onClick={handleClear}
+              className="text-destructive focus:text-destructive"
+            >
+              {t("clear")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <div className="flex-1 overflow-auto">
         {isLoading && cookies.length === 0 ? (
@@ -413,15 +405,26 @@ export function BinaryCookieTab() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-destructive hover:text-destructive"
-                        onClick={() => requestDelete(cookie)}
-                        title={t("remove")}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            title={t("remove")}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => handleRemove(cookie)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            {t("remove")}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -430,31 +433,6 @@ export function BinaryCookieTab() {
           </Table>
         )}
       </div>
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("confirmation")}</DialogTitle>
-            <DialogDescription>
-              {isClearMode && dialogMessage
-                ? dialogMessage
-                : t("delete_cookie_confirmation", {
-                    name: pendingDeleteCookie?.name,
-                  })}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              {t("cancel")}
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={isClearMode ? confirmClear : confirmDelete}
-            >
-              {t("delete")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

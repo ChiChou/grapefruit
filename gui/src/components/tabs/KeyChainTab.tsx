@@ -24,18 +24,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useRpcQuery, useRpcMutation, useQueryClient } from "@/lib/queries";
 
 import type { KeyChainItem } from "../../../../agent/types/fruity/modules/keychain";
@@ -83,9 +81,6 @@ export function KeyChainTab() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [withBiometricId, setWithBiometricId] = useState(false);
-  const [pendingDeleteItem, setPendingDeleteItem] =
-    useState<KeyChainItem | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [expandedIndices, setExpandedIndices] = useState<Set<number>>(new Set());
   const [copySuccessIndex, setCopySuccessIndex] = useState<number | null>(null);
   const [classFilterOpen, setClassFilterOpen] = useState(false);
@@ -113,18 +108,10 @@ export function KeyChainTab() {
     }
   );
 
-  const requestDelete = (item: KeyChainItem) => {
-    setPendingDeleteItem(item);
-    setIsDialogOpen(true);
-  };
-
-  const confirmDelete = async () => {
-    if (!pendingDeleteItem) return;
-    const service = pendingDeleteItem.service || "";
-    const account = pendingDeleteItem.account || "";
+  const handleDelete = async (item: KeyChainItem) => {
+    const service = item.service || "";
+    const account = item.account || "";
     await removeMutation.mutateAsync({ service, account });
-    setPendingDeleteItem(null);
-    setIsDialogOpen(false);
   };
 
   const toggleExpand = (index: number) => {
@@ -457,15 +444,26 @@ export function KeyChainTab() {
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-destructive hover:text-destructive"
-                          onClick={() => requestDelete(item)}
-                          title={t("remove")}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-destructive hover:text-destructive"
+                              title={t("remove")}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => handleDelete(item)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              {t("remove")}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -591,27 +589,6 @@ export function KeyChainTab() {
           </Table>
         )}
       </div>
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("confirmation")}</DialogTitle>
-            <DialogDescription>
-              {t("delete_keychain_confirmation", {
-                service: pendingDeleteItem?.service,
-                account: pendingDeleteItem?.account,
-              })}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              {t("cancel")}
-            </Button>
-            <Button variant="destructive" onClick={confirmDelete}>
-              {t("delete")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
