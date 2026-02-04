@@ -11,6 +11,8 @@ import {
   Download,
   Copy,
   Check,
+  ChevronsDownUp,
+  ChevronsUpDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -227,6 +229,28 @@ export function KeyChainTab() {
           <RefreshCw className="w-4 h-4 mr-2" />
           {t("reload")}
         </Button>
+        <div className="flex">
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-r-none border-r-0"
+            onClick={() => setExpandedIndices(new Set(filteredItems.map((_, i) => i)))}
+            disabled={isLoading || filteredItems.length === 0}
+            title={t("expand_all")}
+          >
+            <ChevronsUpDown className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-l-none"
+            onClick={() => setExpandedIndices(new Set())}
+            disabled={isLoading || expandedIndices.size === 0}
+            title={t("collapse_all")}
+          >
+            <ChevronsDownUp className="w-4 h-4" />
+          </Button>
+        </div>
         <div className="flex items-center gap-2 ml-auto">
           <label className="text-sm flex items-center gap-2">
             <input

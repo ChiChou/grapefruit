@@ -9,7 +9,6 @@ import {
   Globe,
   Code,
   Settings,
-  Github,
 } from "lucide-react";
 
 import { useDock } from "@/context/DockContext";
@@ -182,8 +181,7 @@ export function QuickStartTab() {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            <Github className="w-4 h-4" />
-            github.com/chichou/grapefruit
+            GitHub
           </a>
         </div>
 

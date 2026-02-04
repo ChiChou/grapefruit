@@ -29,29 +29,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useRpcQuery, useRpcMutation, useQueryClient } from "@/lib/queries";
 
 import type { UserDefaultsEntry } from "../../../../agent/types/fruity/modules/userdefaults";
 
 interface UserDefaultsItem extends UserDefaultsEntry {
   key: string;
-}
-
-function formatValue(entry: UserDefaultsEntry): string {
-  if (entry.type === "data") {
-    return `<NSData ${entry.readable.length} bytes>`;
-  }
-  if (entry.type === "array" || entry.type === "dict") {
-    return JSON.stringify(entry.value, null, 2);
-  }
-  return entry.readable;
 }
 
 function getTypeBadgeColor(type: string): string {
@@ -77,12 +65,12 @@ export function UserDefaultsTab() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
-  const [pendingDeleteKey, setPendingDeleteKey] = useState<string | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [datePickerKey, setDatePickerKey] = useState<string | null>(null);
-  const [datePickerValue, setDatePickerValue] = useState<Date | undefined>(undefined);
+  const [datePickerValue, setDatePickerValue] = useState<Date | undefined>(
+    undefined,
+  );
   const [timeHours, setTimeHours] = useState<string>("00");
   const [timeMinutes, setTimeMinutes] = useState<string>("00");
   const [timeSeconds, setTimeSeconds] = useState<string>("00");
@@ -99,7 +87,7 @@ export function UserDefaultsTab() {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["fruity", "userdefaults"] });
       },
-    }
+    },
   );
 
   const updateMutation = useRpcMutation(
@@ -110,7 +98,7 @@ export function UserDefaultsTab() {
         queryClient.invalidateQueries({ queryKey: ["fruity", "userdefaults"] });
         setEditingKey(null);
       },
-    }
+    },
   );
 
   const items: UserDefaultsItem[] = useMemo(() => {
@@ -127,20 +115,12 @@ export function UserDefaultsTab() {
     return items.filter(
       (item) =>
         item.key.toLowerCase().includes(query) ||
-        item.readable.toLowerCase().includes(query)
+        item.readable.toLowerCase().includes(query),
     );
   }, [items, searchQuery]);
 
-  const requestDelete = (key: string) => {
-    setPendingDeleteKey(key);
-    setIsDialogOpen(true);
-  };
-
-  const confirmDelete = async () => {
-    if (!pendingDeleteKey) return;
-    await removeMutation.mutateAsync({ key: pendingDeleteKey });
-    setPendingDeleteKey(null);
-    setIsDialogOpen(false);
+  const handleDelete = async (key: string) => {
+    await removeMutation.mutateAsync({ key });
   };
 
   const startEdit = (item: UserDefaultsItem) => {
@@ -241,7 +221,9 @@ export function UserDefaultsTab() {
                 <TableHead className="w-20">{t("type")}</TableHead>
                 <TableHead className="min-w-[300px]">{t("key")}</TableHead>
                 <TableHead>{t("value")}</TableHead>
-                <TableHead className="w-24 text-right">{t("actions")}</TableHead>
+                <TableHead className="w-24 text-right">
+                  {t("actions")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -291,7 +273,7 @@ export function UserDefaultsTab() {
                         className="font-mono text-xs whitespace-pre-wrap break-all max-h-32 overflow-auto"
                         title={item.readable}
                       >
-                        {formatValue(item)}
+                        {item.readable}
                       </pre>
                     )}
                   </TableCell>
@@ -346,7 +328,11 @@ export function UserDefaultsTab() {
                                   min="0"
                                   max="23"
                                   value={timeHours}
-                                  onChange={(e) => setTimeHours(e.target.value.padStart(2, "0").slice(-2))}
+                                  onChange={(e) =>
+                                    setTimeHours(
+                                      e.target.value.padStart(2, "0").slice(-2),
+                                    )
+                                  }
                                   className="w-14 h-8 text-center font-mono"
                                   placeholder="HH"
                                 />
@@ -356,7 +342,11 @@ export function UserDefaultsTab() {
                                   min="0"
                                   max="59"
                                   value={timeMinutes}
-                                  onChange={(e) => setTimeMinutes(e.target.value.padStart(2, "0").slice(-2))}
+                                  onChange={(e) =>
+                                    setTimeMinutes(
+                                      e.target.value.padStart(2, "0").slice(-2),
+                                    )
+                                  }
                                   className="w-14 h-8 text-center font-mono"
                                   placeholder="MM"
                                 />
@@ -366,7 +356,11 @@ export function UserDefaultsTab() {
                                   min="0"
                                   max="59"
                                   value={timeSeconds}
-                                  onChange={(e) => setTimeSeconds(e.target.value.padStart(2, "0").slice(-2))}
+                                  onChange={(e) =>
+                                    setTimeSeconds(
+                                      e.target.value.padStart(2, "0").slice(-2),
+                                    )
+                                  }
                                   className="w-14 h-8 text-center font-mono"
                                   placeholder="SS"
                                 />
@@ -391,15 +385,26 @@ export function UserDefaultsTab() {
                           </PopoverContent>
                         </Popover>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-destructive hover:text-destructive"
-                        onClick={() => requestDelete(item.key)}
-                        title={t("remove")}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            title={t("remove")}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(item.key)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            {t("remove")}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -408,24 +413,6 @@ export function UserDefaultsTab() {
           </Table>
         )}
       </div>
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("confirmation")}</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete the key "{pendingDeleteKey}"?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              {t("cancel")}
-            </Button>
-            <Button variant="destructive" onClick={confirmDelete}>
-              {t("delete")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
