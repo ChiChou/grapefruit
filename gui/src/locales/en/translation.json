@@ -17,6 +17,10 @@
   "failed_to_fetch_devices": "Failed to fetch devices",
   "failed_to_fetch_device_info": "Failed to fetch device info",
   "no_apps_found": "No apps found",
+  "no_processes_found": "No processes found",
+  "apps": "Apps",
+  "processes": "Processes",
+  "failed_to_fetch_processes": "Failed to fetch processes",
   "please_select_device": "Please select a device",
   "desktop_only_warning": "Grapefruit is designed for desktop browsers only",
   "search_commands": "Search commands",
@@ -197,5 +201,8 @@
   "navigate": "Navigate",
   "select_webview": "Select a WebView to inspect",
   "url": "URL",
-  "key": "Key"
+  "key": "Key",
+  "daemon": "Daemon",
+  "mode": "Mode",
+  "feature_coming_soon": "This feature is coming soon"
 }
