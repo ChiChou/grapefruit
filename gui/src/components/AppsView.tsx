@@ -1,24 +1,26 @@
 import { useParams, Link, useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
-import { AlertCircleIcon } from "lucide-react";
+import { AlertCircleIcon, Search } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 import type { Application, DeviceInfo } from "@shared/schema";
 
 function AppCardSkeleton() {
   return (
-    <div className="block rounded-lg py-6 px-2">
+    <div className="block rounded-lg p-6">
       <div className="mb-3 flex items-center justify-center">
-        <Skeleton className="h-16 w-16 rounded-xl" />
+        <Skeleton className="h-16 w-16 rounded-2xl" />
       </div>
       <div className="space-y-1 text-center">
-        <Skeleton className="mx-auto h-4 w-20" />
-        <Skeleton className="mx-auto h-3 w-24" />
+        <Skeleton className="mx-auto h-5 w-24" />
+        <Skeleton className="mx-auto h-3 w-28" />
       </div>
     </div>
   );
@@ -40,12 +42,12 @@ function DeviceHeader({ deviceInfo: info }: { deviceInfo: DeviceInfo }) {
   );
 }
 
-function getPlatformFromDeviceInfo(info: DeviceInfo | undefined): "fruity" | "droid" {
-  // Determine platform based on OS name
+function getPlatformFromDeviceInfo(
+  info: DeviceInfo | undefined,
+): "fruity" | "droid" {
   if (info?.os?.name?.toLowerCase().includes("android")) {
     return "droid";
   }
-  // Default to fruity (iOS) for now
   return "fruity";
 }
 
@@ -59,22 +61,22 @@ function AppCard({ app, udid, platform }: AppCardProps) {
   return (
     <Link
       to={`/workspace/${platform}/${udid}/app/${app.identifier}`}
-      className="block rounded-lg py-6 px-2 transition-colors  hover:bg-amber-100 dark:hover:bg-gray-800"
+      className="block rounded-lg p-6 transition-colors hover:bg-amber-100 dark:hover:bg-gray-800"
     >
       <div className="relative mb-3 flex items-center justify-center">
         <img
           src={`/api/device/${udid}/icon/${app.identifier}`}
           alt={app.name}
           loading="lazy"
-          className="h-16 w-16 rounded-xl"
+          className="h-16 w-16 rounded-2xl"
           onError={(e) => {
             e.currentTarget.src =
-              "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' fill='%23ddd'/%3E%3C/svg%3E";
+              "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Crect width='48' height='48' fill='%23ddd'/%3E%3C/svg%3E";
           }}
         />
         {app.pid !== 0 && (
           <Badge
-            className="absolute -right-1 -top-1 bg-green-500 px-1.5 py-0.5 text-xs"
+            className="absolute -right-1 -top-1 bg-green-500 px-1 py-0 text-[10px]"
             variant="default"
           >
             {app.pid}
@@ -98,6 +100,7 @@ export function AppsView() {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const platformParam = searchParams.get("platform");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const {
     data: apps = [],
@@ -130,9 +133,19 @@ export function AppsView() {
     enabled: !!udid,
   });
 
-  const platform = platformParam as "fruity" | "droid" | null || getPlatformFromDeviceInfo(deviceInfo);
+  const platform =
+    (platformParam as "fruity" | "droid" | null) ||
+    getPlatformFromDeviceInfo(deviceInfo);
   const loading = infoLoading || appsLoading;
   const error = infoError || appsError;
+
+  const filteredApps = apps.filter((app) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      app.name.toLowerCase().includes(query) ||
+      app.identifier.toLowerCase().includes(query)
+    );
+  });
 
   if (loading) {
     return (
@@ -145,8 +158,8 @@ export function AppsView() {
           <Skeleton className="h-9 w-24" />
         </div>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-          {Array.from({ length: 12 }).map((_, i) => (
+        <div className="grid grid-cols-2 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+          {Array.from({ length: 16 }).map((_, i) => (
             <AppCardSkeleton key={i} />
           ))}
         </div>
@@ -172,24 +185,40 @@ export function AppsView() {
     <div className="p-6">
       {deviceInfo ? <DeviceHeader deviceInfo={deviceInfo} /> : <></>}
 
-      <div className="mb-6 flex gap-2">
+      <div className="mb-4 flex gap-2">
         <Button variant="default" size="sm">
           {t("apps")}
         </Button>
         <Button variant="outline" size="sm" asChild>
-          <Link to={`/processes/${udid}`}>{t("processes")}</Link>
+          <Link to={`/list/${udid}/processes`}>{t("processes")}</Link>
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-        {apps.map((app) => (
-          <AppCard key={app.identifier} app={app} udid={udid!} platform={platform} />
+      <div className="mb-4 relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Input
+          type="text"
+          placeholder={t("search_apps")}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+        {filteredApps.map((app) => (
+          <AppCard
+            key={app.identifier}
+            app={app}
+            udid={udid!}
+            platform={platform}
+          />
         ))}
       </div>
 
-      {apps.length === 0 && (
-        <p className="text-center text-gray-500 dark:text-gray-400">
-          {t("no_apps_found")}
+      {filteredApps.length === 0 && (
+        <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+          {searchQuery ? t("no_apps_matching_search") : t("no_apps_found")}
         </p>
       )}
     </div>

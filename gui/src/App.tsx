@@ -34,10 +34,10 @@ function App() {
         {/* Welcome page with device list */}
         <Route path="/" element={<WelcomePage />}>
           <Route index element={<DefaultMessage />} />
-          {/* Apps list for a device (with platform query param) */}
-          <Route path="apps/:udid" element={<AppsView />} />
+          {/* Apps list for a device */}
+          <Route path="list/:udid/apps" element={<AppsView />} />
           {/* Processes list for a device */}
-          <Route path="processes/:udid" element={<ProcessesView />} />
+          <Route path="list/:udid/processes" element={<ProcessesView />} />
         </Route>
 
         {/* Workspace with platform and mode as route params */}
