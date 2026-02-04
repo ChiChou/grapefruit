@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { Outlet } from "react-router";
+import { Outlet, useNavigate } from "react-router";
 import { t } from "i18next";
-import { PanelBottomClose, PanelBottomOpen } from "lucide-react";
+import { PanelBottomClose, PanelBottomOpen, RefreshCw, XCircle, Unplug } from "lucide-react";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import {
   type DockviewApi,
@@ -45,6 +52,7 @@ import { DockContext, useDockActions } from "@/context/DockContext";
 
 function WorkspaceContent() {
   const { status, bundle, device, platform, mode, pid } = useSession();
+  const navigate = useNavigate();
 
   // Show full workspace (left panel + dockview) for iOS app and daemon modes
   const isFruityApp = platform === Platform.Fruity && mode === Mode.App;
@@ -66,6 +74,26 @@ function WorkspaceContent() {
       case Status.Connecting:
       default:
         return "bg-gray-600";
+    }
+  };
+
+  const handleReloadPage = () => {
+    window.location.reload();
+  };
+
+  const handleKillProcess = async () => {
+    if (!device || !pid) return;
+    try {
+      await fetch(`/api/device/${device}/kill/${pid}`, { method: "POST" });
+      navigate(`/list/${device}/apps`);
+    } catch (e) {
+      console.error("Failed to kill process:", e);
+    }
+  };
+
+  const handleDetach = () => {
+    if (device) {
+      navigate(`/list/${device}/apps`);
     }
   };
 
@@ -251,11 +279,35 @@ function WorkspaceContent() {
           </ResizablePanel>
         </ResizablePanelGroup>
         <footer className={`${getStatusColor()} px-4 py-1 text-xs text-white flex items-center justify-between`}>
-          <span>
-            {status === Status.Ready && t("connected")}
-            {status === Status.Connecting && t("connecting")}
-            {status === Status.Disconnected && t("disconnected")}
-          </span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="hover:bg-white/20 px-1 py-0.5 rounded transition-colors cursor-pointer"
+              >
+                {status === Status.Ready && t("connected")}
+                {status === Status.Connecting && t("connecting")}
+                {status === Status.Disconnected && t("disconnected")}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem onClick={handleReloadPage}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                {t("reload_page")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleKillProcess}
+                disabled={status !== Status.Ready}
+              >
+                <XCircle className="w-4 h-4 mr-2" />
+                {t("kill_process")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDetach}>
+                <Unplug className="w-4 h-4 mr-2" />
+                {t("detach")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           {showFullWorkspace && (
             <button
               type="button"
