@@ -294,5 +294,7 @@
   "execute": "执行",
   "rows_returned": "返回 {{count}} 行",
   "query_executed_no_results": "查询执行成功（无结果）",
-  "select_table_or_execute": "选择表格或执行查询"
+  "select_table_or_execute": "选择表格或执行查询",
+  "file_renamed": "文件已重命名",
+  "file_deleted": "文件已删除"
 }
