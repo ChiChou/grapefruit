@@ -19,6 +19,12 @@ import {
   process as serializeProcess,
 } from "./lib/serializer.ts";
 import { agent } from "./lib/assets.ts";
+import {
+  queryHooks,
+  countHooks,
+  clearHooks,
+  deleteHooks,
+} from "./lib/localstore.ts";
 
 const manager = frida.getDeviceManager();
 const app = new Hono();
@@ -335,6 +341,67 @@ api
     await fs.rm(logsDir, { recursive: true, force: true });
 
     return c.body(null, 204);
+  })
+  // Hook log endpoints
+  .get("/hooks/:device/:identifier", (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+
+    const limit = parseInt(c.req.query("limit") || "1000", 10);
+    const offset = parseInt(c.req.query("offset") || "0", 10);
+    const category = c.req.query("category");
+    const since = c.req.query("since");
+
+    try {
+      const records = queryHooks(deviceId, identifier, {
+        limit,
+        offset,
+        category,
+        since,
+      });
+
+      // Parse JSON payloads
+      const hooks = records.map((r) => ({
+        id: r.id,
+        timestamp: r.timestamp,
+        category: r.category,
+        symbol: r.symbol,
+        direction: r.direction,
+        payload: JSON.parse(r.payload),
+        created_at: r.created_at,
+      }));
+
+      const total = countHooks(deviceId, identifier, category);
+
+      return c.json({ hooks, total, limit, offset });
+    } catch (e) {
+      console.error("Failed to query hooks:", e);
+      return c.json({ hooks: [], total: 0, limit, offset });
+    }
+  })
+  .delete("/hooks/:device/:identifier", (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+
+    try {
+      clearHooks(deviceId, identifier);
+      return c.body(null, 204);
+    } catch (e) {
+      console.error("Failed to clear hooks:", e);
+      return c.text("Failed to clear hooks", 500);
+    }
+  })
+  .delete("/hooks/:device/:identifier/db", (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+
+    try {
+      deleteHooks(deviceId, identifier);
+      return c.body(null, 204);
+    } catch (e) {
+      console.error("Failed to delete hooks:", e);
+      return c.text("Failed to delete hooks", 500);
+    }
   });
 
 app.route("/api", api);
