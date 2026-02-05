@@ -38,9 +38,12 @@ export function HookControlPanel() {
   useEffect(() => {
     if (status !== Status.Ready || !fruity) return;
 
-    fruity.hook.status().then((status) => {
-      setHookStatus(status);
-    }).catch(console.error);
+    fruity.hook
+      .status()
+      .then((status) => {
+        setHookStatus(status);
+      })
+      .catch(console.error);
   }, [fruity, status]);
 
   const handleToggle = async (groupId: string, enabled: boolean) => {
@@ -56,7 +59,10 @@ export function HookControlPanel() {
       }
       setHookStatus((prev) => ({ ...prev, [groupId]: enabled }));
     } catch (error) {
-      console.error(`Failed to ${enabled ? "start" : "stop"} hook group ${groupId}:`, error);
+      console.error(
+        `Failed to ${enabled ? "start" : "stop"} hook group ${groupId}:`,
+        error,
+      );
     } finally {
       setLoading((prev) => ({ ...prev, [groupId]: false }));
     }
@@ -75,7 +81,7 @@ export function HookControlPanel() {
             key={group.id}
             className="flex items-start space-x-3 p-2 rounded-md hover:bg-muted/50 transition-colors"
           >
-            <div className="flex-shrink-0 mt-0.5 text-muted-foreground">
+            <div className="shrink-0 mt-0.5 text-muted-foreground">
               {group.icon}
             </div>
             <div className="flex-1 min-w-0">
@@ -92,7 +98,9 @@ export function HookControlPanel() {
                   <Switch
                     id={`hook-${group.id}`}
                     checked={hookStatus[group.id] || false}
-                    onCheckedChange={(checked) => handleToggle(group.id, checked)}
+                    onCheckedChange={(checked) =>
+                      handleToggle(group.id, checked)
+                    }
                     disabled={isDisabled}
                   />
                 )}
