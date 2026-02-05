@@ -1,6 +1,6 @@
 import { Link, NavLink, Outlet } from "react-router";
 import { t } from "i18next";
-import { Info, Package, Braces, Link as LinkIcon, MapPin, Webhook } from "lucide-react";
+import { Info, Package, Braces, Link as LinkIcon, MapPin, Anchor } from "lucide-react";
 
 import {
   Tooltip,
@@ -77,7 +77,7 @@ export function LeftPanelView() {
           />
           <NavItem
             to={`${basePath}/hooks`}
-            icon={<Webhook className="h-5 w-5" />}
+            icon={<Anchor className="h-5 w-5" />}
             label={t("hooks")}
           />
           <NavItem
@@ -105,7 +105,7 @@ export function LeftPanelView() {
           />
           <NavItem
             to={`${basePath}/hooks`}
-            icon={<Webhook className="h-5 w-5" />}
+            icon={<Anchor className="h-5 w-5" />}
             label={t("hooks")}
           />
         </div>
