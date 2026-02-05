@@ -1,10 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Lock, Database, Loader2 } from "lucide-react";
+import {
+  Lock,
+  Database,
+  Loader2,
+  Clipboard,
+  Fingerprint,
+  Smartphone,
+  FolderOpen,
+} from "lucide-react";
 
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { useSession, Status } from "@/context/SessionContext";
+import { useSession, Status, Mode } from "@/context/SessionContext";
+import { UserHooksList } from "./UserHooksList";
+
+const HOOKS_STORAGE_PREFIX = "igf:hooks:";
 
 interface HookGroup {
   id: string;
@@ -26,25 +37,109 @@ const HOOK_GROUPS: HookGroup[] = [
     nameKey: "hook_sqlite",
     descKey: "hook_sqlite_desc",
   },
+  {
+    id: "pasteboard",
+    icon: <Clipboard className="h-4 w-4" />,
+    nameKey: "hook_pasteboard",
+    descKey: "hook_pasteboard_desc",
+  },
+  {
+    id: "deviceid",
+    icon: <Smartphone className="h-4 w-4" />,
+    nameKey: "hook_deviceid",
+    descKey: "hook_deviceid_desc",
+  },
+  {
+    id: "biometric",
+    icon: <Fingerprint className="h-4 w-4" />,
+    nameKey: "hook_biometric",
+    descKey: "hook_biometric_desc",
+  },
+  {
+    id: "fileops",
+    icon: <FolderOpen className="h-4 w-4" />,
+    nameKey: "hook_fileops",
+    descKey: "hook_fileops_desc",
+  },
 ];
 
 export function HookControlPanel() {
   const { t } = useTranslation();
-  const { fruity, status } = useSession();
+  const { fruity, status, device, bundle, pid, mode } = useSession();
   const [hookStatus, setHookStatus] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
+  const initializedRef = useRef(false);
 
-  // Fetch initial hook status
+  // Generate storage key based on device and identifier
+  const getStorageKey = useCallback(() => {
+    if (!device) return null;
+    if (mode === Mode.App && bundle) {
+      return `${HOOKS_STORAGE_PREFIX}${device}|${bundle}`;
+    } else if (mode === Mode.Daemon && pid) {
+      // For daemon mode, use pid (note: pid changes between launches)
+      return `${HOOKS_STORAGE_PREFIX}${device}|pid-${pid}`;
+    }
+    return null;
+  }, [device, bundle, pid, mode]);
+
+  // Load saved hooks from localStorage
+  const loadSavedHooks = useCallback((): string[] => {
+    const key = getStorageKey();
+    if (!key) return [];
+    try {
+      const saved = localStorage.getItem(key);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  }, [getStorageKey]);
+
+  // Save hooks to localStorage
+  const saveHooks = useCallback((enabledHooks: string[]) => {
+    const key = getStorageKey();
+    if (!key) return;
+    try {
+      localStorage.setItem(key, JSON.stringify(enabledHooks));
+    } catch {
+      // ignore storage errors
+    }
+  }, [getStorageKey]);
+
+  // Fetch initial hook status and restore saved hooks
   useEffect(() => {
-    if (status !== Status.Ready || !fruity) return;
+    if (status !== Status.Ready || !fruity || initializedRef.current) return;
 
-    fruity.hook
-      .status()
-      .then((status) => {
-        setHookStatus(status);
-      })
-      .catch(console.error);
-  }, [fruity, status]);
+    const initialize = async () => {
+      initializedRef.current = true;
+
+      // Get current hook status from agent
+      const currentStatus: Record<string, boolean> = await fruity.hook.status().catch(() => ({}));
+      setHookStatus(currentStatus);
+
+      // Load saved hooks and enable any that aren't already enabled
+      const savedHooks = loadSavedHooks();
+      for (const groupId of savedHooks) {
+        if (!currentStatus[groupId]) {
+          setLoading((prev) => ({ ...prev, [groupId]: true }));
+          try {
+            await fruity.hook.start(groupId);
+            setHookStatus((prev) => ({ ...prev, [groupId]: true }));
+          } catch (error) {
+            console.error(`Failed to restore hook group ${groupId}:`, error);
+          } finally {
+            setLoading((prev) => ({ ...prev, [groupId]: false }));
+          }
+        }
+      }
+    };
+
+    initialize();
+  }, [fruity, status, loadSavedHooks]);
+
+  // Reset initialized flag when session changes
+  useEffect(() => {
+    initializedRef.current = false;
+  }, [device, bundle, pid]);
 
   const handleToggle = async (groupId: string, enabled: boolean) => {
     if (!fruity) return;
@@ -57,7 +152,15 @@ export function HookControlPanel() {
       } else {
         await fruity.hook.stop(groupId);
       }
-      setHookStatus((prev) => ({ ...prev, [groupId]: enabled }));
+      setHookStatus((prev) => {
+        const newStatus = { ...prev, [groupId]: enabled };
+        // Save enabled hooks to localStorage
+        const enabledHooks = Object.entries(newStatus)
+          .filter(([, v]) => v)
+          .map(([k]) => k);
+        saveHooks(enabledHooks);
+        return newStatus;
+      });
     } catch (error) {
       console.error(
         `Failed to ${enabled ? "start" : "stop"} hook group ${groupId}:`,
@@ -123,9 +226,7 @@ export function HookControlPanel() {
         <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           {t("hook_user_defined")}
         </h3>
-        <p className="text-xs text-muted-foreground italic">
-          {t("feature_coming_soon")}
-        </p>
+        <UserHooksList />
       </div>
     </div>
   );
