@@ -290,5 +290,9 @@
   "hook_batch_generate": "Generate Code",
   "hook_added": "Hook added",
   "hook_added_count": "{{count}} hooks added",
-  "hook_failed": "Failed to add hook"
+  "hook_failed": "Failed to add hook",
+  "execute": "Execute",
+  "rows_returned": "{{count}} rows returned",
+  "query_executed_no_results": "Query executed successfully (no results)",
+  "select_table_or_execute": "Select a table or execute a query"
 }
