@@ -8,11 +8,41 @@ import type {
 
 import type { RPCRoute as DroidRPCRoute } from "../../../agent/types/droid/registry.d.ts";
 
+// Hook message types
+export interface BaseHookMessage {
+  subject: "hook";
+  category: string;
+  symbol: string;
+  dir: "enter" | "leave";
+  backtrace?: string[];
+}
+
+export interface CryptoHookMessage extends BaseHookMessage {
+  category: "crypto";
+  op?: "decrypt" | "encrypt";
+  algo?: string;
+  details?: {
+    type: "input" | "output" | "key";
+    len?: number;
+  };
+}
+
+export interface SQLiteHookMessage extends BaseHookMessage {
+  category: "sql";
+  filename?: string;
+  sql?: string;
+  bindIndex?: number;
+  bindValue?: number | string | null;
+}
+
+export type HookMessage = CryptoHookMessage | SQLiteHookMessage;
+
 export interface SessionClientEvents {
   ready: (pid: number) => void;
   log: (level: string, text: string) => void;
   syslog: (text: string) => void;
   invalid: () => void;
+  hook: (message: HookMessage) => void;
 }
 
 export interface SessionServerEvents {

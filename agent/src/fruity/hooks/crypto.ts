@@ -34,7 +34,7 @@ export function x509() {
             category: "crypto",
             symbol: "SecCertificateCreateWithData",
             dir: "enter",
-            bt: bt(this.context),
+            backtrace: bt(this.context),
           };
 
           send(detail, der);
@@ -68,7 +68,7 @@ export function cccrypt() {
             category: "crypto",
             symbol: sym,
             dir: "enter",
-            bt: bt(this.context),
+            backtrace: bt(this.context),
           };
 
           if (
@@ -202,7 +202,7 @@ export function hmac() {
           symbol: "CCHmac",
           dir: "enter",
           algo: HMAC_ALGORITHMS[alg] || "Unknown",
-          bt: bt(this.context),
+          backtrace: bt(this.context),
         };
 
         send(
