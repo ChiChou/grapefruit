@@ -8,41 +8,14 @@ import type {
 
 import type { RPCRoute as DroidRPCRoute } from "../../../agent/types/droid/registry.d.ts";
 
-// Hook message types
-export interface BaseHookMessage {
-  subject: "hook";
-  category: string;
-  symbol: string;
-  dir: "enter" | "leave";
-  backtrace?: string[];
-}
-
-export interface CryptoHookMessage extends BaseHookMessage {
-  category: "crypto";
-  op?: "decrypt" | "encrypt";
-  algo?: string;
-  details?: {
-    type: "input" | "output" | "key";
-    len?: number;
-  };
-}
-
-export interface SQLiteHookMessage extends BaseHookMessage {
-  category: "sql";
-  filename?: string;
-  sql?: string;
-  bindIndex?: number;
-  bindValue?: number | string | null;
-}
-
-export type HookMessage = CryptoHookMessage | SQLiteHookMessage;
+import type { BaseMessage as BaseHookMessage } from "../../../agent/types/fruity/hooks/context";
 
 export interface SessionClientEvents {
   ready: (pid: number) => void;
   log: (level: string, text: string) => void;
   syslog: (text: string) => void;
   invalid: () => void;
-  hook: (message: HookMessage) => void;
+  hook: (message: BaseHookMessage) => void;
 }
 
 export interface SessionServerEvents {
@@ -59,7 +32,9 @@ export type AsyncDroidRPC = RemoteRPC<DroidRPCRoute>;
 
 type Platform = "fruity" | "droid";
 
-function createExecutor(socket: Socket<SessionClientEvents, SessionServerEvents>) {
+function createExecutor(
+  socket: Socket<SessionClientEvents, SessionServerEvents>,
+) {
   let ready = false;
   const pending: Array<{ run: () => void; reject: (err: Error) => void }> = [];
 
@@ -118,7 +93,10 @@ function createProxy<T extends object>(
   });
 }
 
-function createThrowingProxy<T extends object>(expectedPlatform: Platform, actualPlatform: Platform): T {
+function createThrowingProxy<T extends object>(
+  expectedPlatform: Platform,
+  actualPlatform: Platform,
+): T {
   const message = `Cannot use ${expectedPlatform} API when connected to ${actualPlatform} platform`;
   return new Proxy({} as T, {
     get() {
