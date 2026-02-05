@@ -20,6 +20,7 @@ import * as hook from "./hooks/index.js";
 
 import * as memory from "../common/memory.js";
 import * as sqlite from "../common/sqlite.js";
+import * as userscript from "../common/userscript.js";
 
 if (!Process.findModuleByName("UIKit")) {
   console.warn("Not an UIKit App. Todo: disable some RPC");
@@ -44,6 +45,7 @@ export default {
   syslog,
   ui,
   url,
+  userscript,
   userdefaults,
   webview,
 };
