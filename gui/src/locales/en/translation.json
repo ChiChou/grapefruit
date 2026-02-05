@@ -134,8 +134,6 @@
   "service": "Service",
   "account": "Account",
   "label": "Label",
-  "creation": "Creation",
-  "modification": "Modification",
   "class": "Class",
   "alias": "Alias",
   "invisible": "Invisible",
@@ -235,7 +233,7 @@
   "process_killed": "Process {{pid}} killed",
   "failed_to_kill_process": "Failed to kill process",
   "detach": "Detach",
-  "hook_groups": "Hook Groups",
+  "hook_groups": "Built-in Hook Groups",
   "hook_crypto": "Crypto",
   "hook_crypto_desc": "Intercept encryption, decryption, hashing, and HMAC operations (CommonCrypto, X.509)",
   "hook_sqlite": "SQLite",
@@ -257,5 +255,10 @@
   "hook_bind_value": "Bind Value",
   "hook_data_type": "Data Type",
   "hook_data_length": "Length",
-  "scroll_to_latest": "Latest"
+  "scroll_to_latest": "Latest",
+  "copied": "Copied",
+  "items": "items",
+  "no_values": "No values",
+  "rename": "Rename",
+  "time": "Time"
 }
