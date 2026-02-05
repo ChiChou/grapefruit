@@ -290,5 +290,9 @@
   "hook_batch_generate": "生成代码",
   "hook_added": "钩子已添加",
   "hook_added_count": "已添加 {{count}} 个钩子",
-  "hook_failed": "添加钩子失败"
+  "hook_failed": "添加钩子失败",
+  "execute": "执行",
+  "rows_returned": "返回 {{count}} 行",
+  "query_executed_no_results": "查询执行成功（无结果）",
+  "select_table_or_execute": "选择表格或执行查询"
 }

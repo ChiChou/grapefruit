@@ -1,13 +1,14 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
 import Editor from "@monaco-editor/react";
+import { Play, Loader2 } from "lucide-react";
 
 import type { DumpResult } from "../../../../agent/types/common/sqlite";
 
 import { useSession } from "@/context/SessionContext";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
-import { Play } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -22,15 +23,21 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable";
-import { useRpcQuery } from "@/lib/queries";
+import { useRpcQuery, useRpcMutation } from "@/lib/queries";
 
 export interface SQLiteEditorTabParams {
   path: string;
 }
 
+interface QueryResult {
+  header: string[];
+  data: unknown[][];
+}
+
 export function SQLiteEditorTab({
   params,
 }: IDockviewPanelProps<SQLiteEditorTabParams>) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const { fruity } = useSession();
 
@@ -38,37 +45,90 @@ export function SQLiteEditorTab({
   const [tableSearch, setTableSearch] = useState("");
   const [sql, setSQL] = useState("SELECT * FROM ");
   const [dumpResult, setDumpResult] = useState<DumpResult | null>(null);
+  const [queryResult, setQueryResult] = useState<QueryResult | null>(null);
+  const [executeError, setExecuteError] = useState<string | null>(null);
 
   const fullPath = params?.path || "";
 
+  // Open database handle
+  const {
+    data: dbHandle,
+    isLoading: isOpeningDb,
+    error: openError,
+  } = useRpcQuery<number>(
+    ["sqliteOpen", fullPath],
+    (api) => api.sqlite.open(fullPath),
+    { enabled: !!fullPath }
+  );
+
+  // Close database handle on unmount
+  useEffect(() => {
+    return () => {
+      if (dbHandle !== undefined && fruity) {
+        fruity.sqlite.close(dbHandle).catch(console.error);
+      }
+    };
+  }, [dbHandle, fruity]);
+
+  // Fetch tables
   const {
     data: tables = [],
-    isLoading,
-    error,
+    isLoading: isLoadingTables,
+    error: tablesError,
   } = useRpcQuery<string[]>(
     ["sqliteTables", fullPath],
     (api) => api.sqlite.tables(fullPath),
     { enabled: !!fullPath }
   );
 
+  // Mutation for loading table data (dump)
+  const dumpMutation = useRpcMutation<DumpResult, { table: string }>(
+    (api, { table }) => api.sqlite.dump(fullPath, table)
+  );
+
+  // Mutation for executing arbitrary SQL
+  const queryMutation = useRpcMutation<unknown[][], { handle: number; sql: string }>(
+    (api, { handle, sql }) => api.sqlite.query(handle, sql)
+  );
+
   useEffect(() => {
     setFilteredTables(tables);
   }, [tables]);
 
-  const loadTableData = useCallback(
-    async (tableName: string) => {
-      if (!fruity || !fullPath) return;
+  const loadTableData = async (tableName: string) => {
+    try {
+      const result = await dumpMutation.mutateAsync({ table: tableName });
+      setDumpResult(result);
+      setQueryResult(null);
+      setExecuteError(null);
+      setSQL(`SELECT * FROM "${tableName}" LIMIT 100;`);
+    } catch (err) {
+      console.error("Failed to load table data:", err);
+    }
+  };
 
-      try {
-        const result = await fruity.sqlite.dump(fullPath, tableName);
-        setDumpResult(result);
-        setSQL(`SELECT * FROM "${tableName}" LIMIT 100;`);
-      } catch (err) {
-        console.error("Failed to load table data:", err);
+  const executeSQL = async () => {
+    if (dbHandle === undefined || !sql.trim()) return;
+
+    setExecuteError(null);
+
+    try {
+      const data = await queryMutation.mutateAsync({ handle: dbHandle, sql });
+
+      // Generate column headers from first row
+      const columnCount = data.length > 0 ? data[0].length : 0;
+      const header: string[] = [];
+      for (let i = 0; i < columnCount; i++) {
+        header.push(String(i));
       }
-    },
-    [fruity, fullPath],
-  );
+
+      setQueryResult({ header, data });
+      setDumpResult(null);
+    } catch (err) {
+      setExecuteError(err instanceof Error ? err.message : String(err));
+      setQueryResult(null);
+    }
+  };
 
   useEffect(() => {
     if (tableSearch.trim() === "") {
@@ -79,10 +139,22 @@ export function SQLiteEditorTab({
     }
   }, [tableSearch, tables]);
 
+  const isLoading = isOpeningDb || isLoadingTables;
+  const error = openError || tablesError;
+  const isExecuting = queryMutation.isPending;
+  const isLoadingTable = dumpMutation.isPending;
+
+  // Determine if execute button should be disabled
+  const executeDisabled = useMemo(
+    () => isExecuting || !sql.trim() || dbHandle === undefined,
+    [isExecuting, sql, dbHandle]
+  );
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
-        Loading...
+        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+        {t("loading")}...
       </div>
     );
   }
@@ -105,7 +177,7 @@ export function SQLiteEditorTab({
         <div className="h-full flex flex-col border-r">
           <div className="p-2 border-b">
             <Input
-              placeholder="Search tables..."
+              placeholder={t("search")}
               value={tableSearch}
               onChange={(e) => setTableSearch(e.target.value)}
             />
@@ -115,7 +187,8 @@ export function SQLiteEditorTab({
               <button
                 key={table}
                 onClick={() => loadTableData(table)}
-                className="w-full px-3 py-2 text-left hover:bg-accent hover:text-accent-foreground text-sm truncate"
+                disabled={isLoadingTable}
+                className="w-full px-3 py-2 text-left hover:bg-accent hover:text-accent-foreground text-sm truncate disabled:opacity-50"
               >
                 {table}
               </button>
@@ -129,9 +202,18 @@ export function SQLiteEditorTab({
           <ResizablePanel defaultSize={50} minSize={20}>
             <div className="h-full flex flex-col">
               <div className="flex items-center gap-2 p-2 border-b">
-                <Button variant="outline" size="sm">
-                  <Play className="h-4 w-4 mr-2" />
-                  Execute
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={executeSQL}
+                  disabled={executeDisabled}
+                >
+                  {isExecuting ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Play className="h-4 w-4 mr-2" />
+                  )}
+                  {t("execute")}
                 </Button>
               </div>
               <div className="flex-1">
@@ -152,7 +234,48 @@ export function SQLiteEditorTab({
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={50} minSize={20}>
             <div className="h-full overflow-auto">
-              {dumpResult ? (
+              {executeError ? (
+                <div className="flex items-center justify-center h-full text-destructive text-sm p-4">
+                  <pre className="whitespace-pre-wrap">{executeError}</pre>
+                </div>
+              ) : queryResult ? (
+                <div className="flex flex-col h-full">
+                  <div className="p-2 border-b text-xs text-muted-foreground">
+                    {t("rows_returned", { count: queryResult.data.length })}
+                  </div>
+                  <div className="flex-1 overflow-auto">
+                    {queryResult.data.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            {queryResult.header.map((name, i) => (
+                              <TableHead key={i}>{name}</TableHead>
+                            ))}
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {queryResult.data.map((row, rowIndex) => (
+                            <TableRow key={rowIndex}>
+                              {queryResult.header.map((_, colIndex) => (
+                                <TableCell key={colIndex}>
+                                  {row[colIndex] === null ||
+                                  row[colIndex] === undefined
+                                    ? "NULL"
+                                    : String(row[colIndex])}
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                        {t("query_executed_no_results")}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : dumpResult ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -185,7 +308,7 @@ export function SQLiteEditorTab({
                 </Table>
               ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                  Select a table to view data
+                  {t("select_table_or_execute")}
                 </div>
               )}
             </div>
