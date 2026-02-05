@@ -38,7 +38,7 @@ export function ClassesPanel() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-4 space-y-4">
+      <div className="p-3 space-y-3 border-b border-border/50">
         <ToggleGroup
           type="single"
           value={scope}
@@ -56,34 +56,36 @@ export function ClassesPanel() {
         {!isLoading && (
           <>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder={t("search")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
+                className="pl-9 h-8 text-sm"
               />
             </div>
-            <div className="text-xs text-gray-500">
-              {filteredClasses.length} / {classes.length}
+            <div className="text-xs text-muted-foreground">
+              {filteredClasses.length.toLocaleString()} / {classes.length.toLocaleString()} {t("items")}
             </div>
           </>
         )}
       </div>
-      <div className="flex-1 min-h-0 h-full">
+      <div className="flex-1 min-h-0 h-full overflow-hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+          <div className="flex items-center justify-center h-full text-muted-foreground">
+            {t("loading")}...
+          </div>
+        ) : filteredClasses.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+            {t("no_results")}
           </div>
         ) : (
-          <div className="flex h-full">
-            <List
-              rowComponent={ClassRow}
-              rowCount={filteredClasses.length}
-              rowHeight={ITEM_HEIGHT}
-              rowProps={{ classes: filteredClasses, openFilePanel }}
-            />
-          </div>
+          <List
+            rowComponent={ClassRow}
+            rowCount={filteredClasses.length}
+            rowHeight={ITEM_HEIGHT}
+            rowProps={{ classes: filteredClasses, openFilePanel }}
+          />
         )}
       </div>
     </div>
@@ -106,14 +108,20 @@ function ClassRow({
 }>) {
   const className = classes[index];
 
+  // Split class name into prefix and name for better visual hierarchy
+  const dotIndex = className.lastIndexOf(".");
+  const hasPrefix = dotIndex > 0;
+  const prefix = hasPrefix ? className.slice(0, dotIndex) : null;
+  const name = hasPrefix ? className.slice(dotIndex + 1) : className;
+
   return (
     <div
-      className="px-4 py-1 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+      className="px-3 py-1.5 border-b border-border/50 hover:bg-accent/50 transition-colors"
       style={style}
     >
       <button
         type="button"
-        className="text-sm font-mono truncate block text-left w-full text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+        className="flex items-center gap-2 w-full text-left cursor-pointer group"
         onClick={() =>
           openFilePanel({
             id: `class_${className}`,
@@ -123,7 +131,14 @@ function ClassRow({
           })
         }
       >
-        {className}
+        {prefix && (
+          <span className="text-xs text-muted-foreground/70 font-medium shrink-0">
+            {prefix}.
+          </span>
+        )}
+        <span className="text-sm font-mono truncate text-foreground group-hover:text-primary transition-colors">
+          {name}
+        </span>
       </button>
     </div>
   );
