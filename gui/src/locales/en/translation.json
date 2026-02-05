@@ -234,6 +234,8 @@
   "failed_to_kill_process": "Failed to kill process",
   "detach": "Detach",
   "hook_groups": "Built-in Hook Groups",
+  "hook_builtin": "Built-in",
+  "hook_user_defined": "User Defined",
   "hook_crypto": "Crypto",
   "hook_crypto_desc": "Intercept encryption, decryption, hashing, and HMAC operations (CommonCrypto, X.509)",
   "hook_sqlite": "SQLite",
@@ -260,5 +262,6 @@
   "items": "items",
   "no_values": "No values",
   "rename": "Rename",
-  "time": "Time"
+  "time": "Time",
+  "imports": "Imports"
 }

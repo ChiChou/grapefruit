@@ -234,6 +234,8 @@
   "failed_to_kill_process": "终止进程失败",
   "detach": "分离",
   "hook_groups": "钩子组",
+  "hook_builtin": "内置",
+  "hook_user_defined": "用户自定义",
   "hook_crypto": "加密",
   "hook_crypto_desc": "拦截加密、解密、哈希和 HMAC 操作 (CommonCrypto, X.509)",
   "hook_sqlite": "SQLite",
@@ -260,5 +262,6 @@
   "items": "项",
   "no_values": "无数据",
   "rename": "重命名",
-  "time": "时间"
+  "time": "时间",
+  "imports": "导入"
 }
