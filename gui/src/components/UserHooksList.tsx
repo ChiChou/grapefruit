@@ -1,10 +1,11 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Trash2, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useSession, Status } from "@/context/SessionContext";
 import { formatObjCMethod } from "@/lib/hook-codegen";
+import { useRpcQuery } from "@/lib/queries";
 
 interface UserHook {
   type: "objc" | "native";
@@ -16,36 +17,22 @@ interface UserHook {
 export function UserHooksList() {
   const { t } = useTranslation();
   const { fruity, status } = useSession();
-  const [hooks, setHooks] = useState<UserHook[]>([]);
-  const [loading, setLoading] = useState(false);
   const [removingHook, setRemovingHook] = useState<string | null>(null);
 
-  const fetchHooks = useCallback(async () => {
-    if (status !== Status.Ready || !fruity) return;
-
-    setLoading(true);
-    try {
-      const userHooks = await fruity.hook.userHooks();
-      setHooks(userHooks);
-    } catch (error) {
-      console.error("Failed to fetch user hooks:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [fruity, status]);
-
-  useEffect(() => {
-    fetchHooks();
-  }, [fetchHooks]);
+  const {
+    data: hooks = [],
+    isLoading: loading,
+    refetch,
+  } = useRpcQuery<UserHook[]>(["userHooks"], (api) => api.hook.userHooks());
 
   // Listen for hooks:refresh event to reload the list
   useEffect(() => {
     const handleRefresh = () => {
-      fetchHooks();
+      refetch();
     };
     window.addEventListener("hooks:refresh", handleRefresh);
     return () => window.removeEventListener("hooks:refresh", handleRefresh);
-  }, [fetchHooks]);
+  }, [refetch]);
 
   const getHookKey = (hook: UserHook): string => {
     if (hook.type === "objc") {
@@ -74,7 +61,7 @@ export function UserHooksList() {
         await fruity.native.unhook(hook.module ?? null, hook.name);
       }
       // Refresh the list
-      await fetchHooks();
+      await refetch();
     } catch (error) {
       console.error("Failed to remove hook:", error);
     } finally {

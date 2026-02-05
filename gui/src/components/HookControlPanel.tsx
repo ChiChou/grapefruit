@@ -13,6 +13,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useSession, Status, Mode } from "@/context/SessionContext";
+import { useRpcQuery } from "@/lib/queries";
 import { UserHooksList } from "./UserHooksList";
 
 const HOOKS_STORAGE_PREFIX = "igf:hooks:";
@@ -68,7 +69,7 @@ export function HookControlPanel() {
   const { fruity, status, device, bundle, pid, mode } = useSession();
   const [hookStatus, setHookStatus] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
-  const initializedRef = useRef(false);
+  const restoredRef = useRef(false);
 
   // Generate storage key based on device and identifier
   const getStorageKey = useCallback(() => {
@@ -105,21 +106,29 @@ export function HookControlPanel() {
     }
   }, [getStorageKey]);
 
-  // Fetch initial hook status and restore saved hooks
+  // Fetch initial hook status using TanStack Query
+  const { data: initialStatus } = useRpcQuery<Record<string, boolean>>(
+    ["hookStatus", device ?? "", bundle ?? "", String(pid ?? "")],
+    (api) => api.hook.status()
+  );
+
+  // Update local state when initial status is fetched
   useEffect(() => {
-    if (status !== Status.Ready || !fruity || initializedRef.current) return;
+    if (initialStatus) {
+      setHookStatus(initialStatus);
+    }
+  }, [initialStatus]);
 
-    const initialize = async () => {
-      initializedRef.current = true;
+  // Restore saved hooks after initial status is loaded
+  useEffect(() => {
+    if (!initialStatus || !fruity || restoredRef.current) return;
 
-      // Get current hook status from agent
-      const currentStatus: Record<string, boolean> = await fruity.hook.status().catch(() => ({}));
-      setHookStatus(currentStatus);
+    const restoreSavedHooks = async () => {
+      restoredRef.current = true;
 
-      // Load saved hooks and enable any that aren't already enabled
       const savedHooks = loadSavedHooks();
       for (const groupId of savedHooks) {
-        if (!currentStatus[groupId]) {
+        if (!initialStatus[groupId]) {
           setLoading((prev) => ({ ...prev, [groupId]: true }));
           try {
             await fruity.hook.start(groupId);
@@ -133,12 +142,12 @@ export function HookControlPanel() {
       }
     };
 
-    initialize();
-  }, [fruity, status, loadSavedHooks]);
+    restoreSavedHooks();
+  }, [initialStatus, fruity, loadSavedHooks]);
 
-  // Reset initialized flag when session changes
+  // Reset restored flag when session changes
   useEffect(() => {
-    initializedRef.current = false;
+    restoredRef.current = false;
   }, [device, bundle, pid]);
 
   const handleToggle = async (groupId: string, enabled: boolean) => {
