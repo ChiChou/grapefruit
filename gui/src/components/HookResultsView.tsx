@@ -15,6 +15,12 @@ import {
   Database,
   Trash2,
   ChevronsDown,
+  Clipboard,
+  Fingerprint,
+  Smartphone,
+  FolderOpen,
+  Copy,
+  Check,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -50,6 +56,14 @@ function CategoryIcon({ category }: { category: string }) {
       return <Lock className="h-3.5 w-3.5" />;
     case "sql":
       return <Database className="h-3.5 w-3.5" />;
+    case "pasteboard":
+      return <Clipboard className="h-3.5 w-3.5" />;
+    case "biometric":
+      return <Fingerprint className="h-3.5 w-3.5" />;
+    case "deviceid":
+      return <Smartphone className="h-3.5 w-3.5" />;
+    case "fileops":
+      return <FolderOpen className="h-3.5 w-3.5" />;
     default:
       return <Layers className="h-3.5 w-3.5" />;
   }
@@ -66,8 +80,14 @@ function formatTime(date: Date): string {
   });
 }
 
-// Format message summary - no truncation, let CSS handle overflow
+// Format message summary - prefer line field, fallback to computed summary
 function formatSummary(message: HookMessage): string {
+  // Use line field if available
+  if (message.line) {
+    return message.line;
+  }
+
+  // Fallback to computed summary for backwards compatibility
   if (message.category === "crypto") {
     const crypto = message as CryptoHookMessage;
     const parts: string[] = [];
@@ -89,6 +109,65 @@ function formatSummary(message: HookMessage): string {
     }
   }
   return "";
+}
+
+// Summary popover component
+function SummaryPopover({ summary }: { summary: string }) {
+  const [copied, setCopied] = useState(false);
+
+  if (!summary) {
+    return <span className="text-muted-foreground/30">--</span>;
+  }
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(summary);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      console.error("Failed to copy:", e);
+    }
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <span
+          className="font-mono text-muted-foreground truncate flex-1 min-w-0 cursor-pointer hover:text-foreground"
+          title={summary}
+        >
+          {summary}
+        </span>
+      </PopoverTrigger>
+      <PopoverContent className="w-[500px] p-0" align="start">
+        <div className="flex items-center justify-end p-2 border-b">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-xs gap-1"
+            onClick={handleCopy}
+          >
+            {copied ? (
+              <>
+                <Check className="h-3 w-3" />
+                Copied
+              </>
+            ) : (
+              <>
+                <Copy className="h-3 w-3" />
+                Copy
+              </>
+            )}
+          </Button>
+        </div>
+        <ScrollArea className="max-h-[300px]">
+          <div className="p-3 font-mono text-xs whitespace-pre-wrap break-all">
+            {summary}
+          </div>
+        </ScrollArea>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 // Stack trace popover component
@@ -195,12 +274,7 @@ function HookRow(
       </span>
 
       {/* Summary */}
-      <span
-        className="font-mono text-muted-foreground truncate flex-1 min-w-0"
-        title={formatSummary(message)}
-      >
-        {formatSummary(message)}
-      </span>
+      <SummaryPopover summary={formatSummary(message)} />
 
       {/* Stack trace button */}
       <div className="shrink-0">
@@ -366,11 +440,26 @@ export function HookResultsView() {
     [entries.length],
   );
 
-  const handleClear = useCallback(() => {
+  const handleClear = useCallback(async () => {
+    // Clear UI state
     setEntries([]);
     pendingEntriesRef.current = [];
     idCounterRef.current = 0;
-  }, []);
+
+    // Clear database
+    if (device) {
+      const identifier = mode === Mode.App ? bundle : `pid-${pid}`;
+      if (identifier) {
+        try {
+          await fetch(`/api/hooks/${device}/${identifier}`, {
+            method: "DELETE",
+          });
+        } catch (e) {
+          console.error("Failed to clear hooks from database:", e);
+        }
+      }
+    }
+  }, [device, bundle, pid, mode]);
 
   const scrollToLatest = useCallback(() => {
     if (listRef.current && entries.length > 0) {
