@@ -1,0 +1,21 @@
+.disassembly-view {
+    font-family:
+        ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+        "Liberation Mono", monospace;
+    font-size: 12px;
+    line-height: 1.2;
+    /*white-space: pre-wrap;*/
+    /* Force dark theme for R2 terminal output */
+    background-color: #1a1a2e;
+    color: #e0e0e0;
+    border-radius: 4px;
+}
+
+.disassembly-view a {
+    color: #6db3f2;
+    text-decoration: none;
+}
+
+.disassembly-view a:hover {
+    text-decoration: underline;
+}

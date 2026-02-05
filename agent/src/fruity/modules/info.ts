@@ -102,3 +102,15 @@ export function urls(): URLScheme[] {
 export function plist() {
   return dump(ObjC.classes.NSBundle.mainBundle().infoDictionary());
 }
+
+export interface ProcessInfo {
+  platform: string;
+  arch: string;
+  pointerSize: number;
+  pageSize: number;
+}
+
+export function processInfo(): ProcessInfo {
+  const { platform, arch, pointerSize, pageSize } = Process;
+  return { platform, arch, pointerSize, pageSize };
+}

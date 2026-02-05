@@ -41,9 +41,11 @@ import { WebViewTab } from "./tabs/WebViewTab";
 import { JSCTab } from "./tabs/JSCTab";
 import { UserDefaultsTab } from "./tabs/UserDefaultsTab";
 import { QuickStartTab } from "./tabs/QuickStartTab";
+import { DisassemblyTab } from "./tabs/DisassemblyTab";
 import { NoCloseTabHeader } from "./tabs/NoCloseTabHeader";
 
 import { DockContext, useDockActions } from "@/context/DockContext";
+import { R2Provider } from "./R2Provider";
 
 function WorkspaceContent() {
   const { bundle, device, platform, mode, pid } = useSession();
@@ -115,6 +117,7 @@ function WorkspaceContent() {
     webview: WebViewTab,
     jsc: JSCTab,
     userdefaults: UserDefaultsTab,
+    disassembly: DisassemblyTab,
   };
 
   const tabComponents = {
@@ -249,7 +252,9 @@ function WorkspaceContent() {
 export function Workspace() {
   return (
     <SessionProvider>
-      <WorkspaceContent />
+      <R2Provider>
+        <WorkspaceContent />
+      </R2Provider>
     </SessionProvider>
   );
 }
