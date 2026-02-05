@@ -4,7 +4,7 @@ import type { IDockviewPanelProps } from "dockview";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { DependenciesListView } from "../views/DependenciesListView";
+import { ImportsListView } from "../views/ImportsListView";
 import { SectionsListView } from "../views/SectionsListView";
 import { ClassesListView } from "../views/ClassesListView";
 import { SymbolsListView } from "../views/SymbolsListView";
@@ -14,7 +14,7 @@ export interface ModuleDetailParams {
   path: string;
 }
 
-type TabKey = "dependencies" | "sections" | "symbols" | "exported" | "classes";
+type TabKey = "imports" | "sections" | "symbols" | "exported" | "classes";
 
 export function ModuleDetailTab({
   params,
@@ -36,7 +36,7 @@ export function ModuleDetailTab({
       >
         <div className="flex items-center justify-between gap-4 mb-2">
           <TabsList>
-            <TabsTrigger value="dependencies">{t("dependencies")}</TabsTrigger>
+            <TabsTrigger value="imports">{t("imports")}</TabsTrigger>
             <TabsTrigger value="sections">{t("sections")}</TabsTrigger>
             <TabsTrigger value="classes">{t("classes")}</TabsTrigger>
             <TabsTrigger value="symbols">{t("symbols")}</TabsTrigger>
@@ -44,8 +44,8 @@ export function ModuleDetailTab({
           </TabsList>
           <h2 className="text-sm font-thin truncate">{params.path}</h2>
         </div>
-        <TabsContent value="dependencies" className="flex-1">
-          <DependenciesListView path={params.path} />
+        <TabsContent value="imports" className="flex-1">
+          <ImportsListView path={params.path} />
         </TabsContent>
         <TabsContent value="sections" className="flex-1">
           <SectionsListView path={params.path} />

@@ -243,3 +243,45 @@ export function exports(path: string): Exported[] {
       };
     });
 }
+
+export interface ImportGroup {
+  module: string;
+  imports: Imported[];
+}
+
+export function importsGrouped(path: string): ImportGroup[] {
+  const mod = getModule(path);
+  const allImports = mod.enumerateImports();
+
+  // Group imports by module
+  const grouped = new Map<string, Imported[]>();
+  for (const imp of allImports) {
+    const moduleName = imp.module || "(unknown)";
+    if (!grouped.has(moduleName)) {
+      grouped.set(moduleName, []);
+    }
+
+    let t: SymbolType | undefined = undefined;
+    if (imp.type === "function") {
+      t = "f";
+    } else if (imp.type === "variable") {
+      t = "v";
+    }
+
+    grouped.get(moduleName)!.push({
+      name: imp.name,
+      addr: imp.address?.toString() || "",
+      demangled: tryDemangle(imp.name),
+      type: t,
+    });
+  }
+
+  // Convert to array and sort alphabetically by module name
+  const result: ImportGroup[] = [];
+  for (const [module, imports] of grouped) {
+    result.push({ module, imports });
+  }
+  result.sort((a, b) => a.module.localeCompare(b.module));
+
+  return result;
+}
