@@ -291,7 +291,7 @@ export function SymbolsTableView({ symbols, loading, modulePath }: SymbolsTableV
         cell: ({ row }) => {
           const item = row.original as Exported;
           if (item.type === "f") {
-            return <FileCode className="w-3.5 h-3.5 text-blue-500" />;
+            return <FileCode className="w-3.5 h-3.5 text-amber-500" />;
           } else if (item.type === "v") {
             return <Database className="w-3.5 h-3.5 text-green-500" />;
           }
@@ -317,7 +317,7 @@ export function SymbolsTableView({ symbols, loading, modulePath }: SymbolsTableV
             return (
               <button
                 type="button"
-                className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                className="text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
                 onClick={() => handleAddressClick(item)}
               >
                 {addr}
@@ -389,7 +389,7 @@ export function SymbolsTableView({ symbols, loading, modulePath }: SymbolsTableV
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500">
+      <div className="flex items-center justify-center h-full text-muted-foreground">
         {t("loading")}...
       </div>
     );
@@ -397,7 +397,7 @@ export function SymbolsTableView({ symbols, loading, modulePath }: SymbolsTableV
 
   if (!symbols || symbols.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500">
+      <div className="flex items-center justify-center h-full text-muted-foreground">
         {t("no_results")}
       </div>
     );
@@ -407,7 +407,7 @@ export function SymbolsTableView({ symbols, loading, modulePath }: SymbolsTableV
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 mb-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder={t("search")}
             value={globalFilter}
@@ -483,8 +483,8 @@ export function SymbolsTableView({ symbols, loading, modulePath }: SymbolsTableV
                       <div
                         onMouseDown={header.getResizeHandler()}
                         onTouchStart={header.getResizeHandler()}
-                        className={`absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none hover:bg-blue-500/50 ${
-                          header.column.getIsResizing() ? "bg-blue-500" : ""
+                        className={`absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none hover:bg-amber-500/50 ${
+                          header.column.getIsResizing() ? "bg-amber-500" : ""
                         }`}
                       />
                     )}

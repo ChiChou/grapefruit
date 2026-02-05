@@ -211,7 +211,7 @@ export function ClassDetailTab({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500">
+      <div className="flex items-center justify-center h-full text-muted-foreground">
         {t("loading")}...
       </div>
     );
@@ -219,7 +219,7 @@ export function ClassDetailTab({
 
   if (!classInfo) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500">
+      <div className="flex items-center justify-center h-full text-muted-foreground">
         {t("no_results")}
       </div>
     );
@@ -233,19 +233,19 @@ export function ClassDetailTab({
             <span key={cls} className="flex items-center">
               <button
                 type="button"
-                className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer font-mono"
+                className="text-amber-600 dark:text-amber-400 hover:underline cursor-pointer font-mono"
                 onClick={() => openClassTab(cls)}
               >
                 {cls}
               </button>
-              <span className="mx-1 text-gray-400">/</span>
+              <span className="mx-1 text-muted-foreground">/</span>
             </span>
           ))}
           <span className="font-mono font-semibold">{classInfo.name}</span>
         </div>
         <button
           type="button"
-          className="text-sm text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+          className="text-sm text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
           onClick={() => openModuleTab(classInfo.module)}
         >
           {classInfo.module}
@@ -401,7 +401,7 @@ export function ClassDetailTab({
           <TabsContent value="protocols">
             <section className="flex-1 overflow-auto">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-gray-500">
+                <h3 className="text-sm font-medium text-muted-foreground">
                   {t("protocols")} ({filteredProtocols.length})
                 </h3>
                 <Input
@@ -415,14 +415,14 @@ export function ClassDetailTab({
                 {filteredProtocols.map((protocol) => (
                   <span
                     key={protocol}
-                    className="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded"
+                    className="text-xs font-mono bg-muted px-2 py-1 rounded"
                   >
                     {protocol}
                   </span>
                 ))}
               </div>
               {filteredProtocols.length === 0 && (
-                <div className="text-sm text-gray-500 py-4 text-center">
+                <div className="text-sm text-muted-foreground py-4 text-center">
                   {t("no_results")}
                 </div>
               )}
@@ -431,7 +431,7 @@ export function ClassDetailTab({
 
           <TabsContent value="ivar">
             <section>
-              <h3 className="text-sm font-medium text-gray-500 mb-2">
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">
                 ivar ({ivarEntries.length})
               </h3>
               <div className="overflow-auto max-h-48 border rounded">

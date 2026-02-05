@@ -89,7 +89,7 @@ function PlistNode({
   return (
     <div>
       <div
-        className="flex items-center hover:bg-gray-100 dark:hover:bg-gray-800 py-0.5 font-mono"
+        className="flex items-center hover:bg-accent py-0.5 font-mono"
         style={{ paddingLeft: `${depth * 20 + 8}px` }}
       >
         {hasChildren ? (
@@ -108,15 +108,15 @@ function PlistNode({
           <span className="w-5" />
         )}
         {node.key && (
-          <span className="text-blue-600 dark:text-blue-400 mr-2 text-sm after:content-[':']">
+          <span className="text-amber-600 dark:text-amber-400 mr-2 text-sm after:content-[':']">
             {node.key}
           </span>
         )}
         {hasChildren ? (
-          <span className="text-gray-500 text-sm">
+          <span className="text-muted-foreground text-sm">
             {isObject(node.value) ? "{" : "["}
             {!expanded && node.children && node.children.length > 0 && (
-              <span className="text-gray-400 ml-2">
+              <span className="text-muted-foreground ml-2">
                 ...{node.children.length} items
               </span>
             )}
@@ -140,7 +140,7 @@ function PlistNode({
             />
           ))}
           <div
-            className="text-gray-500 text-sm"
+            className="text-muted-foreground text-sm"
             style={{ paddingLeft: `${depth * 20 + 8 + 20}px` }}
           >
             {isObject(node.value) ? "}" : "]"}

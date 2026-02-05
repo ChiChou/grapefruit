@@ -209,11 +209,11 @@ export function BinaryCookieTab() {
       </div>
       <div className="flex-1 overflow-auto">
         {isLoading && cookies.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-gray-500">
+          <div className="flex items-center justify-center h-full text-muted-foreground">
             {t("loading")}...
           </div>
         ) : cookies.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-gray-500">
+          <div className="flex items-center justify-center h-full text-muted-foreground">
             {t("no_cookies")}
           </div>
         ) : (
@@ -304,7 +304,7 @@ export function BinaryCookieTab() {
                     ) : (
                       <button
                         type="button"
-                        className="w-full text-left hover:bg-gray-100 dark:hover:bg-gray-800 px-1 py-0.5 rounded truncate"
+                        className="w-full text-left hover:bg-accent px-1 py-0.5 rounded truncate"
                         onClick={() => startEditing(cookie)}
                         title={cookie.value}
                       >
@@ -331,7 +331,7 @@ export function BinaryCookieTab() {
                       <PopoverTrigger asChild>
                         <button
                           type="button"
-                          className="w-full text-left hover:bg-gray-100 dark:hover:bg-gray-800 px-1 py-0.5 rounded"
+                          className="w-full text-left hover:bg-accent px-1 py-0.5 rounded"
                         >
                           {formatDate(cookie.expiresDate)}
                         </button>
@@ -386,21 +386,21 @@ export function BinaryCookieTab() {
                     {cookie.isSecure ? (
                       <span className="text-green-600">✓</span>
                     ) : (
-                      <span className="text-gray-300">-</span>
+                      <span className="text-muted-foreground">-</span>
                     )}
                   </TableCell>
                   <TableCell className="text-center">
                     {cookie.isHTTPOnly ? (
                       <span className="text-green-600">✓</span>
                     ) : (
-                      <span className="text-gray-300">-</span>
+                      <span className="text-muted-foreground">-</span>
                     )}
                   </TableCell>
                   <TableCell className="text-center">
                     {cookie.isSessionOnly ? (
-                      <span className="text-blue-600">✓</span>
+                      <span className="text-amber-600">✓</span>
                     ) : (
-                      <span className="text-gray-300">-</span>
+                      <span className="text-muted-foreground">-</span>
                     )}
                   </TableCell>
                   <TableCell className="text-right">

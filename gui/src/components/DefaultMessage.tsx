@@ -6,8 +6,8 @@ export function DefaultMessage() {
   return (
     <div className="flex h-full items-center justify-center">
       <div className="text-center">
-        <p className="text-lg text-gray-500">{t("please_select_device")}</p>
-        <p className="text-gray-500 mt-4">{t("new_to_grapefruit")}</p>
+        <p className="text-lg text-muted-foreground">{t("please_select_device")}</p>
+        <p className="text-muted-foreground mt-4">{t("new_to_grapefruit")}</p>
         <p>
           <a
             href="http://github.com/chichou/grapefruit"

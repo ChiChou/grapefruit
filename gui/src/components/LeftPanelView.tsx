@@ -24,9 +24,9 @@ function NavItem({ to, icon, label }: NavItemProps) {
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `p-2 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors ${
+        `p-2 flex items-center justify-center hover:bg-sidebar-accent transition-colors ${
           isActive
-            ? "bg-gray-200 dark:bg-gray-800 border-l-2 border-primary"
+            ? "bg-sidebar-accent border-l-2 border-primary"
             : ""
         }`
       }
@@ -121,8 +121,8 @@ export function LeftPanelView() {
 
   return (
     <div className="flex h-full">
-      <div className="w-12 bg-gray-50 dark:bg-gray-900 border-r dark:border-gray-700 flex flex-col">
-        <div className="p-2 flex items-center justify-center border-b dark:border-gray-700">
+      <div className="w-12 bg-sidebar border-r border-sidebar-border flex flex-col">
+        <div className="p-2 flex items-center justify-center border-b border-sidebar-border">
           <Link to={`/list/${device}/apps`} className="flex items-center">
             <img src={logo} alt={t("logo_alt")} className="h-6 w-6" />
           </Link>

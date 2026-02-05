@@ -98,7 +98,7 @@ export function URLSchemesPanel() {
                           <button
                             key={i}
                             type="button"
-                            className="w-full cursor-pointer text-left font-mono text-sm text-blue-600 dark:text-blue-400 rounded-sm px-1 py-0.5 transition-colors hover:underline"
+                            className="w-full cursor-pointer text-left font-mono text-sm text-amber-600 dark:text-amber-400 rounded-sm px-1 py-0.5 transition-colors hover:underline"
                             onClick={() => s && setSelectedScheme(s)}
                           >
                             {s}://
@@ -151,7 +151,7 @@ export function URLSchemesPanel() {
                       <button
                         key={i}
                         type="button"
-                        className="w-full cursor-pointer text-left font-mono text-sm text-blue-600 dark:text-blue-400 rounded-sm px-1 py-0.5 transition-colors hover:underline"
+                        className="w-full cursor-pointer text-left font-mono text-sm text-amber-600 dark:text-amber-400 rounded-sm px-1 py-0.5 transition-colors hover:underline"
                         onClick={() => s && setSelectedScheme(s)}
                       >
                         {s}://

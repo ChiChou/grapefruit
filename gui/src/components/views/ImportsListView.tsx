@@ -326,7 +326,7 @@ export function ImportsListView({ path }: ImportsListViewProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500">
+      <div className="flex items-center justify-center h-full text-muted-foreground">
         {t("loading")}...
       </div>
     );
@@ -334,7 +334,7 @@ export function ImportsListView({ path }: ImportsListViewProps) {
 
   if (!importGroups || importGroups.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500">
+      <div className="flex items-center justify-center h-full text-muted-foreground">
         {t("no_results")}
       </div>
     );
@@ -362,7 +362,7 @@ export function ImportsListView({ path }: ImportsListViewProps) {
     column: keyof typeof DEFAULT_WIDTHS;
   }) => (
     <div
-      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-blue-500/50 active:bg-blue-500"
+      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-amber-500/50 active:bg-amber-500"
       onMouseDown={(e) => handleMouseDown(column, e)}
     />
   );
@@ -373,7 +373,7 @@ export function ImportsListView({ path }: ImportsListViewProps) {
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 mb-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder={t("search")}
             value={search}
@@ -392,7 +392,7 @@ export function ImportsListView({ path }: ImportsListViewProps) {
         </Button>
         <button
           type="button"
-          className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer transition"
+          className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-muted border border-border rounded-md hover:bg-accent cursor-pointer transition"
           onClick={expandAll}
         >
           <span>⤢</span>
@@ -400,7 +400,7 @@ export function ImportsListView({ path }: ImportsListViewProps) {
         </button>
         <button
           type="button"
-          className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer transition"
+          className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-muted border border-border rounded-md hover:bg-accent cursor-pointer transition"
           onClick={collapseAll}
         >
           <span>⤡</span>
@@ -508,12 +508,12 @@ export function ImportsListView({ path }: ImportsListViewProps) {
                     <td colSpan={3} className="p-2 font-medium">
                       <div className="flex items-center gap-2">
                         <span className="truncate">{group.module}</span>
-                        <span className="px-1.5 py-0.5 text-[10px] rounded bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
+                        <span className="px-1.5 py-0.5 text-[10px] rounded bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
                           {group.imports.length}
                         </span>
                         <button
                           type="button"
-                          className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400"
+                          className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-amber-600 dark:hover:text-amber-400"
                           onClick={(e) => openModuleTab(group.module, e)}
                           aria-label="Open module"
                         >
@@ -591,7 +591,7 @@ export function ImportsListView({ path }: ImportsListViewProps) {
                         isClickable(imp) ? (
                           <button
                             type="button"
-                            className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                            className="text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
                             onClick={() => handleAddressClick(imp)}
                           >
                             {imp.addr}

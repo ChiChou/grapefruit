@@ -81,7 +81,7 @@ export function DisassemblyTab({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center gap-2 p-2 border-b bg-[#1a1a2e] text-gray-300">
+      <div className="flex items-center gap-2 p-2 border-b bg-[#1b1b1f] text-muted-foreground">
         <span className="text-xs font-mono">{params?.name || address}</span>
       </div>
       <div className="disassembly-view flex-1 overflow-auto p-3">

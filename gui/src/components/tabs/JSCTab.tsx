@@ -56,13 +56,13 @@ interface JSCEntry {
 
 function ValueIcon({ value }: { value: unknown }) {
   if (value === null || value === undefined) {
-    return <span className="text-gray-400">null</span>;
+    return <span className="text-muted-foreground">null</span>;
   }
   if (typeof value === "boolean") {
     return <ToggleLeft className="w-3 h-3 text-purple-500" />;
   }
   if (typeof value === "number") {
-    return <Hash className="w-3 h-3 text-blue-500" />;
+    return <Hash className="w-3 h-3 text-amber-500" />;
   }
   if (typeof value === "string") {
     return <Type className="w-3 h-3 text-green-500" />;
@@ -84,9 +84,9 @@ function ValueIcon({ value }: { value: unknown }) {
 }
 
 function ValuePreview({ value }: { value: unknown }) {
-  if (value === null) return <span className="text-gray-400">null</span>;
+  if (value === null) return <span className="text-muted-foreground">null</span>;
   if (value === undefined)
-    return <span className="text-gray-400">undefined</span>;
+    return <span className="text-muted-foreground">undefined</span>;
   if (typeof value === "boolean") {
     return (
       <span className="text-purple-600 dark:text-purple-400">
@@ -95,7 +95,7 @@ function ValuePreview({ value }: { value: unknown }) {
     );
   }
   if (typeof value === "number") {
-    return <span className="text-blue-600 dark:text-blue-400">{value}</span>;
+    return <span className="text-amber-600 dark:text-amber-400">{value}</span>;
   }
   if (typeof value === "string") {
     return (
@@ -356,7 +356,7 @@ export function JSCTab() {
       </div>
       <div className="flex-1 overflow-hidden">
         {!isLoading && entries.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-gray-500">
+          <div className="flex items-center justify-center h-full text-muted-foreground">
             {t("no_jscontext_found")}
           </div>
         ) : (
@@ -365,7 +365,7 @@ export function JSCTab() {
             <ResizablePanel defaultSize={35} minSize={20}>
               <div className="h-full overflow-auto">
                 {isLoading ? (
-                  <div className="flex items-center justify-center h-full gap-2 text-gray-500">
+                  <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
                     <Spinner className="w-5 h-5" />
                     <span>{t("loading")}...</span>
                   </div>
@@ -489,7 +489,7 @@ export function JSCTab() {
                             <div className="text-sm text-muted-foreground mb-1">
                               {t("result")}:
                             </div>
-                            <pre className="font-mono text-xs bg-gray-100 dark:bg-gray-800 p-3 rounded overflow-x-auto max-h-40 whitespace-pre-wrap">
+                            <pre className="font-mono text-xs bg-muted p-3 rounded overflow-x-auto max-h-40 whitespace-pre-wrap">
                               {jsResult}
                             </pre>
                           </div>

@@ -25,7 +25,7 @@ function CopyButton({ text }: { text: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="ml-2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+      className="ml-2 p-1 text-muted-foreground hover:text-muted-foreground dark:hover:text-muted-foreground"
       title="Copy to clipboard"
     >
       {copied ? (
@@ -42,7 +42,7 @@ function PathDisplay({ path, onClick }: { path: string; onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="text-left flex items-start text-sm font-mono break-all hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer hover:underline"
+      className="text-left flex items-start text-sm font-mono break-all hover:text-amber-600 dark:hover:text-amber-400 transition-colors cursor-pointer hover:underline"
     >
       <span className="text-xs">{path}</span>
     </button>
@@ -104,13 +104,13 @@ export function GeneralPanel() {
             />
             <div className="flex-1 min-w-0">
               <div>
-                <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                <div className="text-sm text-muted-foreground mb-1">
                   {t("app_name")}
                 </div>
                 <div className="text-sm">{basicInfo.label || t("na")}</div>
               </div>
               <div className="mt-2">
-                <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                <div className="text-sm text-muted-foreground mb-1">
                   {t("bundle_id")}
                 </div>
                 <div className="text-sm font-mono break-all">
@@ -120,7 +120,7 @@ export function GeneralPanel() {
             </div>
           </div>
           <div>
-            <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+            <div className="text-sm text-muted-foreground mb-1">
               {t("version")}
             </div>
             <div className="flex items-center gap-2 text-sm">
@@ -131,13 +131,13 @@ export function GeneralPanel() {
             </div>
           </div>
           <div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+            <div className="text-xs text-muted-foreground mb-1">
               {t("min_os")}
             </div>
             <Badge variant="outline">{basicInfo.minOS || t("na")}</Badge>
           </div>
           <div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+            <div className="text-xs text-muted-foreground mb-1">
               {t("bundle_path")}
             </div>
             {basicInfo.path ? (
@@ -153,7 +153,7 @@ export function GeneralPanel() {
             )}
           </div>
           <div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+            <div className="text-xs text-muted-foreground mb-1">
               {t("executable")}
             </div>
             <div className="flex items-center text-sm font-mono break-all">
@@ -162,7 +162,7 @@ export function GeneralPanel() {
             </div>
           </div>
           <div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+            <div className="text-xs text-muted-foreground mb-1">
               {t("tmp_dir")}
             </div>
             <div className="flex items-center text-sm font-mono break-all">
@@ -171,7 +171,7 @@ export function GeneralPanel() {
             </div>
           </div>
           <div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+            <div className="text-xs text-muted-foreground mb-1">
               {t("home_dir")}
             </div>
             {basicInfo.home ? (
@@ -188,11 +188,11 @@ export function GeneralPanel() {
           </div>
         </div>
       ) : status === Status.Ready ? (
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-sm text-muted-foreground">
           {t("no_app_info")}
         </div>
       ) : (
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-sm text-muted-foreground">
           {t("connect_to_view_app_info")}
         </div>
       )}
