@@ -265,12 +265,12 @@ export function KeyChainTab() {
       </div>
       <div className="flex-1 overflow-auto">
         {isLoading ? (
-          <div className="flex items-center justify-center h-full gap-2 text-gray-500">
+          <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
             <Spinner className="w-5 h-5" />
             <span>{t("loading")}...</span>
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-gray-500">
+          <div className="flex items-center justify-center h-full text-muted-foreground">
             {t("no_keychain_items")}
           </div>
         ) : (
@@ -495,11 +495,11 @@ export function KeyChainTab() {
                     <TableRow key={`detail-${index}`}>
                       <TableCell
                         colSpan={9}
-                        className="bg-gray-50 dark:bg-gray-900 p-4"
+                        className="bg-muted p-4"
                       >
                         <div className="grid grid-cols-4 gap-4 text-sm">
                           <div>
-                            <span className="font-medium text-gray-500">
+                            <span className="font-medium text-muted-foreground">
                               {t("creation_time")}:
                             </span>
                             <div className="font-mono">
@@ -509,7 +509,7 @@ export function KeyChainTab() {
                             </div>
                           </div>
                           <div>
-                            <span className="font-medium text-gray-500">
+                            <span className="font-medium text-muted-foreground">
                               {t("modification_time")}:
                             </span>
                             <div className="font-mono">
@@ -519,7 +519,7 @@ export function KeyChainTab() {
                             </div>
                           </div>
                           <div>
-                            <span className="font-medium text-gray-500">
+                            <span className="font-medium text-muted-foreground">
                               {t("comment")}:
                             </span>
                             <div
@@ -530,7 +530,7 @@ export function KeyChainTab() {
                             </div>
                           </div>
                           <div>
-                            <span className="font-medium text-gray-500">
+                            <span className="font-medium text-muted-foreground">
                               {t("creator")}:
                             </span>
                             <div
@@ -541,25 +541,25 @@ export function KeyChainTab() {
                             </div>
                           </div>
                           <div>
-                            <span className="font-medium text-gray-500">
+                            <span className="font-medium text-muted-foreground">
                               {t("alias")}:
                             </span>
                             <div>{formatBoolean(item.alias)}</div>
                           </div>
                           <div>
-                            <span className="font-medium text-gray-500">
+                            <span className="font-medium text-muted-foreground">
                               {t("invisible")}:
                             </span>
                             <div>{formatBoolean(item.invisible)}</div>
                           </div>
                           <div>
-                            <span className="font-medium text-gray-500">
+                            <span className="font-medium text-muted-foreground">
                               {t("custom_icon")}:
                             </span>
                             <div>{formatBoolean(item.customIcon)}</div>
                           </div>
                           <div className="col-span-2">
-                            <span className="font-medium text-gray-500">
+                            <span className="font-medium text-muted-foreground">
                               {t("data")}:
                             </span>
                             <div
@@ -571,7 +571,7 @@ export function KeyChainTab() {
                           </div>
                           <div className="col-span-4">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-gray-500">
+                              <span className="font-medium text-muted-foreground">
                                 {t("raw")}:
                               </span>
                               <Button
@@ -599,7 +599,7 @@ export function KeyChainTab() {
                                 )}
                               </Button>
                             </div>
-                            <pre className="font-mono text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded mt-1 overflow-x-auto">
+                            <pre className="font-mono text-xs bg-muted p-2 rounded mt-1 overflow-x-auto">
                               {hexDump(item.raw)}
                             </pre>
                           </div>

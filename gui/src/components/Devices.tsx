@@ -100,14 +100,14 @@ export function Devices() {
   if (loading) {
     return (
       <>
-        <h2 className="mb-4 text-lg  dark:text-gray-100 font-light">
+        <h2 className="mb-4 text-lg  dark:text-foreground font-light">
           <Spinner className="inline-block h-5 w-5 animate-spin" />
         </h2>
         <div className="flex flex-col gap-2" role="status" aria-live="polite">
           {Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
-              className="h-8 w-3/4 rounded-md bg-gray-200 dark:bg-gray-700 animate-pulse"
+              className="h-8 w-3/4 rounded-md bg-accent animate-pulse"
             />
           ))}
         </div>
@@ -155,7 +155,7 @@ export function Devices() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleAddRemoteDevice();
                 }}
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               />
               <div className="flex gap-2">
                 <Button
@@ -182,7 +182,7 @@ export function Devices() {
       </div>
       <Separator className="mb-4" />
       {devices.length === 0 ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400 text-center flex items-center justify-center gap-2">
+        <p className="text-sm text-muted-foreground text-center flex items-center justify-center gap-2">
           <TriangleAlert className="h-4 w-4" />
           {t("no_devices_found")}
         </p>
@@ -192,10 +192,10 @@ export function Devices() {
             <li key={device.id} className="flex items-center gap-2 min-w-0">
               <Link
                 to={`/list/${device.id}/apps`}
-                className={`flex-1 block rounded-md px-3 py-2 text-sm transition-colors hover:bg-gray-200 dark:hover:bg-gray-700 min-w-0 truncate ${
+                className={`flex-1 block rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent min-w-0 truncate ${
                   udid === device.id
-                    ? "bg-gray-300 font-medium dark:bg-gray-700 dark:text-gray-100"
-                    : "text-gray-700 dark:text-gray-300"
+                    ? "bg-accent font-medium text-accent-foreground"
+                    : "text-muted-foreground"
                 }`}
                 title={device.name || device.id}
               >

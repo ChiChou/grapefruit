@@ -36,7 +36,7 @@ export function SectionsListView({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500">
+      <div className="flex items-center justify-center h-full text-muted-foreground">
         {t("loading")}...
       </div>
     );
@@ -44,7 +44,7 @@ export function SectionsListView({
 
   if (!sections || sections.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500">
+      <div className="flex items-center justify-center h-full text-muted-foreground">
         {t("no_results")}
       </div>
     );
@@ -67,7 +67,7 @@ export function SectionsListView({
               <TableCell className="font-mono">
                 <button
                   type="button"
-                  className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer text-left"
+                  className="text-amber-600 dark:text-amber-400 hover:underline cursor-pointer text-left"
                   onClick={() =>
                     openMemoryPreviewTab(section.addr, section.size)
                   }

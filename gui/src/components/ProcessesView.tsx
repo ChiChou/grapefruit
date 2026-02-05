@@ -38,10 +38,10 @@ function DeviceHeader({ deviceInfo: info }: { deviceInfo: DeviceInfo }) {
   const { t } = useTranslation();
   return (
     <>
-      <h1 className="mb-2 text-2xl font-bold dark:text-gray-100">
+      <h1 className="mb-2 text-2xl font-bold dark:text-foreground">
         {info.name || t("device")}
       </h1>
-      <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
+      <p className="mb-6 text-sm text-muted-foreground">
         {info.arch} {info.os?.name} {info.os?.version}
         <br />
         {info.udid}
@@ -170,7 +170,7 @@ export function ProcessesView() {
     >
       <div className="flex items-center gap-1">
         {children}
-        <ArrowUpDown className={`h-3 w-3 ${sort.field === field ? "text-blue-500" : "text-muted-foreground"}`} />
+        <ArrowUpDown className={`h-3 w-3 ${sort.field === field ? "text-amber-500" : "text-muted-foreground"}`} />
       </div>
     </TableHead>
   );
@@ -219,7 +219,7 @@ export function ProcessesView() {
       </div>
 
       <div className="mb-4 relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           type="text"
           placeholder={t("search_processes")}
@@ -251,7 +251,7 @@ export function ProcessesView() {
                   <TableCell>
                     <Link
                       to={`/workspace/${platform}/${udid}/daemon/${process.pid}`}
-                      className="text-blue-600 dark:text-blue-400 hover:underline"
+                      className="text-amber-600 dark:text-amber-400 hover:underline"
                     >
                       {process.pid}
                     </Link>

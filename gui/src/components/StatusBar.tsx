@@ -38,12 +38,12 @@ export function StatusBar({
   const getStatusColor = () => {
     switch (status) {
       case Status.Ready:
-        return "bg-green-500";
+        return "bg-green-600 dark:bg-green-900";
       case Status.Disconnected:
-        return "bg-orange-500";
+        return "bg-orange-500 dark:bg-orange-900";
       case Status.Connecting:
       default:
-        return "bg-gray-600";
+        return "bg-muted text-muted-foreground";
     }
   };
 

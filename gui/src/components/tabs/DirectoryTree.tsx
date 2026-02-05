@@ -186,8 +186,8 @@ export function DirectoryTree({
           type="button"
           className={`flex items-center w-full py-1 px-2 text-left ${
             isActive
-              ? "bg-blue-100 dark:bg-blue-900"
-              : "hover:bg-gray-100 dark:hover:bg-gray-800"
+              ? "bg-amber-100 dark:bg-amber-900"
+              : "hover:bg-accent"
           }`}
           style={{ paddingLeft: `${depth * 16 + 8}px` }}
           onClick={() => handleNodeClick(currentPath)}

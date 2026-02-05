@@ -189,12 +189,12 @@ document.title`);
       </div>
       <div className="flex-1 overflow-hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center h-full gap-2 text-gray-500">
+          <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
             <Spinner className="w-5 h-5" />
             <span>{t("loading")}...</span>
           </div>
         ) : entries.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-gray-500">
+          <div className="flex items-center justify-center h-full text-muted-foreground">
             {t("no_webviews")}
           </div>
         ) : (
@@ -224,7 +224,7 @@ document.title`);
                           <span
                             className={`px-2 py-1 text-xs rounded ${
                               entry.kind === "WK"
-                                ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
                                 : "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
                             }`}
                           >
@@ -261,7 +261,7 @@ document.title`);
                     <span
                       className={`px-2 py-1 text-xs rounded ${
                         selectedEntry.kind === "WK"
-                          ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                          ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
                           : "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
                       }`}
                     >
@@ -309,7 +309,7 @@ document.title`);
                       <Globe className="w-4 h-4 text-muted-foreground" />
                       <span className="text-sm font-medium">{t("current_url")}</span>
                     </div>
-                    <div className="font-mono text-sm bg-gray-100 dark:bg-gray-800 p-2 rounded flex items-center gap-2">
+                    <div className="font-mono text-sm bg-muted p-2 rounded flex items-center gap-2">
                       <span className="truncate flex-1">
                         {selectedEntry.url || "about:blank"}
                       </span>
@@ -318,7 +318,7 @@ document.title`);
                           href={selectedEntry.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-500 hover:text-blue-600 shrink-0"
+                          className="text-amber-500 hover:text-amber-600 shrink-0"
                         >
                           <ExternalLink className="w-4 h-4" />
                         </a>
@@ -393,7 +393,7 @@ document.title`);
                         <div className="text-sm text-muted-foreground mb-1">
                           {t("result")}:
                         </div>
-                        <pre className="font-mono text-xs bg-gray-100 dark:bg-gray-800 p-3 rounded overflow-x-auto max-h-32 whitespace-pre-wrap">
+                        <pre className="font-mono text-xs bg-muted p-3 rounded overflow-x-auto max-h-32 whitespace-pre-wrap">
                           {jsResult}
                         </pre>
                       </div>

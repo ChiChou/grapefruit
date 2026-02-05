@@ -128,11 +128,11 @@ export function FileTable({
   if (isLoading) {
     return (
       <div className="flex flex-col h-full">
-        <div className="flex-1 flex items-center justify-center text-gray-500">
+        <div className="flex-1 flex items-center justify-center text-muted-foreground">
           {t("loading")}...
         </div>
         {cwd && (
-          <div className="px-2 py-1 text-xs text-gray-500 border-t">{cwd}</div>
+          <div className="px-2 py-1 text-xs text-muted-foreground border-t">{cwd}</div>
         )}
       </div>
     );
@@ -141,11 +141,11 @@ export function FileTable({
   if (items.length === 0) {
     return (
       <div className="flex flex-col h-full">
-        <div className="flex-1 flex items-center justify-center text-gray-500">
+        <div className="flex-1 flex items-center justify-center text-muted-foreground">
           {t("empty_directory")}
         </div>
         {cwd && (
-          <div className="px-2 py-1 text-xs text-gray-500 border-t">{cwd}</div>
+          <div className="px-2 py-1 text-xs text-muted-foreground border-t">{cwd}</div>
         )}
       </div>
     );
@@ -176,7 +176,7 @@ export function FileTable({
                     {item.dir ? (
                       <Folder className="w-4 h-4 text-yellow-500" />
                     ) : (
-                      <File className="w-4 h-4 text-gray-500" />
+                      <File className="w-4 h-4 text-muted-foreground" />
                     )}
                   </TableCell>
                   <TableCell className="font-mono text-sm">
@@ -219,7 +219,7 @@ export function FileTable({
                       <button
                         type="button"
                         onClick={() => onPreview(item.name, typeFor(item.name))}
-                        className="hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
+                        className="hover:text-amber-600 dark:hover:text-amber-400 hover:underline"
                       >
                         {item.name}
                       </button>
@@ -277,7 +277,7 @@ export function FileTable({
                   <TableCell className="text-right text-sm">
                     {item.dir ? "-" : formatSize(item.size)}
                   </TableCell>
-                  <TableCell className="text-sm text-gray-500">
+                  <TableCell className="text-sm text-muted-foreground">
                     {formatDate(item.created)}
                   </TableCell>
                   <TableCell>
@@ -339,7 +339,7 @@ export function FileTable({
         </Table>
       </div>
       {cwd && (
-        <div className="px-2 py-1 text-xs text-gray-500 border-t shrink-0">
+        <div className="px-2 py-1 text-xs text-muted-foreground border-t shrink-0">
           {cwd}
         </div>
       )}

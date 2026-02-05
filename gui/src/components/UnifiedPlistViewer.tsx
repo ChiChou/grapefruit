@@ -114,7 +114,7 @@ export function PlistView({
             {value ? (
               <PlistTreeView data={value} expanded={expandAll} />
             ) : (
-              <div className="flex items-center justify-center h-full text-gray-500">
+              <div className="flex items-center justify-center h-full text-muted-foreground">
                 {t("no_content")}
               </div>
             )}
@@ -138,7 +138,7 @@ export function PlistView({
                 }}
               />
             ) : (
-              <div className="flex items-center justify-center h-full text-gray-500">
+              <div className="flex items-center justify-center h-full text-muted-foreground">
                 {t("no_content")}
               </div>
             )}

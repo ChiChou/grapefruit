@@ -6,13 +6,13 @@
     line-height: 1.2;
     /*white-space: pre-wrap;*/
     /* Force dark theme for R2 terminal output */
-    background-color: #1a1a2e;
-    color: #e0e0e0;
+    background-color: #1b1b1f;
+    color: #fafafa;
     border-radius: 4px;
 }
 
 .disassembly-view a {
-    color: #6db3f2;
+    color: #e0a050;
     text-decoration: none;
 }
 

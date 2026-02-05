@@ -43,7 +43,7 @@ export function ClassesListView({ path }: ClassesListViewProps) {
           return (
             <span
               key={`${className}-${index}`}
-              className="rounded bg-yellow-200 px-0.5 text-gray-900 dark:bg-yellow-400/70 dark:text-gray-900"
+              className="rounded bg-yellow-200 px-0.5 text-yellow-900 dark:bg-yellow-400/70 dark:text-yellow-900"
             >
               {part}
             </span>
@@ -70,7 +70,7 @@ export function ClassesListView({ path }: ClassesListViewProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500">
+      <div className="flex items-center justify-center h-full text-muted-foreground">
         {t("loading")}...
       </div>
     );
@@ -78,7 +78,7 @@ export function ClassesListView({ path }: ClassesListViewProps) {
 
   if (!classes || classes.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500">
+      <div className="flex items-center justify-center h-full text-muted-foreground">
         {t("no_results")}
       </div>
     );

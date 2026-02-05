@@ -30,10 +30,10 @@ function DeviceHeader({ deviceInfo: info }: { deviceInfo: DeviceInfo }) {
   const { t } = useTranslation();
   return (
     <>
-      <h1 className="mb-2 text-2xl font-bold dark:text-gray-100">
+      <h1 className="mb-2 text-2xl font-bold dark:text-foreground">
         {info.name || t("device")}
       </h1>
-      <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
+      <p className="mb-6 text-sm text-muted-foreground">
         {info.arch} {info.os?.name} {info.os?.version}
         <br />
         {info.udid}
@@ -61,7 +61,7 @@ function AppCard({ app, udid, platform }: AppCardProps) {
   return (
     <Link
       to={`/workspace/${platform}/${udid}/app/${app.identifier}`}
-      className="block rounded-lg p-6 transition-colors hover:bg-amber-100 dark:hover:bg-gray-800"
+      className="block rounded-lg p-6 transition-colors hover:bg-accent dark:hover:bg-accent"
     >
       <div className="relative mb-3 flex items-center justify-center">
         <img
@@ -84,10 +84,10 @@ function AppCard({ app, udid, platform }: AppCardProps) {
         )}
       </div>
       <div className="space-y-1 text-center">
-        <p className="line-clamp-2 text-sm font-medium leading-tight dark:text-gray-100">
+        <p className="line-clamp-2 text-sm font-medium leading-tight dark:text-foreground">
           {app.name}
         </p>
-        <p className="line-clamp-1 text-xs text-gray-500 dark:text-gray-400">
+        <p className="line-clamp-1 text-xs text-muted-foreground">
           {app.identifier}
         </p>
       </div>
@@ -195,7 +195,7 @@ export function AppsView() {
       </div>
 
       <div className="mb-4 relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           type="text"
           placeholder={t("search_apps")}
@@ -217,7 +217,7 @@ export function AppsView() {
       </div>
 
       {filteredApps.length === 0 && (
-        <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+        <p className="text-center text-muted-foreground py-8">
           {searchQuery ? t("no_apps_matching_search") : t("no_apps_found")}
         </p>
       )}

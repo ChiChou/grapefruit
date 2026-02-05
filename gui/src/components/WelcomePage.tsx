@@ -11,7 +11,7 @@ export function WelcomePage() {
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden sm:flex-row">
-      <div className="flex w-full flex-col border-b border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900 sm:h-full sm:w-64 sm:border-b-0 sm:border-r">
+      <div className="flex w-full flex-col border-b border-border bg-sidebar p-4 sm:h-full sm:w-64 sm:border-b-0 sm:border-r">
         <div className="mb-6 flex items-center justify-center gap-2 px-4">
           <Link to="/">
             <img src={logo} alt={t("logo_alt")} className="h-10 w-40" />

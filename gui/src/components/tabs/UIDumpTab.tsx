@@ -73,7 +73,7 @@ function Description({ text }: { text: string }) {
   const tokens = [...scan(text)];
 
   const typeToClass: Record<string, string> = {
-    num: "text-blue-600 dark:text-blue-400",
+    num: "text-amber-600 dark:text-amber-400",
     str: "text-purple-600 dark:text-purple-400",
     hex: "text-yellow-600 dark:text-yellow-500",
     bool: "text-green-600 dark:text-green-500",
@@ -82,7 +82,7 @@ function Description({ text }: { text: string }) {
   };
 
   return (
-    <span className="text-gray-600 dark:text-gray-400">
+    <span className="text-muted-foreground">
       {tokens.map((token, i) => {
         if (!token.type) return token.word;
         return (
@@ -118,7 +118,7 @@ function TreeNode({
   return (
     <li className="font-mono text-xs list-none">
       <p
-        className="flex items-start gap-1 py-0.5 cursor-pointer transition-colors duration-200 whitespace-nowrap hover:bg-gray-200 dark:hover:bg-white/10"
+        className="flex items-start gap-1 py-0.5 cursor-pointer transition-colors duration-200 whitespace-nowrap hover:bg-accent"
         style={{ paddingLeft: `${(depth + 1) * 16}px` }}
         onMouseEnter={() => onHighlight?.(node)}
         onMouseLeave={() => onDismissHighlight?.()}
@@ -129,21 +129,21 @@ function TreeNode({
               e.stopPropagation();
               setExpanded(!expanded);
             }}
-            className="cursor-pointer text-gray-400 hover:text-gray-900 dark:hover:text-white select-none w-4"
+            className="cursor-pointer text-muted-foreground hover:text-foreground select-none w-4"
           >
             {expanded ? "−" : "+"}
           </span>
         ) : (
-          <span className="text-gray-600 w-4">·</span>
+          <span className="text-muted-foreground w-4">·</span>
         )}
         {node.description ? (
           <Description text={node.description} />
         ) : (
-          <span className="text-blue-600 dark:text-blue-400">{node.clazz}</span>
+          <span className="text-amber-600 dark:text-amber-400">{node.clazz}</span>
         )}
         {node.delegate?.name && (
           <span
-            className="ml-4 text-yellow-700 dark:text-yellow-200 bg-gray-200 dark:bg-gray-800 px-1 cursor-pointer hover:text-yellow-600 dark:hover:text-yellow-400"
+            className="ml-4 text-yellow-700 dark:text-yellow-200 bg-muted px-1 cursor-pointer hover:text-yellow-600 dark:hover:text-yellow-400"
             title={node.delegate.name}
             onClick={(e) => {
               e.stopPropagation();
@@ -259,7 +259,7 @@ export function UIDumpTab() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between p-3 border-b border-border">
         <ButtonGroup>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -340,7 +340,7 @@ export function UIDumpTab() {
             }}
           >
             {isLoading && !data ? (
-              <div className="text-sm text-gray-500">{t("loading")}</div>
+              <div className="text-sm text-muted-foreground">{t("loading")}</div>
             ) : data ? (
               <TreeNode
                 key={expandKey}
@@ -351,7 +351,7 @@ export function UIDumpTab() {
                 onOpenClass={handleOpenClass}
               />
             ) : (
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-muted-foreground">
                 {t("no_data")}
               </div>
             )}
