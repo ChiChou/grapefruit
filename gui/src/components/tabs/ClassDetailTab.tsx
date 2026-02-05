@@ -65,6 +65,15 @@ export function ClassDetailTab({
     });
   };
 
+  const openDisassemblyTab = (address: string, methodName: string) => {
+    openFilePanel({
+      id: `disasm_${address}`,
+      component: "disassembly",
+      title: methodName,
+      params: { address, name: methodName },
+    });
+  };
+
   const ivarEntries = useMemo(() => classInfo?.ivars ?? [], [classInfo]);
   const ownMethodsSet = useMemo(
     () => new Set(classInfo?.ownMethods ?? []),
@@ -150,13 +159,13 @@ export function ClassDetailTab({
             <TabsTrigger value="classdump">classdump</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="methods">
-            <section className="flex-1 overflow-auto">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-gray-500">
+          <TabsContent value="methods" className="flex-1 overflow-hidden">
+            <section className="h-full flex flex-col">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">
                   {t("methods")} ({displayedMethods.length})
                 </h3>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-2 ml-auto">
                   <Checkbox
                     id={`show-inherited-${params.className}`}
                     checked={showInherited}
@@ -166,7 +175,7 @@ export function ClassDetailTab({
                   />
                   <Label
                     htmlFor={`show-inherited-${params.className}`}
-                    className="text-sm cursor-pointer"
+                    className="text-xs cursor-pointer whitespace-nowrap"
                   >
                     {t("show_inherited")}
                   </Label>
@@ -176,37 +185,36 @@ export function ClassDetailTab({
                 placeholder={t("search")}
                 value={methodSearch}
                 onChange={(e) => setMethodSearch(e.target.value)}
-                className="mb-2"
+                className="mb-2 h-8 text-sm"
               />
               {displayedMethods.length > 0 ? (
-                <div className="border rounded max-h-[calc(100vh-300px)] overflow-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t("method")}</TableHead>
-                        <TableHead>{t("type_encoding")}</TableHead>
-                        <TableHead>{t("address")}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {displayedMethods.map(({ name: method, types, impl }) => (
-                        <TableRow key={method}>
-                          <TableCell className="font-mono text-xs">
-                            {method}
-                          </TableCell>
-                          <TableCell className="font-mono text-xs text-gray-500">
-                            {types}
-                          </TableCell>
-                          <TableCell className="font-mono text-xs">
+                <div className="border rounded flex-1 overflow-auto min-h-0">
+                  <div className="divide-y divide-border/50">
+                    {displayedMethods.map(({ name: method, types, impl }) => (
+                      <div key={method} className="p-2 hover:bg-muted/50">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="font-mono text-xs truncate" title={method}>
+                              {method}
+                            </div>
+                            <div className="font-mono text-muted-foreground truncate text-[10px]" title={types}>
+                              {types}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className="font-mono text-xs text-primary hover:underline cursor-pointer shrink-0"
+                            onClick={() => openDisassemblyTab(impl, method)}
+                          >
                             {impl}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ) : (
-                <div className="text-sm text-gray-500 py-4 text-center border rounded">
+                <div className="text-sm text-muted-foreground py-4 text-center border rounded">
                   {t("no_results")}
                 </div>
               )}
