@@ -8,6 +8,7 @@ import frida from "./lib/xvii.ts";
 import env from "./lib/env.ts";
 import { agent } from "./lib/assets.ts";
 import paths from "./lib/paths.ts";
+import { insertHook } from "./lib/localstore.ts";
 
 import type { Message as ObjCHookMessage } from "../agent/types/fruity/hooks/objc.js";
 import type { Message as SQLiteHookMessage } from "../agent/types/fruity/hooks/sqlite.js";
@@ -113,6 +114,7 @@ function setupScriptHandlers(
     ReturnType<typeof import("frida").Session.prototype.createScript>
   >,
   logPaths: { syslog: string; agentLog: string },
+  sessionInfo: { deviceId: string; identifier: string },
 ) {
   script.destroyed.connect(() => {
     console.error("script is destroyed");
@@ -131,6 +133,8 @@ function setupScriptHandlers(
       } else {
         if (subject === "hook") {
           socket.emit(subject, payload);
+          // Store hook message in SQLite
+          insertHook(sessionInfo.deviceId, sessionInfo.identifier, payload);
         } else if (subject === "lifecycle") {
           socket.emit(subject, payload.event);
         } else {
@@ -234,7 +238,7 @@ async function onConnection(
   const logPaths = await getLogPaths(deviceId, identifier);
   const script = await session.createScript(await agent(platform));
 
-  setupScriptHandlers(socket, script, logPaths);
+  setupScriptHandlers(socket, script, logPaths, { deviceId, identifier });
   setupSocketHandlers(socket, script, session);
 
   await script.load();
