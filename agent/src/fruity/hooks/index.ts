@@ -3,6 +3,9 @@ import * as sqlite from "./sqlite.js";
 
 const active = new Map<string, InvocationListener[]>();
 
+// Available hook groups
+const HOOK_GROUPS = ["crypto", "sqlite"] as const;
+
 function get(group: string) {
   if (group === "crypto") {
     return [
@@ -19,6 +22,24 @@ function get(group: string) {
       ...sqlite.exec(),
     ];
   }
+}
+
+/**
+ * Get the list of available hook groups
+ */
+export function list(): string[] {
+  return [...HOOK_GROUPS];
+}
+
+/**
+ * Get the status of all hook groups
+ */
+export function status(): Record<string, boolean> {
+  const result: Record<string, boolean> = {};
+  for (const group of HOOK_GROUPS) {
+    result[group] = active.has(group);
+  }
+  return result;
 }
 
 export function start(group: string) {
