@@ -76,14 +76,14 @@ export function LeftPanelView() {
             label="URL Schemes"
           />
           <NavItem
-            to={`${basePath}/geolocation`}
-            icon={<MapPin className="h-5 w-5" />}
-            label={t("geolocation_simulation")}
-          />
-          <NavItem
             to={`${basePath}/hooks`}
             icon={<Webhook className="h-5 w-5" />}
             label={t("hooks")}
+          />
+          <NavItem
+            to={`${basePath}/geolocation`}
+            icon={<MapPin className="h-5 w-5" />}
+            label={t("geolocation_simulation")}
           />
         </div>
       );
