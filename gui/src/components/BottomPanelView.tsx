@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import { t } from "i18next";
-import { FileText, Activity } from "lucide-react";
+import { FileText, Activity, Webhook } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Status, Mode, useSession } from "@/context/SessionContext";
 
 import { LogViewer, type LogViewerHandle } from "./LogViewer";
+import { HookResultsView } from "./HookResultsView";
 
 const BOTTOM_PANEL_TAB_STATE = "BOTTOM_PANEL_TAB_STATE";
 
@@ -97,13 +98,13 @@ export function BottomPanelView() {
           <FileText className="h-4 w-4" />
           {t("logs")}
         </TabsTrigger>
-        {/*<TabsTrigger
+        <TabsTrigger
           value="hooks"
           className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary flex items-center gap-2"
         >
           <Webhook className="h-4 w-4" />
           {t("hooks")}
-        </TabsTrigger>*/}
+        </TabsTrigger>
         <TabsTrigger
           value="agent-logs"
           className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary flex items-center gap-2"
@@ -114,6 +115,9 @@ export function BottomPanelView() {
       </TabsList>
       <TabsContent value="logs" className="flex-1 overflow-hidden mt-0" forceMount hidden={activeTab !== "logs"}>
         <LogViewer ref={syslogRef} />
+      </TabsContent>
+      <TabsContent value="hooks" className="flex-1 overflow-hidden mt-0" forceMount hidden={activeTab !== "hooks"}>
+        <HookResultsView />
       </TabsContent>
       <TabsContent value="agent-logs" className="flex-1 overflow-hidden mt-0" forceMount hidden={activeTab !== "agent-logs"}>
         <LogViewer ref={logRef} />
