@@ -3,6 +3,7 @@ export interface BaseMessage {
   category: string;
   symbol: string;
   dir: "enter" | "leave";
+  line?: string;
   backtrace?: string[];
 }
 

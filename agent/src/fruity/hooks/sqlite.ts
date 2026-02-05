@@ -27,6 +27,7 @@ export function open() {
             category: "sql",
             symbol: "sqlite3_open",
             dir: "enter",
+            line: `sqlite3_open("${filename}")`,
             filename,
             backtrace: bt(this.context),
           } as Message);
@@ -46,6 +47,7 @@ export function open() {
             category: "sql",
             symbol: "sqlite3_open16",
             dir: "enter",
+            line: `sqlite3_open16("${filename}")`,
             filename,
             backtrace: bt(this.context),
           } as Message);
@@ -65,6 +67,7 @@ export function open() {
             category: "sql",
             symbol: "sqlite3_open_v2",
             dir: "enter",
+            line: `sqlite3_open_v2("${filename}")`,
             filename,
             backtrace: bt(this.context),
           } as Message);
@@ -91,6 +94,7 @@ export function exec() {
             category: "sql",
             symbol: "sqlite3_exec",
             dir: "enter",
+            line: `sqlite3_exec: ${sql}`,
             backtrace: bt(this.context),
             sql,
           } as Message);
@@ -119,6 +123,7 @@ export function prepare() {
             category: "sql",
             symbol: "sqlite3_prepare",
             dir: "enter",
+            line: `sqlite3_prepare: ${sql}`,
             backtrace: bt(this.context),
             sql,
           } as Message);
@@ -138,6 +143,7 @@ export function prepare() {
             category: "sql",
             symbol: "sqlite3_prepare_v2",
             dir: "enter",
+            line: `sqlite3_prepare_v2: ${sql}`,
             backtrace: bt(this.context),
             sql,
           } as Message);
@@ -157,6 +163,7 @@ export function prepare() {
             category: "sql",
             symbol: "sqlite3_prepare_v3",
             dir: "enter",
+            line: `sqlite3_prepare_v3: ${sql}`,
             backtrace: bt(this.context),
             sql,
           } as Message);
@@ -205,32 +212,40 @@ export function bind() {
     hooks.push(
       Interceptor.attach(func, {
         onEnter(args) {
-          const stmtPtr = args[0];
-          let sql = "";
+          this.stmtPtr = args[0];
+          this.bindIndex = args[1].toInt32();
+          this.type = type;
 
-          if (!stmtPtr.isNull()) {
-            const sqlPtr = sqlite3_sql(stmtPtr) as NativePointer;
+          try {
+            this.value = getter(args);
+          } catch (e) {
+            this.value = "[Error reading value]";
+          }
+        },
+        onLeave(retval) {
+          let sql = "";
+          if (!this.stmtPtr.isNull()) {
+            const sqlPtr = sqlite3_sql(this.stmtPtr) as NativePointer;
             if (!sqlPtr.isNull()) {
               sql = sqlPtr.readUtf8String() || "";
             }
           }
 
-          let value: SQLiteValue;
-          try {
-            value = getter(args);
-          } catch (e) {
-            value = "[Error reading value]";
-          }
+          const result = retval.toInt32();
+          const valueStr = typeof this.value === "string" && !this.value.startsWith("[")
+            ? `"${this.value}"`
+            : String(this.value);
 
           send({
             subject: "hook",
             category: "sql",
             symbol: funcName,
-            dir: "enter",
+            dir: "leave",
+            line: `bind_${this.type}(?${this.bindIndex}, ${valueStr})${result !== 0 ? ` = ${result}` : ""}`,
             backtrace: bt(this.context),
             sql: sql,
-            bindIndex: args[1].toInt32(),
-            bindValue: value,
+            bindIndex: this.bindIndex,
+            bindValue: this.value,
           } as Message);
         },
       }),

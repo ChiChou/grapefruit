@@ -13,7 +13,7 @@ const R2_WASM_PATH = path.join(
   "@frida",
   "react-use-r2",
   "dist",
-  "r2.wasm"
+  "r2.wasm",
 );
 
 const r2WasmPlugin: Plugin = {
@@ -29,6 +29,10 @@ const r2WasmPlugin: Plugin = {
       }
       next();
     });
+  },
+  async writeBundle(options) {
+    const destPath = path.join(options.dir || "dist", "r2.wasm");
+    await fs.promises.copyFile(R2_WASM_PATH, destPath);
   },
 };
 
