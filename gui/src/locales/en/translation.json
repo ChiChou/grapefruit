@@ -294,5 +294,7 @@
   "execute": "Execute",
   "rows_returned": "{{count}} rows returned",
   "query_executed_no_results": "Query executed successfully (no results)",
-  "select_table_or_execute": "Select a table or execute a query"
+  "select_table_or_execute": "Select a table or execute a query",
+  "file_renamed": "File renamed",
+  "file_deleted": "File deleted"
 }

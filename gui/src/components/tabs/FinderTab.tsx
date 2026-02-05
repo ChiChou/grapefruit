@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
+import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ResizablePanelGroup,
@@ -16,6 +17,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Status, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
+import { useRpcMutation } from "@/lib/queries";
 import { DirectoryTree } from "./DirectoryTree";
 import { FileTable } from "./FileTable";
 import type { FinderTabParams, UploadFile } from "../../lib/file-explorer.ts";
@@ -57,6 +59,14 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
       return fruity.fs.ls(path);
     },
     [fruity],
+  );
+
+  const renameMutation = useRpcMutation<void, { src: string; dst: string }>(
+    (api, { src, dst }) => api.fs.mv(src, dst),
+  );
+
+  const deleteMutation = useRpcMutation<void, { path: string }>(
+    (api, { path }) => api.fs.rm(path),
   );
 
   const handleDirectorySelect = useCallback(
@@ -114,6 +124,35 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
       });
     },
     [fullCwd, openSingletonPanel],
+  );
+
+  const handleRename = useCallback(
+    async (oldName: string, newName: string) => {
+      if (!fullCwd) return;
+
+      const src = `${fullCwd}/${oldName}`;
+      const dst = `${fullCwd}/${newName}`;
+
+      await renameMutation.mutateAsync({ src, dst });
+      toast.success(t("file_renamed"));
+      // Refresh directory listing
+      handleDirectorySelect(fullCwd);
+    },
+    [fullCwd, renameMutation, t, handleDirectorySelect],
+  );
+
+  const handleDelete = useCallback(
+    async (fileName: string) => {
+      if (!fullCwd) return;
+
+      const path = `${fullCwd}/${fileName}`;
+
+      await deleteMutation.mutateAsync({ path });
+      toast.success(t("file_deleted"));
+      // Refresh directory listing
+      handleDirectorySelect(fullCwd);
+    },
+    [fullCwd, deleteMutation, t, handleDirectorySelect],
   );
 
   const handleDrop = useCallback(
@@ -252,6 +291,8 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
               cwd={fullCwd!}
               onDownload={handleDownload}
               onPreview={handlePreview}
+              onRename={handleRename}
+              onDelete={handleDelete}
             />
           </div>
         </ResizablePanel>
