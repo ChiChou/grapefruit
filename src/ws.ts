@@ -10,9 +10,7 @@ import { agent } from "./lib/assets.ts";
 import paths from "./lib/paths.ts";
 import { insertHook } from "./lib/localstore.ts";
 
-import type { Message as ObjCHookMessage } from "../agent/types/fruity/hooks/objc.js";
-import type { Message as SQLiteHookMessage } from "../agent/types/fruity/hooks/sqlite.js";
-import type { Message as CryptoHookMessage } from "../agent/types/fruity/hooks/crypto.js";
+import type { BaseMessage as BaseHookMessage } from "../agent/types/fruity/hooks/context.d.ts";
 
 type Platform = "fruity" | "droid";
 type Mode = "app" | "daemon";
@@ -35,16 +33,14 @@ interface ServerToClientEvents {
   lifecycle: (
     event: "inactive" | "active" | "forerground" | "background",
   ) => void;
-  hook: (msg: ObjCHookMessage | SQLiteHookMessage | CryptoHookMessage) => void;
+  hook: (msg: BaseHookMessage) => void;
 }
 
+type ClientCallback = (err: Error | null, result: any) => void;
+
 interface ClientToServerEvents {
-  rpc: (
-    mod: string,
-    method: string,
-    args: any[],
-    ack: (err: Error | null, result: any) => void,
-  ) => void;
+  rpc: (mod: string, method: string, args: any[], ack: ClientCallback) => void;
+  eval: (source: string, name: string, ack: ClientCallback) => void;
 }
 
 const manager = frida.getDeviceManager();
@@ -198,6 +194,11 @@ function setupSocketHandlers(
           ack(err, null);
         })
         .then((result) => ack(null, result));
+    })
+    .on("eval", (source, name, ack) => {
+      console.info(`evaluating script: ${name}`);
+      ack(new Error("not implemented"), null);
+      return;
     })
     .on("disconnect", async () => {
       console.info("socket disconnected");
