@@ -1,17 +1,36 @@
 import { hostname } from "node:os";
+import { parseArgs } from "node:util";
+
+import { schema } from "./cli";
+
+const { values: argv } = parseArgs(schema);
 
 const dev = process.env.NODE_ENV === "development";
 const production = process.env.NODE_ENV === "production";
 
-const host = dev ? hostname() : "127.0.0.1";
-const port = 31337;
+const mapping = { frida: "FRIDA_VERSION", host: "HOST", port: "PORT" } as const;
+for (const [argKey, envKey] of Object.entries(mapping)) {
+  if (argv[argKey as keyof typeof mapping] && process.env[envKey]) {
+    console.warn(
+      `Warning: Both command-line argument '--${argKey}' and environment variable
+      '${envKey}' are set. The command-line argument will take precedence.`,
+    );
+  }
+}
+
+const defaultHost = dev ? hostname() : "localhost";
+const host =
+  (typeof argv.host === "string" ? argv.host : process.env.HOST) || defaultHost;
+const port = parseInt(argv.port as string, 10) || 31337;
 const frontend = dev ? 3000 : port;
 const envAsNumber = (name: string, defaultValue: number) =>
   parseInt(process.env[name.toUpperCase()] || "0") || defaultValue;
-const frida = envAsNumber("FRIDA_VERSION", 17);
+
+const frida =
+  parseInt(argv.frida as string, 10) || envAsNumber("FRIDA_VERSION", 17);
 
 if (frida !== 16 && frida !== 17)
-  throw new Error("Invalid FRIDA_VERSION, must be 16 or 17");
+  throw new Error(`Invalid FRIDA_VERSION ${frida}, must be 16 or 17`);
 
 const { dirname } = import.meta;
 const bunSEA =
@@ -24,7 +43,7 @@ export default {
   frida,
   dev,
   production,
-  host: process.env.HOST || host,
+  host,
   port: envAsNumber(dev ? "BACKEND_PORT" : "PORT", port),
   frontend: envAsNumber("WEB_PORT", frontend),
   timeout: envAsNumber("FRIDA_TIMEOUT", 1000),
