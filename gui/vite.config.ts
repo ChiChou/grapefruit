@@ -30,10 +30,6 @@ const r2WasmPlugin: Plugin = {
       next();
     });
   },
-  async writeBundle(options) {
-    const destPath = path.join(options.dir || "dist", "r2.wasm");
-    await fs.promises.copyFile(R2_WASM_PATH, destPath);
-  },
 };
 
 // https://vite.dev/config/
