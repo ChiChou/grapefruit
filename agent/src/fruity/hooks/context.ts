@@ -3,7 +3,7 @@ export interface BaseMessage {
   category: string;
   symbol: string;
   dir: "enter" | "leave";
-  bt?: string[];
+  backtrace?: string[];
 }
 
 export function bt(ctx: CpuContext): string[] {
