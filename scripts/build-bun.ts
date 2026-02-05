@@ -1,7 +1,8 @@
 #! /usr/bin/env bun
 
 import path from "node:path";
-import { $, Glob, type BunFile } from "bun";
+import fs from "node:fs/promises";
+import { $ } from "bun";
 
 const bunTargets: Record<string, [string, string]> = {
   "bun-linux-x64": ["linux", "x64"],

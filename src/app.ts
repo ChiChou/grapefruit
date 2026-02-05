@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { createMiddleware } from "hono/factory";
 import { logger } from "hono/logger";
 import { prettyJSON } from "hono/pretty-json";
+import { serveStatic } from "@hono/node-server/serve-static";
 import { stream } from "hono/streaming";
 import { Readable } from "node:stream";
 import fs from "node:fs/promises";
