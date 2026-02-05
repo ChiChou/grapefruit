@@ -1,6 +1,6 @@
 import { Link, NavLink, Outlet } from "react-router";
 import { t } from "i18next";
-import { Info, Package, Braces, Link as LinkIcon, MapPin } from "lucide-react";
+import { Info, Package, Braces, Link as LinkIcon, MapPin, Webhook } from "lucide-react";
 
 import {
   Tooltip,
@@ -80,12 +80,17 @@ export function LeftPanelView() {
             icon={<MapPin className="h-5 w-5" />}
             label={t("geolocation_simulation")}
           />
+          <NavItem
+            to={`${basePath}/hooks`}
+            icon={<Webhook className="h-5 w-5" />}
+            label={t("hooks")}
+          />
         </div>
       );
     }
 
     if (isFruityDaemon) {
-      // iOS Daemon mode - modules, classes
+      // iOS Daemon mode - modules, classes, hooks
       return (
         <div className="flex-1 flex flex-col gap-1 pt-2">
           <NavItem
@@ -97,6 +102,11 @@ export function LeftPanelView() {
             to={`${basePath}/classes`}
             icon={<Braces className="h-5 w-5" />}
             label={t("classes")}
+          />
+          <NavItem
+            to={`${basePath}/hooks`}
+            icon={<Webhook className="h-5 w-5" />}
+            label={t("hooks")}
           />
         </div>
       );

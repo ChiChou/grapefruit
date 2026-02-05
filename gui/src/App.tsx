@@ -16,6 +16,7 @@ import { ModulesPanel } from "./components/panels/ModulesPanel";
 import { ClassesPanel } from "./components/panels/ClassesPanel";
 import { URLSchemesPanel } from "./components/panels/URLSchemesPanel";
 import { GeolocationPanel } from "./components/panels/GeolocationPanel";
+import { HooksPanel } from "./components/panels/HooksPanel";
 import { PlaceholderPanel } from "./components/panels/PlaceholderPanel";
 
 import { AlertTriangle } from "lucide-react";
@@ -51,6 +52,7 @@ function App() {
           <Route path="classes" element={<ClassesPanel />} />
           <Route path="urls" element={<URLSchemesPanel />} />
           <Route path="geolocation" element={<GeolocationPanel />} />
+          <Route path="hooks" element={<HooksPanel />} />
           {/* Placeholder for unsupported modes */}
           <Route path="placeholder" element={<PlaceholderPanel />} />
         </Route>
