@@ -1,6 +1,7 @@
-import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { type ReactNode, useCallback } from "react";
 import { useR2, type Platform, type Architecture } from "@frida/react-use-r2";
-import { useSession, Status } from "@/context/SessionContext";
+import { useSession } from "@/context/SessionContext";
+import { useRpcQuery } from "@/lib/queries";
 
 interface ProcessInfo {
   platform: string;
@@ -29,17 +30,12 @@ function mapArch(arch: string): Architecture {
 }
 
 export function R2Provider({ children }: { children: ReactNode }) {
-  const { fruity, status } = useSession();
-  const [processInfo, setProcessInfo] = useState<ProcessInfo | null>(null);
+  const { fruity } = useSession();
 
-  useEffect(() => {
-    if (status !== Status.Ready || !fruity) {
-      setProcessInfo(null);
-      return;
-    }
-
-    fruity.info.processInfo().then(setProcessInfo).catch(console.error);
-  }, [fruity, status]);
+  const { data: processInfo } = useRpcQuery<ProcessInfo>(
+    ["processInfo"],
+    (api) => api.info.processInfo(),
+  );
 
   const onReadRequest = useCallback(
     async (address: bigint, size: number): Promise<Uint8Array | null> => {
@@ -79,16 +75,15 @@ export function R2Provider({ children }: { children: ReactNode }) {
   );
 
   useR2({
-    source:
-      processInfo !== null
-        ? {
-            platform: mapPlatform(processInfo.platform),
-            arch: mapArch(processInfo.arch),
-            pointerSize: processInfo.pointerSize,
-            pageSize: processInfo.pageSize,
-            onReadRequest,
-          }
-        : undefined,
+    source: processInfo
+      ? {
+          platform: mapPlatform(processInfo.platform),
+          arch: mapArch(processInfo.arch),
+          pointerSize: processInfo.pointerSize,
+          pageSize: processInfo.pageSize,
+          onReadRequest,
+        }
+      : undefined,
   });
 
   return <>{children}</>;
