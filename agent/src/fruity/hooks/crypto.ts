@@ -34,6 +34,7 @@ export function x509() {
             category: "crypto",
             symbol: "SecCertificateCreateWithData",
             dir: "enter",
+            line: `SecCertificateCreateWithData(data[${len}])`,
             backtrace: bt(this.context),
           };
 
@@ -83,6 +84,7 @@ export function cccrypt() {
 
             const keyLen = args[4].toInt32();
             const key = args[3].readByteArray(keyLen);
+            detail.line = `${sym}(${detail.op}, ${detail.algo}, key[${keyLen}])`;
             send({ ...detail, details: { type: "key" } }, key);
           }
 
@@ -93,6 +95,7 @@ export function cccrypt() {
             const data = args[dataInIdx].readByteArray(len);
 
             detail.details = { type: "input", len: len };
+            detail.line = `${sym}(input[${len}])`;
             send(detail, data);
 
             this.outPtr = args[sym === "CCCrypt" ? 8 : 3];
@@ -102,6 +105,8 @@ export function cccrypt() {
           if (sym === "CCCryptorFinal") {
             this.outPtr = args[1];
             this.movedPtr = args[3];
+            detail.line = `${sym}()`;
+            send(detail);
           }
         },
         onLeave(retval) {
@@ -119,6 +124,7 @@ export function cccrypt() {
                 category: "crypto",
                 symbol: this.symbol,
                 dir: "leave",
+                line: `${this.symbol}() → output[${moved}]`,
                 details: { type: "output", len: moved },
               };
               send(leaveMsg, outData);
@@ -149,7 +155,8 @@ export function hash() {
                 subject: "hook",
                 category: "crypto",
                 symbol: `CC_${alg}`,
-                direction: "enter",
+                dir: "enter",
+                line: `CC_${alg}(data[${len}])`,
                 backtrace: bt(this.context),
               },
               args[0].readByteArray(len),
@@ -170,7 +177,8 @@ export function hash() {
                 subject: "hook",
                 category: "crypto",
                 symbol: `CC_${alg}_Update`,
-                direction: "enter",
+                dir: "enter",
+                line: `CC_${alg}_Update(data[${len}])`,
                 backtrace: bt(this.context),
               },
               args[1].readByteArray(len),
@@ -195,13 +203,15 @@ export function hmac() {
         const alg = args[0].toInt32();
         const keyLen = args[2].toInt32();
         const dataLen = args[4].toInt32();
+        const algoName = HMAC_ALGORITHMS[alg] || "Unknown";
 
         const detail: Message = {
           subject: "hook",
           category: "crypto",
           symbol: "CCHmac",
           dir: "enter",
-          algo: HMAC_ALGORITHMS[alg] || "Unknown",
+          line: `CCHmac(${algoName}, key[${keyLen}], data[${dataLen}])`,
+          algo: algoName,
           backtrace: bt(this.context),
         };
 
@@ -210,7 +220,7 @@ export function hmac() {
           args[3].readByteArray(dataLen),
         );
         send(
-          { ...detail, symbol: "CCHmac_Key", details: { type: "key" } },
+          { ...detail, symbol: "CCHmac_Key", line: `CCHmac key[${keyLen}]`, details: { type: "key" } },
           args[1].readByteArray(keyLen),
         );
       },
@@ -226,7 +236,8 @@ export function hmac() {
             subject: "hook",
             category: "crypto",
             symbol: "CCHmacUpdate",
-            direction: "enter",
+            dir: "enter",
+            line: `CCHmacUpdate(data[${len}])`,
             backtrace: bt(this.context),
           },
           args[1].readByteArray(len),

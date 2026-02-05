@@ -16,6 +16,7 @@ import * as userdefaults from "./modules/userdefaults.js";
 import * as webview from "./modules/webview.js";
 
 import * as objc from "./hooks/objc.js";
+import * as native from "./hooks/native.js";
 import * as hook from "./hooks/index.js";
 
 import * as memory from "../common/memory.js";
@@ -39,6 +40,7 @@ export default {
   keychain,
   lsof,
   memory,
+  native,
   objc,
   sqlite,
   symbol,

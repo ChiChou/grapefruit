@@ -35,6 +35,7 @@ export function swizzle(cls: string, sel: string) {
   const listener = Interceptor.attach(method.implementation, {
     onEnter(args) {
       const formatted = parsed.args.map((t, i) => format(t, args[i + 2]));
+      const argsStr = formatted.length > 0 ? formatted.join(", ") : "";
 
       send({
         subject: "hook",
@@ -42,21 +43,24 @@ export function swizzle(cls: string, sel: string) {
         cls,
         sel,
         symbol: `${cls} ${sel}`,
-        direction: "enter",
+        dir: "enter",
+        line: `[${cls} ${sel}](${argsStr})`,
         backtrace: bt(this.context),
         args: formatted,
       });
     },
     onLeave(retval) {
+      const retStr = format(parsed.ret, retval);
       send({
         subject: "hook",
         category: "objc",
         cls,
         sel,
         symbol: `${cls} ${sel}`,
-        direction: "leave",
+        dir: "leave",
+        line: `[${cls} ${sel}] → ${retStr}`,
         backtrace: bt(this.context),
-        ret: format(parsed.ret, retval),
+        ret: retStr,
       });
     },
   });
@@ -77,4 +81,19 @@ export function unswizzle(cls: string, sel: string) {
   if (methods.size === 0) {
     hooked.delete(cls);
   }
+}
+
+/**
+ * List all active ObjC hooks.
+ */
+export function list(): Array<{ cls: string; sel: string }> {
+  const result: Array<{ cls: string; sel: string }> = [];
+
+  for (const [cls, methods] of hooked) {
+    for (const sel of methods.keys()) {
+      result.push({ cls, sel });
+    }
+  }
+
+  return result;
 }
