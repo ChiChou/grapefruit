@@ -1,12 +1,13 @@
 import { useEffect, useState, useRef } from "react";
 import { t } from "i18next";
-import { FileText, Activity, Webhook } from "lucide-react";
+import { FileText, Activity, Anchor, Terminal } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Status, Mode, useSession } from "@/context/SessionContext";
 
 import { LogViewer, type LogViewerHandle } from "./LogViewer";
 import { HookResultsView } from "./HookResultsView";
+import { CodeEditorTab } from "./tabs/CodeEditorTab";
 
 const BOTTOM_PANEL_TAB_STATE = "BOTTOM_PANEL_TAB_STATE";
 
@@ -33,9 +34,14 @@ export function BottomPanelView() {
 
     historyLoadedRef.current = true;
 
-    const loadLogs = async (type: "syslog" | "agent", ref: React.RefObject<LogViewerHandle | null>) => {
+    const loadLogs = async (
+      type: "syslog" | "agent",
+      ref: React.RefObject<LogViewerHandle | null>,
+    ) => {
       try {
-        const res = await fetch(`/api/logs/${device}/${identifier}/${type}?limit=5000`);
+        const res = await fetch(
+          `/api/logs/${device}/${identifier}/${type}?limit=5000`,
+        );
         if (res.ok) {
           const text = await res.text();
           if (text.length > 0) {
@@ -84,6 +90,18 @@ export function BottomPanelView() {
     localStorage.setItem(BOTTOM_PANEL_TAB_STATE, activeTab);
   }, [activeTab]);
 
+  // Listen for REPL content additions to auto-switch to REPL tab
+  useEffect(() => {
+    const handleReplContentAdded = () => {
+      setActiveTab("repl");
+    };
+
+    window.addEventListener("repl:content-added", handleReplContentAdded);
+    return () => {
+      window.removeEventListener("repl:content-added", handleReplContentAdded);
+    };
+  }, []);
+
   return (
     <Tabs
       value={activeTab}
@@ -102,7 +120,7 @@ export function BottomPanelView() {
           value="hooks"
           className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary flex items-center gap-2"
         >
-          <Webhook className="h-4 w-4" />
+          <Anchor className="h-4 w-4" />
           {t("hooks")}
         </TabsTrigger>
         <TabsTrigger
@@ -112,15 +130,45 @@ export function BottomPanelView() {
           <Activity className="h-4 w-4" />
           {t("agent_logs")}
         </TabsTrigger>
+        <TabsTrigger
+          value="repl"
+          className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary flex items-center gap-2"
+        >
+          <Terminal className="h-4 w-4" />
+          {t("code_editor")}
+        </TabsTrigger>
       </TabsList>
-      <TabsContent value="logs" className="flex-1 overflow-hidden mt-0" forceMount hidden={activeTab !== "logs"}>
+      <TabsContent
+        value="logs"
+        className="flex-1 overflow-hidden mt-0"
+        forceMount
+        hidden={activeTab !== "logs"}
+      >
         <LogViewer ref={syslogRef} />
       </TabsContent>
-      <TabsContent value="hooks" className="flex-1 overflow-hidden mt-0" forceMount hidden={activeTab !== "hooks"}>
+      <TabsContent
+        value="hooks"
+        className="flex-1 overflow-hidden mt-0"
+        forceMount
+        hidden={activeTab !== "hooks"}
+      >
         <HookResultsView />
       </TabsContent>
-      <TabsContent value="agent-logs" className="flex-1 overflow-hidden mt-0" forceMount hidden={activeTab !== "agent-logs"}>
+      <TabsContent
+        value="agent-logs"
+        className="flex-1 overflow-hidden mt-0"
+        forceMount
+        hidden={activeTab !== "agent-logs"}
+      >
         <LogViewer ref={logRef} />
+      </TabsContent>
+      <TabsContent
+        value="repl"
+        className="flex-1 overflow-hidden mt-0"
+        forceMount
+        hidden={activeTab !== "repl"}
+      >
+        <CodeEditorTab />
       </TabsContent>
     </Tabs>
   );
