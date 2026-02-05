@@ -32,17 +32,16 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { useSession, Status, Mode } from "@/context/SessionContext";
-import {
-  type HookMessage,
-  type CryptoHookMessage,
-  type SQLiteHookMessage,
-} from "@/lib/rpc";
+
+import type { BaseMessage as BaseHookMessage } from "../../../agent/types/fruity/hooks/context";
+import type { Message as CryptoHookMessage } from "../../../agent/types/fruity/hooks/crypto.d.ts";
+import type { Message as SQLiteHookMessage } from "../../../agent/types/fruity/hooks/sqlite.d.ts";
 
 // Internal representation with timestamp
 interface HookEntry {
   id: number;
   timestamp: Date;
-  message: HookMessage;
+  message: BaseHookMessage;
 }
 
 const ROW_HEIGHT = 32;
@@ -81,7 +80,7 @@ function formatTime(date: Date): string {
 }
 
 // Format message summary - prefer line field, fallback to computed summary
-function formatSummary(message: HookMessage): string {
+function formatSummary(message: BaseHookMessage): string {
   // Use line field if available
   if (message.line) {
     return message.line;
@@ -325,7 +324,7 @@ export function HookResultsView() {
                 (record: {
                   id: number;
                   timestamp: string;
-                  payload: HookMessage;
+                  payload: BaseHookMessage;
                 }) => ({
                   id: idCounterRef.current++,
                   timestamp: new Date(record.timestamp),
@@ -401,7 +400,7 @@ export function HookResultsView() {
   useEffect(() => {
     if (status !== Status.Ready || !socket) return;
 
-    const handleHook = (message: HookMessage) => {
+    const handleHook = (message: BaseHookMessage) => {
       const entry: HookEntry = {
         id: idCounterRef.current++,
         timestamp: new Date(),
