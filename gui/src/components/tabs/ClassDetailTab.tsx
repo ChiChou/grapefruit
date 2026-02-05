@@ -1,8 +1,13 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
+import { toast } from "sonner";
 import type { IDockviewPanelProps } from "dockview";
+import { Anchor, Code, Layers } from "lucide-react";
 
 import { useDock } from "@/context/DockContext";
+import { useSession, Status, Mode } from "@/context/SessionContext";
+import { useRepl } from "@/context/ReplContext";
 import {
   Table,
   TableBody,
@@ -14,11 +19,13 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import Editor, { loader } from "@monaco-editor/react";
 import { useTheme } from "@/components/theme-provider";
 import { header, type ClassDumpInfo } from "../../lib/classdump-header.ts";
 import { useRpcQuery } from "@/lib/queries";
+import { generateObjCHook, formatObjCMethod, type ObjCHookTarget } from "@/lib/hook-codegen";
 
 import type { ClassDetail } from "../../../../agent/types/fruity/modules/classdump";
 
@@ -36,10 +43,17 @@ export function ClassDetailTab({
   const { openFilePanel } = useDock();
   const { t } = useTranslation();
   const { theme } = useTheme();
+  const { fruity, status, platform, mode, device, bundle, pid } = useSession();
+  const { createDocumentWithCode } = useRepl();
+  const navigate = useNavigate();
+
+  const hooksPath = `/workspace/${platform}/${device}/${mode}/${mode === Mode.App ? bundle : pid}/hooks`;
   const [showInherited, setShowInherited] = useState(false);
   const [methodSearch, setMethodSearch] = useState("");
   const [activeTab, setActiveTab] = useState("methods");
   const [protocolSearch, setProtocolSearch] = useState("");
+  const [batchMode, setBatchMode] = useState(false);
+  const [selectedMethods, setSelectedMethods] = useState<Set<string>>(new Set());
 
   const { data: classInfo, isLoading } = useRpcQuery<ClassDetail>(
     ["classDetail", params.className],
@@ -102,6 +116,98 @@ export function ClassDetailTab({
     const query = protocolSearch.toLowerCase();
     return classInfo.protocols.filter((p) => p.toLowerCase().includes(query));
   }, [classInfo, protocolSearch]);
+
+  const handleSelectMethod = useCallback((methodName: string, checked: boolean) => {
+    setSelectedMethods((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        next.add(methodName);
+      } else {
+        next.delete(methodName);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleHookMethod = useCallback(
+    async (methodName: string) => {
+      if (!fruity || status !== Status.Ready || !classInfo) return;
+      try {
+        await fruity.objc.swizzle(classInfo.name, methodName);
+        // Navigate to hooks panel, show toast, and trigger refresh
+        navigate(hooksPath);
+        toast.success(t("hook_added"), {
+          description: formatObjCMethod(classInfo.name, methodName),
+        });
+        window.dispatchEvent(new CustomEvent("hooks:refresh"));
+      } catch (error) {
+        console.error("Failed to hook method:", error);
+        toast.error(t("hook_failed"));
+      }
+    },
+    [fruity, status, classInfo, navigate, hooksPath, t]
+  );
+
+  const handleGenerateCode = useCallback(
+    (methodName: string) => {
+      if (!classInfo) return;
+      const target: ObjCHookTarget = {
+        type: "objc",
+        cls: classInfo.name,
+        sel: methodName,
+      };
+      const code = generateObjCHook(target);
+      createDocumentWithCode(code);
+    },
+    [classInfo, createDocumentWithCode]
+  );
+
+  const handleBatchHook = useCallback(async () => {
+    if (!fruity || status !== Status.Ready || !classInfo) return;
+
+    let successCount = 0;
+    for (const methodName of selectedMethods) {
+      try {
+        await fruity.objc.swizzle(classInfo.name, methodName);
+        successCount++;
+      } catch (error) {
+        console.error(`Failed to hook ${methodName}:`, error);
+      }
+    }
+
+    if (successCount > 0) {
+      // Navigate to hooks panel, show toast, and trigger refresh
+      navigate(hooksPath);
+      toast.success(t("hook_added_count", { count: successCount }));
+      window.dispatchEvent(new CustomEvent("hooks:refresh"));
+      setSelectedMethods(new Set());
+    }
+  }, [fruity, status, classInfo, selectedMethods, navigate, hooksPath, t]);
+
+  const handleBatchGenerateCode = useCallback(() => {
+    if (!classInfo) return;
+
+    const codes: string[] = [];
+    for (const methodName of selectedMethods) {
+      const target: ObjCHookTarget = {
+        type: "objc",
+        cls: classInfo.name,
+        sel: methodName,
+      };
+      codes.push(generateObjCHook(target));
+    }
+
+    if (codes.length > 0) {
+      createDocumentWithCode(codes.join("\n"));
+    }
+  }, [classInfo, selectedMethods, createDocumentWithCode]);
+
+  const toggleBatchMode = useCallback(() => {
+    setBatchMode((prev) => !prev);
+    setSelectedMethods(new Set());
+  }, []);
+
+  const selectedCount = selectedMethods.size;
 
   if (isLoading) {
     return (
@@ -166,6 +272,15 @@ export function ClassDetailTab({
                   {t("methods")} ({displayedMethods.length})
                 </h3>
                 <div className="flex items-center gap-2 ml-auto">
+                  <Button
+                    variant={batchMode ? "secondary" : "outline"}
+                    size="sm"
+                    onClick={toggleBatchMode}
+                    className="gap-1.5 h-7"
+                  >
+                    <Layers className="h-3.5 w-3.5" />
+                    {t("hook_batch_mode")}
+                  </Button>
                   <Checkbox
                     id={`show-inherited-${params.className}`}
                     checked={showInherited}
@@ -187,12 +302,74 @@ export function ClassDetailTab({
                 onChange={(e) => setMethodSearch(e.target.value)}
                 className="mb-2 h-8 text-sm"
               />
+
+              {batchMode && (
+                <div className="flex items-center gap-2 mb-2 p-2 bg-muted/50 rounded-md">
+                  <span className="text-sm text-muted-foreground">
+                    {t("hook_selected_count", { count: selectedCount })}
+                  </span>
+                  <div className="flex-1" />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleBatchHook}
+                    disabled={status !== Status.Ready || selectedCount === 0}
+                    className="gap-1.5 h-7"
+                  >
+                    <Anchor className="h-3.5 w-3.5" />
+                    {t("hook_batch_hook")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleBatchGenerateCode}
+                    disabled={selectedCount === 0}
+                    className="gap-1.5 h-7"
+                  >
+                    <Code className="h-3.5 w-3.5" />
+                    {t("hook_batch_generate")}
+                  </Button>
+                </div>
+              )}
+
               {displayedMethods.length > 0 ? (
                 <div className="border rounded flex-1 overflow-auto min-h-0">
                   <div className="divide-y divide-border/50">
                     {displayedMethods.map(({ name: method, types, impl }) => (
-                      <div key={method} className="p-2 hover:bg-muted/50">
-                        <div className="flex items-start justify-between gap-2">
+                      <div key={method} className="p-2 hover:bg-muted/50 group">
+                        <div className="flex items-start gap-2">
+                          {batchMode ? (
+                            <Checkbox
+                              checked={selectedMethods.has(method)}
+                              onCheckedChange={(checked) =>
+                                handleSelectMethod(method, !!checked)
+                              }
+                              className="mt-0.5"
+                              aria-label="Select method"
+                            />
+                          ) : (
+                            <div className="flex items-center gap-0.5 shrink-0">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => handleHookMethod(method)}
+                                disabled={status !== Status.Ready}
+                                title={t("hook_add")}
+                              >
+                                <Anchor className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => handleGenerateCode(method)}
+                                title={t("hook_generate_code")}
+                              >
+                                <Code className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          )}
                           <div className="min-w-0 flex-1">
                             <div className="font-mono text-xs truncate" title={method}>
                               {method}
