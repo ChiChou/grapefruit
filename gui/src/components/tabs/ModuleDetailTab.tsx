@@ -20,7 +20,7 @@ export function ModuleDetailTab({
   params,
 }: IDockviewPanelProps<ModuleDetailParams>) {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<TabKey>("sections");
+  const [activeTab, setActiveTab] = useState<TabKey>("imports");
 
   const handleTabChange = (value: string) => {
     setActiveTab(value as TabKey);
@@ -29,7 +29,7 @@ export function ModuleDetailTab({
   return (
     <div className="h-full flex flex-col p-4 overflow-y-auto">
       <Tabs
-        defaultValue="sections"
+        defaultValue="imports"
         value={activeTab}
         onValueChange={handleTabChange}
         className="flex-1 flex flex-col"
