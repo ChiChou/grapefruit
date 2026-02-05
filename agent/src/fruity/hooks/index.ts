@@ -11,12 +11,12 @@ const active = new Map<string, InvocationListener[]>();
 
 // Available hook groups
 const HOOK_GROUPS = [
-  "crypto",
-  "sqlite",
   "pasteboard",
+  "fileops",
   "deviceid",
   "biometric",
-  "fileops",
+  "sqlite",
+  "crypto",
 ] as const;
 
 function get(group: string) {
