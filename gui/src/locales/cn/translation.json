@@ -255,5 +255,10 @@
   "hook_bind_value": "绑定值",
   "hook_data_type": "数据类型",
   "hook_data_length": "长度",
-  "scroll_to_latest": "最新"
+  "scroll_to_latest": "最新",
+  "copied": "已复制",
+  "items": "项",
+  "no_values": "无数据",
+  "rename": "重命名",
+  "time": "时间"
 }
