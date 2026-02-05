@@ -61,11 +61,11 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
     [fruity],
   );
 
-  const renameMutation = useRpcMutation<void, { src: string; dst: string }>(
+  const renameMutation = useRpcMutation<boolean, { src: string; dst: string }>(
     (api, { src, dst }) => api.fs.mv(src, dst),
   );
 
-  const deleteMutation = useRpcMutation<void, { path: string }>(
+  const deleteMutation = useRpcMutation<boolean, { path: string }>(
     (api, { path }) => api.fs.rm(path),
   );
 
