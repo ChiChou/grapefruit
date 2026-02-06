@@ -148,7 +148,7 @@ export function TextEditorTab({
     data: rawData,
     isLoading,
     error,
-  } = useRpcQuery<ArrayBuffer>(
+  } = useRpcQuery<ArrayBuffer | null>(
     ["filePreview", fullPath],
     (api) => api.fs.preview(fullPath),
     { enabled: !!fullPath }
