@@ -18,7 +18,7 @@ export function MemoryPreviewTab({
     data: rawData,
     isLoading,
     error,
-  } = useRpcQuery<ArrayBuffer>(
+  } = useRpcQuery<ArrayBuffer | null>(
     ["memory", address ?? "", String(size ?? 0)],
     (api) => api.memory.dump(address!, size!),
     { enabled: !!address && !!size }

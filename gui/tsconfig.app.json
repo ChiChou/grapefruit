@@ -12,6 +12,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
+      "@/common/*": ["../agent/types/common/*"],
       "@shared/schema": ["../shared/schema"]
     },
 
