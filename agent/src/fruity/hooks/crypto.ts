@@ -1,5 +1,5 @@
-import cf from "../native/corefoundation.js";
-import { BaseMessage, bt } from "./context.js";
+import cf from "@/fruity/native/corefoundation.js";
+import { BaseMessage, bt } from "@/common/hooks/context.js";
 
 export interface Message extends BaseMessage {
   subject: "hook";
@@ -220,7 +220,12 @@ export function hmac() {
           args[3].readByteArray(dataLen),
         );
         send(
-          { ...detail, symbol: "CCHmac_Key", line: `CCHmac key[${keyLen}]`, details: { type: "key" } },
+          {
+            ...detail,
+            symbol: "CCHmac_Key",
+            line: `CCHmac key[${keyLen}]`,
+            details: { type: "key" },
+          },
           args[1].readByteArray(keyLen),
         );
       },

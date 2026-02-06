@@ -7,9 +7,9 @@ import {
   NSDate,
   NSArray,
   NSDictionary,
-} from "../typings.js";
+} from "@/fruity/typings.js";
 
-import { toJS } from "../bridge/object.js";
+import { toJS } from "@/fruity/bridge/object.js";
 
 /**
  * A default object must be a property list—that is, an instance of (or for collections,

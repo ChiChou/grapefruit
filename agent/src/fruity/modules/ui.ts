@@ -1,5 +1,5 @@
 import ObjC from "frida-objc-bridge";
-import { performOnMainThread } from "../lib/dispatch.js";
+import { performOnMainThread } from "@/fruity/lib/dispatch.js";
 
 type Point = [number, number];
 type Size = [number, number];

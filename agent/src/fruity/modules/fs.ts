@@ -8,10 +8,10 @@ import type {
   NSObject,
   NSDictionary,
   NSData,
-} from "../typings.js";
+} from "@/fruity/typings.js";
 
-import { toJS } from "../bridge/object.js";
-import { dump } from "../lib/plist.js";
+import { toJS } from "@/fruity/bridge/object.js";
+import { dump } from "@/fruity/lib/plist.js";
 
 export interface Item {
   type: "file" | "directory" | "symlink";

@@ -1,6 +1,6 @@
 import ObjC from "frida-objc-bridge";
-import { toJS } from "../bridge/object.js";
-import getSecurityApi from "../native/security.js";
+import { toJS } from "@/fruity/bridge/object.js";
+import getSecurityApi from "@/fruity/native/security.js";
 
 function kSec(suffix: string) {
   return Process.getModuleByName("Security")

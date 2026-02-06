@@ -4,7 +4,7 @@ import * as pasteboard from "./pasteboard.js";
 import * as deviceid from "./deviceid.js";
 import * as biometric from "./biometric.js";
 import * as fileops from "./fileops.js";
-import * as native from "./native.js";
+import * as native from "@/common/hooks/native.js";
 import * as objc from "./objc.js";
 
 const active = new Map<string, InvocationListener[]>();

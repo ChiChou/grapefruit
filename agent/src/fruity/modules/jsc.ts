@@ -5,11 +5,11 @@ import {
   NSArray,
   NSDictionary,
   NSString,
-} from "../typings.js";
+} from "@/fruity/typings.js";
 
-import * as Dictionary from "../bridge/object.js";
-import { iterateNSArray } from "../bridge/nsarray.js";
-import { AliveTracker } from "../lib/alive.js";
+import * as Dictionary from "@/fruity/bridge/object.js";
+import { iterateNSArray } from "@/fruity/bridge/nsarray.js";
+import { AliveTracker } from "@/fruity/lib/alive.js";
 
 interface JSContext extends NSObject {
   evaluateScript_(script: StringLike): NSObject;

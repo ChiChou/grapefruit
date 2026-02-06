@@ -1,6 +1,6 @@
 import ObjC from "frida-objc-bridge";
 
-import { BaseMessage, bt } from "./context.js";
+import { BaseMessage, bt } from "@/common/hooks/context.js";
 import { parse } from "./typecoding.js";
 
 export interface Message extends BaseMessage {

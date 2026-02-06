@@ -1,8 +1,8 @@
 import ObjC from "frida-objc-bridge";
 
-import cf from "../native/corefoundation.js";
-import { NSData } from "../typings.js";
-import { dump, toJSON, toXML } from "../lib/plist.js";
+import cf from "@/fruity/native/corefoundation.js";
+import { NSData } from "@/fruity/typings.js";
+import { dump, toJSON, toXML } from "@/fruity/lib/plist.js";
 
 const kSecCSDefaultFlags = 0;
 // const kSecCSInternalInformation = 1 << 0;

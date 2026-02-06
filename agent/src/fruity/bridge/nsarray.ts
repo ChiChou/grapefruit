@@ -1,5 +1,5 @@
 import ObjC from "frida-objc-bridge";
-import type { NSArray, NSObject } from "../typings.js";
+import type { NSArray, NSObject } from "@/fruity/typings.js";
 
 export function* iterateNSArray(arr: NSArray<NSObject>) {
   if (!arr.isKindOfClass_(ObjC.classes.NSArray))

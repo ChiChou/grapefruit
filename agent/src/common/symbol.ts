@@ -1,12 +1,11 @@
+import { getGlobalExport } from "@/lib/polyfill.js";
+
 const BUF_LEN = 256 * 1024;
 const buf = Memory.alloc(BUF_LEN);
 
 function cxaDemangle(name: string): string | null {
-  const libcxxabi = Process.findModuleByName("libc++abi.dylib");
-  if (!libcxxabi) return null;
-
   const demangle = new NativeFunction(
-    libcxxabi.findExportByName("__cxa_demangle")!,
+    getGlobalExport("__cxa_demangle")!,
     "pointer",
     ["pointer", "pointer", "pointer", "pointer"],
   );

@@ -4,10 +4,10 @@ import type {
   NSObject,
   StringLike,
   NSArray,
-} from "../typings.js";
+} from "@/fruity/typings.js";
 
-import { toJsArray } from "../bridge/object.js";
-import { dump } from "../lib/plist.js";
+import { toJsArray } from "@/fruity/bridge/object.js";
+import { dump } from "@/fruity/lib/plist.js";
 
 export interface URLScheme {
   name?: string;

@@ -1,4 +1,4 @@
-import { BaseMessage, bt } from "./context.js";
+import { BaseMessage, bt } from "@/common/hooks/context.js";
 
 export interface Message extends BaseMessage {
   subject: "hook";
