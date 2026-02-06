@@ -493,116 +493,51 @@ export function KeyChainTab() {
                   </TableRow>
                   {expandedIndices.has(index) && (
                     <TableRow key={`detail-${index}`}>
-                      <TableCell
-                        colSpan={9}
-                        className="bg-muted p-4"
-                      >
-                        <div className="grid grid-cols-4 gap-4 text-sm">
-                          <div>
-                            <span className="font-medium text-muted-foreground">
-                              {t("creation_time")}:
-                            </span>
-                            <div className="font-mono">
-                              {item.creation
-                                ? new Date(item.creation).toLocaleString()
-                                : "-"}
+                      <TableCell colSpan={9} className="bg-muted/50 px-4 py-3">
+                        <div className="space-y-2 text-xs">
+                          <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                            <div className="flex gap-2">
+                              <span className="text-muted-foreground shrink-0">{t("creation_time")}:</span>
+                              <span className="font-mono truncate">{item.creation ? new Date(item.creation).toLocaleString() : "-"}</span>
+                            </div>
+                            <div className="flex gap-2">
+                              <span className="text-muted-foreground shrink-0">{t("modification_time")}:</span>
+                              <span className="font-mono truncate">{item.modification ? new Date(item.modification).toLocaleString() : "-"}</span>
+                            </div>
+                            <div className="flex gap-2">
+                              <span className="text-muted-foreground shrink-0">{t("comment")}:</span>
+                              <span className="font-mono truncate" title={item.comment}>{item.comment || "-"}</span>
+                            </div>
+                            <div className="flex gap-2">
+                              <span className="text-muted-foreground shrink-0">{t("creator")}:</span>
+                              <span className="font-mono truncate" title={item.creator}>{item.creator || "-"}</span>
                             </div>
                           </div>
-                          <div>
-                            <span className="font-medium text-muted-foreground">
-                              {t("modification_time")}:
-                            </span>
-                            <div className="font-mono">
-                              {item.modification
-                                ? new Date(item.modification).toLocaleString()
-                                : "-"}
+                          <div className="flex gap-4 text-muted-foreground">
+                            <span>{t("alias")}: <span className="text-foreground">{formatBoolean(item.alias)}</span></span>
+                            <span>{t("invisible")}: <span className="text-foreground">{formatBoolean(item.invisible)}</span></span>
+                            <span>{t("custom_icon")}: <span className="text-foreground">{formatBoolean(item.customIcon)}</span></span>
+                          </div>
+                          {item.data && (
+                            <div className="flex gap-2">
+                              <span className="text-muted-foreground shrink-0">{t("data")}:</span>
+                              <span className="font-mono truncate" title={item.data}>{item.data}</span>
                             </div>
-                          </div>
-                          <div>
-                            <span className="font-medium text-muted-foreground">
-                              {t("comment")}:
-                            </span>
-                            <div
-                              className="font-mono truncate"
-                              title={item.comment}
-                            >
-                              {item.comment || "-"}
+                          )}
+                          {item.raw && (
+                            <div>
+                              <div className="flex items-center gap-1 mb-1">
+                                <span className="text-muted-foreground">{t("raw")}:</span>
+                                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => downloadRaw(item)} title={t("download")}>
+                                  <Download className="h-3 w-3" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => copyToClipboardRaw(item, index)} title={t("copy")}>
+                                  {copySuccessIndex === index ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                                </Button>
+                              </div>
+                              <pre className="font-mono text-xs bg-background/50 p-2 rounded overflow-x-auto max-h-40">{hexDump(item.raw)}</pre>
                             </div>
-                          </div>
-                          <div>
-                            <span className="font-medium text-muted-foreground">
-                              {t("creator")}:
-                            </span>
-                            <div
-                              className="font-mono truncate"
-                              title={item.creator}
-                            >
-                              {item.creator || "-"}
-                            </div>
-                          </div>
-                          <div>
-                            <span className="font-medium text-muted-foreground">
-                              {t("alias")}:
-                            </span>
-                            <div>{formatBoolean(item.alias)}</div>
-                          </div>
-                          <div>
-                            <span className="font-medium text-muted-foreground">
-                              {t("invisible")}:
-                            </span>
-                            <div>{formatBoolean(item.invisible)}</div>
-                          </div>
-                          <div>
-                            <span className="font-medium text-muted-foreground">
-                              {t("custom_icon")}:
-                            </span>
-                            <div>{formatBoolean(item.customIcon)}</div>
-                          </div>
-                          <div className="col-span-2">
-                            <span className="font-medium text-muted-foreground">
-                              {t("data")}:
-                            </span>
-                            <div
-                              className="font-mono text-xs truncate max-w-[400px]"
-                              title={item.data}
-                            >
-                              {item.data || "-"}
-                            </div>
-                          </div>
-                          <div className="col-span-4">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-muted-foreground">
-                                {t("raw")}:
-                              </span>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6"
-                                onClick={() => downloadRaw(item)}
-                                disabled={!item.raw}
-                                title={t("download")}
-                              >
-                                <Download className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6"
-                                onClick={() => copyToClipboardRaw(item, index)}
-                                disabled={!item.raw}
-                                title={t("copy")}
-                              >
-                                {copySuccessIndex === index ? (
-                                  <Check className="h-3 w-3 text-green-500" />
-                                ) : (
-                                  <Copy className="h-3 w-3" />
-                                )}
-                              </Button>
-                            </div>
-                            <pre className="font-mono text-xs bg-muted p-2 rounded mt-1 overflow-x-auto">
-                              {hexDump(item.raw)}
-                            </pre>
-                          </div>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
