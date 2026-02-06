@@ -235,6 +235,12 @@ export function UIDumpTab() {
     }
   }, [copied]);
 
+  useEffect(() => {
+    return () => {
+      fruity?.ui.dismissHighlight().catch(() => {});
+    };
+  }, [fruity]);
+
   const handleExpandAll = useCallback(() => {
     setAllExpanded(true);
     setExpandKey((k) => k + 1);
