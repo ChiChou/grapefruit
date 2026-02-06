@@ -1,6 +1,13 @@
 import { Link, NavLink, Outlet } from "react-router";
 import { t } from "i18next";
-import { Info, Package, Braces, Link as LinkIcon, MapPin, Anchor } from "lucide-react";
+import {
+  Info,
+  Package,
+  Braces,
+  Link as LinkIcon,
+  MapPin,
+  Anchor,
+} from "lucide-react";
 
 import {
   Tooltip,
@@ -25,9 +32,7 @@ function NavItem({ to, icon, label }: NavItemProps) {
       to={to}
       className={({ isActive }) =>
         `p-2 flex items-center justify-center hover:bg-sidebar-accent transition-colors ${
-          isActive
-            ? "bg-sidebar-accent border-l-2 border-primary"
-            : ""
+          isActive ? "bg-sidebar-accent border-l-2 border-primary" : ""
         }`
       }
     >
@@ -121,7 +126,7 @@ export function LeftPanelView() {
 
   return (
     <div className="flex h-full">
-      <div className="w-12 bg-sidebar border-r border-sidebar-border flex flex-col">
+      <div className="w-16 bg-sidebar border-r border-sidebar-border flex flex-col">
         <div className="p-2 flex items-center justify-center border-b border-sidebar-border">
           <Link to={`/list/${device}/apps`} className="flex items-center">
             <img src={logo} alt={t("logo_alt")} className="h-6 w-6" />
