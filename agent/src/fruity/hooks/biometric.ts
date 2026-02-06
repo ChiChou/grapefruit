@@ -1,5 +1,5 @@
 import ObjC from "frida-objc-bridge";
-import { BaseMessage, bt } from "./context.js";
+import { BaseMessage, bt } from "@/common/hooks/context.js";
 
 export interface Message extends BaseMessage {
   subject: "hook";
@@ -27,8 +27,7 @@ export function bypass() {
   if (!LAContext) return [];
 
   // Hook evaluatePolicy:localizedReason:reply:
-  const evaluatePolicy =
-    LAContext["- evaluatePolicy:localizedReason:reply:"];
+  const evaluatePolicy = LAContext["- evaluatePolicy:localizedReason:reply:"];
   if (evaluatePolicy) {
     hooks.push(
       Interceptor.attach(evaluatePolicy.implementation, {
@@ -49,7 +48,8 @@ export function bypass() {
           };
         },
         onLeave() {
-          const policyStr = LA_POLICIES[this.policy] || `Unknown(${this.policy})`;
+          const policyStr =
+            LA_POLICIES[this.policy] || `Unknown(${this.policy})`;
           send({
             subject: "hook",
             category: "biometric",
@@ -82,7 +82,8 @@ export function bypass() {
           // Always return YES (1)
           retval.replace(ptr(1));
 
-          const policyStr = LA_POLICIES[this.policy] || `Unknown(${this.policy})`;
+          const policyStr =
+            LA_POLICIES[this.policy] || `Unknown(${this.policy})`;
           send({
             subject: "hook",
             category: "biometric",

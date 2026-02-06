@@ -8,19 +8,19 @@ import * as info from "./modules/info.js";
 import * as jsc from "./modules/jsc.js";
 import * as keychain from "./modules/keychain.js";
 import * as lsof from "./modules/lsof.js";
-import * as symbol from "./modules/symbol.js";
-import * as syslog from "./modules/syslog.js";
+import * as symbol from "@/common/symbol.js";
+import * as syslog from "@/common/syslog.js";
 import * as ui from "./modules/ui.js";
 import * as url from "./modules/url.js";
 import * as userdefaults from "./modules/userdefaults.js";
 import * as webview from "./modules/webview.js";
 
 import * as objc from "./hooks/objc.js";
-import * as native from "./hooks/native.js";
+import * as native from "@/common/hooks/native.js";
 import * as hook from "./hooks/index.js";
 
-import * as memory from "../common/memory.js";
-import * as sqlite from "../common/sqlite.js";
+import * as memory from "@/common/memory.js";
+import * as sqlite from "@/common/sqlite.js";
 
 if (!Process.findModuleByName("UIKit")) {
   console.warn("Not an UIKit App. Todo: disable some RPC");

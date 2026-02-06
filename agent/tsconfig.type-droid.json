@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "experimentalDecorators": true,
+    "emitDeclarationOnly": true,
+    "outDir": "types",
+    "target": "ES2019",
+    "skipLibCheck": true,
+    "noEmit": false,
+  },
+  "files": ["src/droid/registry.ts"],
+  "include": [],
+}

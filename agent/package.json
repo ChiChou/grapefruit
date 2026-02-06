@@ -19,9 +19,8 @@
     "build": "bun run scripts/build.ts",
     "prepare": "bun run build",
     "lint": "eslint src/**/*.ts",
-    "type:flags": "tsgo --declaration --experimentalDecorators --emitDeclarationOnly --outDir types --target es2019 --skipLibCheck",
-    "type:fruity": "bun run type:flags -- src/fruity/registry.ts",
-    "type:droid": "bun run type:flags -- src/droid/registry.ts",
+    "type:fruity": "tsgo -p tsconfig.type-fruity.json",
+    "type:droid": "tsgo -p tsconfig.type-droid.json",
     "type": "bun run type:fruity && bun run type:droid"
   },
   "devDependencies": {

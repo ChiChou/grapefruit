@@ -1,7 +1,7 @@
 import ObjC from "frida-objc-bridge";
-import type { NSObject, StringLike, NSURL, NSString } from "../typings.js";
+import type { NSObject, StringLike, NSURL, NSString } from "@/fruity/typings.js";
 
-import { performOnMainThread } from "../lib/dispatch.js";
+import { performOnMainThread } from "@/fruity/lib/dispatch.js";
 
 const WebViewKinds = ["UI", "WK"] as const;
 

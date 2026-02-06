@@ -1,6 +1,6 @@
 import ObjC from "frida-objc-bridge";
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { _Nullable, NSArray, NSDictionary, NSObject } from "../typings.js";
+import type { _Nullable, NSArray, NSDictionary, NSObject } from "@/fruity/typings.js";
 import { iterateNSArray } from "./nsarray.js";
 
 const NSPropertyListImmutable = 0;

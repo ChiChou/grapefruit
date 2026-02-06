@@ -9,8 +9,8 @@ import type {
   StringLike,
   NSMutableDictionary,
   NSString,
-} from "../typings.js";
-import { toJsArray } from "../bridge/object.js";
+} from "@/fruity/typings.js";
+import { toJsArray } from "@/fruity/bridge/object.js";
 
 export type CookiePredicate = Partial<{
   name: string;

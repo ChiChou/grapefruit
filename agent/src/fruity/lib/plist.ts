@@ -1,7 +1,7 @@
 import ObjC from "frida-objc-bridge";
 
-import { NSData } from "../typings.js";
-import { toJS } from "../bridge/object.js";
+import { NSData } from "@/fruity/typings.js";
+import { toJS } from "@/fruity/bridge/object.js";
 
 export function nsdata2str(data: NSData) {
   const NSUTF8StringEncoding = 4;

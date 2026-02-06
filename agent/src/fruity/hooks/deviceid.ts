@@ -1,5 +1,5 @@
 import ObjC from "frida-objc-bridge";
-import { BaseMessage } from "./context.js";
+import { BaseMessage } from "@/common/hooks/context.js";
 
 export interface Message extends BaseMessage {
   subject: "hook";

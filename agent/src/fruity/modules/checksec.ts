@@ -1,4 +1,4 @@
-import { encryptionInfo, pie } from "../lib/macho.js";
+import { encryptionInfo, pie } from "@/fruity/lib/macho.js";
 
 export interface CheckSecFlags {
   pie: boolean;
