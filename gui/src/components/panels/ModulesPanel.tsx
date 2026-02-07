@@ -5,20 +5,37 @@ import { List, type RowComponentProps } from "react-window";
 
 import { useDock } from "@/context/DockContext";
 import { Input } from "@/components/ui/input";
-import { useRpcQuery } from "@/lib/queries";
+import { useRpcQuery, useDroidRpcQuery } from "@/lib/queries";
+import { Platform, useSession } from "@/context/SessionContext";
 import type { ModuleInfo } from "../../../../agent/types/fruity/modules/symbol";
 
 const ITEM_HEIGHT = 72;
+
+function usePlatformModulesQuery() {
+  const { platform } = useSession();
+  const isDroid = platform === Platform.Droid;
+
+  const fruityResult = useRpcQuery(
+    ["modules"],
+    (api) => api.symbol.modules(),
+    { enabled: !isDroid },
+  );
+
+  const droidResult = useDroidRpcQuery<ModuleInfo[]>(
+    ["modules"],
+    (api) => api.symbol.modules(),
+    { enabled: isDroid },
+  );
+
+  return isDroid ? droidResult : fruityResult;
+}
 
 export function ModulesPanel() {
   const { t } = useTranslation();
   const { openFilePanel } = useDock();
   const [search, setSearch] = useState("");
 
-  const { data: modules = [], isLoading } = useRpcQuery(
-    ["modules"],
-    (api) => api.symbol.modules()
-  );
+  const { data: modules = [], isLoading } = usePlatformModulesQuery();
 
   const filteredModules = useMemo(() => {
     if (!search.trim()) return modules;

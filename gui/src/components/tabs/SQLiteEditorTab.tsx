@@ -6,7 +6,7 @@ import { Play, Loader2 } from "lucide-react";
 
 import type { DumpResult } from "../../../../agent/types/common/sqlite";
 
-import { useSession } from "@/context/SessionContext";
+import { Platform, useSession } from "@/context/SessionContext";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,7 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable";
-import { useRpcQuery, useRpcMutation } from "@/lib/queries";
+import { useQuery, useMutation } from "@tanstack/react-query";
 
 export interface SQLiteEditorTabParams {
   path: string;
@@ -39,7 +39,8 @@ export function SQLiteEditorTab({
 }: IDockviewPanelProps<SQLiteEditorTabParams>) {
   const { t } = useTranslation();
   const { theme } = useTheme();
-  const { fruity } = useSession();
+  const { fruity, droid, platform } = useSession();
+  const sqlite = (platform === Platform.Droid ? droid?.sqlite : fruity?.sqlite) ?? null;
 
   const [filteredTables, setFilteredTables] = useState<string[]>([]);
   const [tableSearch, setTableSearch] = useState("");
@@ -55,41 +56,45 @@ export function SQLiteEditorTab({
     data: dbHandle,
     isLoading: isOpeningDb,
     error: openError,
-  } = useRpcQuery<number>(
-    ["sqliteOpen", fullPath],
-    (api) => api.sqlite.open(fullPath),
-    { enabled: !!fullPath }
-  );
+  } = useQuery<number, Error>({
+    queryKey: ["sqliteOpen", fullPath],
+    queryFn: () => sqlite!.open(fullPath),
+    enabled: !!sqlite && !!fullPath,
+    staleTime: 0,
+    gcTime: 0,
+  });
 
   // Close database handle on unmount
   useEffect(() => {
     return () => {
-      if (dbHandle !== undefined && fruity) {
-        fruity.sqlite.close(dbHandle).catch(console.error);
+      if (dbHandle !== undefined && sqlite) {
+        sqlite.close(dbHandle).catch(console.error);
       }
     };
-  }, [dbHandle, fruity]);
+  }, [dbHandle, sqlite]);
 
   // Fetch tables
   const {
     data: tables = [],
     isLoading: isLoadingTables,
     error: tablesError,
-  } = useRpcQuery<string[]>(
-    ["sqliteTables", fullPath],
-    (api) => api.sqlite.tables(fullPath),
-    { enabled: !!fullPath }
-  );
+  } = useQuery<string[], Error>({
+    queryKey: ["sqliteTables", fullPath],
+    queryFn: () => sqlite!.tables(fullPath),
+    enabled: !!sqlite && !!fullPath,
+    staleTime: 0,
+    gcTime: 0,
+  });
 
   // Mutation for loading table data (dump)
-  const dumpMutation = useRpcMutation<DumpResult, { table: string }>(
-    (api, { table }) => api.sqlite.dump(fullPath, table)
-  );
+  const dumpMutation = useMutation<DumpResult, Error, { table: string }>({
+    mutationFn: ({ table }) => sqlite!.dump(fullPath, table),
+  });
 
   // Mutation for executing arbitrary SQL
-  const queryMutation = useRpcMutation<unknown[][], { handle: number; sql: string }>(
-    (api, { handle, sql }) => api.sqlite.query(handle, sql)
-  );
+  const queryMutation = useMutation<unknown[][], Error, { handle: number; sql: string }>({
+    mutationFn: ({ handle, sql }) => sqlite!.query(handle, sql),
+  });
 
   useEffect(() => {
     setFilteredTables(tables);

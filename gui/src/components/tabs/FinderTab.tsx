@@ -15,9 +15,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { Status, useSession } from "@/context/SessionContext";
+import { Platform, Status, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
-import { useRpcMutation } from "@/lib/queries";
+import { useRpcMutation, useDroidRpcMutation } from "@/lib/queries";
 import { DirectoryTree } from "./DirectoryTree";
 import { FileTable } from "./FileTable";
 import type { FinderTabParams, UploadFile } from "../../lib/file-explorer.ts";
@@ -30,9 +30,10 @@ const PREFIXES = {
 } as const;
 
 export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
-  const { fruity, status, pid, device } = useSession();
+  const { fruity, droid, status, pid, device, platform } = useSession();
   const { t } = useTranslation();
   const { openSingletonPanel } = useDock();
+  const isDroid = platform === Platform.Droid;
 
   const initialPath = params?.path || PREFIXES.home;
   const initialTab = initialPath === PREFIXES.bundle ? "bundle" : "home";
@@ -47,7 +48,8 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploadFiles, setUploadFiles] = useState<UploadFile[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
-  const apiReady = status === Status.Ready && !!fruity;
+  const fsApi = isDroid ? droid : fruity;
+  const apiReady = status === Status.Ready && !!fsApi;
 
   const loadDirectory = useCallback(
     async (
@@ -55,19 +57,30 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
     ): Promise<
       import("../../../../agent/types/fruity/modules/fs.ts").DirectoryListing
     > => {
-      if (!fruity) return { cwd: "", list: [] };
-      return fruity.fs.ls(path);
+      if (!fsApi) return { cwd: "", list: [] };
+      return fsApi.fs.ls(path);
     },
-    [fruity],
+    [fsApi],
   );
 
-  const renameMutation = useRpcMutation<boolean, { src: string; dst: string }>(
+  const fruityRenameMutation = useRpcMutation<boolean, { src: string; dst: string }>(
     (api, { src, dst }) => api.fs.mv(src, dst),
   );
 
-  const deleteMutation = useRpcMutation<boolean, { path: string }>(
+  const fruityDeleteMutation = useRpcMutation<boolean, { path: string }>(
     (api, { path }) => api.fs.rm(path),
   );
+
+  const droidRenameMutation = useDroidRpcMutation<boolean, { src: string; dst: string }>(
+    (api, { src, dst }) => api.fs.mv(src, dst),
+  );
+
+  const droidDeleteMutation = useDroidRpcMutation<boolean, { path: string }>(
+    (api, { path }) => api.fs.rm(path),
+  );
+
+  const renameMutation = isDroid ? droidRenameMutation : fruityRenameMutation;
+  const deleteMutation = isDroid ? droidDeleteMutation : fruityDeleteMutation;
 
   const handleDirectorySelect = useCallback(
     (path: string) => {
@@ -246,7 +259,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
                 {t("home")}
               </TabsTrigger>
               <TabsTrigger value="bundle" className="flex-1">
-                {t("bundle")}
+                {isDroid ? t("apk") : t("bundle")}
               </TabsTrigger>
             </TabsList>
             <TabsContent value="bundle" className="flex-1 overflow-hidden mt-0">
