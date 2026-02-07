@@ -14,7 +14,7 @@ import type { Application, DeviceInfo } from "@shared/schema";
 
 function AppCardSkeleton() {
   return (
-    <div className="block rounded-lg p-6">
+    <div className="block rounded-lg p-6 max-w-40 mx-auto">
       <div className="mb-3 flex items-center justify-center">
         <Skeleton className="h-16 w-16 rounded-2xl" />
       </div>
@@ -61,7 +61,7 @@ function AppCard({ app, udid, platform }: AppCardProps) {
   return (
     <Link
       to={`/workspace/${platform}/${udid}/app/${app.identifier}`}
-      className="block rounded-lg p-6 transition-colors hover:bg-accent dark:hover:bg-accent"
+      className="block rounded-lg p-6 transition-colors hover:bg-accent dark:hover:bg-accent max-w-40 mx-auto"
     >
       <div className="relative mb-3 flex items-center justify-center">
         <img
@@ -158,7 +158,7 @@ export function AppsView() {
           <Skeleton className="h-9 w-24" />
         </div>
 
-        <div className="grid grid-cols-2 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-10">
           {Array.from({ length: 16 }).map((_, i) => (
             <AppCardSkeleton key={i} />
           ))}
@@ -205,7 +205,7 @@ export function AppsView() {
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8 3xl:grid-cols-10">
         {filteredApps.map((app) => (
           <AppCard
             key={app.identifier}
