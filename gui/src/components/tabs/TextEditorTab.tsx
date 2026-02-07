@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useTheme } from "@/components/theme-provider";
+import { Platform, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useRpcQuery } from "@/lib/queries";
+import { useQuery } from "@tanstack/react-query";
 
 const LANGUAGES = [
   { value: "javascript", label: "JavaScript", ext: ["js", "mjs", "cjs"] },
@@ -104,6 +105,7 @@ export function TextEditorTab({
 }: IDockviewPanelProps<TextEditorTabParams>) {
   const { t } = useTranslation();
   const { theme } = useTheme();
+  const { fruity, droid, platform } = useSession();
   const { openSingletonPanel } = useDock();
   const [content, setContent] = useState<string | null>(null);
   const [isInvalidUtf8, setIsInvalidUtf8] = useState(false);
@@ -144,15 +146,19 @@ export function TextEditorTab({
     [magika],
   );
 
+  const fs = (platform === Platform.Droid ? droid?.fs : fruity?.fs) ?? null;
+
   const {
     data: rawData,
     isLoading,
     error,
-  } = useRpcQuery<ArrayBuffer | null>(
-    ["filePreview", fullPath],
-    (api) => api.fs.preview(fullPath),
-    { enabled: !!fullPath }
-  );
+  } = useQuery<ArrayBuffer | null, Error>({
+    queryKey: ["filePreview", fullPath],
+    queryFn: () => fs!.preview(fullPath),
+    enabled: !!fs && !!fullPath,
+    staleTime: 0,
+    gcTime: 0,
+  });
 
   useEffect(() => {
     if (!rawData) return;
