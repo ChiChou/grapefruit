@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { Outlet } from "react-router";
 import { t } from "i18next";
 import { StatusBar } from "./StatusBar";
 
@@ -50,10 +49,10 @@ import { R2Provider } from "./R2Provider";
 function WorkspaceContent() {
   const { bundle, device, platform, mode, pid } = useSession();
 
-  // Show full workspace (left panel + dockview) for iOS app and daemon modes
   const isFruityApp = platform === Platform.Fruity && mode === Mode.App;
   const isFruityDaemon = platform === Platform.Fruity && mode === Mode.Daemon;
-  const showFullWorkspace = isFruityApp || isFruityDaemon;
+  const isDroidApp = platform === Platform.Droid && mode === Mode.App;
+  const isDroidDaemon = platform === Platform.Droid && mode === Mode.Daemon;
   const { theme } = useTheme();
 
   useEffect(() => {
@@ -180,6 +179,22 @@ function WorkspaceContent() {
         title: "Finder",
         params: { path: "/" },
       });
+    } else if (isDroidApp) {
+      // Android App mode - Finder tab at home
+      dockApi.addPanel({
+        id: "finder_tab",
+        component: "finder",
+        title: "Finder",
+        params: { path: "~" },
+      });
+    } else if (isDroidDaemon) {
+      // Android Daemon mode - Finder tab at root
+      dockApi.addPanel({
+        id: "finder_tab",
+        component: "finder",
+        title: "Finder",
+        params: { path: "/" },
+      });
     }
   };
 
@@ -200,47 +215,40 @@ function WorkspaceContent() {
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel>
-            {showFullWorkspace ? (
-              bottomPanelVisible ? (
-                <ResizablePanelGroup
-                  direction="vertical"
-                  className="h-full"
-                  autoSaveId="workspace-bottom-split"
-                >
-                  <ResizablePanel>
-                    <DockviewReact
-                      // workaround: theme must not be empty, otherwise
-                      //  Dockview will always insert abyss className
-                      theme={themeLight}
-                      className={dockViewClazz}
-                      onReady={onReady}
-                      components={components}
-                      tabComponents={tabComponents}
-                    />
-                  </ResizablePanel>
-                  <ResizableHandle />
-                  <ResizablePanel defaultSize={30}>
-                    <BottomPanelView />
-                  </ResizablePanel>
-                </ResizablePanelGroup>
-              ) : (
-                <DockviewReact
-                  theme={themeLight}
-                  className={dockViewClazz}
-                  onReady={onReady}
-                  components={components}
-                  tabComponents={tabComponents}
-                />
-              )
+            {bottomPanelVisible ? (
+              <ResizablePanelGroup
+                direction="vertical"
+                className="h-full"
+                autoSaveId="workspace-bottom-split"
+              >
+                <ResizablePanel>
+                  <DockviewReact
+                    // workaround: theme must not be empty, otherwise
+                    //  Dockview will always insert abyss className
+                    theme={themeLight}
+                    className={dockViewClazz}
+                    onReady={onReady}
+                    components={components}
+                    tabComponents={tabComponents}
+                  />
+                </ResizablePanel>
+                <ResizableHandle />
+                <ResizablePanel defaultSize={30}>
+                  <BottomPanelView />
+                </ResizablePanel>
+              </ResizablePanelGroup>
             ) : (
-              <div className="h-full overflow-auto">
-                <Outlet />
-              </div>
+              <DockviewReact
+                theme={themeLight}
+                className={dockViewClazz}
+                onReady={onReady}
+                components={components}
+                tabComponents={tabComponents}
+              />
             )}
           </ResizablePanel>
         </ResizablePanelGroup>
         <StatusBar
-          showFullWorkspace={showFullWorkspace}
           bottomPanelVisible={bottomPanelVisible}
           setBottomPanelVisible={setBottomPanelVisible}
         />

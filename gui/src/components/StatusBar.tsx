@@ -21,13 +21,11 @@ import {
 import { Status, useSession } from "@/context/SessionContext";
 
 interface StatusBarProps {
-  showFullWorkspace: boolean;
   bottomPanelVisible: boolean;
   setBottomPanelVisible: (visible: boolean) => void;
 }
 
 export function StatusBar({
-  showFullWorkspace,
   bottomPanelVisible,
   setBottomPanelVisible,
 }: StatusBarProps) {
@@ -113,20 +111,18 @@ export function StatusBar({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      {showFullWorkspace && (
-        <button
-          type="button"
-          onClick={() => setBottomPanelVisible(!bottomPanelVisible)}
-          className="p-0.5 hover:bg-white/20 rounded transition-colors"
-          title={bottomPanelVisible ? t("hide_panel") : t("show_panel")}
-        >
-          {bottomPanelVisible ? (
-            <PanelBottomClose className="w-4 h-4" />
-          ) : (
-            <PanelBottomOpen className="w-4 h-4" />
-          )}
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={() => setBottomPanelVisible(!bottomPanelVisible)}
+        className="p-0.5 hover:bg-white/20 rounded transition-colors"
+        title={bottomPanelVisible ? t("hide_panel") : t("show_panel")}
+      >
+        {bottomPanelVisible ? (
+          <PanelBottomClose className="w-4 h-4" />
+        ) : (
+          <PanelBottomOpen className="w-4 h-4" />
+        )}
+      </button>
     </footer>
   );
 }

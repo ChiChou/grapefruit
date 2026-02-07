@@ -12,6 +12,9 @@ import { Workspace } from "./components/Workspace";
 import { WorkspaceIndex } from "./components/WorkspaceIndex";
 
 import { GeneralPanel } from "./components/panels/GeneralPanel";
+import { DroidGeneralPanel } from "./components/panels/DroidGeneralPanel";
+import { DroidComponentsPanel } from "./components/panels/DroidComponentsPanel";
+import { DroidDevicePanel } from "./components/panels/DroidDevicePanel";
 import { ModulesPanel } from "./components/panels/ModulesPanel";
 import { ClassesPanel } from "./components/panels/ClassesPanel";
 import { URLSchemesPanel } from "./components/panels/URLSchemesPanel";
@@ -19,7 +22,13 @@ import { GeolocationPanel } from "./components/panels/GeolocationPanel";
 import { HooksPanel } from "./components/panels/HooksPanel";
 import { PlaceholderPanel } from "./components/panels/PlaceholderPanel";
 
+import { Platform, useSession } from "./context/SessionContext";
 import { AlertTriangle } from "lucide-react";
+
+function GeneralPanelRoute() {
+  const { platform } = useSession();
+  return platform === Platform.Droid ? <DroidGeneralPanel /> : <GeneralPanel />;
+}
 
 function App() {
   const { t } = useTranslation();
@@ -46,13 +55,16 @@ function App() {
         <Route path="/workspace/:platform/:device/:mode/:target" element={<Workspace />}>
           {/* Default view based on platform/mode */}
           <Route index element={<WorkspaceIndex />} />
-          {/* iOS App/Daemon mode panels */}
-          <Route path="general" element={<GeneralPanel />} />
+          {/* Platform-aware panels */}
+          <Route path="general" element={<GeneralPanelRoute />} />
           <Route path="modules" element={<ModulesPanel />} />
           <Route path="classes" element={<ClassesPanel />} />
           <Route path="urls" element={<URLSchemesPanel />} />
           <Route path="geolocation" element={<GeolocationPanel />} />
           <Route path="hooks" element={<HooksPanel />} />
+          {/* Android (droid) panels */}
+          <Route path="components" element={<DroidComponentsPanel />} />
+          <Route path="device" element={<DroidDevicePanel />} />
           {/* Placeholder for unsupported modes */}
           <Route path="placeholder" element={<PlaceholderPanel />} />
         </Route>
