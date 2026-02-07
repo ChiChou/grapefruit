@@ -1,5 +1,6 @@
 import { Platform, Mode, useSession } from "@/context/SessionContext";
 import { GeneralPanel } from "./panels/GeneralPanel";
+import { DroidGeneralPanel } from "./panels/DroidGeneralPanel";
 import { ModulesPanel } from "./panels/ModulesPanel";
 import { PlaceholderPanel } from "./panels/PlaceholderPanel";
 
@@ -20,14 +21,14 @@ export function WorkspaceIndex() {
     return <ModulesPanel />;
   }
 
-  // Android App mode - placeholder for now
+  // Android App mode - show DroidGeneralPanel
   if (platform === Platform.Droid && mode === Mode.App) {
-    return <PlaceholderPanel />;
+    return <DroidGeneralPanel />;
   }
 
-  // Android Daemon mode - placeholder for now
+  // Android Daemon mode - show ModulesPanel
   if (platform === Platform.Droid && mode === Mode.Daemon) {
-    return <PlaceholderPanel />;
+    return <ModulesPanel />;
   }
 
   // Fallback

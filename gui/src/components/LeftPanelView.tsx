@@ -7,6 +7,8 @@ import {
   Link as LinkIcon,
   MapPin,
   Anchor,
+  Puzzle,
+  Smartphone,
 } from "lucide-react";
 
 import {
@@ -54,6 +56,8 @@ export function LeftPanelView() {
   // Determine which navigation to show based on platform and mode
   const isFruityApp = platform === Platform.Fruity && mode === Mode.App;
   const isFruityDaemon = platform === Platform.Fruity && mode === Mode.Daemon;
+  const isDroidApp = platform === Platform.Droid && mode === Mode.App;
+  const isDroidDaemon = platform === Platform.Droid && mode === Mode.Daemon;
 
   const renderNavigation = () => {
     if (isFruityApp) {
@@ -117,12 +121,55 @@ export function LeftPanelView() {
       );
     }
 
+    if (isDroidApp) {
+      // Android App mode - general, components, modules, device
+      return (
+        <div className="flex-1 flex flex-col gap-1 pt-2">
+          <NavItem
+            to={`${basePath}/general`}
+            icon={<Info className="h-5 w-5" />}
+            label={t("general")}
+          />
+          <NavItem
+            to={`${basePath}/components`}
+            icon={<Puzzle className="h-5 w-5" />}
+            label={t("components")}
+          />
+          <NavItem
+            to={`${basePath}/modules`}
+            icon={<Package className="h-5 w-5" />}
+            label={t("modules")}
+          />
+          <NavItem
+            to={`${basePath}/device`}
+            icon={<Smartphone className="h-5 w-5" />}
+            label={t("device_info")}
+          />
+        </div>
+      );
+    }
+
+    if (isDroidDaemon) {
+      // Android Daemon mode - modules, device
+      return (
+        <div className="flex-1 flex flex-col gap-1 pt-2">
+          <NavItem
+            to={`${basePath}/modules`}
+            icon={<Package className="h-5 w-5" />}
+            label={t("modules")}
+          />
+          <NavItem
+            to={`${basePath}/device`}
+            icon={<Smartphone className="h-5 w-5" />}
+            label={t("device_info")}
+          />
+        </div>
+      );
+    }
+
     // Other modes - no navigation yet
     return <div className="flex-1" />;
   };
-
-  // Show panel content for modes with full workspace (left panel + tabs area)
-  const showPanelContent = isFruityApp || isFruityDaemon;
 
   return (
     <div className="flex h-full">
@@ -142,12 +189,9 @@ export function LeftPanelView() {
         </div>
       </div>
 
-      {/* Tab content for modes with panel + tabs layout */}
-      {showPanelContent && (
-        <div className="flex-1 overflow-auto">
-          <Outlet />
-        </div>
-      )}
+      <div className="flex-1 overflow-auto">
+        <Outlet />
+      </div>
     </div>
   );
 }

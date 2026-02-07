@@ -3,7 +3,7 @@ import { t } from "i18next";
 import { FileText, Activity, Anchor, Terminal } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Status, Mode, useSession } from "@/context/SessionContext";
+import { Status, Mode, Platform, useSession } from "@/context/SessionContext";
 
 import { LogViewer, type LogViewerHandle } from "./LogViewer";
 import { HookResultsView } from "./HookResultsView";
@@ -12,7 +12,7 @@ import { CodeEditorTab } from "./tabs/CodeEditorTab";
 const BOTTOM_PANEL_TAB_STATE = "BOTTOM_PANEL_TAB_STATE";
 
 export function BottomPanelView() {
-  const { fruity, status, socket, device, bundle, pid, mode } = useSession();
+  const { fruity, droid, platform, status, socket, device, bundle, pid, mode } = useSession();
   const [activeTab, setActiveTab] = useState<string>(() => {
     try {
       return localStorage.getItem(BOTTOM_PANEL_TAB_STATE) || "logs";
@@ -58,12 +58,13 @@ export function BottomPanelView() {
   }, [device, bundle, pid, mode]);
 
   useEffect(() => {
-    fruity?.syslog.start();
+    const syslogApi = platform === Platform.Droid ? droid : fruity;
+    syslogApi?.syslog.start();
 
     return () => {
-      fruity?.syslog.stop();
+      syslogApi?.syslog.stop();
     };
-  }, [fruity, status, socket]);
+  }, [fruity, droid, platform, status, socket]);
 
   useEffect(() => {
     const handleSyslog = (message: string) => {
