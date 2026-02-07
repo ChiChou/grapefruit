@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDock } from "@/context/DockContext";
 import { useSession, Status, Mode } from "@/context/SessionContext";
-import { useRepl } from "@/context/ReplContext";
+import { useRepl } from "@/context/useRepl";
 import { generateNativeHook, type NativeHookTarget } from "@/lib/hook-codegen";
 
 import type {

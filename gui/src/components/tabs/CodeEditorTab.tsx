@@ -7,7 +7,7 @@ import Editor from "@monaco-editor/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTheme } from "@/components/theme-provider";
-import { useRepl } from "@/context/ReplContext";
+import { useRepl } from "@/context/useRepl";
 import { cn } from "@/lib/utils";
 
 export function CodeEditorTab() {

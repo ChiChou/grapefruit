@@ -14,7 +14,7 @@ import {
 import { useDock } from "@/context/DockContext";
 import { useRpcQuery } from "@/lib/queries";
 import { useSession, Status, Mode } from "@/context/SessionContext";
-import { useRepl } from "@/context/ReplContext";
+import { useRepl } from "@/context/useRepl";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";

@@ -7,7 +7,7 @@ import { Anchor, Code, Layers } from "lucide-react";
 
 import { useDock } from "@/context/DockContext";
 import { useSession, Status, Mode } from "@/context/SessionContext";
-import { useRepl } from "@/context/ReplContext";
+import { useRepl } from "@/context/useRepl";
 import {
   Table,
   TableBody,
