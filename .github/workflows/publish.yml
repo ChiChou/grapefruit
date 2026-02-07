@@ -7,7 +7,7 @@ on:
 
     # debug the action
     # branches:
-    #   - master
+    #   - dev
   workflow_dispatch:
 
 jobs:
