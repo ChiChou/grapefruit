@@ -231,7 +231,7 @@ async function onConnection(
 
   // Resume only for app mode (spawned processes need resume)
   if (mode === "app") {
-    await device.resume(pid);
+    await device.resume(pid).catch(() => {});
   }
 
   // Get log file paths based on device and identifier
