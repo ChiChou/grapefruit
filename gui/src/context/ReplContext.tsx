@@ -1,40 +1,7 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
+import { ReplContext, type ReplDocument } from "./useRepl";
 
 const REPL_DOCUMENTS_STATE = "REPL_DOCUMENTS_STATE";
-
-export interface ReplDocument {
-  id: string;
-  name: string;
-  content: string;
-}
-
-interface ReplContextType {
-  documents: ReplDocument[];
-  activeDocId: string | null;
-  addDocument: (name?: string, content?: string) => string;
-  removeDocument: (id: string) => void;
-  updateDocument: (id: string, content: string) => void;
-  renameDocument: (id: string, name: string) => void;
-  setActiveDocument: (id: string) => void;
-  appendToActiveDocument: (code: string) => void;
-  createDocumentWithCode: (code: string, name?: string) => string;
-}
-
-const defaultContext: ReplContextType = {
-  documents: [],
-  activeDocId: null,
-  addDocument: () => "",
-  removeDocument: () => {},
-  updateDocument: () => {},
-  renameDocument: () => {},
-  setActiveDocument: () => {},
-  appendToActiveDocument: () => {},
-  createDocumentWithCode: () => "",
-};
-
-const ReplContext = createContext<ReplContextType>(defaultContext);
-
-export const useRepl = () => useContext(ReplContext);
 
 function generateId(): string {
   return `doc_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
