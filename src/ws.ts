@@ -79,10 +79,9 @@ async function resolveAppPid(
     scope: frida.Scope.Full,
   });
 
-  if (!match.length)
-    throw new Error(`Application ${bundleId} not found on device`);
+  const app = match.at(0);
+  if (!app) throw new Error(`Application ${bundleId} not found on device`);
 
-  const app = match.at(0)!;
   const frontmost = await device.getFrontmostApplication();
   if (frontmost?.pid === app.pid) return app.pid;
 
@@ -287,7 +286,7 @@ export default function attach(server: ServerType) {
     const params = parseSessionParams(socket.handshake.query);
     if (params) {
       onConnection(socket, params).catch((ex) => {
-        console.error(ex);
+        console.error("failed to establish session, ", ex);
         socket.disconnect(true);
       });
     } else {

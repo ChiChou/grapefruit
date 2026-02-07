@@ -189,31 +189,38 @@ api
 
     console.log("upload file", file.name, file.type, file.size);
 
-    await Promise.all([
-      new Promise<void>(async (resolve) => {
-        const writable = controller.open(`${pid}:${path}`, {
-          meta: { type: "data" },
-        });
+    // Set up agent recv() handler before sending any stream messages
+    await script.exports.push(path);
 
-        const reader = file.stream().getReader();
-        if (!reader) {
-          resolve();
-          return;
-        }
+    await new Promise<void>((resolve, reject) => {
+      const writable = controller.open(`${pid}:${path}`, {
+        meta: { type: "data" },
+      });
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          writable.write(value);
-        }
-        writable.end();
-        resolve();
-      }),
-      script.exports.push(path),
-    ]);
+      writable.on("error", reject);
+      writable.on("finish", () => resolve());
 
-    return c.text("not properly implemented yet", 501);
-    // return c.text("upload complete");
+      const reader = file.stream().getReader();
+      const pump = () => {
+        reader.read().then(({ done, value }) => {
+          if (done) {
+            writable.end();
+            return;
+          }
+          if (!writable.write(value)) {
+            writable.once("drain", pump);
+          } else {
+            pump();
+          }
+        }, reject);
+      };
+      pump();
+    });
+
+    await script.unload();
+    await session.detach();
+
+    return c.text("upload complete");
   })
   .get("/device/:device/apps", getDeviceMiddleware, async (c) => {
     const device = c.get("device");
