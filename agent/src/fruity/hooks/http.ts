@@ -234,11 +234,13 @@ export function urlSessionDataTasks() {
       Interceptor.attach(dataTaskWithRequestCompletion.implementation, {
         onEnter(args) {
           this.request = new ObjC.Object(args[2]);
-          this.taskPtr = null;
 
           try {
             const originalHandler = new ObjC.Block(args[3]);
             const request = this.request;
+
+            // Capture task handle in closure for later use
+            let taskHandle: NativePointer | null = null;
 
             const wrappedHandler = new ObjC.Block({
               retType: "void",
@@ -253,8 +255,8 @@ export function urlSessionDataTasks() {
 
                 // Capture response
                 try {
-                  const requestId = this.taskPtr
-                    ? this.taskPtr.toString()
+                  const requestId = taskHandle
+                    ? taskHandle.toString()
                     : "unknown";
                   const startTime = requestTimestamps.get(requestId);
                   const latency = startTime ? Date.now() - startTime : undefined;
@@ -333,6 +335,11 @@ export function urlSessionDataTasks() {
               },
             });
 
+            // Store the task handle for the completion handler
+            this.taskHandleSetter = (handle: NativePointer) => {
+              taskHandle = handle;
+            };
+
             // Replace the completion handler
             args[3] = wrappedHandler.handle;
           } catch (e) {
@@ -346,7 +353,11 @@ export function urlSessionDataTasks() {
             const task = new ObjC.Object(retval);
             const request = this.request;
             const requestId = generateRequestId(task);
-            this.taskPtr = task.handle;
+
+            // Set the task handle for the completion handler
+            if (this.taskHandleSetter) {
+              this.taskHandleSetter(task.handle);
+            }
 
             const url = extractURL(request);
             const method = extractMethod(request);
@@ -430,11 +441,13 @@ export function urlSessionDataTasks() {
       Interceptor.attach(dataTaskWithURLCompletion.implementation, {
         onEnter(args) {
           this.url = new ObjC.Object(args[2]);
-          this.taskPtr = null;
 
           try {
             const originalHandler = new ObjC.Block(args[3]);
             const url = this.url.absoluteString().toString();
+
+            // Capture task handle in closure for later use
+            let taskHandle: NativePointer | null = null;
 
             const wrappedHandler = new ObjC.Block({
               retType: "void",
@@ -449,8 +462,8 @@ export function urlSessionDataTasks() {
 
                 // Capture response
                 try {
-                  const requestId = this.taskPtr
-                    ? this.taskPtr.toString()
+                  const requestId = taskHandle
+                    ? taskHandle.toString()
                     : "unknown";
                   const startTime = requestTimestamps.get(requestId);
                   const latency = startTime ? Date.now() - startTime : undefined;
@@ -527,6 +540,11 @@ export function urlSessionDataTasks() {
               },
             });
 
+            // Store the task handle for the completion handler
+            this.taskHandleSetter = (handle: NativePointer) => {
+              taskHandle = handle;
+            };
+
             // Replace the completion handler
             args[3] = wrappedHandler.handle;
           } catch (e) {
@@ -539,7 +557,12 @@ export function urlSessionDataTasks() {
           try {
             const task = new ObjC.Object(retval);
             const requestId = generateRequestId(task);
-            this.taskPtr = task.handle;
+
+            // Set the task handle for the completion handler
+            if (this.taskHandleSetter) {
+              this.taskHandleSetter(task.handle);
+            }
+
             const url = this.url.absoluteString().toString();
 
             const detail: Message = {
