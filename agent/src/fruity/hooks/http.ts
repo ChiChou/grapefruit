@@ -735,3 +735,112 @@ export function urlSessionTaskResume() {
 
   return hooks;
 }
+
+/**
+ * Hook legacy NSURLConnection synchronous requests
+ */
+export function urlConnection() {
+  if (!ObjC.available) return [];
+
+  const NSURLConnection = ObjC.classes.NSURLConnection;
+  if (!NSURLConnection) return [];
+
+  const hooks: InvocationListener[] = [];
+
+  // Hook: +[NSURLConnection sendSynchronousRequest:returningResponse:error:]
+  const sendSync =
+    NSURLConnection["+ sendSynchronousRequest:returningResponse:error:"];
+  if (sendSync) {
+    hooks.push(
+      Interceptor.attach(sendSync.implementation, {
+        onEnter(args) {
+          try {
+            this.request = new ObjC.Object(args[2]);
+            this.responsePtr = args[3];
+            this.startTime = Date.now();
+
+            const request = this.request;
+            const url = extractURL(request);
+            const method = extractMethod(request);
+            const headers = extractRequestHeaders(request);
+            const { data: bodyData, size: bodySize } =
+              extractRequestBody(request);
+
+            const detail: Message = {
+              subject: "hook",
+              category: "http",
+              symbol: "+[NSURLConnection sendSynchronousRequest:returningResponse:error:]",
+              dir: "enter",
+              line: `${method} ${q(url)} (sync)`,
+              phase: "request",
+              method,
+              url,
+              requestHeaders: headers,
+              requestBodySize: bodySize,
+              hasRequestBody: bodySize > 0,
+              timestamp: this.startTime,
+              backtrace: bt(this.context),
+            };
+
+            send(detail, bodyData);
+          } catch (e) {
+            // Ignore errors
+          }
+        },
+        onLeave(retval) {
+          try {
+            const latency = Date.now() - this.startTime;
+            const url = extractURL(this.request);
+            const method = extractMethod(this.request);
+
+            // Check if response pointer is valid
+            if (this.responsePtr && !this.responsePtr.isNull()) {
+              const responseObj = this.responsePtr.readPointer();
+              if (!responseObj.isNull()) {
+                const response = new ObjC.Object(responseObj);
+                const { statusCode, headers, mimeType } =
+                  extractResponseInfo(response);
+
+                let responseBodySize = 0;
+                let responseData: ArrayBuffer | null = null;
+
+                if (!retval.isNull()) {
+                  const dataObj = new ObjC.Object(retval);
+                  responseBodySize = dataObj.length();
+
+                  if (responseBodySize <= 1024 * 1024) {
+                    responseData = dataObj.bytes().readByteArray(responseBodySize);
+                  }
+                }
+
+                send(
+                  {
+                    subject: "hook",
+                    category: "http",
+                    symbol: "+[NSURLConnection sendSynchronousRequest:returningResponse:error:]",
+                    dir: "leave",
+                    line: `${method} ${q(url)} -> ${statusCode} (sync)`,
+                    phase: "response",
+                    method,
+                    url,
+                    statusCode,
+                    responseHeaders: headers,
+                    responseBodySize,
+                    hasResponseBody: responseBodySize > 0,
+                    mimeType,
+                    latency,
+                  } as Message,
+                  responseData,
+                );
+              }
+            }
+          } catch (e) {
+            // Ignore errors
+          }
+        },
+      }),
+    );
+  }
+
+  return hooks;
+}

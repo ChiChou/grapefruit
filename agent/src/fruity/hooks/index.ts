@@ -6,6 +6,7 @@ import * as biometric from "./biometric.js";
 import * as fileops from "./fileops.js";
 import * as native from "./native.js";
 import * as objc from "./objc.js";
+import * as http from "./http.js";
 
 const active = new Map<string, InvocationListener[]>();
 
@@ -17,6 +18,7 @@ const HOOK_GROUPS = [
   "biometric",
   "sqlite",
   "crypto",
+  "http",
 ] as const;
 
 function get(group: string) {
@@ -42,6 +44,14 @@ function get(group: string) {
     return [...biometric.bypass()];
   } else if (group === "fileops") {
     return [...fileops.monitor()];
+  } else if (group === "http") {
+    return [
+      ...http.urlSessionDataTasks(),
+      ...http.urlSessionUploadTasks(),
+      ...http.urlSessionDownloadTasks(),
+      ...http.urlSessionTaskResume(),
+      ...http.urlConnection(),
+    ];
   }
 }
 
