@@ -239,6 +239,8 @@
   "hook_user_defined": "User Defined",
   "hook_crypto": "Crypto",
   "hook_crypto_desc": "Intercept encryption, decryption, hashing, and HMAC operations (CommonCrypto, X.509)",
+  "hook_http": "HTTP/HTTPS",
+  "hook_http_desc": "Monitor network traffic: capture requests, responses, headers, bodies, and timing (NSURLSession, NSURLConnection)",
   "hook_sqlite": "SQLite",
   "hook_sqlite_desc": "Monitor database operations including open, prepare, execute, and bind statements",
   "hook_pasteboard": "Pasteboard",

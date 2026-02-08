@@ -8,6 +8,7 @@ import {
   Fingerprint,
   Smartphone,
   FolderOpen,
+  Network,
 } from "lucide-react";
 
 import { Switch } from "@/components/ui/switch";
@@ -31,6 +32,12 @@ const HOOK_GROUPS: HookGroup[] = [
     icon: <Lock className="h-4 w-4" />,
     nameKey: "hook_crypto",
     descKey: "hook_crypto_desc",
+  },
+  {
+    id: "http",
+    icon: <Network className="h-4 w-4" />,
+    nameKey: "hook_http",
+    descKey: "hook_http_desc",
   },
   {
     id: "sqlite",

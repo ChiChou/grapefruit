@@ -239,6 +239,8 @@
   "hook_user_defined": "用户自定义",
   "hook_crypto": "加密",
   "hook_crypto_desc": "拦截加密、解密、哈希和 HMAC 操作 (CommonCrypto, X.509)",
+  "hook_http": "HTTP/HTTPS",
+  "hook_http_desc": "监控网络流量：捕获请求、响应、标头、正文和计时 (NSURLSession, NSURLConnection)",
   "hook_sqlite": "SQLite",
   "hook_sqlite_desc": "监控数据库操作，包括打开、准备、执行和绑定语句",
   "hook_pasteboard": "剪贴板",
