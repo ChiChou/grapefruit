@@ -166,3 +166,572 @@ setInterval(() => {
     }
   }
 }, 30000);
+
+/**
+ * Hook NSURLSession data task creation methods
+ */
+export function urlSessionDataTasks() {
+  if (!ObjC.available) return [];
+
+  const NSURLSession = ObjC.classes.NSURLSession;
+  if (!NSURLSession) return [];
+
+  const hooks: InvocationListener[] = [];
+
+  // Hook: -[NSURLSession dataTaskWithRequest:]
+  const dataTaskWithRequest = NSURLSession["- dataTaskWithRequest:"];
+  if (dataTaskWithRequest) {
+    hooks.push(
+      Interceptor.attach(dataTaskWithRequest.implementation, {
+        onEnter(args) {
+          this.request = new ObjC.Object(args[2]);
+        },
+        onLeave(retval) {
+          if (retval.isNull()) return;
+
+          try {
+            const task = new ObjC.Object(retval);
+            const request = this.request;
+            const requestId = generateRequestId(task);
+            const url = extractURL(request);
+            const method = extractMethod(request);
+            const headers = extractRequestHeaders(request);
+            const { data: bodyData, size: bodySize } =
+              extractRequestBody(request);
+
+            const detail: Message = {
+              subject: "hook",
+              category: "http",
+              symbol: "-[NSURLSession dataTaskWithRequest:]",
+              dir: "leave",
+              line: `${method} ${q(url)}`,
+              phase: "request",
+              method,
+              url,
+              requestId,
+              requestHeaders: headers,
+              requestBodySize: bodySize,
+              hasRequestBody: bodySize > 0,
+              timestamp: Date.now(),
+              backtrace: bt(this.context),
+            };
+
+            send(detail, bodyData);
+          } catch (e) {
+            // Ignore errors
+          }
+        },
+      }),
+    );
+  }
+
+  // Hook: -[NSURLSession dataTaskWithRequest:completionHandler:]
+  const dataTaskWithRequestCompletion =
+    NSURLSession["- dataTaskWithRequest:completionHandler:"];
+  if (dataTaskWithRequestCompletion) {
+    hooks.push(
+      Interceptor.attach(dataTaskWithRequestCompletion.implementation, {
+        onEnter(args) {
+          this.request = new ObjC.Object(args[2]);
+          this.taskPtr = null;
+
+          try {
+            const originalHandler = new ObjC.Block(args[3]);
+            const request = this.request;
+
+            const wrappedHandler = new ObjC.Block({
+              retType: "void",
+              argTypes: ["object", "object", "object"],
+              implementation: (
+                data: NativePointer,
+                response: NativePointer,
+                error: NativePointer,
+              ) => {
+                // Call original handler first
+                originalHandler.implementation(data, response, error);
+
+                // Capture response
+                try {
+                  const requestId = this.taskPtr
+                    ? this.taskPtr.toString()
+                    : "unknown";
+                  const startTime = requestTimestamps.get(requestId);
+                  const latency = startTime ? Date.now() - startTime : undefined;
+                  const url = extractURL(request);
+                  const method = extractMethod(request);
+
+                  if (!error.isNull()) {
+                    // Error case
+                    const errObj = new ObjC.Object(error);
+                    const errMsg =
+                      errObj.localizedDescription()?.toString() ||
+                      "Unknown error";
+
+                    send({
+                      subject: "hook",
+                      category: "http",
+                      symbol: "completionHandler",
+                      dir: "leave",
+                      line: `${method} ${q(url)} - Error: ${errMsg}`,
+                      phase: "error",
+                      method,
+                      url,
+                      requestId,
+                      error: errMsg,
+                      latency,
+                    } as Message);
+                  } else if (!response.isNull()) {
+                    // Success case
+                    const respObj = new ObjC.Object(response);
+                    const { statusCode, headers, mimeType } =
+                      extractResponseInfo(respObj);
+
+                    let responseBodySize = 0;
+                    let responseData: ArrayBuffer | null = null;
+
+                    if (!data.isNull()) {
+                      const dataObj = new ObjC.Object(data);
+                      responseBodySize = dataObj.length();
+
+                      if (responseBodySize <= 1024 * 1024) {
+                        responseData = dataObj
+                          .bytes()
+                          .readByteArray(responseBodySize);
+                      }
+                    }
+
+                    send(
+                      {
+                        subject: "hook",
+                        category: "http",
+                        symbol: "completionHandler",
+                        dir: "leave",
+                        line: `${method} ${q(url)} -> ${statusCode}`,
+                        phase: "response",
+                        method,
+                        url,
+                        requestId,
+                        statusCode,
+                        responseHeaders: headers,
+                        responseBodySize,
+                        hasResponseBody: responseBodySize > 0,
+                        mimeType,
+                        latency,
+                      } as Message,
+                      responseData,
+                    );
+                  }
+
+                  // Clean up
+                  if (requestId !== "unknown") {
+                    requestTimestamps.delete(requestId);
+                  }
+                } catch (e) {
+                  // Ignore errors in completion handler
+                }
+              },
+            });
+
+            // Replace the completion handler
+            args[3] = wrappedHandler.handle;
+          } catch (e) {
+            // Ignore errors
+          }
+        },
+        onLeave(retval) {
+          if (retval.isNull()) return;
+
+          try {
+            const task = new ObjC.Object(retval);
+            const request = this.request;
+            const requestId = generateRequestId(task);
+            this.taskPtr = task.handle;
+
+            const url = extractURL(request);
+            const method = extractMethod(request);
+            const headers = extractRequestHeaders(request);
+            const { data: bodyData, size: bodySize } =
+              extractRequestBody(request);
+
+            const detail: Message = {
+              subject: "hook",
+              category: "http",
+              symbol: "-[NSURLSession dataTaskWithRequest:completionHandler:]",
+              dir: "leave",
+              line: `${method} ${q(url)}`,
+              phase: "request",
+              method,
+              url,
+              requestId,
+              requestHeaders: headers,
+              requestBodySize: bodySize,
+              hasRequestBody: bodySize > 0,
+              timestamp: Date.now(),
+              backtrace: bt(this.context),
+            };
+
+            send(detail, bodyData);
+          } catch (e) {
+            // Ignore errors
+          }
+        },
+      }),
+    );
+  }
+
+  // Hook: -[NSURLSession dataTaskWithURL:]
+  const dataTaskWithURL = NSURLSession["- dataTaskWithURL:"];
+  if (dataTaskWithURL) {
+    hooks.push(
+      Interceptor.attach(dataTaskWithURL.implementation, {
+        onEnter(args) {
+          this.url = new ObjC.Object(args[2]);
+        },
+        onLeave(retval) {
+          if (retval.isNull()) return;
+
+          try {
+            const task = new ObjC.Object(retval);
+            const requestId = generateRequestId(task);
+            const url = this.url.absoluteString().toString();
+
+            const detail: Message = {
+              subject: "hook",
+              category: "http",
+              symbol: "-[NSURLSession dataTaskWithURL:]",
+              dir: "leave",
+              line: `GET ${q(url)}`,
+              phase: "request",
+              method: "GET",
+              url,
+              requestId,
+              requestHeaders: {},
+              requestBodySize: 0,
+              hasRequestBody: false,
+              timestamp: Date.now(),
+              backtrace: bt(this.context),
+            };
+
+            send(detail);
+          } catch (e) {
+            // Ignore errors
+          }
+        },
+      }),
+    );
+  }
+
+  // Hook: -[NSURLSession dataTaskWithURL:completionHandler:]
+  const dataTaskWithURLCompletion =
+    NSURLSession["- dataTaskWithURL:completionHandler:"];
+  if (dataTaskWithURLCompletion) {
+    hooks.push(
+      Interceptor.attach(dataTaskWithURLCompletion.implementation, {
+        onEnter(args) {
+          this.url = new ObjC.Object(args[2]);
+          this.taskPtr = null;
+
+          try {
+            const originalHandler = new ObjC.Block(args[3]);
+            const url = this.url.absoluteString().toString();
+
+            const wrappedHandler = new ObjC.Block({
+              retType: "void",
+              argTypes: ["object", "object", "object"],
+              implementation: (
+                data: NativePointer,
+                response: NativePointer,
+                error: NativePointer,
+              ) => {
+                // Call original handler first
+                originalHandler.implementation(data, response, error);
+
+                // Capture response
+                try {
+                  const requestId = this.taskPtr
+                    ? this.taskPtr.toString()
+                    : "unknown";
+                  const startTime = requestTimestamps.get(requestId);
+                  const latency = startTime ? Date.now() - startTime : undefined;
+
+                  if (!error.isNull()) {
+                    // Error case
+                    const errObj = new ObjC.Object(error);
+                    const errMsg =
+                      errObj.localizedDescription()?.toString() ||
+                      "Unknown error";
+
+                    send({
+                      subject: "hook",
+                      category: "http",
+                      symbol: "completionHandler",
+                      dir: "leave",
+                      line: `GET ${q(url)} - Error: ${errMsg}`,
+                      phase: "error",
+                      method: "GET",
+                      url,
+                      requestId,
+                      error: errMsg,
+                      latency,
+                    } as Message);
+                  } else if (!response.isNull()) {
+                    // Success case
+                    const respObj = new ObjC.Object(response);
+                    const { statusCode, headers, mimeType } =
+                      extractResponseInfo(respObj);
+
+                    let responseBodySize = 0;
+                    let responseData: ArrayBuffer | null = null;
+
+                    if (!data.isNull()) {
+                      const dataObj = new ObjC.Object(data);
+                      responseBodySize = dataObj.length();
+
+                      if (responseBodySize <= 1024 * 1024) {
+                        responseData = dataObj
+                          .bytes()
+                          .readByteArray(responseBodySize);
+                      }
+                    }
+
+                    send(
+                      {
+                        subject: "hook",
+                        category: "http",
+                        symbol: "completionHandler",
+                        dir: "leave",
+                        line: `GET ${q(url)} -> ${statusCode}`,
+                        phase: "response",
+                        method: "GET",
+                        url,
+                        requestId,
+                        statusCode,
+                        responseHeaders: headers,
+                        responseBodySize,
+                        hasResponseBody: responseBodySize > 0,
+                        mimeType,
+                        latency,
+                      } as Message,
+                      responseData,
+                    );
+                  }
+
+                  // Clean up
+                  if (requestId !== "unknown") {
+                    requestTimestamps.delete(requestId);
+                  }
+                } catch (e) {
+                  // Ignore errors in completion handler
+                }
+              },
+            });
+
+            // Replace the completion handler
+            args[3] = wrappedHandler.handle;
+          } catch (e) {
+            // Ignore errors
+          }
+        },
+        onLeave(retval) {
+          if (retval.isNull()) return;
+
+          try {
+            const task = new ObjC.Object(retval);
+            const requestId = generateRequestId(task);
+            this.taskPtr = task.handle;
+            const url = this.url.absoluteString().toString();
+
+            const detail: Message = {
+              subject: "hook",
+              category: "http",
+              symbol: "-[NSURLSession dataTaskWithURL:completionHandler:]",
+              dir: "leave",
+              line: `GET ${q(url)}`,
+              phase: "request",
+              method: "GET",
+              url,
+              requestId,
+              requestHeaders: {},
+              requestBodySize: 0,
+              hasRequestBody: false,
+              timestamp: Date.now(),
+              backtrace: bt(this.context),
+            };
+
+            send(detail);
+          } catch (e) {
+            // Ignore errors
+          }
+        },
+      }),
+    );
+  }
+
+  return hooks;
+}
+
+/**
+ * Hook NSURLSession upload task creation methods
+ */
+export function urlSessionUploadTasks() {
+  if (!ObjC.available) return [];
+
+  const NSURLSession = ObjC.classes.NSURLSession;
+  if (!NSURLSession) return [];
+
+  const hooks: InvocationListener[] = [];
+
+  // Hook: -[NSURLSession uploadTaskWithRequest:fromData:]
+  const uploadTaskWithRequestFromData =
+    NSURLSession["- uploadTaskWithRequest:fromData:"];
+  if (uploadTaskWithRequestFromData) {
+    hooks.push(
+      Interceptor.attach(uploadTaskWithRequestFromData.implementation, {
+        onEnter(args) {
+          this.request = new ObjC.Object(args[2]);
+          this.uploadData = new ObjC.Object(args[3]);
+        },
+        onLeave(retval) {
+          if (retval.isNull()) return;
+
+          try {
+            const task = new ObjC.Object(retval);
+            const request = this.request;
+            const uploadData = this.uploadData;
+            const requestId = generateRequestId(task);
+            const url = extractURL(request);
+            const method = extractMethod(request);
+            const headers = extractRequestHeaders(request);
+
+            let uploadSize = 0;
+            let uploadBuffer: ArrayBuffer | null = null;
+
+            if (uploadData && !uploadData.isNull()) {
+              uploadSize = uploadData.length();
+              if (uploadSize <= 1024 * 1024) {
+                uploadBuffer = uploadData.bytes().readByteArray(uploadSize);
+              }
+            }
+
+            const detail: Message = {
+              subject: "hook",
+              category: "http",
+              symbol: "-[NSURLSession uploadTaskWithRequest:fromData:]",
+              dir: "leave",
+              line: `${method} ${q(url)} (upload ${uploadSize} bytes)`,
+              phase: "request",
+              method,
+              url,
+              requestId,
+              requestHeaders: headers,
+              requestBodySize: uploadSize,
+              hasRequestBody: uploadSize > 0,
+              timestamp: Date.now(),
+              backtrace: bt(this.context),
+            };
+
+            send(detail, uploadBuffer);
+          } catch (e) {
+            // Ignore errors
+          }
+        },
+      }),
+    );
+  }
+
+  return hooks;
+}
+
+/**
+ * Hook NSURLSession download task creation methods
+ */
+export function urlSessionDownloadTasks() {
+  if (!ObjC.available) return [];
+
+  const NSURLSession = ObjC.classes.NSURLSession;
+  if (!NSURLSession) return [];
+
+  const hooks: InvocationListener[] = [];
+
+  // Hook: -[NSURLSession downloadTaskWithRequest:]
+  const downloadTaskWithRequest =
+    NSURLSession["- downloadTaskWithRequest:"];
+  if (downloadTaskWithRequest) {
+    hooks.push(
+      Interceptor.attach(downloadTaskWithRequest.implementation, {
+        onEnter(args) {
+          this.request = new ObjC.Object(args[2]);
+        },
+        onLeave(retval) {
+          if (retval.isNull()) return;
+
+          try {
+            const task = new ObjC.Object(retval);
+            const request = this.request;
+            const requestId = generateRequestId(task);
+            const url = extractURL(request);
+            const method = extractMethod(request);
+            const headers = extractRequestHeaders(request);
+
+            const detail: Message = {
+              subject: "hook",
+              category: "http",
+              symbol: "-[NSURLSession downloadTaskWithRequest:]",
+              dir: "leave",
+              line: `${method} ${q(url)} (download)`,
+              phase: "request",
+              method,
+              url,
+              requestId,
+              requestHeaders: headers,
+              requestBodySize: 0,
+              hasRequestBody: false,
+              timestamp: Date.now(),
+              backtrace: bt(this.context),
+            };
+
+            send(detail);
+          } catch (e) {
+            // Ignore errors
+          }
+        },
+      }),
+    );
+  }
+
+  return hooks;
+}
+
+/**
+ * Hook NSURLSessionTask resume to track when requests actually start
+ */
+export function urlSessionTaskResume() {
+  if (!ObjC.available) return [];
+
+  const NSURLSessionTask = ObjC.classes.NSURLSessionTask;
+  if (!NSURLSessionTask) return [];
+
+  const hooks: InvocationListener[] = [];
+
+  // Hook: -[NSURLSessionTask resume]
+  const resume = NSURLSessionTask["- resume"];
+  if (resume) {
+    hooks.push(
+      Interceptor.attach(resume.implementation, {
+        onEnter(args) {
+          try {
+            const task = new ObjC.Object(args[0]);
+            const requestId = generateRequestId(task);
+
+            // Store timestamp for latency calculation
+            requestTimestamps.set(requestId, Date.now());
+          } catch (e) {
+            // Ignore errors
+          }
+        },
+      }),
+    );
+  }
+
+  return hooks;
+}
