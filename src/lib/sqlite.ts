@@ -25,35 +25,8 @@ type DatabaseFactory = (path: string) => Database;
 
 let createDatabase: DatabaseFactory;
 
-// Try Node.js sqlite first, fall back to Bun
+// Try Bun sqlite first, fall back to Node.js
 try {
-  const { DatabaseSync } = await import("node:sqlite");
-
-  createDatabase = (path: string): Database => {
-    const db = new DatabaseSync(path, { open: true });
-    return {
-      exec: (sql: string) => db.exec(sql),
-      prepare: (sql: string) => {
-        const stmt = db.prepare(sql);
-        return {
-          run: (...params: SqliteValue[]) => {
-            const result = stmt.run(...params);
-            return {
-              changes: result.changes as number,
-              lastInsertRowid: result.lastInsertRowid as number | bigint,
-            };
-          },
-          get: (...params: SqliteValue[]) =>
-            stmt.get(...params) as Record<string, unknown> | undefined,
-          all: (...params: SqliteValue[]) =>
-            stmt.all(...params) as Record<string, unknown>[],
-        };
-      },
-      close: () => db.close(),
-    };
-  };
-} catch {
-  // Node.js sqlite not available, use Bun
   const { Database: BunDatabase } = await import("bun:sqlite");
 
   createDatabase = (path: string): Database => {
@@ -68,6 +41,33 @@ try {
             return {
               changes: result.changes,
               lastInsertRowid: result.lastInsertRowid,
+            };
+          },
+          get: (...params: SqliteValue[]) =>
+            stmt.get(...params) as Record<string, unknown> | undefined,
+          all: (...params: SqliteValue[]) =>
+            stmt.all(...params) as Record<string, unknown>[],
+        };
+      },
+      close: () => db.close(),
+    };
+  };
+} catch {
+  // Bun not available, use Node.js sqlite
+  const { DatabaseSync } = await import("node:sqlite");
+
+  createDatabase = (path: string): Database => {
+    const db = new DatabaseSync(path, { open: true });
+    return {
+      exec: (sql: string) => db.exec(sql),
+      prepare: (sql: string) => {
+        const stmt = db.prepare(sql);
+        return {
+          run: (...params: SqliteValue[]) => {
+            const result = stmt.run(...params);
+            return {
+              changes: result.changes as number,
+              lastInsertRowid: result.lastInsertRowid as number | bigint,
             };
           },
           get: (...params: SqliteValue[]) =>
