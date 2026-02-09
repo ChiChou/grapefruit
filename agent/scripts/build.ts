@@ -24,4 +24,7 @@ await Promise.all(
   }),
 );
 
+await $`bun run build:fruity`;
+await $`bun run build:droid`;
+
 console.log(styleText("green", "all build tasks finished"));
