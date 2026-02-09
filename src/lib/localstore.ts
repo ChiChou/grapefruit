@@ -3,7 +3,7 @@ import path from "node:path";
 import paths from "./paths.ts";
 import { createDatabase, type Database } from "./sqlite.ts";
 
-const DATABASE_VERSION = 2;
+const DATABASE_VERSION = 0;
 
 let dbInstance: Database;
 
@@ -15,32 +15,28 @@ function get(): Database {
   const db = createDatabase(path.join(paths.data, "data.db"));
   const result = db.prepare("PRAGMA user_version").get();
 
-  if (result) {
-    const version = result["user_version"] as number;
+  const version = result?.user_version as number;
+  // we are going to use ORM libraries in the future, so won't implement migration for now
+  if (version !== DATABASE_VERSION) {
+    console.error(
+      `Database version mismatch: expected ${DATABASE_VERSION}, got ${version}.
+      Currently we do not support migration, please delete the database file at ${path.join(paths.data, "data.db")} to reset the local store.`,
+    );
 
-    if (version === 0) {
-      // Fresh install - create all tables
-      db.exec(`PRAGMA user_version = ${DATABASE_VERSION};`);
-      db.exec(`CREATE TABLE IF NOT EXISTS preferences (
-                key TEXT PRIMARY KEY,
-                value TEXT
-            );`);
-      createHooksTable(db);
-    } else if (version === 1) {
-      // Migration from v1: add hooks table
-      createHooksTable(db);
-      db.exec(`PRAGMA user_version = ${DATABASE_VERSION};`);
-    } else if (version !== DATABASE_VERSION) {
-      // migration not supported at the moment, bail out
-      throw new Error(`Database version ${version} does not match app`);
-    }
+    throw new Error(
+      `Database version mismatch: expected ${DATABASE_VERSION}, got ${version}`,
+    );
   }
 
-  dbInstance = db;
-  return dbInstance;
-}
+  // preferences
+  db.exec(`CREATE TABLE IF NOT EXISTS preferences (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        );`);
 
-function createHooksTable(db: Database): void {
+  // preferences end
+
+  // hooks
   db.exec(`
     CREATE TABLE IF NOT EXISTS hooks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -54,9 +50,16 @@ function createHooksTable(db: Database): void {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `);
-  db.exec(`CREATE INDEX IF NOT EXISTS idx_hooks_device_identifier ON hooks(device_id, identifier)`);
+  db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_hooks_device_identifier ON hooks(device_id, identifier)`,
+  );
   db.exec(`CREATE INDEX IF NOT EXISTS idx_hooks_timestamp ON hooks(timestamp)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_hooks_category ON hooks(category)`);
+
+  // hooks end
+
+  dbInstance = db;
+  return dbInstance;
 }
 
 export function setPref(key: string, value: any): void {
@@ -195,7 +198,9 @@ export function countHooks(
  */
 export function clearHooks(deviceId: string, identifier: string): void {
   const db = get();
-  const stmt = db.prepare("DELETE FROM hooks WHERE device_id = ? AND identifier = ?");
+  const stmt = db.prepare(
+    "DELETE FROM hooks WHERE device_id = ? AND identifier = ?",
+  );
   stmt.run(deviceId, identifier);
 }
 
