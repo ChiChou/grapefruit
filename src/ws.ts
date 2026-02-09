@@ -8,7 +8,7 @@ import frida from "./lib/xvii.ts";
 import env from "./lib/env.ts";
 import { agent } from "./lib/assets.ts";
 import paths from "./lib/paths.ts";
-import { insertHook } from "./lib/localstore.ts";
+import { insertHookLog } from "./lib/store.ts";
 
 import type { BaseMessage as BaseHookMessage } from "../agent/types/fruity/hooks/context.d.ts";
 
@@ -140,7 +140,7 @@ function setupScriptHandlers(
         if (subject === "hook") {
           socket.emit(subject, payload);
           // Store hook message in SQLite
-          insertHook(sessionInfo.deviceId, sessionInfo.identifier, payload);
+          insertHookLog(sessionInfo.deviceId, sessionInfo.identifier, payload);
         } else if (subject === "lifecycle") {
           socket.emit(subject, payload.event);
         } else {

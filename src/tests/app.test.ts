@@ -1,7 +1,11 @@
-import { describe, it } from "node:test";
+import { describe, it, afterEach } from "node:test";
 import assert from "node:assert";
+import fs from "node:fs/promises";
+import nodePath from "node:path";
 
 import app from "../app.ts";
+import paths from "../lib/paths.ts";
+import { insertHookLog, deleteHookLogs } from "../lib/store.ts";
 
 describe("API tests", () => {
   it("should start http server", async () => {
@@ -111,5 +115,163 @@ describe("API tests", () => {
       method: "POST",
     });
     assert.strictEqual(r1.status, 400, "Should return 400 for missing path");
+  });
+});
+
+describe("Logs API", () => {
+  const device = "test-device";
+  const identifier = "com.test.app";
+  const logsDir = nodePath.join(paths.data, "logs", device, identifier);
+
+  afterEach(async () => {
+    await fs.rm(logsDir, { recursive: true, force: true });
+  });
+
+  it("should reject invalid log type", async () => {
+    const r = await app.request(`/api/logs/${device}/${identifier}/invalid`);
+    assert.strictEqual(r.status, 400);
+    assert.strictEqual(await r.text(), "invalid log type");
+  });
+
+  it("should return empty string for missing log file", async () => {
+    const r = await app.request(`/api/logs/${device}/${identifier}/syslog`);
+    assert.strictEqual(r.status, 200);
+    assert.strictEqual(await r.text(), "");
+  });
+
+  it("should return syslog content", async () => {
+    await fs.mkdir(logsDir, { recursive: true });
+    await fs.writeFile(nodePath.join(logsDir, "syslog.log"), "line1\nline2\nline3\n");
+
+    const r = await app.request(`/api/logs/${device}/${identifier}/syslog`);
+    assert.strictEqual(r.status, 200);
+    const text = await r.text();
+    assert(text.includes("line1"));
+    assert(text.includes("line3"));
+  });
+
+  it("should return agent log content", async () => {
+    await fs.mkdir(logsDir, { recursive: true });
+    await fs.writeFile(nodePath.join(logsDir, "agent.log"), "[info] hello\n");
+
+    const r = await app.request(`/api/logs/${device}/${identifier}/agent`);
+    assert.strictEqual(r.status, 200);
+    assert(await r.text(), "[info] hello");
+  });
+
+  it("should respect limit parameter", async () => {
+    await fs.mkdir(logsDir, { recursive: true });
+    const lines = Array.from({ length: 10 }, (_, i) => `line${i}`).join("\n") + "\n";
+    await fs.writeFile(nodePath.join(logsDir, "syslog.log"), lines);
+
+    const r = await app.request(`/api/logs/${device}/${identifier}/syslog?limit=3`);
+    const text = await r.text();
+    const returned = text.split("\n").filter(Boolean);
+    assert.strictEqual(returned.length, 3);
+    assert.strictEqual(returned[0], "line7");
+  });
+
+  it("should delete logs directory", async () => {
+    await fs.mkdir(logsDir, { recursive: true });
+    await fs.writeFile(nodePath.join(logsDir, "syslog.log"), "data\n");
+
+    const r = await app.request(`/api/logs/${device}/${identifier}`, { method: "DELETE" });
+    assert.strictEqual(r.status, 204);
+
+    const exists = await fs.access(logsDir).then(() => true, () => false);
+    assert.strictEqual(exists, false);
+  });
+});
+
+describe("Hooks API", () => {
+  const device = "test-device";
+  const identifier = "com.test.app";
+
+  afterEach(() => {
+    deleteHookLogs(device, identifier);
+  });
+
+  it("should return empty hooks list", async () => {
+    const r = await app.request(`/api/hooks/${device}/${identifier}`);
+    assert.strictEqual(r.status, 200);
+    const body = await r.json() as { hooks: unknown[]; total: number; limit: number; offset: number };
+    assert.deepStrictEqual(body.hooks, []);
+    assert.strictEqual(body.total, 0);
+    assert.strictEqual(body.limit, 1000);
+    assert.strictEqual(body.offset, 0);
+  });
+
+  it("should return inserted hooks with parsed payload", async () => {
+    insertHookLog(device, identifier, { category: "network", symbol: "send", dir: "out", data: "test" });
+    insertHookLog(device, identifier, { category: "crypto", symbol: "encrypt", dir: "in", data: "test2" });
+
+    const r = await app.request(`/api/hooks/${device}/${identifier}`);
+    const body = await r.json() as { hooks: any[]; total: number };
+    assert.strictEqual(body.total, 2);
+    assert.strictEqual(body.hooks.length, 2);
+    // newest first
+    assert.strictEqual(body.hooks[0].category, "crypto");
+    assert.strictEqual(body.hooks[1].category, "network");
+    // payload should be parsed JSON, not string
+    assert.strictEqual(typeof body.hooks[0].payload, "object");
+    assert.strictEqual(body.hooks[0].payload.data, "test2");
+  });
+
+  it("should filter by category", async () => {
+    insertHookLog(device, identifier, { category: "network", symbol: "send", dir: "out" });
+    insertHookLog(device, identifier, { category: "crypto", symbol: "enc", dir: "in" });
+
+    const r = await app.request(`/api/hooks/${device}/${identifier}?category=crypto`);
+    const body = await r.json() as { hooks: any[]; total: number };
+    assert.strictEqual(body.total, 1);
+    assert.strictEqual(body.hooks.length, 1);
+    assert.strictEqual(body.hooks[0].category, "crypto");
+  });
+
+  it("should paginate with limit and offset", async () => {
+    for (let i = 0; i < 5; i++) {
+      insertHookLog(device, identifier, { category: "c", symbol: `s${i}`, dir: "out" });
+    }
+
+    const r = await app.request(`/api/hooks/${device}/${identifier}?limit=2&offset=1`);
+    const body = await r.json() as { hooks: any[]; total: number; limit: number; offset: number };
+    assert.strictEqual(body.hooks.length, 2);
+    assert.strictEqual(body.limit, 2);
+    assert.strictEqual(body.offset, 1);
+    assert.strictEqual(body.total, 5);
+  });
+
+  it("should clear hooks", async () => {
+    insertHookLog(device, identifier, { category: "c", symbol: "s", dir: "out" });
+
+    const r = await app.request(`/api/hooks/${device}/${identifier}`, { method: "DELETE" });
+    assert.strictEqual(r.status, 204);
+
+    const r2 = await app.request(`/api/hooks/${device}/${identifier}`);
+    const body = await r2.json() as { total: number };
+    assert.strictEqual(body.total, 0);
+  });
+
+  it("should delete hooks via /db endpoint", async () => {
+    insertHookLog(device, identifier, { category: "c", symbol: "s", dir: "out" });
+
+    const r = await app.request(`/api/hooks/${device}/${identifier}/db`, { method: "DELETE" });
+    assert.strictEqual(r.status, 204);
+
+    const r2 = await app.request(`/api/hooks/${device}/${identifier}`);
+    const body = await r2.json() as { total: number };
+    assert.strictEqual(body.total, 0);
+  });
+
+  it("should isolate hooks by device/identifier", async () => {
+    insertHookLog(device, identifier, { category: "c", symbol: "s", dir: "out" });
+    insertHookLog(device, "com.other.app", { category: "c", symbol: "s", dir: "out" });
+
+    const r = await app.request(`/api/hooks/${device}/${identifier}`);
+    const body = await r.json() as { total: number };
+    assert.strictEqual(body.total, 1);
+
+    // cleanup other
+    deleteHookLogs(device, "com.other.app");
   });
 });
