@@ -1,4 +1,3 @@
-import RemoteStreamController from "frida-remote-stream";
 import { Hono } from "hono";
 import { createMiddleware } from "hono/factory";
 import { logger } from "hono/logger";
@@ -18,7 +17,7 @@ import {
   device as serializeDevice,
   process as serializeProcess,
 } from "./lib/serializer.ts";
-import { agent } from "./lib/assets.ts";
+import { createTransport } from "./lib/transport.ts";
 import { queryHookLogs, countHookLogs, deleteHookLogs } from "./lib/store.ts";
 
 const manager = frida.getDeviceManager();
@@ -64,7 +63,6 @@ api
     );
   })
   .get("/download/:device/:pid", getDeviceMiddleware, async (c) => {
-    console.log("inside route");
     const path = c.req.query("path");
     if (typeof path !== "string") return c.text("invalid path", 400);
 
@@ -75,37 +73,8 @@ api
 
     const device = c.get("device");
     const pid = parseInt(c.req.param("pid"), 10);
-
-    const agentSource = await agent("transport");
-    const session = await device.attach(pid);
-    const script = await session.createScript(agentSource);
-    await script.load();
-
-    const controller = new RemoteStreamController();
-    controller.events.on("send", ({ stanza, data }) => {
-      script.post(
-        {
-          type: "+stream",
-          payload: stanza,
-        },
-        data,
-      );
-    });
-
-    script.message.connect((message, data) => {
-      if (message.type === "send") {
-        const stanza = message.payload as {
-          payload: { [key: string]: any };
-          name: string;
-        };
-        if (stanza.name === "+stream") {
-          controller.receive({
-            stanza: stanza.payload,
-            data,
-          });
-        }
-      }
-    });
+    const transport = await createTransport(device, pid);
+    const { script, controller } = transport;
 
     let size: number;
     try {
@@ -128,8 +97,7 @@ api
             for await (const chunk of incomingStream) {
               await streamer.write(chunk);
             }
-            await script.unload();
-            await session.detach();
+            await transport.close();
             resolve();
           });
         }),
@@ -142,46 +110,13 @@ api
     const path = formBody["path"];
     if (typeof path !== "string") return c.text("invalid path", 400);
 
-    console.log("file upload to", path);
-
     const device = c.get("device");
     const pid = parseInt(c.req.param("pid"), 10);
-
-    const agentSource = await agent("transport");
-    const session = await device.attach(pid);
-    const script = await session.createScript(agentSource);
-    await script.load();
-
-    const controller = new RemoteStreamController();
-    controller.events.on("send", ({ stanza, data }) => {
-      script.post(
-        {
-          type: "+stream",
-          payload: stanza,
-        },
-        data,
-      );
-    });
-
-    script.message.connect((message, data) => {
-      if (message.type === "send") {
-        const stanza = message.payload as {
-          payload: { [key: string]: any };
-          name: string;
-        };
-        if (stanza.name === "+stream") {
-          controller.receive({
-            stanza: stanza.payload,
-            data,
-          });
-        }
-      }
-    });
+    const transport = await createTransport(device, pid);
+    const { script, controller } = transport;
 
     const file = formBody["file"];
     if (!(file instanceof File)) return c.text("invalid request", 400);
-
-    console.log("upload file", file.name, file.type, file.size);
 
     // Set up agent recv() handler before sending any stream messages
     await script.exports.push(path);
@@ -211,8 +146,7 @@ api
       pump();
     });
 
-    await script.unload();
-    await session.detach();
+    await transport.close();
 
     return c.text("upload complete");
   })
