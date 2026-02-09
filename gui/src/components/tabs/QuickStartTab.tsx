@@ -9,6 +9,7 @@ import {
   Globe,
   Code,
   Settings,
+  Network,
 } from "lucide-react";
 
 import { useDock } from "@/context/DockContext";
@@ -112,6 +113,14 @@ export function QuickStartTab() {
     });
   };
 
+  const openHttpLogTab = () => {
+    openSingletonPanel({
+      id: "http_log_tab",
+      component: "httpLog",
+      title: "HTTP Log",
+    });
+  };
+
   const features = [
     {
       icon: <FolderOpen className="w-5 h-5" />,
@@ -166,6 +175,12 @@ export function QuickStartTab() {
       title: "JSContext",
       description: t("quickstart_jsc_desc"),
       onClick: openJSCTab,
+    },
+    {
+      icon: <Network className="w-5 h-5" />,
+      title: "HTTP Log",
+      description: "Capture NSURLSession network traffic",
+      onClick: openHttpLogTab,
     },
   ];
 

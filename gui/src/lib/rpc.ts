@@ -16,6 +16,7 @@ export interface SessionClientEvents {
   syslog: (text: string) => void;
   invalid: () => void;
   hook: (message: BaseHookMessage) => void;
+  httplog: (event: any) => void;
 }
 
 export interface SessionServerEvents {

@@ -1,22 +1,25 @@
 import ObjC from "frida-objc-bridge";
 
-import {
-  type NSObject,
-  type NSString,
-  type NSData,
-  type NSMutableData,
-  type NSError,
-  type NSURL,
-  type NSURLRequest,
-  type NSURLResponse,
-  type NSHTTPURLResponse,
-  type NSURLSessionTask,
-  type NSURLSessionDataTask,
-  type NSURLSessionDownloadTask,
-  type NSFileManager,
-  type NSNumber,
-  wrapObjC,
-} from "../typings.js";
+import type {
+  NSObject,
+  NSString,
+  NSData,
+  NSMutableData,
+  NSError,
+  NSURL,
+  NSURLRequest,
+  NSURLResponse,
+  NSHTTPURLResponse,
+  NSURLSessionTask,
+  NSURLSessionDataTask,
+  NSURLSessionDownloadTask,
+  NSURLSessionWebSocketTask,
+  NSURLSessionWebSocketMessage,
+  NSFileManager,
+  NSNumber,
+} from "@/fruity/typings.js";
+import { wrapObjC } from "@/fruity/typings.js";
+import { getGlobalExport } from "@/lib/polyfill.js";
 
 const subject = "httplog";
 
@@ -201,12 +204,16 @@ function recordResponseReceived(
   });
 }
 
-function recordDataReceived(requestId: string, dataLength: number): void {
+function recordDataReceived(
+  requestId: string,
+  dataLength: number | string,
+): void {
   emitNetworkEvent({
     type: "dataReceived",
     requestId,
     timestamp: Date.now(),
-    dataLength,
+    dataLength:
+      typeof dataLength === "string" ? dataLength : String(dataLength),
   });
 }
 
@@ -238,6 +245,34 @@ function recordMechanism(mechanism: string, requestId: string): void {
     timestamp: Date.now(),
     mechanism,
   });
+}
+
+function recordWebSocketMessage(
+  type: "send" | "receive",
+  task: NSURLSessionWebSocketTask,
+  message: NSURLSessionWebSocketMessage,
+  error?: NSError | null,
+): void {
+  const event: NetworkEvent = {
+    type: `webSocket${type === "send" ? "Send" : "Receive"}`,
+    requestId: task.taskIdentifier().toString(),
+    timestamp: Date.now(),
+    messageType: message.type() === 0 ? "data" : "string",
+  };
+
+  const msgData = message.data();
+  const msgString = message.string();
+  if (message.type() === 0 && msgData) {
+    event.dataLength = msgData.length();
+  } else if (message.type() === 1 && msgString) {
+    event.message = msgString.toString();
+  }
+
+  if (error) {
+    event.error = error.toString();
+  }
+
+  emitNetworkEvent(event);
 }
 
 function hookResume(klass: ObjC.Object) {
@@ -315,6 +350,14 @@ function hookDelegateMethods() {
       onEnter(args) {
         const task = wrapObjC<NSURLSessionTask>(args[3]);
         const requestId = getOrAssignTaskId(task);
+
+        // Always emit response from task — covers completion handler tasks
+        // where didReceiveResponse: may not fire
+        const response = task.response();
+        if (response) {
+          recordResponseReceived(requestId, response);
+        }
+
         if (!args[4].isNull()) {
           recordLoadingFailed(requestId, wrapObjC<NSError>(args[4]));
         } else {
@@ -354,7 +397,7 @@ function hookDelegateMethods() {
               requestId,
             );
           }
-          recordDataReceived(requestId, args[4].toInt32());
+          recordDataReceived(requestId, args[4].toString());
         },
       },
     "URLSession:downloadTask:didFinishDownloadingToURL:": {
@@ -432,6 +475,20 @@ function hookNSURLSessionAsyncMethods() {
     return "NSURLSessionDataTask (completionHandler)";
   }
 
+  // Force-copy blocks to heap so the pointer stays stable for ObjC.bind.
+  // Stack blocks get a new address when the runtime copies them; by
+  // pre-copying we ensure args[0] in the invoke matches what we bound to.
+  const blockCopy = new NativeFunction(
+    getGlobalExport("_Block_copy"),
+    "pointer",
+    ["pointer"],
+  );
+  const blockRelease = new NativeFunction(
+    getGlobalExport("_Block_release"),
+    "void",
+    ["pointer"],
+  );
+
   const hookedInvokers = new Set<string>();
 
   function hookCompletionInvoke(blockPtr: NativePointer) {
@@ -493,13 +550,23 @@ function hookNSURLSessionAsyncMethods() {
       Interceptor.attach(method.implementation, {
         onEnter(args) {
           if (args[handlerIndex].isNull()) return;
-          hookCompletionInvoke(args[handlerIndex]);
-          this.blockPtr = args[handlerIndex];
+
+          // Copy the block to heap so the pointer is stable across
+          // _Block_copy calls the runtime makes internally.
+          const heapBlock = blockCopy(args[handlerIndex]) as NativePointer;
+          args[handlerIndex] = heapBlock;
+
+          hookCompletionInvoke(heapBlock);
+          this.blockPtr = heapBlock;
           this.mechanism = mechanism;
           this.isDownload = isDownload;
         },
         onLeave(retval) {
           if (!this.blockPtr || retval.isNull()) return;
+
+          // Release our extra retain — the method already retained the block
+          blockRelease(this.blockPtr);
+
           const task = wrapObjC<NSURLSessionTask>(retval);
           const requestId = getOrAssignTaskId(task);
 
@@ -530,6 +597,338 @@ function hookNSURLSessionAsyncMethods() {
   if (__NSURLSessionLocal) intercept(__NSURLSessionLocal);
 }
 
+function getOrAssignConnectionId(connection: ObjC.Object): string {
+  const metadata = ObjC.getBoundData(connection) as TaskBoundData;
+  let id = metadata?.id;
+  if (!id) {
+    id = nextRequestId();
+    ObjC.bind(connection, { id } as TaskBoundData);
+  }
+  return id;
+}
+
+function hookNSURLConnectionDelegateMethods() {
+  const delegateMethodHandlers: Record<string, InvocationListenerCallbacks> = {
+    "connection:willSendRequest:redirectResponse:": {
+      onEnter(args) {
+        const delegate = wrapObjC<NSObject>(args[0]);
+        const connection = new ObjC.Object(args[2]);
+        const request = wrapObjC<NSURLRequest>(args[3]);
+        const response = args[4].isNull()
+          ? null
+          : wrapObjC<NSURLResponse>(args[4]);
+
+        const requestId = getOrAssignConnectionId(connection);
+        const state = getRequestState(requestId);
+        state.request = request;
+
+        recordRequestWillBeSent(requestId, request, response);
+        recordMechanism(
+          `NSURLConnection (delegate: ${delegate.$className})`,
+          requestId,
+        );
+      },
+    },
+    "connection:didReceiveResponse:": {
+      onEnter(args) {
+        const connection = new ObjC.Object(args[2]);
+        const response = wrapObjC<NSURLResponse>(args[3]);
+        const requestId = getOrAssignConnectionId(connection);
+        const state = getRequestState(requestId);
+        state.dataAccumulator =
+          ObjC.classes.NSMutableData.alloc().init() as NSMutableData;
+        recordResponseReceived(requestId, response);
+      },
+    },
+    "connection:didReceiveData:": {
+      onEnter(args) {
+        const connection = new ObjC.Object(args[2]);
+        const data = wrapObjC<NSData>(args[3]);
+        const requestId = getOrAssignConnectionId(connection);
+        const state = getRequestState(requestId);
+
+        if (!state.dataAccumulator) {
+          state.dataAccumulator =
+            ObjC.classes.NSMutableData.alloc().init() as NSMutableData;
+        }
+        state.dataAccumulator.appendData_(data);
+        recordDataReceived(requestId, data.length());
+      },
+    },
+    "connectionDidFinishLoading:": {
+      onEnter(args) {
+        const connection = new ObjC.Object(args[2]);
+        const requestId = getOrAssignConnectionId(connection);
+        const state = getRequestState(requestId);
+        recordLoadingFinished(requestId, state.dataAccumulator);
+        removeRequestState(requestId);
+      },
+    },
+    "connection:didFailWithError:": {
+      onEnter(args) {
+        const connection = new ObjC.Object(args[2]);
+        const requestId = getOrAssignConnectionId(connection);
+        const state = getRequestState(requestId);
+        if (state.request) {
+          recordLoadingFailed(requestId, wrapObjC<NSError>(args[3]));
+        }
+        removeRequestState(requestId);
+      },
+    },
+  };
+
+  const resolver = new ApiResolver("objc");
+  const fmt = (sel: string) => `-[* ${sel}]`;
+
+  for (const [sel, handler] of Object.entries(delegateMethodHandlers)) {
+    for (const match of resolver.enumerateMatches(fmt(sel))) {
+      const clazz = classFromSymbol(match.name);
+      if (!clazz) continue;
+
+      const method = clazz["- " + sel] as ObjC.ObjectMethod;
+      hooks.push(Interceptor.attach(method.implementation, handler));
+    }
+  }
+}
+
+function hookNSURLConnectionAsyncMethods() {
+  const { NSURLConnection } = ObjC.classes;
+  if (!NSURLConnection) return;
+
+  // +sendAsynchronousRequest:queue:completionHandler:
+  const asyncSel = "sendAsynchronousRequest:queue:completionHandler:";
+  const asyncMethod = NSURLConnection["+ " + asyncSel] as
+    | ObjC.ObjectMethod
+    | undefined;
+
+  if (asyncMethod) {
+    const hookedInvokers = new Set<string>();
+
+    hooks.push(
+      Interceptor.attach(asyncMethod.implementation, {
+        onEnter(args) {
+          // args: self, _cmd, request, queue, completionHandler
+          const request = wrapObjC<NSURLRequest>(args[2]);
+          const blockPtr = args[4];
+          if (blockPtr.isNull()) return;
+
+          const requestId = nextRequestId();
+          recordRequestWillBeSent(requestId, request, null);
+          recordMechanism(
+            "+[NSURLConnection sendAsynchronousRequest:queue:completionHandler:]",
+            requestId,
+          );
+
+          // Hook the block's invoke function
+          const invokePtr = blockPtr.add(0x10).readPointer();
+          const key = invokePtr.toString();
+          if (!hookedInvokers.has(key)) {
+            hookedInvokers.add(key);
+            hooks.push(
+              Interceptor.attach(invokePtr, {
+                onEnter(innerArgs) {
+                  const block = new ObjC.Object(innerArgs[0]);
+                  const meta = ObjC.getBoundData(block) as TaskBoundData;
+                  if (!meta?.id) return;
+
+                  const rid = meta.id;
+                  const response = innerArgs[1];
+                  const data = innerArgs[2];
+                  const error = innerArgs[3];
+
+                  if (!error.isNull()) {
+                    recordLoadingFailed(rid, wrapObjC<NSError>(error));
+                  } else {
+                    if (!response.isNull()) {
+                      recordResponseReceived(
+                        rid,
+                        wrapObjC<NSURLResponse>(response),
+                      );
+                    }
+                    const nsdata = data.isNull()
+                      ? null
+                      : wrapObjC<NSData>(data);
+                    if (nsdata) {
+                      recordDataReceived(rid, nsdata.length());
+                    }
+                    recordLoadingFinished(rid, nsdata);
+                  }
+                },
+              }),
+            );
+          }
+
+          // Bind request ID to the block
+          const block = new ObjC.Object(blockPtr);
+          ObjC.bind(block, { id: requestId } as TaskBoundData);
+        },
+      }),
+    );
+  }
+}
+
+function hookWebSocketMethods() {
+  const classes = [
+    ObjC.classes.__NSURLSessionWebSocketTask,
+    ObjC.classes.NSURLSessionWebSocketTask,
+  ].filter(Boolean);
+
+  const hookedSendInvokers = new Set<string>();
+  const hookedRecvInvokers = new Set<string>();
+
+  for (const clazz of classes) {
+    // -sendMessage:completionHandler:
+    const sendMethod = clazz["- sendMessage:completionHandler:"] as
+      | ObjC.ObjectMethod
+      | undefined;
+    if (sendMethod) {
+      hooks.push(
+        Interceptor.attach(sendMethod.implementation, {
+          onEnter(args) {
+            const task = wrapObjC<NSURLSessionWebSocketTask>(args[0]);
+            const message = wrapObjC<NSURLSessionWebSocketMessage>(args[2]);
+            recordWebSocketMessage("send", task, message);
+
+            // Hook completion to capture send errors
+            const blockPtr = args[3];
+            if (blockPtr.isNull()) return;
+
+            const invokePtr = blockPtr.add(0x10).readPointer();
+            const key = invokePtr.toString();
+            if (!hookedSendInvokers.has(key)) {
+              hookedSendInvokers.add(key);
+              hooks.push(
+                Interceptor.attach(invokePtr, {
+                  onEnter(innerArgs) {
+                    const error = innerArgs[1];
+                    if (!error.isNull()) {
+                      // Re-emit with error info attached
+                      const block = new ObjC.Object(innerArgs[0]);
+                      const meta = ObjC.getBoundData(block) as {
+                        task?: NSURLSessionWebSocketTask;
+                        message?: NSURLSessionWebSocketMessage;
+                      };
+                      if (meta?.task && meta?.message) {
+                        recordWebSocketMessage(
+                          "send",
+                          meta.task,
+                          meta.message,
+                          wrapObjC<NSError>(error),
+                        );
+                      }
+                    }
+                  },
+                }),
+              );
+            }
+
+            const block = new ObjC.Object(blockPtr);
+            ObjC.bind(block, { task, message });
+          },
+        }),
+      );
+    }
+
+    // -receiveMessageWithCompletionHandler:
+    const recvMethod = clazz["- receiveMessageWithCompletionHandler:"] as
+      | ObjC.ObjectMethod
+      | undefined;
+    if (recvMethod) {
+      hooks.push(
+        Interceptor.attach(recvMethod.implementation, {
+          onEnter(args) {
+            const task = wrapObjC<NSURLSessionWebSocketTask>(args[0]);
+            const blockPtr = args[2];
+            if (blockPtr.isNull()) return;
+
+            const invokePtr = blockPtr.add(0x10).readPointer();
+            const key = invokePtr.toString();
+            if (!hookedRecvInvokers.has(key)) {
+              hookedRecvInvokers.add(key);
+              hooks.push(
+                Interceptor.attach(invokePtr, {
+                  onEnter(innerArgs) {
+                    const message = innerArgs[1];
+                    const error = innerArgs[2];
+                    if (!message.isNull()) {
+                      const block = new ObjC.Object(innerArgs[0]);
+                      const meta = ObjC.getBoundData(block) as {
+                        task?: NSURLSessionWebSocketTask;
+                      };
+                      if (meta?.task) {
+                        recordWebSocketMessage(
+                          "receive",
+                          meta.task,
+                          wrapObjC<NSURLSessionWebSocketMessage>(message),
+                          error.isNull() ? null : wrapObjC<NSError>(error),
+                        );
+                      }
+                    }
+                  },
+                }),
+              );
+            }
+
+            const block = new ObjC.Object(blockPtr);
+            ObjC.bind(block, { task });
+          },
+        }),
+      );
+    }
+  }
+}
+
+function hookRespondsToSelector() {
+  // Inject respondsToSelector: on delegate classes so they report YES for
+  // URLSession:dataTask:didReceiveResponse:completionHandler: even when
+  // they don't implement it. This forces the URL loading system to call
+  // the delegate method, allowing our hooks to capture the response.
+  const targetSel = ObjC.selector(
+    "URLSession:dataTask:didReceiveResponse:completionHandler:",
+  );
+
+  const resolver = new ApiResolver("objc");
+  const delegateSelectors = [
+    "URLSession:dataTask:didReceiveData:",
+    "URLSession:task:didCompleteWithError:",
+  ];
+
+  const injectedClasses = new Set<string>();
+
+  for (const sel of delegateSelectors) {
+    for (const match of resolver.enumerateMatches(`-[* ${sel}]`)) {
+      const clazz = classFromSymbol(match.name);
+      if (!clazz) continue;
+
+      const className = clazz.$className;
+      if (injectedClasses.has(className)) continue;
+
+      // Skip if the class already implements didReceiveResponse:
+      const existing = clazz[
+        "- URLSession:dataTask:didReceiveResponse:completionHandler:"
+      ] as ObjC.ObjectMethod | undefined;
+      if (existing) continue;
+
+      const rtsMethod = clazz["- respondsToSelector:"] as
+        | ObjC.ObjectMethod
+        | undefined;
+      if (!rtsMethod) continue;
+
+      injectedClasses.add(className);
+      hooks.push(
+        Interceptor.attach(rtsMethod.implementation, {
+          onLeave(retval) {
+            const sel = this.context as unknown as { x1: NativePointer };
+            if (sel.x1.equals(targetSel)) {
+              retval.replace(ptr(1));
+            }
+          },
+        }),
+      );
+    }
+  }
+}
+
 export function start() {
   if (!ObjC.available) return;
 
@@ -544,6 +943,10 @@ export function start() {
 
   hookNSURLSessionAsyncMethods();
   hookDelegateMethods();
+  hookNSURLConnectionDelegateMethods();
+  hookNSURLConnectionAsyncMethods();
+  hookWebSocketMethods();
+  hookRespondsToSelector();
 }
 
 export function stop() {

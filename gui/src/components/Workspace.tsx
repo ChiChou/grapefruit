@@ -41,6 +41,7 @@ import { JSCTab } from "./tabs/JSCTab";
 import { UserDefaultsTab } from "./tabs/UserDefaultsTab";
 import { QuickStartTab } from "./tabs/QuickStartTab";
 import { DisassemblyTab } from "./tabs/DisassemblyTab";
+import { HttpLogTab } from "./tabs/HttpLogTab";
 import { NoCloseTabHeader } from "./tabs/NoCloseTabHeader";
 
 import { DockContext, useDockActions } from "@/context/DockContext";
@@ -74,7 +75,10 @@ function WorkspaceContent() {
   });
 
   useEffect(() => {
-    localStorage.setItem("workspace-bottom-panel-visible", JSON.stringify(bottomPanelVisible));
+    localStorage.setItem(
+      "workspace-bottom-panel-visible",
+      JSON.stringify(bottomPanelVisible),
+    );
   }, [bottomPanelVisible]);
 
   useEffect(() => {
@@ -117,6 +121,7 @@ function WorkspaceContent() {
     jsc: JSCTab,
     userdefaults: UserDefaultsTab,
     disassembly: DisassemblyTab,
+    httpLog: HttpLogTab,
   };
 
   const tabComponents = {
@@ -157,7 +162,10 @@ function WorkspaceContent() {
       const layout = event.api.toJSON();
       const key = getLayoutKey();
       if (key) {
-        localStorage.setItem(key, JSON.stringify({ device, mode, target: bundle || pid, layout }));
+        localStorage.setItem(
+          key,
+          JSON.stringify({ device, mode, target: bundle || pid, layout }),
+        );
       }
     });
   };
