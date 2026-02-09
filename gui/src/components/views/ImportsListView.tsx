@@ -23,7 +23,7 @@ import { generateNativeHook, type NativeHookTarget } from "@/lib/hook-codegen";
 import type {
   ImportGroup,
   Imported,
-} from "../../../../agent/types/fruity/modules/symbol";
+} from "@agent/fruity/modules/symbol";
 
 interface ImportsListViewProps {
   path: string;

@@ -15,7 +15,7 @@ import {
 import { URLSendView } from "@/components/URLSendView";
 import { useRpcQuery } from "@/lib/queries";
 
-import type { URLScheme } from "../../../../agent/types/fruity/modules/info";
+import type { URLScheme } from "@agent/fruity/modules/info";
 
 export function URLSchemesPanel() {
   const { t } = useTranslation();

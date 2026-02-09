@@ -24,7 +24,7 @@ import { generateNativeHook, type NativeHookTarget } from "@/lib/hook-codegen";
 import type {
   Symbol,
   Exported,
-} from "../../../agent/types/fruity/modules/symbol";
+} from "@agent/fruity/modules/symbol";
 
 type SymbolItem = Symbol | Exported;
 

@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useRpcQuery, useRpcMutation, useQueryClient } from "@/lib/queries";
 
-import type { UserDefaultsEntry } from "../../../../agent/types/fruity/modules/userdefaults";
+import type { UserDefaultsEntry } from "@agent/fruity/modules/userdefaults";
 
 interface UserDefaultsItem extends UserDefaultsEntry {
   key: string;

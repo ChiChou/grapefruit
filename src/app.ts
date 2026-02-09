@@ -3,7 +3,6 @@ import { Hono } from "hono";
 import { createMiddleware } from "hono/factory";
 import { logger } from "hono/logger";
 import { prettyJSON } from "hono/pretty-json";
-import { serveStatic } from "@hono/node-server/serve-static";
 import { stream } from "hono/streaming";
 import { Readable } from "node:stream";
 import fs from "node:fs/promises";
@@ -20,11 +19,7 @@ import {
   process as serializeProcess,
 } from "./lib/serializer.ts";
 import { agent } from "./lib/assets.ts";
-import {
-  queryHookLogs,
-  countHookLogs,
-  deleteHookLogs,
-} from "./lib/store.ts";
+import { queryHookLogs, countHookLogs, deleteHookLogs } from "./lib/store.ts";
 
 const manager = frida.getDeviceManager();
 const app = new Hono();

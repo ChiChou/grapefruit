@@ -33,9 +33,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { useSession, Status, Mode } from "@/context/SessionContext";
 
-import type { BaseMessage as BaseHookMessage } from "../../../agent/types/fruity/hooks/context";
-import type { Message as CryptoHookMessage } from "../../../agent/types/fruity/hooks/crypto.d.ts";
-import type { Message as SQLiteHookMessage } from "../../../agent/types/fruity/hooks/sqlite.d.ts";
+import type { BaseMessage as BaseHookMessage } from "@agent/fruity/hooks/context";
+import type { Message as CryptoHookMessage } from "@agent/fruity/hooks/crypto";
+import type { Message as SQLiteHookMessage } from "@agent/fruity/hooks/sqlite";
 
 // Internal representation with timestamp
 interface HookEntry {

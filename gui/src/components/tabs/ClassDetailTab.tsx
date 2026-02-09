@@ -27,7 +27,7 @@ import { header, type ClassDumpInfo } from "../../lib/classdump-header.ts";
 import { useRpcQuery } from "@/lib/queries";
 import { generateObjCHook, formatObjCMethod, type ObjCHookTarget } from "@/lib/hook-codegen";
 
-import type { ClassDetail } from "../../../../agent/types/fruity/modules/classdump";
+import type { ClassDetail } from "@agent/fruity/modules/classdump";
 
 loader.init().then((monaco) => {
   monaco.languages.register({ id: "objective-c" });

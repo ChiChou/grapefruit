@@ -6,7 +6,7 @@ import type {
   LoadDirectoryFn,
   DirectorySelectFn,
 } from "../../lib/file-explorer.ts";
-import type { MetaData } from "../../../../agent/types/fruity/modules/fs.ts";
+import type { MetaData } from "@agent/fruity/modules/fs";
 
 interface DirectoryTreeProps {
   root: RootType;

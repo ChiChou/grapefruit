@@ -10,7 +10,7 @@ import { Status, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 import { useRpcQuery } from "@/lib/queries";
 
-import type { BasicInfo } from "../../../../agent/types/fruity/modules/info";
+import type { BasicInfo } from "@agent/fruity/modules/info";
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);

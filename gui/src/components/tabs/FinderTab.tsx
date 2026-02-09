@@ -40,7 +40,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
 
   const [activeTab, setActiveTab] = useState<keyof typeof PREFIXES>(initialTab);
   const [items, setItems] = useState<
-    import("../../../../agent/types/fruity/modules/fs.ts").MetaData[]
+    import("@agent/fruity/modules/fs").MetaData[]
   >([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -55,7 +55,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
     async (
       path: string,
     ): Promise<
-      import("../../../../agent/types/fruity/modules/fs.ts").DirectoryListing
+      import("@agent/fruity/modules/fs").DirectoryListing
     > => {
       if (!fsApi) return { cwd: "", list: [] };
       return fsApi.fs.ls(path);
