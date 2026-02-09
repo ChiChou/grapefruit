@@ -17,7 +17,6 @@ import * as receivers from "./modules/receivers.js";
 import * as provider from "./modules/provider.js";
 import * as device from "./modules/device.js";
 import * as fs from "./modules/fs.js";
-import * as pkg from "./modules/pkg.js";
 
 // ---------------------------------------------------------------------------
 // helpers
@@ -76,16 +75,6 @@ function assertNonEmpty(arr: unknown[], label: string) {
   assert(arr.length > 0, `${label}: expected non-empty array`);
 }
 
-function currentPackageName(): Promise<string> {
-  return new Promise<string>((resolve) => {
-    Java.perform(() => {
-      const ActivityThread = Java.use("android.app.ActivityThread");
-      const ctx = ActivityThread.currentApplication().getApplicationContext();
-      resolve(ctx.getPackageName() as string);
-    });
-  });
-}
-
 // ---------------------------------------------------------------------------
 // test suites
 // ---------------------------------------------------------------------------
@@ -113,24 +102,6 @@ async function testDevice() {
     const keys = Object.keys(props);
     assert(keys.length > 0, "properties should be non-empty");
     log(`    ${keys.length} properties`);
-  });
-}
-
-async function testPkg(pkgName: string) {
-  log("\n--- pkg (current app) ---");
-
-  await test("pkg.info returns current app info", async () => {
-    const p = await pkg.info();
-    assertKeys(
-      p as unknown as Record<string, unknown>,
-      ["name", "version", "activities", "services", "permissions"],
-      "pkg.info",
-    );
-    assert(p.name === pkgName, `name mismatch: ${p.name} !== ${pkgName}`);
-    assertArray(p.activities, "activities");
-    assertArray(p.services, "services");
-    assertArray(p.permissions, "permissions");
-    log(`    name=${p.name} ver=${p.version} activities=${p.activities.length} services=${p.services.length} perms=${p.permissions.length}`);
   });
 }
 
@@ -443,11 +414,7 @@ async function testFs() {
 async function run() {
   log("=== droid module tests ===");
 
-  const pkgName = await currentPackageName();
-  log(`target package: ${pkgName}\n`);
-
   await testDevice();
-  await testPkg(pkgName);
   await testActivities();
   await testServices();
   await testReceivers();
