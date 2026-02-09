@@ -4,9 +4,9 @@ import { StatusBar } from "./StatusBar";
 
 import {
   type DockviewApi,
+  type DockviewTheme,
   DockviewReact,
   type DockviewReadyEvent,
-  themeLight,
 } from "dockview";
 
 import {
@@ -19,7 +19,6 @@ import { LeftPanelView } from "./LeftPanelView";
 import { BottomPanelView } from "./BottomPanelView";
 import { Platform, Mode, useSession } from "@/context/SessionContext";
 import SessionProvider from "./SessionProvider";
-import { useTheme } from "./theme-provider";
 import { HandlesTab } from "./tabs/HandlesTab";
 import { InfoPlistTab } from "./tabs/InfoPlistTab";
 import { EntitlementsTab } from "./tabs/EntitlementsTab";
@@ -47,6 +46,11 @@ import { NoCloseTabHeader } from "./tabs/NoCloseTabHeader";
 import { DockContext, useDockActions } from "@/context/DockContext";
 import { R2Provider } from "./R2Provider";
 
+const themeApp: DockviewTheme = {
+  name: "app",
+  className: "dockview-theme-app",
+};
+
 function WorkspaceContent() {
   const { bundle, device, platform, mode, pid } = useSession();
 
@@ -54,16 +58,10 @@ function WorkspaceContent() {
   const isFruityDaemon = platform === Platform.Fruity && mode === Mode.Daemon;
   const isDroidApp = platform === Platform.Droid && mode === Mode.App;
   const isDroidDaemon = platform === Platform.Droid && mode === Mode.Daemon;
-  const { theme } = useTheme();
-
   useEffect(() => {
     const target = bundle || (pid ? `PID ${pid}` : "");
     document.title = "Grapefruit" + (target ? ` - ${target}` : "");
   }, [bundle, pid]);
-
-  const [dockViewClazz, setDockViewClazz] = useState<string>(
-    "dockview-theme-light",
-  );
 
   const [bottomPanelVisible, setBottomPanelVisible] = useState(() => {
     try {
@@ -80,12 +78,6 @@ function WorkspaceContent() {
       JSON.stringify(bottomPanelVisible),
     );
   }, [bottomPanelVisible]);
-
-  useEffect(() => {
-    setDockViewClazz(
-      theme === "dark" ? "dockview-theme-abyss" : "dockview-theme-light",
-    );
-  }, [theme]);
 
   const [dockApi, setDockApi] = useState<DockviewApi | null>(null);
   const { openSingletonPanel, openFilePanel } = useDockActions(dockApi);
@@ -231,10 +223,7 @@ function WorkspaceContent() {
               >
                 <ResizablePanel>
                   <DockviewReact
-                    // workaround: theme must not be empty, otherwise
-                    //  Dockview will always insert abyss className
-                    theme={themeLight}
-                    className={dockViewClazz}
+                    theme={themeApp}
                     onReady={onReady}
                     components={components}
                     tabComponents={tabComponents}
@@ -247,8 +236,7 @@ function WorkspaceContent() {
               </ResizablePanelGroup>
             ) : (
               <DockviewReact
-                theme={themeLight}
-                className={dockViewClazz}
+                theme={themeApp}
                 onReady={onReady}
                 components={components}
                 tabComponents={tabComponents}
