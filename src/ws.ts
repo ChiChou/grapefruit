@@ -34,6 +34,7 @@ interface ServerToClientEvents {
     event: "inactive" | "active" | "forerground" | "background",
   ) => void;
   hook: (msg: BaseHookMessage) => void;
+  httplog: (event: any) => void;
 }
 
 type ClientCallback = (err: Error | null, result: any) => void;
@@ -125,6 +126,9 @@ function setupScriptHandlers(
         console.log(`[syslog]`, text);
         socket.emit("syslog", text);
         appendLog(logPaths.syslog, text);
+      } else if (subject === "httplog") {
+        console.log(`[httplog]`, payload);
+        socket.emit("httplog", payload);
       } else {
         if (subject === "hook") {
           socket.emit(subject, payload);
