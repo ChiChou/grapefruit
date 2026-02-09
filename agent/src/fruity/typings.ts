@@ -38,6 +38,7 @@ export interface NSSet<T> extends NSObject {
 
 export interface NSURL extends NSObject {
   absoluteString(): string;
+  path(): NSString | null;
 }
 
 export interface NSDictionary<K, V> extends NSObject {
@@ -66,6 +67,50 @@ export interface NSData extends NSObject {
   writeToFile_atomically_(path: StringLike, atomically: boolean): boolean;
   bytes(): NativePointer;
   length(): number;
+}
+
+export interface NSMutableData extends NSData {
+  appendData_(data: NSData): void;
+}
+
+export interface NSURLRequest extends NSObject {
+  URL(): NSURL;
+  HTTPMethod(): NSString;
+  HTTPBody(): NSData | null;
+  allHTTPHeaderFields(): NSDictionary<NSString, NSString> | null;
+}
+
+export interface NSURLResponse extends NSObject {
+  URL(): NSURL;
+  MIMEType(): NSString | null;
+  expectedContentLength(): number;
+}
+
+export interface NSHTTPURLResponse extends NSURLResponse {
+  statusCode(): number;
+  allHeaderFields(): NSDictionary<NSString, NSString> | null;
+}
+
+export interface NSURLSessionTask extends NSObject {
+  taskIdentifier(): number;
+  originalRequest(): NSURLRequest | null;
+  currentRequest(): NSURLRequest | null;
+  response(): NSURLResponse | null;
+  state(): number;
+}
+
+export interface NSURLSessionDataTask extends NSURLSessionTask {}
+export interface NSURLSessionDownloadTask extends NSURLSessionTask {}
+export interface NSURLSessionWebSocketTask extends NSURLSessionTask {}
+
+export interface NSURLSessionWebSocketMessage extends NSObject {
+  type(): number; // 0 = data, 1 = string
+  data(): NSData | null;
+  string(): NSString | null;
+}
+
+export function wrapObjC<T extends NSObject>(ptr: NativePointer): T {
+  return new ObjC.Object(ptr) as T;
 }
 
 export type NSFileAttribute = NSDictionary<NSString, NSObject>;
