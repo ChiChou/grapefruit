@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useRpcQuery, useRpcMutation, useQueryClient } from "@/lib/queries";
 
-import type { KeyChainItem } from "../../../../agent/types/fruity/modules/keychain";
+import type { KeyChainItem } from "@agent/fruity/modules/keychain";
 
 function formatBoolean(value: boolean | undefined): string {
   return value ? "✓" : "-";

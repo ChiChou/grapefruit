@@ -1,7 +1,7 @@
 import type {
   MetaData,
   DirectoryListing,
-} from "../../../agent/types/fruity/modules/fs";
+} from "@agent/fruity/modules/fs";
 
 export interface TreeNode {
   meta: MetaData;

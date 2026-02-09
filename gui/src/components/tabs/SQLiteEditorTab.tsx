@@ -4,7 +4,7 @@ import type { IDockviewPanelProps } from "dockview";
 import Editor from "@monaco-editor/react";
 import { Play, Loader2 } from "lucide-react";
 
-import type { DumpResult } from "../../../../agent/types/common/sqlite";
+import type { DumpResult } from "@agent/common/sqlite";
 
 import { Platform, useSession } from "@/context/SessionContext";
 import { useTheme } from "@/components/theme-provider";

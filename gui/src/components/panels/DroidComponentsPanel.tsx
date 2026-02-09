@@ -9,9 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDroidRpcQuery, useDroidRpcMutation } from "@/lib/queries";
 
-import type { ActivityEntry } from "../../../../agent/types/droid/modules/activities";
-import type { ServiceEntry } from "../../../../agent/types/droid/modules/services";
-import type { ReceiverEntry } from "../../../../agent/types/droid/modules/receivers";
+import type { ActivityEntry } from "@agent/droid/modules/activities";
+import type { ServiceEntry } from "@agent/droid/modules/services";
+import type { ReceiverEntry } from "@agent/droid/modules/receivers";
 
 const ITEM_HEIGHT = 56;
 

@@ -10,7 +10,7 @@ import { agent } from "./lib/assets.ts";
 import paths from "./lib/paths.ts";
 import { insertHookLog } from "./lib/store.ts";
 
-import type { BaseMessage as BaseHookMessage } from "../agent/types/fruity/hooks/context.d.ts";
+import type { BaseMessage as BaseHookMessage } from "@agent/fruity/hooks/context";
 
 type Platform = "fruity" | "droid";
 type Mode = "app" | "daemon";

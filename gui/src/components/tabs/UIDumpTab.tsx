@@ -11,7 +11,7 @@ import { useRpcQuery } from "@/lib/queries";
 
 const FONT_SIZES = [0.75, 1, 1.25, 1.5] as const;
 
-import type { UIDumpNode } from "../../../../agent/types/fruity/modules/ui";
+import type { UIDumpNode } from "@agent/fruity/modules/ui";
 
 // Tokenizer for description syntax highlighting
 function* tokenize(text: string, delimiters: string): IterableIterator<string> {

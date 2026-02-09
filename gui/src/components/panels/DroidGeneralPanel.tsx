@@ -10,7 +10,7 @@ import { Status, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 import { useDroidRpcQuery } from "@/lib/queries";
 
-import type { ApplicationInfoResult } from "../../../../agent/types/droid/modules/app";
+import type { ApplicationInfoResult } from "@agent/droid/modules/app";
 
 
 function CopyButton({ text }: { text: string }) {

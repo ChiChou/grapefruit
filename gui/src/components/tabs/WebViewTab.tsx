@@ -39,7 +39,7 @@ import { useRpcQuery, useRpcMutation } from "@/lib/queries";
 import type {
   WKWebViewInfo,
   UIWebViewInfo,
-} from "../../../../agent/types/fruity/modules/webview";
+} from "@agent/fruity/modules/webview";
 
 type WebViewKind = "UI" | "WK";
 type WebViewEntry = WKWebViewInfo | UIWebViewInfo;

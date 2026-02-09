@@ -38,7 +38,7 @@ import { useRpcQuery, useRpcMutation, useQueryClient } from "@/lib/queries";
 import type {
   Cookie,
   CookiePredicate,
-} from "../../../../agent/types/fruity/modules/cookies";
+} from "@agent/fruity/modules/cookies";
 
 function formatDate(date: Date | null): string {
   if (!date) return "-";

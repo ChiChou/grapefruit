@@ -4,11 +4,11 @@ import type { Socket } from "socket.io-client";
 import type {
   RemoteRPC,
   RPCRoute as FruityRPCRoute,
-} from "../../../agent/types/fruity/registry.d.ts";
+} from "@agent/fruity/registry";
 
-import type { RPCRoute as DroidRPCRoute } from "../../../agent/types/droid/registry.d.ts";
+import type { RPCRoute as DroidRPCRoute } from "@agent/droid/registry";
 
-import type { BaseMessage as BaseHookMessage } from "../../../agent/types/fruity/hooks/context";
+import type { BaseMessage as BaseHookMessage } from "@agent/fruity/hooks/context";
 
 export interface HttpNetworkEvent {
   event: string;

@@ -54,6 +54,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@agent": path.resolve(__dirname, "..", "agent", "types"),
       "@shared/schema": path.resolve(__dirname, "..", "shared", "schema.d.ts"),
     },
   },

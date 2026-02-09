@@ -7,7 +7,7 @@ import { useDock } from "@/context/DockContext";
 import { Input } from "@/components/ui/input";
 import { useRpcQuery, useDroidRpcQuery } from "@/lib/queries";
 import { Platform, useSession } from "@/context/SessionContext";
-import type { ModuleInfo } from "../../../../agent/types/fruity/modules/symbol";
+import type { ModuleInfo } from "@agent/fruity/modules/symbol";
 
 const ITEM_HEIGHT = 72;
 

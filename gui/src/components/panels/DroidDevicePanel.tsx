@@ -5,7 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 import { useDroidRpcQuery } from "@/lib/queries";
 
-import type { DeviceInfo } from "../../../../agent/types/droid/modules/device";
+import type { DeviceInfo } from "@agent/droid/modules/device";
 
 export function DroidDevicePanel() {
   const { t } = useTranslation();

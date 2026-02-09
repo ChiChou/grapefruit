@@ -26,7 +26,7 @@ import type {
   FileDescriptor,
   VnodeFD,
   SocketFD,
-} from "../../../../agent/types/fruity/modules/lsof";
+} from "@agent/fruity/modules/lsof";
 
 function isVnodeFD(fd: FileDescriptor): fd is VnodeFD {
   return fd.type === "vnode";

@@ -33,7 +33,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { MetaData } from "../../../../agent/types/fruity/modules/fs.ts";
+import type { MetaData } from "@agent/fruity/modules/fs";
 import { formatSize, formatDate, typeFor } from "../../lib/file-explorer.ts";
 
 interface FileTableProps {
