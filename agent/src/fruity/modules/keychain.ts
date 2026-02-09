@@ -8,8 +8,6 @@ function kSec(suffix: string) {
     .readPointer();
 }
 
-const kCFBooleanTrue = ObjC.classes.__NSCFBoolean!.numberWithBool_(true);
-
 const kSecClasses = {
   id: kSec("ClassIdentity"),
   cert: kSec("ClassCertificate"),
@@ -136,7 +134,7 @@ function dumpACL(item: ObjC.Object) {
 
     const pkofn = opDict.objectForKey_(kACMKeyAclParamKofN);
     if (pkofn) {
-      yield pkofn.value() === 1
+      yield pkofn.intValue() === 1
         ? "kSecAccessControlOr"
         : "kSecAccessControlAnd";
     }
@@ -176,6 +174,7 @@ export function list(withBiometricId = false): KeyChainItem[] {
   const kSecAttrAccessibleLookup = enumLookup("kSecAttrAccessible");
 
   const result: KeyChainItem[] = [];
+  const kCFBooleanTrue = ObjC.classes.__NSCFBoolean!.numberWithBool_(true);
   const query = ObjC.classes.NSMutableDictionary!.alloc().init();
   query.setObject_forKey_(kCFBooleanTrue, kSec("ReturnAttributes"));
   query.setObject_forKey_(kCFBooleanTrue, kSec("ReturnData"));
