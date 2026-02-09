@@ -15,6 +15,13 @@ import type { BaseMessage as BaseHookMessage } from "../agent/types/fruity/hooks
 type Platform = "fruity" | "droid";
 type Mode = "app" | "daemon";
 
+export interface HttpNetworkEvent {
+  event: string;
+  requestId: string;
+  timestamp: number;
+  [key: string]: unknown;
+}
+
 interface SessionParams {
   platform: Platform;
   mode: Mode;
@@ -34,7 +41,7 @@ interface ServerToClientEvents {
     event: "inactive" | "active" | "forerground" | "background",
   ) => void;
   hook: (msg: BaseHookMessage) => void;
-  httplog: (event: any) => void;
+  http: (event: HttpNetworkEvent) => void;
 }
 
 type ClientCallback = (err: Error | null, result: any) => void;
@@ -126,9 +133,9 @@ function setupScriptHandlers(
         console.log(`[syslog]`, text);
         socket.emit("syslog", text);
         appendLog(logPaths.syslog, text);
-      } else if (subject === "httplog") {
-        console.log(`[httplog]`, payload);
-        socket.emit("httplog", payload);
+      } else if (subject === "http") {
+        console.log(`[http]`, payload);
+        socket.emit("http", payload as HttpNetworkEvent);
       } else {
         if (subject === "hook") {
           socket.emit(subject, payload);

@@ -10,13 +10,20 @@ import type { RPCRoute as DroidRPCRoute } from "../../../agent/types/droid/regis
 
 import type { BaseMessage as BaseHookMessage } from "../../../agent/types/fruity/hooks/context";
 
+export interface HttpNetworkEvent {
+  event: string;
+  requestId: string;
+  timestamp: number;
+  [key: string]: unknown;
+}
+
 export interface SessionClientEvents {
   ready: (pid: number) => void;
   log: (level: string, text: string) => void;
   syslog: (text: string) => void;
   invalid: () => void;
   hook: (message: BaseHookMessage) => void;
-  httplog: (event: any) => void;
+  http: (event: HttpNetworkEvent) => void;
 }
 
 export interface SessionServerEvents {

@@ -1,8 +1,10 @@
 import ObjC from "frida-objc-bridge";
 import { init as enableLifeCycleHook } from "./observers/lifecycle.js";
+import { start as enableHTTPLog } from "./observers/http.js";
 import { interfaces, invoke } from "./registry.js";
 
 setImmediate(enableLifeCycleHook);
+setImmediate(enableHTTPLog);
 
 Process.setExceptionHandler((detail) => {
   console.error("Exception report: ");
