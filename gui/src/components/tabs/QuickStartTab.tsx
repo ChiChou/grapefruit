@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { useDock } from "@/context/DockContext";
+import { useSession, Platform } from "@/context/SessionContext";
 
 interface FeatureCardProps {
   icon: React.ReactNode;
@@ -40,6 +41,7 @@ function FeatureCard({ icon, title, description, onClick }: FeatureCardProps) {
 export function QuickStartTab() {
   const { t } = useTranslation();
   const { openSingletonPanel } = useDock();
+  const { platform } = useSession();
 
   const openHandlesTab = () => {
     openSingletonPanel({
@@ -176,12 +178,16 @@ export function QuickStartTab() {
       description: t("quickstart_jsc_desc"),
       onClick: openJSCTab,
     },
-    {
-      icon: <Network className="w-5 h-5" />,
-      title: "HTTP Log",
-      description: "Capture NSURLSession network traffic",
-      onClick: openHttpLogTab,
-    },
+    ...(platform === Platform.Fruity
+      ? [
+          {
+            icon: <Network className="w-5 h-5" />,
+            title: "HTTP Log",
+            description: "Capture NSURLSession network traffic",
+            onClick: openHttpLogTab,
+          },
+        ]
+      : []),
   ];
 
   return (

@@ -66,6 +66,10 @@ function notificationCenter() {
 }
 
 export function init() {
+  if (!ObjC.available || !ObjC.classes.NSNotificationCenter) {
+    return;
+  }
+
   const center = notificationCenter();
   const signalHandler = getSignalHandler();
   center.addObserver_selector_name_object_(

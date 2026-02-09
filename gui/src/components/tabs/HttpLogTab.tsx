@@ -1,13 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Play,
-  Square,
-  Trash2,
-  Copy,
-  Check,
-  ArrowUp,
-  ArrowDown,
-} from "lucide-react";
+import { Trash2, Copy, Check, ArrowUp, ArrowDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +19,7 @@ import {
 } from "@/components/ui/resizable";
 
 import { useSession, Status } from "@/context/SessionContext";
-import { useRpcMutation } from "@/lib/queries";
+import type { HttpNetworkEvent } from "@/lib/rpc";
 
 interface WebSocketMessage {
   direction: "send" | "receive";
@@ -187,28 +179,17 @@ function CopyButton({ text }: { text: string }) {
 
 export function HttpLogTab() {
   const { socket, status } = useSession();
+
   const [requests, setRequests] = useState<Map<string, CapturedRequest>>(
     () => new Map(),
   );
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [capturing, setCapturing] = useState(false);
   const tableEndRef = useRef<HTMLDivElement>(null);
 
-  const startMutation = useRpcMutation<void, void>(
-    (api) => api.httplog.start(),
-    { onSuccess: () => setCapturing(true) },
-  );
-
-  const stopMutation = useRpcMutation<void, void>((api) => api.httplog.stop(), {
-    onSuccess: () => setCapturing(false),
-  });
-
-  const startedRef = useRef(false);
-
-  const handleEvent = useCallback((event: any) => {
+  const handleEvent = useCallback((event: HttpNetworkEvent) => {
     setRequests((prev) => {
       const next = new Map(prev);
-      const { type, requestId } = event;
+      const { event: eventType, requestId } = event;
 
       function getOrCreate(id: string): CapturedRequest {
         let entry = next.get(id);
@@ -226,9 +207,17 @@ export function HttpLogTab() {
         return entry;
       }
 
-      switch (type) {
+      switch (eventType) {
         case "requestWillBeSent": {
-          const req = event.request;
+          const req = event["request"] as
+            | {
+                method: string;
+                url: string;
+                headers: Record<string, string>;
+                body?: string;
+              }
+            | undefined;
+          if (!req) break;
           const entry = getOrCreate(requestId);
           entry.method = req.method;
           entry.url = req.url;
@@ -237,8 +226,16 @@ export function HttpLogTab() {
           break;
         }
         case "responseReceived": {
+          const resp = event["response"] as
+            | {
+                url?: string;
+                mimeType?: string;
+                statusCode?: number;
+                headers?: Record<string, string>;
+              }
+            | undefined;
+          if (!resp) break;
           const entry = getOrCreate(requestId);
-          const resp = event.response;
           entry.statusCode = resp.statusCode;
           entry.mimeType = resp.mimeType;
           entry.responseHeaders = resp.headers;
@@ -248,7 +245,7 @@ export function HttpLogTab() {
         case "dataReceived": {
           const entry = getOrCreate(requestId);
           try {
-            entry.size += BigInt(event.dataLength);
+            entry.size += BigInt(event["dataLength"] as string);
           } catch {
             /* ignore invalid */
           }
@@ -256,21 +253,21 @@ export function HttpLogTab() {
         }
         case "loadingFinished": {
           const entry = getOrCreate(requestId);
-          entry.responseBody = event.responseBody;
+          entry.responseBody = event["responseBody"] as string | undefined;
           entry.endTime = event.timestamp;
           entry.duration = event.timestamp - entry.startTime;
           break;
         }
         case "loadingFailed": {
           const entry = getOrCreate(requestId);
-          entry.error = event.error;
+          entry.error = event["error"] as string | undefined;
           entry.endTime = event.timestamp;
           entry.duration = event.timestamp - entry.startTime;
           break;
         }
         case "mechanism": {
           const entry = getOrCreate(requestId);
-          entry.mechanism = event.mechanism;
+          entry.mechanism = event["mechanism"] as string | undefined;
           break;
         }
         case "webSocketSend":
@@ -280,11 +277,13 @@ export function HttpLogTab() {
           if (!entry.method) entry.method = "WS";
           if (!entry.wsMessages) entry.wsMessages = [];
           entry.wsMessages.push({
-            direction: type === "webSocketSend" ? "send" : "receive",
-            messageType: event.messageType,
-            message: event.message,
-            dataLength: event.dataLength,
-            error: event.error,
+            direction: eventType === "webSocketSend" ? "send" : "receive",
+            messageType: (event["messageType"] as "data" | "string") ?? "data",
+            message: event["message"] as string | undefined,
+            dataLength: event["dataLength"]
+              ? Number(event["dataLength"])
+              : undefined,
+            error: event["error"] as string | undefined,
             timestamp: event.timestamp,
           });
           break;
@@ -298,18 +297,11 @@ export function HttpLogTab() {
   useEffect(() => {
     if (status !== Status.Ready || !socket) return;
 
-    socket.on("httplog", handleEvent);
-
-    // Auto-start capture on tab load
-    if (!startedRef.current) {
-      startedRef.current = true;
-      startMutation.mutate();
-    }
+    socket.on("http", handleEvent);
 
     return () => {
-      socket.off("httplog", handleEvent);
+      socket.off("http", handleEvent);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket, status, handleEvent]);
 
   const handleClear = () => {
@@ -324,27 +316,6 @@ export function HttpLogTab() {
     <div className="flex flex-col h-full">
       {/* Toolbar */}
       <div className="flex items-center gap-2 p-2 border-b">
-        {capturing ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => stopMutation.mutate()}
-            disabled={stopMutation.isPending}
-          >
-            <Square className="w-4 h-4 mr-1" />
-            Stop
-          </Button>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => startMutation.mutate()}
-            disabled={startMutation.isPending}
-          >
-            <Play className="w-4 h-4 mr-1" />
-            Start
-          </Button>
-        )}
         <Button variant="outline" size="sm" onClick={handleClear}>
           <Trash2 className="w-4 h-4 mr-1" />
           Clear

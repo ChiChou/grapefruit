@@ -21,7 +21,7 @@ import type {
 import { wrapObjC } from "@/fruity/typings.js";
 import { getGlobalExport } from "@/lib/polyfill.js";
 
-const subject = "httplog";
+const subject = "http";
 
 function nextRequestId(): string {
   return ObjC.classes.NSUUID.UUID().UUIDString().toString();
@@ -32,7 +32,7 @@ interface TaskBoundData {
 }
 
 interface NetworkEvent {
-  type: string;
+  event: string;
   requestId: string;
   timestamp: number;
   [key: string]: unknown;
@@ -181,7 +181,7 @@ function recordRequestWillBeSent(
   redirectResponse: NSURLResponse | null,
 ): void {
   const event: NetworkEvent = {
-    type: "requestWillBeSent",
+    event: "requestWillBeSent",
     requestId,
     timestamp: Date.now(),
     request: serializeRequest(request),
@@ -197,7 +197,7 @@ function recordResponseReceived(
   response: NSURLResponse,
 ): void {
   emitNetworkEvent({
-    type: "responseReceived",
+    event: "responseReceived",
     requestId,
     timestamp: Date.now(),
     response: serializeResponse(response),
@@ -209,7 +209,7 @@ function recordDataReceived(
   dataLength: number | string,
 ): void {
   emitNetworkEvent({
-    type: "dataReceived",
+    event: "dataReceived",
     requestId,
     timestamp: Date.now(),
     dataLength:
@@ -222,7 +222,7 @@ function recordLoadingFinished(
   responseBody: NSData | null,
 ): void {
   emitNetworkEvent({
-    type: "loadingFinished",
+    event: "loadingFinished",
     requestId,
     timestamp: Date.now(),
     responseBody: serializeBody(responseBody),
@@ -231,7 +231,7 @@ function recordLoadingFinished(
 
 function recordLoadingFailed(requestId: string, error: NSError): void {
   emitNetworkEvent({
-    type: "loadingFailed",
+    event: "loadingFailed",
     requestId,
     timestamp: Date.now(),
     error: error.toString(),
@@ -240,7 +240,7 @@ function recordLoadingFailed(requestId: string, error: NSError): void {
 
 function recordMechanism(mechanism: string, requestId: string): void {
   emitNetworkEvent({
-    type: "mechanism",
+    event: "mechanism",
     requestId,
     timestamp: Date.now(),
     mechanism,
@@ -254,7 +254,7 @@ function recordWebSocketMessage(
   error?: NSError | null,
 ): void {
   const event: NetworkEvent = {
-    type: `webSocket${type === "send" ? "Send" : "Receive"}`,
+    event: `webSocket${type === "send" ? "Send" : "Receive"}`,
     requestId: task.taskIdentifier().toString(),
     timestamp: Date.now(),
     messageType: message.type() === 0 ? "data" : "string",
@@ -931,6 +931,8 @@ function hookRespondsToSelector() {
 
 export function start() {
   if (!ObjC.available) return;
+
+  console.log("start logging http URL requests");
 
   const { __NSCFURLSessionTask, NSURLSessionTask } = ObjC.classes;
   if (__NSCFURLSessionTask) {
