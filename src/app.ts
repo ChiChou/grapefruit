@@ -21,11 +21,10 @@ import {
 } from "./lib/serializer.ts";
 import { agent } from "./lib/assets.ts";
 import {
-  queryHooks,
-  countHooks,
-  clearHooks,
-  deleteHooks,
-} from "./lib/localstore.ts";
+  queryHookLogs,
+  countHookLogs,
+  deleteHookLogs,
+} from "./lib/store.ts";
 
 const manager = frida.getDeviceManager();
 const app = new Hono();
@@ -361,14 +360,13 @@ api
     const since = c.req.query("since");
 
     try {
-      const records = queryHooks(deviceId, identifier, {
+      const records = queryHookLogs(deviceId, identifier, {
         limit,
         offset,
         category,
         since,
       });
 
-      // Parse JSON payloads
       const hooks = records.map((r) => ({
         id: r.id,
         timestamp: r.timestamp,
@@ -379,7 +377,7 @@ api
         created_at: r.created_at,
       }));
 
-      const total = countHooks(deviceId, identifier, category);
+      const total = countHookLogs(deviceId, identifier, category);
 
       return c.json({ hooks, total, limit, offset });
     } catch (e) {
@@ -392,7 +390,7 @@ api
     const identifier = c.req.param("identifier");
 
     try {
-      clearHooks(deviceId, identifier);
+      deleteHookLogs(deviceId, identifier);
       return c.body(null, 204);
     } catch (e) {
       console.error("Failed to clear hooks:", e);
@@ -404,7 +402,7 @@ api
     const identifier = c.req.param("identifier");
 
     try {
-      deleteHooks(deviceId, identifier);
+      deleteHookLogs(deviceId, identifier);
       return c.body(null, 204);
     } catch (e) {
       console.error("Failed to delete hooks:", e);
