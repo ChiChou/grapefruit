@@ -8,7 +8,7 @@ import type {
 
 import type { RPCRoute as DroidRPCRoute } from "@agent/droid/registry";
 
-import type { BaseMessage as BaseHookMessage } from "@agent/fruity/hooks/context";
+import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
 
 export interface HttpNetworkEvent {
   event: string;
