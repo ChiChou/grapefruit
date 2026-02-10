@@ -33,7 +33,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { useSession, Status, Mode } from "@/context/SessionContext";
 
-import type { BaseMessage as BaseHookMessage } from "@agent/fruity/hooks/context";
+import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
 import type { Message as CryptoHookMessage } from "@agent/fruity/hooks/crypto";
 import type { Message as SQLiteHookMessage } from "@agent/fruity/hooks/sqlite";
 
