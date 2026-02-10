@@ -24,7 +24,12 @@ await Promise.all(
   }),
 );
 
-await $`bun run build:fruity`;
-await $`bun run build:droid`;
+const metadata = await import("../package.json", { with: { type: "json" } });
+
+await Promise.all(
+  Object.keys(metadata.scripts)
+    .filter((name) => name.startsWith("build:"))
+    .map((name) => $`bun run ${name}`),
+);
 
 console.log(styleText("green", "all build tasks finished"));
