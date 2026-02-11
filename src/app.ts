@@ -247,11 +247,12 @@ api
     const identifier = c.req.param("identifier");
     const type = c.req.param("type");
 
-    if (type !== "syslog" && type !== "agent") {
+    const validTypes = ["syslog", "agent"];
+    if (!validTypes.includes(type)) {
       return c.text("invalid log type", 400);
     }
 
-    const filename = type === "syslog" ? "syslog.log" : "agent.log";
+    const filename = `${type}.log`;
     const logPath = nodePath.join(
       paths.data,
       "logs",
