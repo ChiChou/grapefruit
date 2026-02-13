@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
 import { toast } from "sonner";
+import { useMutation } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ResizablePanelGroup,
@@ -168,6 +169,25 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
     [fullCwd, deleteMutation, t, handleDirectorySelect],
   );
 
+  const uploadFileMutation = useMutation({
+    mutationFn: async ({ file, targetPath }: { file: File; targetPath: string }) => {
+      const formData = new FormData();
+      formData.append("path", targetPath);
+      formData.append("file", file);
+
+      const url = new URL(window.location.href);
+      url.pathname = `/api/upload/${device}/${pid}`;
+      const response = await fetch(url.toString(), {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+    },
+  });
+
   const handleDrop = useCallback(
     async (e: React.DragEvent) => {
       e.preventDefault();
@@ -187,30 +207,12 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const targetPath = `${fullCwd}/${file.name}`;
-        const formData = new FormData();
-        formData.append("path", targetPath);
-        formData.append("file", file);
 
         try {
-          const url = new URL(window.location.href);
-          url.pathname = `/api/upload/${device}/${pid}`;
-          const response = await fetch(url.toString(), {
-            method: "POST",
-            body: formData,
-          });
-
-          if (!response.ok) {
-            const error = await response.text();
-            setUploadFiles((prev) =>
-              prev.map((f, idx) =>
-                idx === i ? { ...f, progress: 0, error: error } : f,
-              ),
-            );
-          } else {
-            setUploadFiles((prev) =>
-              prev.map((f, idx) => (idx === i ? { ...f, progress: 100 } : f)),
-            );
-          }
+          await uploadFileMutation.mutateAsync({ file, targetPath });
+          setUploadFiles((prev) =>
+            prev.map((f, idx) => (idx === i ? { ...f, progress: 100 } : f)),
+          );
         } catch (err) {
           setUploadFiles((prev) =>
             prev.map((f, idx) =>
@@ -227,7 +229,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
         handleDirectorySelect(fullCwd);
       }, 500);
     },
-    [activeTab, pid, device, fullCwd, handleDirectorySelect],
+    [activeTab, pid, device, fullCwd, handleDirectorySelect, uploadFileMutation],
   );
 
   useEffect(() => {

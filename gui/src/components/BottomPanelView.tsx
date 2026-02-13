@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { t } from "i18next";
+import { useQuery } from "@tanstack/react-query";
 import { FileText, Activity, Anchor, Terminal } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,39 +24,44 @@ export function BottomPanelView() {
 
   const syslogRef = useRef<LogViewerHandle>(null);
   const logRef = useRef<LogViewerHandle>(null);
-  const historyLoadedRef = useRef(false);
 
-  // Load historical logs on initialization
+  const identifier = mode === Mode.App ? bundle : `pid-${pid}`;
+
+  const { data: syslogHistory } = useQuery<string>({
+    queryKey: ["logHistory", device, identifier, "syslog"],
+    queryFn: async () => {
+      const res = await fetch(`/api/logs/${device}/${identifier}/syslog?limit=5000`);
+      if (!res.ok) throw new Error("Failed to load syslog history");
+      return res.text();
+    },
+    enabled: !!device && !!identifier,
+    staleTime: Infinity,
+    gcTime: 0,
+  });
+
+  const { data: agentLogHistory } = useQuery<string>({
+    queryKey: ["logHistory", device, identifier, "agent"],
+    queryFn: async () => {
+      const res = await fetch(`/api/logs/${device}/${identifier}/agent?limit=5000`);
+      if (!res.ok) throw new Error("Failed to load agent log history");
+      return res.text();
+    },
+    enabled: !!device && !!identifier,
+    staleTime: Infinity,
+    gcTime: 0,
+  });
+
   useEffect(() => {
-    if (!device || historyLoadedRef.current) return;
+    if (syslogHistory && syslogHistory.length > 0) {
+      syslogRef.current?.append(syslogHistory);
+    }
+  }, [syslogHistory]);
 
-    const identifier = mode === Mode.App ? bundle : `pid-${pid}`;
-    if (!identifier) return;
-
-    historyLoadedRef.current = true;
-
-    const loadLogs = async (
-      type: "syslog" | "agent",
-      ref: React.RefObject<LogViewerHandle | null>,
-    ) => {
-      try {
-        const res = await fetch(
-          `/api/logs/${device}/${identifier}/${type}?limit=5000`,
-        );
-        if (res.ok) {
-          const text = await res.text();
-          if (text.length > 0) {
-            ref.current?.append(text);
-          }
-        }
-      } catch (e) {
-        console.error(`Failed to load ${type} history:`, e);
-      }
-    };
-
-    loadLogs("syslog", syslogRef);
-    loadLogs("agent", logRef);
-  }, [device, bundle, pid, mode]);
+  useEffect(() => {
+    if (agentLogHistory && agentLogHistory.length > 0) {
+      logRef.current?.append(agentLogHistory);
+    }
+  }, [agentLogHistory]);
 
   useEffect(() => {
     const syslogApi = platform === Platform.Droid ? droid : fruity;

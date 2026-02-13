@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useParams, Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import { AlertCircleIcon, ArrowUpDown, Search, XCircle } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -64,21 +64,25 @@ export function ProcessesView() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sort, setSort] = useState<SortState>({ field: "pid", direction: "asc" });
 
-  const handleKillProcess = async (pid: number, e: React.MouseEvent) => {
+  const killProcessMutation = useMutation({
+    mutationFn: async (pid: number) => {
+      const res = await fetch(`/api/device/${udid}/kill/${pid}`, { method: "POST" });
+      if (!res.ok) throw new Error("Failed to kill process");
+      return pid;
+    },
+    onSuccess: (pid) => {
+      toast.success(t("process_killed", { pid }));
+      queryClient.invalidateQueries({ queryKey: ["processes", udid] });
+    },
+    onError: () => {
+      toast.error(t("failed_to_kill_process"));
+    },
+  });
+
+  const handleKillProcess = (pid: number, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    try {
-      const res = await fetch(`/api/device/${udid}/kill/${pid}`, { method: "POST" });
-      if (res.ok) {
-        toast.success(t("process_killed", { pid }));
-        queryClient.invalidateQueries({ queryKey: ["processes", udid] });
-      } else {
-        toast.error(t("failed_to_kill_process"));
-      }
-    } catch (err) {
-      console.error("Failed to kill process:", err);
-      toast.error(t("failed_to_kill_process"));
-    }
+    killProcessMutation.mutate(pid);
   };
 
   const {

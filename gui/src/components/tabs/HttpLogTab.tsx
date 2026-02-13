@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Trash2, Copy, Check, ArrowUp, ArrowDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -291,7 +292,8 @@ export function HttpLogTab() {
   );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const tableEndRef = useRef<HTMLDivElement>(null);
-  const historyLoadedRef = useRef(false);
+
+  const identifier = mode === Mode.App ? bundle : `pid-${pid}`;
 
   const handleEvent = useCallback((event: HttpNetworkEvent) => {
     setRequests((prev) => {
@@ -312,56 +314,43 @@ export function HttpLogTab() {
   }, [socket, status, handleEvent]);
 
   // Load historical HTTP logs from database
+  const { data: httpLogHistory } = useQuery<{ requests: (CapturedRequest & { size: string | number })[] }>({
+    queryKey: ["httpLogHistory", device, identifier],
+    queryFn: async () => {
+      const res = await fetch(`/api/http-logs/${device}/${identifier}?limit=5000`);
+      if (!res.ok) throw new Error("Failed to load HTTP log history");
+      return res.json();
+    },
+    enabled: !!device && !!identifier,
+    staleTime: Infinity,
+    gcTime: 0,
+  });
+
   useEffect(() => {
-    if (historyLoadedRef.current) return;
-    if (!device) return;
+    if (!httpLogHistory?.requests?.length) return;
+    setRequests(() => {
+      const map = new Map<string, CapturedRequest>();
+      for (const req of [...httpLogHistory.requests].reverse()) {
+        map.set(req.id, { ...req, size: BigInt(req.size || 0) });
+      }
+      return map;
+    });
+  }, [httpLogHistory]);
 
-    const identifier = mode === Mode.App ? bundle : `pid-${pid}`;
-    if (!identifier) return;
-
-    historyLoadedRef.current = true;
-
-    const loadHistory = async () => {
-      const res = await fetch(
-        `/api/http-logs/${device}/${identifier}?limit=5000`,
-      ).catch((e) => {
-        console.error("Failed to load HTTP log history:", e);
-        return null;
+  const clearHttpLogsMutation = useMutation({
+    mutationFn: async () => {
+      if (!device || !identifier) return;
+      const res = await fetch(`/api/http-logs/${device}/${identifier}`, {
+        method: "DELETE",
       });
-      if (!res || !res.ok) return;
+      if (!res.ok) throw new Error("Failed to clear HTTP logs from database");
+    },
+  });
 
-      const data = await res.json();
-      if (!data.requests || data.requests.length === 0) return;
-
-      setRequests(() => {
-        const map = new Map<string, CapturedRequest>();
-        // Records are in DESC order, reverse for chronological order
-        for (const req of [...data.requests].reverse()) {
-          map.set(req.id, { ...req, size: BigInt(req.size || 0) });
-        }
-        return map;
-      });
-    };
-
-    loadHistory();
-  }, [device, bundle, pid, mode]);
-
-  const handleClear = async () => {
+  const handleClear = () => {
     setRequests(new Map());
     setSelectedId(null);
-
-    if (device) {
-      const identifier = mode === Mode.App ? bundle : `pid-${pid}`;
-      if (identifier) {
-        try {
-          await fetch(`/api/http-logs/${device}/${identifier}`, {
-            method: "DELETE",
-          });
-        } catch (e) {
-          console.error("Failed to clear HTTP logs from database:", e);
-        }
-      }
-    }
+    clearHttpLogsMutation.mutate();
   };
 
   const requestList = Array.from(requests.values());
