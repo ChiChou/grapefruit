@@ -53,25 +53,39 @@ interface ClientToServerEvents {
 
 const manager = frida.getDeviceManager();
 
-/**
- * Get log directory and file paths for a session
- */
-async function getLogPaths(deviceId: string, identifier: string) {
-  const logsDir = path.join(paths.data, "logs", deviceId, identifier);
-  await fs.mkdir(logsDir, { recursive: true });
-  return {
-    syslog: path.join(logsDir, "syslog.log"),
-    agentLog: path.join(logsDir, "agent.log"),
-  };
-}
+class LogWriter {
+  private syslog: fs.FileHandle;
+  private agentLog: fs.FileHandle;
 
-/**
- * Append a line to a log file
- */
-function appendLog(filePath: string, line: string) {
-  fs.appendFile(filePath, line + "\n").catch((err) => {
-    console.error("Failed to write log:", err);
-  });
+  private constructor(syslog: fs.FileHandle, agentLog: fs.FileHandle) {
+    this.syslog = syslog;
+    this.agentLog = agentLog;
+  }
+
+  static async open(deviceId: string, identifier: string): Promise<LogWriter> {
+    const logsDir = path.join(paths.data, "logs", deviceId, identifier);
+    await fs.mkdir(logsDir, { recursive: true });
+    const [syslog, agentLog] = await Promise.all([
+      fs.open(path.join(logsDir, "syslog.log"), "a"),
+      fs.open(path.join(logsDir, "agent.log"), "a"),
+    ]);
+    return new LogWriter(syslog, agentLog);
+  }
+
+  appendSyslog(text: string) {
+    this.syslog.appendFile(text + "\n");
+  }
+
+  appendAgentLog(level: string, text: string) {
+    this.agentLog.appendFile(`[${level}] ${text}\n`);
+  }
+
+  async close() {
+    await Promise.all([
+      this.syslog.close(),
+      this.agentLog.close(),
+    ]).catch(() => {});
+  }
 }
 
 /**
@@ -116,7 +130,7 @@ function setupScriptHandlers(
   script: Awaited<
     ReturnType<typeof import("frida").Session.prototype.createScript>
   >,
-  logPaths: { syslog: string; agentLog: string },
+  logger: LogWriter,
   sessionInfo: { deviceId: string; identifier: string },
 ) {
   script.destroyed.connect(() => {
@@ -132,15 +146,18 @@ function setupScriptHandlers(
         const text = data.toString();
         console.log(`[syslog]`, text);
         socket.emit("syslog", text);
-        appendLog(logPaths.syslog, text);
+        logger.appendSyslog(text);
       } else if (subject === "http") {
         console.log(`[http]`, payload);
         socket.emit("http", payload as HttpNetworkEvent);
-        upsertCapturedRequest(sessionInfo.deviceId, sessionInfo.identifier, payload);
+        try {
+          upsertCapturedRequest(sessionInfo.deviceId, sessionInfo.identifier, payload);
+        } catch (e) {
+          console.error("Failed to persist HTTP event:", e);
+        }
       } else {
         if (subject === "hook") {
           socket.emit(subject, payload);
-          // Store hook message in SQLite
           insertHookLog(sessionInfo.deviceId, sessionInfo.identifier, payload);
         } else if (subject === "lifecycle") {
           socket.emit(subject, payload.event);
@@ -156,7 +173,7 @@ function setupScriptHandlers(
   script.logHandler = (level, text) => {
     console.log(`[agent][${level}] ${text}`);
     socket.emit("log", level, text);
-    appendLog(logPaths.agentLog, `[${level}] ${text}`);
+    logger.appendAgentLog(level, text);
   };
 }
 
@@ -169,6 +186,7 @@ function setupSocketHandlers(
     ReturnType<typeof import("frida").Session.prototype.createScript>
   >,
   session: Awaited<ReturnType<typeof import("frida").Device.prototype.attach>>,
+  logger: LogWriter,
 ) {
   session.detached.connect((reason, crash) => {
     console.error("session detached:", reason, crash);
@@ -211,13 +229,9 @@ function setupSocketHandlers(
       ack(new Error("not implemented"), null);
       return;
     })
-    .on("disconnect", async () => {
+    .on("disconnect", () => {
       console.info("socket disconnected");
-      try {
-        await script.unload();
-        await session.detach();
-      } finally {
-      }
+      script.unload().finally(() => session.detach()).finally(() => logger.close());
     });
 }
 
@@ -245,13 +259,13 @@ async function onConnection(
     await device.resume(pid).catch(() => {});
   }
 
-  // Get log file paths based on device and identifier
+  // Open log file handles for the session
   const identifier = mode === "app" ? bundle! : `pid-${pid}`;
-  const logPaths = await getLogPaths(deviceId, identifier);
+  const logHandles = await LogWriter.open(deviceId, identifier);
   const script = await session.createScript(await agent(platform));
 
-  setupScriptHandlers(socket, script, logPaths, { deviceId, identifier });
-  setupSocketHandlers(socket, script, session);
+  setupScriptHandlers(socket, script, logHandles, { deviceId, identifier });
+  setupSocketHandlers(socket, script, session, logHandles);
 
   await script.load();
   socket.emit("ready", session.pid);
