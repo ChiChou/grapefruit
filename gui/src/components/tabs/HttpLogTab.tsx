@@ -18,7 +18,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 
-import { useSession, Status } from "@/context/SessionContext";
+import { useSession, Status, Mode } from "@/context/SessionContext";
 import type { HttpNetworkEvent } from "@/lib/rpc";
 
 interface WebSocketMessage {
@@ -110,6 +110,112 @@ function parseCookieValue(value: string): { key: string; value: string }[] {
   });
 }
 
+function handleEventPure(
+  map: Map<string, CapturedRequest>,
+  event: HttpNetworkEvent,
+) {
+  const { event: eventType, requestId } = event;
+
+  function getOrCreate(id: string): CapturedRequest {
+    let entry = map.get(id);
+    if (!entry) {
+      entry = {
+        id,
+        method: "",
+        url: "",
+        requestHeaders: {},
+        size: 0n,
+        startTime: event.timestamp,
+      };
+      map.set(id, entry);
+    }
+    return entry;
+  }
+
+  switch (eventType) {
+    case "requestWillBeSent": {
+      const req = event["request"] as
+        | {
+            method: string;
+            url: string;
+            headers: Record<string, string>;
+            body?: string;
+          }
+        | undefined;
+      if (!req) break;
+      const entry = getOrCreate(requestId);
+      entry.method = req.method;
+      entry.url = req.url;
+      entry.requestHeaders = req.headers || {};
+      entry.requestBody = req.body;
+      break;
+    }
+    case "responseReceived": {
+      const resp = event["response"] as
+        | {
+            url?: string;
+            mimeType?: string;
+            statusCode?: number;
+            headers?: Record<string, string>;
+          }
+        | undefined;
+      if (!resp) break;
+      const entry = getOrCreate(requestId);
+      entry.statusCode = resp.statusCode;
+      entry.mimeType = resp.mimeType;
+      entry.responseHeaders = resp.headers;
+      if (resp.url && !entry.url) entry.url = resp.url;
+      break;
+    }
+    case "dataReceived": {
+      const entry = getOrCreate(requestId);
+      try {
+        entry.size += BigInt(event["dataLength"] as string);
+      } catch {
+        /* ignore invalid */
+      }
+      break;
+    }
+    case "loadingFinished": {
+      const entry = getOrCreate(requestId);
+      entry.responseBody = event["responseBody"] as string | undefined;
+      entry.endTime = event.timestamp;
+      entry.duration = event.timestamp - entry.startTime;
+      break;
+    }
+    case "loadingFailed": {
+      const entry = getOrCreate(requestId);
+      entry.error = event["error"] as string | undefined;
+      entry.endTime = event.timestamp;
+      entry.duration = event.timestamp - entry.startTime;
+      break;
+    }
+    case "mechanism": {
+      const entry = getOrCreate(requestId);
+      entry.mechanism = event["mechanism"] as string | undefined;
+      break;
+    }
+    case "webSocketSend":
+    case "webSocketReceive": {
+      const entry = getOrCreate(requestId);
+      entry.isWebSocket = true;
+      if (!entry.method) entry.method = "WS";
+      if (!entry.wsMessages) entry.wsMessages = [];
+      entry.wsMessages.push({
+        direction: eventType === "webSocketSend" ? "send" : "receive",
+        messageType: (event["messageType"] as "data" | "string") ?? "data",
+        message: event["message"] as string | undefined,
+        dataLength: event["dataLength"]
+          ? Number(event["dataLength"])
+          : undefined,
+        error: event["error"] as string | undefined,
+        timestamp: event.timestamp,
+      });
+      break;
+    }
+  }
+}
+
 function HeadersView({
   headers,
 }: {
@@ -178,118 +284,19 @@ function CopyButton({ text }: { text: string }) {
 }
 
 export function HttpLogTab() {
-  const { socket, status } = useSession();
+  const { socket, status, device, bundle, pid, mode } = useSession();
 
   const [requests, setRequests] = useState<Map<string, CapturedRequest>>(
     () => new Map(),
   );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const tableEndRef = useRef<HTMLDivElement>(null);
+  const historyLoadedRef = useRef(false);
 
   const handleEvent = useCallback((event: HttpNetworkEvent) => {
     setRequests((prev) => {
       const next = new Map(prev);
-      const { event: eventType, requestId } = event;
-
-      function getOrCreate(id: string): CapturedRequest {
-        let entry = next.get(id);
-        if (!entry) {
-          entry = {
-            id,
-            method: "",
-            url: "",
-            requestHeaders: {},
-            size: 0n,
-            startTime: event.timestamp,
-          };
-          next.set(id, entry);
-        }
-        return entry;
-      }
-
-      switch (eventType) {
-        case "requestWillBeSent": {
-          const req = event["request"] as
-            | {
-                method: string;
-                url: string;
-                headers: Record<string, string>;
-                body?: string;
-              }
-            | undefined;
-          if (!req) break;
-          const entry = getOrCreate(requestId);
-          entry.method = req.method;
-          entry.url = req.url;
-          entry.requestHeaders = req.headers || {};
-          entry.requestBody = req.body;
-          break;
-        }
-        case "responseReceived": {
-          const resp = event["response"] as
-            | {
-                url?: string;
-                mimeType?: string;
-                statusCode?: number;
-                headers?: Record<string, string>;
-              }
-            | undefined;
-          if (!resp) break;
-          const entry = getOrCreate(requestId);
-          entry.statusCode = resp.statusCode;
-          entry.mimeType = resp.mimeType;
-          entry.responseHeaders = resp.headers;
-          if (resp.url && !entry.url) entry.url = resp.url;
-          break;
-        }
-        case "dataReceived": {
-          const entry = getOrCreate(requestId);
-          try {
-            entry.size += BigInt(event["dataLength"] as string);
-          } catch {
-            /* ignore invalid */
-          }
-          break;
-        }
-        case "loadingFinished": {
-          const entry = getOrCreate(requestId);
-          entry.responseBody = event["responseBody"] as string | undefined;
-          entry.endTime = event.timestamp;
-          entry.duration = event.timestamp - entry.startTime;
-          break;
-        }
-        case "loadingFailed": {
-          const entry = getOrCreate(requestId);
-          entry.error = event["error"] as string | undefined;
-          entry.endTime = event.timestamp;
-          entry.duration = event.timestamp - entry.startTime;
-          break;
-        }
-        case "mechanism": {
-          const entry = getOrCreate(requestId);
-          entry.mechanism = event["mechanism"] as string | undefined;
-          break;
-        }
-        case "webSocketSend":
-        case "webSocketReceive": {
-          const entry = getOrCreate(requestId);
-          entry.isWebSocket = true;
-          if (!entry.method) entry.method = "WS";
-          if (!entry.wsMessages) entry.wsMessages = [];
-          entry.wsMessages.push({
-            direction: eventType === "webSocketSend" ? "send" : "receive",
-            messageType: (event["messageType"] as "data" | "string") ?? "data",
-            message: event["message"] as string | undefined,
-            dataLength: event["dataLength"]
-              ? Number(event["dataLength"])
-              : undefined,
-            error: event["error"] as string | undefined,
-            timestamp: event.timestamp,
-          });
-          break;
-        }
-      }
-
+      handleEventPure(next, event);
       return next;
     });
   }, []);
@@ -304,9 +311,57 @@ export function HttpLogTab() {
     };
   }, [socket, status, handleEvent]);
 
-  const handleClear = () => {
+  // Load historical HTTP logs from database
+  useEffect(() => {
+    if (historyLoadedRef.current) return;
+    if (!device) return;
+
+    const identifier = mode === Mode.App ? bundle : `pid-${pid}`;
+    if (!identifier) return;
+
+    historyLoadedRef.current = true;
+
+    const loadHistory = async () => {
+      const res = await fetch(
+        `/api/http-logs/${device}/${identifier}?limit=5000`,
+      ).catch((e) => {
+        console.error("Failed to load HTTP log history:", e);
+        return null;
+      });
+      if (!res || !res.ok) return;
+
+      const data = await res.json();
+      if (!data.requests || data.requests.length === 0) return;
+
+      setRequests(() => {
+        const map = new Map<string, CapturedRequest>();
+        // Records are in DESC order, reverse for chronological order
+        for (const req of [...data.requests].reverse()) {
+          map.set(req.id, { ...req, size: BigInt(req.size || 0) });
+        }
+        return map;
+      });
+    };
+
+    loadHistory();
+  }, [device, bundle, pid, mode]);
+
+  const handleClear = async () => {
     setRequests(new Map());
     setSelectedId(null);
+
+    if (device) {
+      const identifier = mode === Mode.App ? bundle : `pid-${pid}`;
+      if (identifier) {
+        try {
+          await fetch(`/api/http-logs/${device}/${identifier}`, {
+            method: "DELETE",
+          });
+        } catch (e) {
+          console.error("Failed to clear HTTP logs from database:", e);
+        }
+      }
+    }
   };
 
   const requestList = Array.from(requests.values());

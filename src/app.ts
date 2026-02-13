@@ -18,7 +18,14 @@ import {
   process as serializeProcess,
 } from "./lib/serializer.ts";
 import { createTransport } from "./lib/transport.ts";
-import { queryHookLogs, countHookLogs, deleteHookLogs } from "./lib/store.ts";
+import {
+  queryHookLogs,
+  countHookLogs,
+  deleteHookLogs,
+  queryCapturedRequests,
+  countCapturedRequests,
+  deleteCapturedRequests,
+} from "./lib/store.ts";
 
 const manager = frida.getDeviceManager();
 const app = new Hono();
@@ -337,6 +344,39 @@ api
     } catch (e) {
       console.error("Failed to delete hooks:", e);
       return c.text("Failed to delete hooks", 500);
+    }
+  })
+  // HTTP log endpoints
+  .get("/http-logs/:device/:identifier", (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+
+    const limit = parseInt(c.req.query("limit") || "5000", 10);
+    const offset = parseInt(c.req.query("offset") || "0", 10);
+
+    try {
+      const requests = queryCapturedRequests(deviceId, identifier, {
+        limit,
+        offset,
+      });
+      const total = countCapturedRequests(deviceId, identifier);
+
+      return c.json({ requests, total, limit, offset });
+    } catch (e) {
+      console.error("Failed to query http logs:", e);
+      return c.json({ requests: [], total: 0, limit, offset });
+    }
+  })
+  .delete("/http-logs/:device/:identifier", (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+
+    try {
+      deleteCapturedRequests(deviceId, identifier);
+      return c.body(null, 204);
+    } catch (e) {
+      console.error("Failed to clear http logs:", e);
+      return c.text("Failed to clear http logs", 500);
     }
   });
 
