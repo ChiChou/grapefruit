@@ -54,10 +54,6 @@ const themeApp: DockviewTheme = {
 function WorkspaceContent() {
   const { bundle, device, platform, mode, pid } = useSession();
 
-  const isFruityApp = platform === Platform.Fruity && mode === Mode.App;
-  const isFruityDaemon = platform === Platform.Fruity && mode === Mode.Daemon;
-  const isDroidApp = platform === Platform.Droid && mode === Mode.App;
-  const isDroidDaemon = platform === Platform.Droid && mode === Mode.Daemon;
   useEffect(() => {
     const target = bundle || (pid ? `PID ${pid}` : "");
     document.title = "Grapefruit" + (target ? ` - ${target}` : "");
@@ -163,39 +159,14 @@ function WorkspaceContent() {
   };
 
   const createDefaultLayout = (dockApi: DockviewApi) => {
-    if (isFruityApp) {
-      // iOS App mode - Quick Start tab
-      dockApi.addPanel({
-        id: "quickstart_tab",
-        component: "quickstart",
-        tabComponent: "noClose",
-        title: t("quickstart"),
-      });
-    } else if (isFruityDaemon) {
-      // iOS Daemon mode - Finder tab
-      dockApi.addPanel({
-        id: "finder_tab",
-        component: "finder",
-        title: "Finder",
-        params: { path: "/" },
-      });
-    } else if (isDroidApp) {
-      // Android App mode - Finder tab at home
-      dockApi.addPanel({
-        id: "finder_tab",
-        component: "finder",
-        title: "Finder",
-        params: { path: "~" },
-      });
-    } else if (isDroidDaemon) {
-      // Android Daemon mode - Finder tab at root
-      dockApi.addPanel({
-        id: "finder_tab",
-        component: "finder",
-        title: "Finder",
-        params: { path: "/" },
-      });
-    }
+    const defaultPanels: Record<string, { id: string; component: string; tabComponent?: string; title: string; params?: Record<string, string> }> = {
+      [`${Platform.Fruity}:${Mode.App}`]: { id: "quickstart_tab", component: "quickstart", tabComponent: "noClose", title: t("quickstart") },
+      [`${Platform.Fruity}:${Mode.Daemon}`]: { id: "finder_tab", component: "finder", title: "Finder", params: { path: "/" } },
+      [`${Platform.Droid}:${Mode.App}`]: { id: "finder_tab", component: "finder", title: "Finder", params: { path: "~" } },
+      [`${Platform.Droid}:${Mode.Daemon}`]: { id: "finder_tab", component: "finder", title: "Finder", params: { path: "/" } },
+    };
+    const panel = defaultPanels[`${platform}:${mode}`];
+    if (panel) dockApi.addPanel(panel);
   };
 
   return (

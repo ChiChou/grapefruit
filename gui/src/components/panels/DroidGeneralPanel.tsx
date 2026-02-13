@@ -102,15 +102,20 @@ export function DroidGeneralPanel() {
   const downloadUrl = (path: string) =>
     `/api/download/${device}/${pid}?path=${encodeURIComponent(path)}`;
 
-  return (
-    <div className="h-full p-4 overflow-auto">
-      {error && (
+  if (error) {
+    return (
+      <div className="h-full p-4 overflow-auto">
         <Alert variant="destructive" className="mb-4">
           <AlertTitle>{t("error")}</AlertTitle>
           <AlertDescription>{(error as Error)?.message}</AlertDescription>
         </Alert>
-      )}
-      {isLoading ? (
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="h-full p-4 overflow-auto">
         <div className="space-y-4">
           <div className="flex gap-4">
             <Skeleton className="h-16 w-16 rounded-xl shrink-0" />
@@ -122,121 +127,127 @@ export function DroidGeneralPanel() {
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-4 w-3/4" />
         </div>
-      ) : appInfo ? (
-        <div className="space-y-3 pb-4">
-          <div className="flex gap-4">
-            <img
-              src={`/api/device/${device}/icon/${bundle}`}
-              alt={appInfo.packageName}
-              loading="lazy"
-              className="h-16 w-16 rounded-xl shrink-0"
-              onError={(e) => {
-                e.currentTarget.src =
-                  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' fill='%23ddd'/%3E%3C/svg%3E";
-              }}
-            />
-            <div className="flex-1 min-w-0">
-              <div>
-                <div className="text-sm text-muted-foreground mb-1">
-                  {t("package_name")}
-                </div>
-                <div className="text-sm font-mono break-all">
-                  {appInfo.packageName}
-                </div>
+      </div>
+    );
+  }
+
+  if (!appInfo) {
+    return (
+      <div className="h-full p-4 overflow-auto">
+        <div className="text-sm text-muted-foreground">
+          {status === Status.Ready ? t("no_app_info") : t("connect_to_view_app_info")}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full p-4 overflow-auto">
+      <div className="space-y-3 pb-4">
+        <div className="flex gap-4">
+          <img
+            src={`/api/device/${device}/icon/${bundle}`}
+            alt={appInfo.packageName}
+            loading="lazy"
+            className="h-16 w-16 rounded-xl shrink-0"
+            onError={(e) => {
+              e.currentTarget.src =
+                "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' fill='%23ddd'/%3E%3C/svg%3E";
+            }}
+          />
+          <div className="flex-1 min-w-0">
+            <div>
+              <div className="text-sm text-muted-foreground mb-1">
+                {t("package_name")}
+              </div>
+              <div className="text-sm font-mono break-all">
+                {appInfo.packageName}
               </div>
             </div>
           </div>
+        </div>
 
-          <InfoRow label={t("process_name")}>
-            <div className="text-sm font-mono break-all">{appInfo.processName}</div>
-          </InfoRow>
+        <InfoRow label={t("process_name")}>
+          <div className="text-sm font-mono break-all">{appInfo.processName}</div>
+        </InfoRow>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="secondary" className="text-xs">
-              {t("uid")}: {appInfo.uid}
-            </Badge>
-            <Badge variant="secondary" className="text-xs">
-              {t("target_sdk")}: {appInfo.targetSdkVersion}
-            </Badge>
-            <Badge variant="secondary" className="text-xs">
-              {t("min_sdk")}: {appInfo.minSdkVersion}
-            </Badge>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant="secondary" className="text-xs">
+            {t("uid")}: {appInfo.uid}
+          </Badge>
+          <Badge variant="secondary" className="text-xs">
+            {t("target_sdk")}: {appInfo.targetSdkVersion}
+          </Badge>
+          <Badge variant="secondary" className="text-xs">
+            {t("min_sdk")}: {appInfo.minSdkVersion}
+          </Badge>
+        </div>
+
+        <SectionLabel>{t("directories")}</SectionLabel>
+
+        <InfoRow label={t("data_dir")}>
+          <div className="flex items-start">
+            <PathDisplay path={appInfo.dataDir} onClick={() => openFinderTab(appInfo.dataDir)} />
+            <CopyButton text={appInfo.dataDir} />
           </div>
+        </InfoRow>
 
-          <SectionLabel>{t("directories")}</SectionLabel>
-
-          <InfoRow label={t("data_dir")}>
-            <div className="flex items-start">
-              <PathDisplay path={appInfo.dataDir} onClick={() => openFinderTab(appInfo.dataDir)} />
-              <CopyButton text={appInfo.dataDir} />
-            </div>
-          </InfoRow>
-
-          {appInfo.deviceProtectedDataDir && (
-            <InfoRow label={t("data_dir") + " (DE)"}>
-              <div className="flex items-center text-sm font-mono break-all">
-                <span className="text-xs">{appInfo.deviceProtectedDataDir}</span>
-                <CopyButton text={appInfo.deviceProtectedDataDir} />
-              </div>
-            </InfoRow>
-          )}
-
-          <InfoRow label={t("native_library_dir")}>
+        {appInfo.deviceProtectedDataDir && (
+          <InfoRow label={t("data_dir") + " (DE)"}>
             <div className="flex items-center text-sm font-mono break-all">
-              <span className="text-xs">{appInfo.nativeLibraryDir}</span>
-              <CopyButton text={appInfo.nativeLibraryDir} />
+              <span className="text-xs">{appInfo.deviceProtectedDataDir}</span>
+              <CopyButton text={appInfo.deviceProtectedDataDir} />
             </div>
           </InfoRow>
+        )}
 
-          <InfoRow label={t("public_source_dir")}>
-            <div className="flex items-center text-sm font-mono break-all">
-              <span className="text-xs">{appInfo.publicSourceDir}</span>
-              <CopyButton text={appInfo.publicSourceDir} />
+        <InfoRow label={t("native_library_dir")}>
+          <div className="flex items-center text-sm font-mono break-all">
+            <span className="text-xs">{appInfo.nativeLibraryDir}</span>
+            <CopyButton text={appInfo.nativeLibraryDir} />
+          </div>
+        </InfoRow>
+
+        <InfoRow label={t("public_source_dir")}>
+          <div className="flex items-center text-sm font-mono break-all">
+            <span className="text-xs">{appInfo.publicSourceDir}</span>
+            <CopyButton text={appInfo.publicSourceDir} />
+          </div>
+        </InfoRow>
+
+        <InfoRow label={t("source_dir")}>
+          <div className="flex items-center text-sm font-mono break-all">
+            <span className="text-xs">{appInfo.sourceDir}</span>
+            <CopyButton text={appInfo.sourceDir} />
+          </div>
+        </InfoRow>
+
+        {appInfo.splitPublicSourceDirs && appInfo.splitPublicSourceDirs.length > 0 && (
+          <InfoRow label={t("split_apks")}>
+            <div className="space-y-1">
+              {appInfo.splitPublicSourceDirs.map((p) => (
+                <div key={p} className="flex items-center">
+                  <DownloadLink path={p} href={downloadUrl(p)} />
+                  <CopyButton text={p} />
+                </div>
+              ))}
             </div>
           </InfoRow>
+        )}
 
-          <InfoRow label={t("source_dir")}>
-            <div className="flex items-center text-sm font-mono break-all">
-              <span className="text-xs">{appInfo.sourceDir}</span>
-              <CopyButton text={appInfo.sourceDir} />
+        {appInfo.sharedLibraryFiles && appInfo.sharedLibraryFiles.length > 0 && (
+          <InfoRow label={t("shared_library_files")}>
+            <div className="space-y-1">
+              {appInfo.sharedLibraryFiles.map((p) => (
+                <div key={p} className="flex items-center">
+                  <DownloadLink path={p} href={downloadUrl(p)} />
+                  <CopyButton text={p} />
+                </div>
+              ))}
             </div>
           </InfoRow>
-
-          {appInfo.splitPublicSourceDirs && appInfo.splitPublicSourceDirs.length > 0 && (
-            <InfoRow label={t("split_apks")}>
-              <div className="space-y-1">
-                {appInfo.splitPublicSourceDirs.map((p) => (
-                  <div key={p} className="flex items-center">
-                    <DownloadLink path={p} href={downloadUrl(p)} />
-                    <CopyButton text={p} />
-                  </div>
-                ))}
-              </div>
-            </InfoRow>
-          )}
-
-          {appInfo.sharedLibraryFiles && appInfo.sharedLibraryFiles.length > 0 && (
-            <InfoRow label={t("shared_library_files")}>
-              <div className="space-y-1">
-                {appInfo.sharedLibraryFiles.map((p) => (
-                  <div key={p} className="flex items-center">
-                    <DownloadLink path={p} href={downloadUrl(p)} />
-                    <CopyButton text={p} />
-                  </div>
-                ))}
-              </div>
-            </InfoRow>
-          )}
-        </div>
-      ) : status === Status.Ready ? (
-        <div className="text-sm text-muted-foreground">
-          {t("no_app_info")}
-        </div>
-      ) : (
-        <div className="text-sm text-muted-foreground">
-          {t("connect_to_view_app_info")}
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

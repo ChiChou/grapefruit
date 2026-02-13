@@ -69,15 +69,20 @@ export function GeneralPanel() {
     });
   };
 
-  return (
-    <div className="h-full p-4 overflow-auto">
-      {error && (
+  if (error) {
+    return (
+      <div className="h-full p-4 overflow-auto">
         <Alert variant="destructive" className="mb-4">
           <AlertTitle>{t("error")}</AlertTitle>
           <AlertDescription>{(error as Error)?.message}</AlertDescription>
         </Alert>
-      )}
-      {isLoading ? (
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="h-full p-4 overflow-auto">
         <div className="space-y-4">
           <div className="flex gap-4">
             <Skeleton className="h-16 w-16 rounded-xl shrink-0" />
@@ -89,113 +94,119 @@ export function GeneralPanel() {
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-4 w-3/4" />
         </div>
-      ) : basicInfo ? (
-        <div className="space-y-4 pb-4">
-          <div className="flex gap-4">
-            <img
-              src={`/api/device/${device}/icon/${bundle}`}
-              alt={basicInfo.label}
-              loading="lazy"
-              className="h-16 w-16 rounded-xl shrink-0"
-              onError={(e) => {
-                e.currentTarget.src =
-                  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' fill='%23ddd'/%3E%3C/svg%3E";
-              }}
-            />
-            <div className="flex-1 min-w-0">
-              <div>
-                <div className="text-sm text-muted-foreground mb-1">
-                  {t("app_name")}
-                </div>
-                <div className="text-sm">{basicInfo.label || t("na")}</div>
-              </div>
-              <div className="mt-2">
-                <div className="text-sm text-muted-foreground mb-1">
-                  {t("bundle_id")}
-                </div>
-                <div className="text-sm font-mono break-all">
-                  {basicInfo.id || t("na")}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div>
-            <div className="text-sm text-muted-foreground mb-1">
-              {t("version")}
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span>{basicInfo.version || t("na")}</span>
-              <Badge variant="secondary" className="text-xs">
-                {basicInfo.semVer || t("na")}
-              </Badge>
-            </div>
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">
-              {t("min_os")}
-            </div>
-            <Badge variant="outline">{basicInfo.minOS || t("na")}</Badge>
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">
-              {t("bundle_path")}
-            </div>
-            {basicInfo.path ? (
-              <div className="flex items-start">
-                <PathDisplay
-                  path={basicInfo.path}
-                  onClick={() => openFinderTab("!")}
-                />
-                <CopyButton text={basicInfo.path} />
-              </div>
-            ) : (
-              <span className="text-sm">{t("na")}</span>
-            )}
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">
-              {t("executable")}
-            </div>
-            <div className="flex items-center text-sm font-mono break-all">
-              <span className="text-xs">{basicInfo.main || t("na")}</span>
-              {basicInfo.main && <CopyButton text={basicInfo.main} />}
-            </div>
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">
-              {t("tmp_dir")}
-            </div>
-            <div className="flex items-center text-sm font-mono break-all">
-              <span className="text-xs">{basicInfo.tmp || t("na")}</span>
-              {basicInfo.tmp && <CopyButton text={basicInfo.tmp} />}
-            </div>
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">
-              {t("home_dir")}
-            </div>
-            {basicInfo.home ? (
-              <div className="flex items-start">
-                <PathDisplay
-                  path={basicInfo.home}
-                  onClick={() => openFinderTab("~")}
-                />
-                <CopyButton text={basicInfo.home} />
-              </div>
-            ) : (
-              <span className="text-sm">{t("na")}</span>
-            )}
-          </div>
-        </div>
-      ) : status === Status.Ready ? (
+      </div>
+    );
+  }
+
+  if (!basicInfo) {
+    return (
+      <div className="h-full p-4 overflow-auto">
         <div className="text-sm text-muted-foreground">
-          {t("no_app_info")}
+          {status === Status.Ready ? t("no_app_info") : t("connect_to_view_app_info")}
         </div>
-      ) : (
-        <div className="text-sm text-muted-foreground">
-          {t("connect_to_view_app_info")}
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full p-4 overflow-auto">
+      <div className="space-y-4 pb-4">
+        <div className="flex gap-4">
+          <img
+            src={`/api/device/${device}/icon/${bundle}`}
+            alt={basicInfo.label}
+            loading="lazy"
+            className="h-16 w-16 rounded-xl shrink-0"
+            onError={(e) => {
+              e.currentTarget.src =
+                "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' fill='%23ddd'/%3E%3C/svg%3E";
+            }}
+          />
+          <div className="flex-1 min-w-0">
+            <div>
+              <div className="text-sm text-muted-foreground mb-1">
+                {t("app_name")}
+              </div>
+              <div className="text-sm">{basicInfo.label || t("na")}</div>
+            </div>
+            <div className="mt-2">
+              <div className="text-sm text-muted-foreground mb-1">
+                {t("bundle_id")}
+              </div>
+              <div className="text-sm font-mono break-all">
+                {basicInfo.id || t("na")}
+              </div>
+            </div>
+          </div>
         </div>
-      )}
+        <div>
+          <div className="text-sm text-muted-foreground mb-1">
+            {t("version")}
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <span>{basicInfo.version || t("na")}</span>
+            <Badge variant="secondary" className="text-xs">
+              {basicInfo.semVer || t("na")}
+            </Badge>
+          </div>
+        </div>
+        <div>
+          <div className="text-xs text-muted-foreground mb-1">
+            {t("min_os")}
+          </div>
+          <Badge variant="outline">{basicInfo.minOS || t("na")}</Badge>
+        </div>
+        <div>
+          <div className="text-xs text-muted-foreground mb-1">
+            {t("bundle_path")}
+          </div>
+          {basicInfo.path ? (
+            <div className="flex items-start">
+              <PathDisplay
+                path={basicInfo.path}
+                onClick={() => openFinderTab("!")}
+              />
+              <CopyButton text={basicInfo.path} />
+            </div>
+          ) : (
+            <span className="text-sm">{t("na")}</span>
+          )}
+        </div>
+        <div>
+          <div className="text-xs text-muted-foreground mb-1">
+            {t("executable")}
+          </div>
+          <div className="flex items-center text-sm font-mono break-all">
+            <span className="text-xs">{basicInfo.main || t("na")}</span>
+            {basicInfo.main && <CopyButton text={basicInfo.main} />}
+          </div>
+        </div>
+        <div>
+          <div className="text-xs text-muted-foreground mb-1">
+            {t("tmp_dir")}
+          </div>
+          <div className="flex items-center text-sm font-mono break-all">
+            <span className="text-xs">{basicInfo.tmp || t("na")}</span>
+            {basicInfo.tmp && <CopyButton text={basicInfo.tmp} />}
+          </div>
+        </div>
+        <div>
+          <div className="text-xs text-muted-foreground mb-1">
+            {t("home_dir")}
+          </div>
+          {basicInfo.home ? (
+            <div className="flex items-start">
+              <PathDisplay
+                path={basicInfo.home}
+                onClick={() => openFinderTab("~")}
+              />
+              <CopyButton text={basicInfo.home} />
+            </div>
+          ) : (
+            <span className="text-sm">{t("na")}</span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
