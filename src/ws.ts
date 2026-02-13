@@ -8,7 +8,7 @@ import frida from "./lib/xvii.ts";
 import env from "./lib/env.ts";
 import { agent } from "./lib/assets.ts";
 import paths from "./lib/paths.ts";
-import { insertHookLog } from "./lib/store.ts";
+import { insertHookLog, upsertCapturedRequest } from "./lib/store.ts";
 
 import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
 
@@ -136,6 +136,7 @@ function setupScriptHandlers(
       } else if (subject === "http") {
         console.log(`[http]`, payload);
         socket.emit("http", payload as HttpNetworkEvent);
+        upsertCapturedRequest(sessionInfo.deviceId, sessionInfo.identifier, payload);
       } else {
         if (subject === "hook") {
           socket.emit(subject, payload);

@@ -6,6 +6,30 @@ export const preferences = sqliteTable("preferences", {
   value: text("value"),
 });
 
+export const capturedRequests = sqliteTable(
+  "captured_requests",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    deviceId: text("device_id").notNull(),
+    identifier: text("identifier").notNull(),
+    requestId: text("request_id").notNull(),
+    data: text("data").notNull(),
+    createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_captured_requests_device_identifier").on(
+      table.deviceId,
+      table.identifier,
+    ),
+    index("idx_captured_requests_request_id").on(
+      table.deviceId,
+      table.identifier,
+      table.requestId,
+    ),
+  ],
+);
+
 export const hooks = sqliteTable(
   "hooks",
   {

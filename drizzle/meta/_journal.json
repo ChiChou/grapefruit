@@ -8,6 +8,13 @@
       "when": 1770655598126,
       "tag": "0000_flimsy_boomer",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1770662099682,
+      "tag": "0001_hard_hitman",
+      "breakpoints": true
     }
   ]
 }
