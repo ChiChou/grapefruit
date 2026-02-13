@@ -6,6 +6,7 @@ import {
   useMemo,
   type CSSProperties,
 } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { List, type ListImperativeAPI } from "react-window";
 import {
@@ -294,53 +295,37 @@ export function HookResultsView() {
   const lastUpdateRef = useRef<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const [listHeight, setListHeight] = useState(300);
-  const historyLoadedRef = useRef(false);
 
   // Auto-scroll state
   const [autoScroll, setAutoScroll] = useState(true);
 
-  // Load historical hooks on mount
+  const identifier = mode === Mode.App ? bundle : `pid-${pid}`;
+
+  // Load historical hooks
+  const { data: hookHistory } = useQuery<{ hooks: { id: number; timestamp: string; payload: BaseHookMessage }[] }>({
+    queryKey: ["hookHistory", device, identifier],
+    queryFn: async () => {
+      const res = await fetch(`/api/hooks/${device}/${identifier}?limit=5000`);
+      if (!res.ok) throw new Error("Failed to load hook history");
+      return res.json();
+    },
+    enabled: !!device && !!identifier,
+    staleTime: Infinity,
+    gcTime: 0,
+  });
+
   useEffect(() => {
-    if (!device || historyLoadedRef.current) return;
-
-    const identifier = mode === Mode.App ? bundle : `pid-${pid}`;
-    if (!identifier) return;
-
-    historyLoadedRef.current = true;
-
-    const loadHistory = async () => {
-      try {
-        const res = await fetch(
-          `/api/hooks/${device}/${identifier}?limit=5000`,
-        );
-        if (res.ok) {
-          const data = await res.json();
-          if (data.hooks && data.hooks.length > 0) {
-            // Convert historical records to HookEntry format
-            // Note: records are returned in DESC order, reverse for chronological
-            const historicalEntries: HookEntry[] = data.hooks
-              .reverse()
-              .map(
-                (record: {
-                  id: number;
-                  timestamp: string;
-                  payload: BaseHookMessage;
-                }) => ({
-                  id: idCounterRef.current++,
-                  timestamp: new Date(record.timestamp),
-                  message: record.payload,
-                }),
-              );
-            setEntries(historicalEntries);
-          }
-        }
-      } catch (e) {
-        console.error("Failed to load hook history:", e);
-      }
-    };
-
-    loadHistory();
-  }, [device, bundle, pid, mode]);
+    if (!hookHistory?.hooks?.length) return;
+    const historicalEntries: HookEntry[] = hookHistory.hooks
+      .slice()
+      .reverse()
+      .map((record) => ({
+        id: idCounterRef.current++,
+        timestamp: new Date(record.timestamp),
+        message: record.payload,
+      }));
+    setEntries(historicalEntries);
+  }, [hookHistory]);
 
   // Resize observer for container
   useEffect(() => {
@@ -439,26 +424,22 @@ export function HookResultsView() {
     [entries.length],
   );
 
-  const handleClear = useCallback(async () => {
-    // Clear UI state
+  const clearHooksMutation = useMutation({
+    mutationFn: async () => {
+      if (!device || !identifier) return;
+      const res = await fetch(`/api/hooks/${device}/${identifier}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to clear hooks from database");
+    },
+  });
+
+  const handleClear = useCallback(() => {
     setEntries([]);
     pendingEntriesRef.current = [];
     idCounterRef.current = 0;
-
-    // Clear database
-    if (device) {
-      const identifier = mode === Mode.App ? bundle : `pid-${pid}`;
-      if (identifier) {
-        try {
-          await fetch(`/api/hooks/${device}/${identifier}`, {
-            method: "DELETE",
-          });
-        } catch (e) {
-          console.error("Failed to clear hooks from database:", e);
-        }
-      }
-    }
-  }, [device, bundle, pid, mode]);
+    clearHooksMutation.mutate();
+  }, [clearHooksMutation]);
 
   const scrollToLatest = useCallback(() => {
     if (listRef.current && entries.length > 0) {

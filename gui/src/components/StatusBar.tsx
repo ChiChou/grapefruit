@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
+import { useMutation } from "@tanstack/react-query";
 import {
   PanelBottomClose,
   PanelBottomOpen,
@@ -61,14 +62,19 @@ export function StatusBar({
     window.location.reload();
   };
 
-  const handleKillProcess = async () => {
-    if (!device || !pid) return;
-    try {
-      await fetch(`/api/device/${device}/kill/${pid}`, { method: "POST" });
+  const killProcessMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/device/${device}/kill/${pid}`, { method: "POST" });
+      if (!res.ok) throw new Error("Failed to kill process");
+    },
+    onSuccess: () => {
       navigate(`/list/${device}/apps`);
-    } catch (e) {
-      console.error("Failed to kill process:", e);
-    }
+    },
+  });
+
+  const handleKillProcess = () => {
+    if (!device || !pid) return;
+    killProcessMutation.mutate();
   };
 
   const handleDetach = () => {
