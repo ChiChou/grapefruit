@@ -534,44 +534,38 @@ export function ImportsListView({ path }: ImportsListViewProps) {
                   >
                     <td className="p-2" style={{ width: columnWidths.icon }}>
                       <div className="flex items-center gap-1">
-                        {batchMode
-                          ? isFunction(imp) && (
-                              <Checkbox
-                                checked={isSelected}
-                                onCheckedChange={(checked) =>
-                                  handleSelectImport(module, imp, !!checked)
-                                }
-                                aria-label="Select row"
-                                className="shrink-0"
-                              />
-                            )
-                          : isFunction(imp) && (
-                              <div className="flex items-center gap-0.5 shrink-0">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  onClick={() =>
-                                    handleHookFunction(module, imp)
-                                  }
-                                  disabled={status !== Status.Ready}
-                                  title={t("hook_add")}
-                                >
-                                  <Anchor className="h-3.5 w-3.5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  onClick={() =>
-                                    handleGenerateCode(module, imp)
-                                  }
-                                  title={t("hook_generate_code")}
-                                >
-                                  <Code className="h-3.5 w-3.5" />
-                                </Button>
-                              </div>
-                            )}
+                        {isFunction(imp) && (batchMode ? (
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={(checked) =>
+                              handleSelectImport(module, imp, !!checked)
+                            }
+                            aria-label="Select row"
+                            className="shrink-0"
+                          />
+                        ) : (
+                          <div className="flex items-center gap-0.5 shrink-0">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => handleHookFunction(module, imp)}
+                              disabled={status !== Status.Ready}
+                              title={t("hook_add")}
+                            >
+                              <Anchor className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => handleGenerateCode(module, imp)}
+                              title={t("hook_generate_code")}
+                            >
+                              <Code className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        ))}
                       </div>
                     </td>
                     <td

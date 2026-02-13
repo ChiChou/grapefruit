@@ -53,123 +53,32 @@ export function LeftPanelView() {
   const target = mode === Mode.App ? bundle : pid;
   const basePath = `/workspace/${platform}/${device}/${mode}/${target}`;
 
-  // Determine which navigation to show based on platform and mode
-  const isFruityApp = platform === Platform.Fruity && mode === Mode.App;
-  const isFruityDaemon = platform === Platform.Fruity && mode === Mode.Daemon;
-  const isDroidApp = platform === Platform.Droid && mode === Mode.App;
-  const isDroidDaemon = platform === Platform.Droid && mode === Mode.Daemon;
-
-  const renderNavigation = () => {
-    if (isFruityApp) {
-      // iOS App mode - full features
-      return (
-        <div className="flex-1 flex flex-col gap-1 pt-2">
-          <NavItem
-            to={`${basePath}/general`}
-            icon={<Info className="h-5 w-5" />}
-            label={t("general")}
-          />
-          <NavItem
-            to={`${basePath}/modules`}
-            icon={<Package className="h-5 w-5" />}
-            label={t("modules")}
-          />
-          <NavItem
-            to={`${basePath}/classes`}
-            icon={<Braces className="h-5 w-5" />}
-            label={t("classes")}
-          />
-          <NavItem
-            to={`${basePath}/urls`}
-            icon={<LinkIcon className="h-5 w-5" />}
-            label="URL Schemes"
-          />
-          <NavItem
-            to={`${basePath}/hooks`}
-            icon={<Anchor className="h-5 w-5" />}
-            label={t("hooks")}
-          />
-          <NavItem
-            to={`${basePath}/geolocation`}
-            icon={<MapPin className="h-5 w-5" />}
-            label={t("geolocation_simulation")}
-          />
-        </div>
-      );
-    }
-
-    if (isFruityDaemon) {
-      // iOS Daemon mode - modules, classes, hooks
-      return (
-        <div className="flex-1 flex flex-col gap-1 pt-2">
-          <NavItem
-            to={`${basePath}/modules`}
-            icon={<Package className="h-5 w-5" />}
-            label={t("modules")}
-          />
-          <NavItem
-            to={`${basePath}/classes`}
-            icon={<Braces className="h-5 w-5" />}
-            label={t("classes")}
-          />
-          <NavItem
-            to={`${basePath}/hooks`}
-            icon={<Anchor className="h-5 w-5" />}
-            label={t("hooks")}
-          />
-        </div>
-      );
-    }
-
-    if (isDroidApp) {
-      // Android App mode - general, components, modules, device
-      return (
-        <div className="flex-1 flex flex-col gap-1 pt-2">
-          <NavItem
-            to={`${basePath}/general`}
-            icon={<Info className="h-5 w-5" />}
-            label={t("general")}
-          />
-          <NavItem
-            to={`${basePath}/components`}
-            icon={<Puzzle className="h-5 w-5" />}
-            label={t("components")}
-          />
-          <NavItem
-            to={`${basePath}/modules`}
-            icon={<Package className="h-5 w-5" />}
-            label={t("modules")}
-          />
-          <NavItem
-            to={`${basePath}/device`}
-            icon={<Smartphone className="h-5 w-5" />}
-            label={t("device_info")}
-          />
-        </div>
-      );
-    }
-
-    if (isDroidDaemon) {
-      // Android Daemon mode - modules, device
-      return (
-        <div className="flex-1 flex flex-col gap-1 pt-2">
-          <NavItem
-            to={`${basePath}/modules`}
-            icon={<Package className="h-5 w-5" />}
-            label={t("modules")}
-          />
-          <NavItem
-            to={`${basePath}/device`}
-            icon={<Smartphone className="h-5 w-5" />}
-            label={t("device_info")}
-          />
-        </div>
-      );
-    }
-
-    // Other modes - no navigation yet
-    return <div className="flex-1" />;
-  };
+  const navKey = `${platform}:${mode}`;
+  const navItems: { route: string; icon: React.ReactNode; label: string }[] = {
+    [`${Platform.Fruity}:${Mode.App}`]: [
+      { route: "general", icon: <Info className="h-5 w-5" />, label: t("general") },
+      { route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
+      { route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
+      { route: "urls", icon: <LinkIcon className="h-5 w-5" />, label: "URL Schemes" },
+      { route: "hooks", icon: <Anchor className="h-5 w-5" />, label: t("hooks") },
+      { route: "geolocation", icon: <MapPin className="h-5 w-5" />, label: t("geolocation_simulation") },
+    ],
+    [`${Platform.Fruity}:${Mode.Daemon}`]: [
+      { route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
+      { route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
+      { route: "hooks", icon: <Anchor className="h-5 w-5" />, label: t("hooks") },
+    ],
+    [`${Platform.Droid}:${Mode.App}`]: [
+      { route: "general", icon: <Info className="h-5 w-5" />, label: t("general") },
+      { route: "components", icon: <Puzzle className="h-5 w-5" />, label: t("components") },
+      { route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
+      { route: "device", icon: <Smartphone className="h-5 w-5" />, label: t("device_info") },
+    ],
+    [`${Platform.Droid}:${Mode.Daemon}`]: [
+      { route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
+      { route: "device", icon: <Smartphone className="h-5 w-5" />, label: t("device_info") },
+    ],
+  }[navKey] ?? [];
 
   return (
     <div className="flex h-full">
@@ -180,7 +89,20 @@ export function LeftPanelView() {
           </Link>
         </div>
 
-        {renderNavigation()}
+        {navItems.length > 0 ? (
+          <div className="flex-1 flex flex-col gap-1 pt-2">
+            {navItems.map((item) => (
+              <NavItem
+                key={item.route}
+                to={`${basePath}/${item.route}`}
+                icon={item.icon}
+                label={item.label}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex-1" />
+        )}
 
         {/* Settings at bottom */}
         <div className="flex flex-col gap-1 py-2 items-center">

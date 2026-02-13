@@ -126,45 +126,27 @@ export function ProcessesView() {
   };
 
   const filteredAndSortedProcesses = useMemo(() => {
-    const filtered = processes.filter((process) => {
-      const query = searchQuery.toLowerCase();
-      return (
-        process.name.toLowerCase().includes(query) ||
-        process.pid.toString().includes(query) ||
-        process.path?.toLowerCase().includes(query) ||
-        process.user?.toLowerCase().includes(query)
-      );
+    const query = searchQuery.toLowerCase();
+    const filtered = processes.filter((p) =>
+      p.name.toLowerCase().includes(query) ||
+      p.pid.toString().includes(query) ||
+      p.path?.toLowerCase().includes(query) ||
+      p.user?.toLowerCase().includes(query)
+    );
+
+    const sortAccessors: Record<SortField, (p: Process) => string | number> = {
+      pid: (p) => p.pid,
+      name: (p) => p.name.toLowerCase(),
+      user: (p) => (p.user ?? "").toLowerCase(),
+      path: (p) => (p.path ?? "").toLowerCase(),
+    };
+    const accessor = sortAccessors[sort.field];
+    const dir = sort.direction === "asc" ? 1 : -1;
+
+    return [...filtered].sort((a, b) => {
+      const aVal = accessor(a), bVal = accessor(b);
+      return aVal < bVal ? -dir : aVal > bVal ? dir : 0;
     });
-
-    const sorted = [...filtered];
-    sorted.sort((a, b) => {
-      let aValue: string | number = "";
-      let bValue: string | number = "";
-
-      switch (sort.field) {
-        case "pid":
-          aValue = a.pid;
-          bValue = b.pid;
-          break;
-        case "name":
-          aValue = a.name.toLowerCase();
-          bValue = b.name.toLowerCase();
-          break;
-        case "user":
-          aValue = (a.user ?? "").toLowerCase();
-          bValue = (b.user ?? "").toLowerCase();
-          break;
-        case "path":
-          aValue = (a.path ?? "").toLowerCase();
-          bValue = (b.path ?? "").toLowerCase();
-          break;
-      }
-
-      if (aValue < bValue) return sort.direction === "asc" ? -1 : 1;
-      if (aValue > bValue) return sort.direction === "asc" ? 1 : -1;
-      return 0;
-    });
-    return sorted;
   }, [processes, searchQuery, sort]);
 
   const SortableHead = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
