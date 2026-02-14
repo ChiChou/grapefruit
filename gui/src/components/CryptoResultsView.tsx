@@ -371,7 +371,7 @@ export function CryptoResultsView() {
     queryKey: ["cryptoHistory", device, identifier],
     queryFn: async () => {
       const res = await fetch(
-        `/api/crypto-logs/${device}/${identifier}?limit=5000`,
+        `/api/history/crypto/${device}/${identifier}?limit=5000`,
       );
       if (!res.ok) throw new Error("Failed to load crypto history");
       return res.json();
@@ -498,7 +498,7 @@ export function CryptoResultsView() {
   const clearCryptoMutation = useMutation({
     mutationFn: async () => {
       if (!device || !identifier) return;
-      const res = await fetch(`/api/crypto-logs/${device}/${identifier}`, {
+      const res = await fetch(`/api/history/crypto/${device}/${identifier}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to clear crypto logs");

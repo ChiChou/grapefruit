@@ -107,7 +107,7 @@ const routes = new Hono()
     }
   })
   // Crypto log endpoints
-  .get("/crypto-logs/:device/:identifier", (c) => {
+  .get("/history/crypto/:device/:identifier", (c) => {
     const deviceId = c.req.param("device");
     const identifier = c.req.param("identifier");
 
@@ -142,7 +142,7 @@ const routes = new Hono()
       return c.json({ logs: [], total: 0, limit, offset });
     }
   })
-  .delete("/crypto-logs/:device/:identifier", (c) => {
+  .delete("/history/crypto/:device/:identifier", (c) => {
     const deviceId = c.req.param("device");
     const identifier = c.req.param("identifier");
 
@@ -155,7 +155,7 @@ const routes = new Hono()
     }
   })
   // HTTP log endpoints
-  .get("/http-logs/:device/:identifier", (c) => {
+  .get("/history/http/:device/:identifier", (c) => {
     const deviceId = c.req.param("device");
     const identifier = c.req.param("identifier");
 
@@ -175,7 +175,7 @@ const routes = new Hono()
       return c.json({ requests: [], total: 0, limit, offset });
     }
   })
-  .delete("/http-logs/:device/:identifier", (c) => {
+  .delete("/history/http/:device/:identifier", (c) => {
     const deviceId = c.req.param("device");
     const identifier = c.req.param("identifier");
 

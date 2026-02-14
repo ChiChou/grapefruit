@@ -317,7 +317,7 @@ export function HttpLogTab() {
   const { data: httpLogHistory } = useQuery<{ requests: (CapturedRequest & { size: string | number })[] }>({
     queryKey: ["httpLogHistory", device, identifier],
     queryFn: async () => {
-      const res = await fetch(`/api/http-logs/${device}/${identifier}?limit=5000`);
+      const res = await fetch(`/api/history/http/${device}/${identifier}?limit=5000`);
       if (!res.ok) throw new Error("Failed to load HTTP log history");
       return res.json();
     },
@@ -340,7 +340,7 @@ export function HttpLogTab() {
   const clearHttpLogsMutation = useMutation({
     mutationFn: async () => {
       if (!device || !identifier) return;
-      const res = await fetch(`/api/http-logs/${device}/${identifier}`, {
+      const res = await fetch(`/api/history/http/${device}/${identifier}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to clear HTTP logs from database");
