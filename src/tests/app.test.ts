@@ -299,7 +299,7 @@ describe("Crypto Logs API", () => {
   });
 
   it("should return empty crypto logs", async () => {
-    const r = await app.request(`/api/crypto-logs/${device}/${identifier}`);
+    const r = await app.request(`/api/history/crypto/${device}/${identifier}`);
     assert.strictEqual(r.status, 200);
     const body = await r.json() as { logs: unknown[]; total: number };
     assert.deepStrictEqual(body.logs, []);
@@ -310,7 +310,7 @@ describe("Crypto Logs API", () => {
     cryptoStore.append(device, identifier, { symbol: "CCCrypt", dir: "encrypt" });
     cryptoStore.append(device, identifier, { symbol: "SecKeyEncrypt", dir: "decrypt" });
 
-    const r = await app.request(`/api/crypto-logs/${device}/${identifier}`);
+    const r = await app.request(`/api/history/crypto/${device}/${identifier}`);
     const body = await r.json() as { logs: any[]; total: number };
     assert.strictEqual(body.total, 2);
     assert.strictEqual(body.logs.length, 2);
@@ -326,7 +326,7 @@ describe("Crypto Logs API", () => {
       backtrace: ["0x1000", "0x2000"],
     });
 
-    const r = await app.request(`/api/crypto-logs/${device}/${identifier}`);
+    const r = await app.request(`/api/history/crypto/${device}/${identifier}`);
     const body = await r.json() as { logs: any[] };
     assert.strictEqual(typeof body.logs[0].extra, "object");
     assert.strictEqual(body.logs[0].extra.algo, "AES");
@@ -339,7 +339,7 @@ describe("Crypto Logs API", () => {
       cryptoStore.append(device, identifier, { symbol: `sym${i}`, dir: "enc" });
     }
 
-    const r = await app.request(`/api/crypto-logs/${device}/${identifier}?limit=2&offset=1`);
+    const r = await app.request(`/api/history/crypto/${device}/${identifier}?limit=2&offset=1`);
     const body = await r.json() as { logs: any[]; total: number; limit: number; offset: number };
     assert.strictEqual(body.logs.length, 2);
     assert.strictEqual(body.total, 5);
@@ -348,10 +348,10 @@ describe("Crypto Logs API", () => {
   it("should clear crypto logs", async () => {
     cryptoStore.append(device, identifier, { symbol: "s", dir: "enc" });
 
-    const r = await app.request(`/api/crypto-logs/${device}/${identifier}`, { method: "DELETE" });
+    const r = await app.request(`/api/history/crypto/${device}/${identifier}`, { method: "DELETE" });
     assert.strictEqual(r.status, 204);
 
-    const r2 = await app.request(`/api/crypto-logs/${device}/${identifier}`);
+    const r2 = await app.request(`/api/history/crypto/${device}/${identifier}`);
     const body = await r2.json() as { total: number };
     assert.strictEqual(body.total, 0);
   });
@@ -366,7 +366,7 @@ describe("HTTP Logs API", () => {
   });
 
   it("should return empty http logs", async () => {
-    const r = await app.request(`/api/http-logs/${device}/${identifier}`);
+    const r = await app.request(`/api/history/http/${device}/${identifier}`);
     assert.strictEqual(r.status, 200);
     const body = await r.json() as { requests: unknown[]; total: number };
     assert.deepStrictEqual(body.requests, []);
@@ -387,7 +387,7 @@ describe("HTTP Logs API", () => {
       response: { statusCode: 200, mimeType: "application/json", headers: {} },
     });
 
-    const r = await app.request(`/api/http-logs/${device}/${identifier}`);
+    const r = await app.request(`/api/history/http/${device}/${identifier}`);
     const body = await r.json() as { requests: any[]; total: number };
     assert.strictEqual(body.total, 1);
     assert.strictEqual(body.requests[0].method, "GET");
@@ -403,10 +403,10 @@ describe("HTTP Logs API", () => {
       request: { method: "POST", url: "https://example.com", headers: {} },
     });
 
-    const r = await app.request(`/api/http-logs/${device}/${identifier}`, { method: "DELETE" });
+    const r = await app.request(`/api/history/http/${device}/${identifier}`, { method: "DELETE" });
     assert.strictEqual(r.status, 204);
 
-    const r2 = await app.request(`/api/http-logs/${device}/${identifier}`);
+    const r2 = await app.request(`/api/history/http/${device}/${identifier}`);
     const body = await r2.json() as { total: number };
     assert.strictEqual(body.total, 0);
   });
@@ -425,7 +425,7 @@ describe("HTTP Logs API", () => {
       request: { method: "GET", url: "https://b.com", headers: {} },
     });
 
-    const r = await app.request(`/api/http-logs/${device}/${identifier}`);
+    const r = await app.request(`/api/history/http/${device}/${identifier}`);
     const body = await r.json() as { total: number };
     assert.strictEqual(body.total, 1);
 
