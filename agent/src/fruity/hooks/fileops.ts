@@ -1,15 +1,4 @@
-import { BaseMessage, bt } from "@/common/hooks/context.js";
-
-export interface Message extends BaseMessage {
-  subject: "hook";
-  category: "fileops";
-  op: "open" | "create" | "delete" | "stat" | "access" | "rename" | "link";
-  path?: string;
-  path2?: string; // for rename/link operations
-  flags?: string;
-  mode?: number;
-  result?: number;
-}
+import { bt } from "@/common/hooks/context.js";
 
 // Open flags
 const O_RDONLY = 0x0000;
@@ -69,12 +58,9 @@ export function monitor() {
             symbol: "open",
             dir: "leave",
             line: `open(${q(this.path)}, ${flagsStr}) = ${fd}`,
-            op: isCreate ? "create" : "open",
-            path: this.path,
-            flags: flagsStr,
-            result: fd,
             backtrace: bt(this.context),
-          } as Message);
+            extra: { op: isCreate ? "create" : "open", path: this.path, flags: flagsStr, result: fd },
+          });
         },
       }),
     );
@@ -100,12 +86,9 @@ export function monitor() {
             symbol: "openat",
             dir: "leave",
             line: `openat(AT_FDCWD, ${q(this.path)}, ${flagsStr}) = ${fd}`,
-            op: isCreate ? "create" : "open",
-            path: this.path,
-            flags: flagsStr,
-            result: fd,
             backtrace: bt(this.context),
-          } as Message);
+            extra: { op: isCreate ? "create" : "open", path: this.path, flags: flagsStr, result: fd },
+          });
         },
       }),
     );
@@ -127,11 +110,9 @@ export function monitor() {
             symbol: "unlink",
             dir: "leave",
             line: `unlink(${q(this.path)}) = ${result}`,
-            op: "delete",
-            path: this.path,
-            result,
             backtrace: bt(this.context),
-          } as Message);
+            extra: { op: "delete", path: this.path, result },
+          });
         },
       }),
     );
@@ -153,11 +134,9 @@ export function monitor() {
             symbol: "unlinkat",
             dir: "leave",
             line: `unlinkat(AT_FDCWD, ${q(this.path)}) = ${result}`,
-            op: "delete",
-            path: this.path,
-            result,
             backtrace: bt(this.context),
-          } as Message);
+            extra: { op: "delete", path: this.path, result },
+          });
         },
       }),
     );
@@ -179,11 +158,9 @@ export function monitor() {
             symbol: "rmdir",
             dir: "leave",
             line: `rmdir(${q(this.path)}) = ${result}`,
-            op: "delete",
-            path: this.path,
-            result,
             backtrace: bt(this.context),
-          } as Message);
+            extra: { op: "delete", path: this.path, result },
+          });
         },
       }),
     );
@@ -205,11 +182,9 @@ export function monitor() {
             symbol: "stat",
             dir: "leave",
             line: `stat(${q(this.path)}) = ${result}`,
-            op: "stat",
-            path: this.path,
-            result,
             backtrace: bt(this.context),
-          } as Message);
+            extra: { op: "stat", path: this.path, result },
+          });
         },
       }),
     );
@@ -231,11 +206,9 @@ export function monitor() {
             symbol: "stat64",
             dir: "leave",
             line: `stat64(${q(this.path)}) = ${result}`,
-            op: "stat",
-            path: this.path,
-            result,
             backtrace: bt(this.context),
-          } as Message);
+            extra: { op: "stat", path: this.path, result },
+          });
         },
       }),
     );
@@ -257,11 +230,9 @@ export function monitor() {
             symbol: "lstat",
             dir: "leave",
             line: `lstat(${q(this.path)}) = ${result}`,
-            op: "stat",
-            path: this.path,
-            result,
             backtrace: bt(this.context),
-          } as Message);
+            extra: { op: "stat", path: this.path, result },
+          });
         },
       }),
     );
@@ -283,11 +254,9 @@ export function monitor() {
             symbol: "lstat64",
             dir: "leave",
             line: `lstat64(${q(this.path)}) = ${result}`,
-            op: "stat",
-            path: this.path,
-            result,
             backtrace: bt(this.context),
-          } as Message);
+            extra: { op: "stat", path: this.path, result },
+          });
         },
       }),
     );
@@ -310,12 +279,9 @@ export function monitor() {
             symbol: "access",
             dir: "leave",
             line: `access(${q(this.path)}, ${this.mode}) = ${result}`,
-            op: "access",
-            path: this.path,
-            mode: this.mode,
-            result,
             backtrace: bt(this.context),
-          } as Message);
+            extra: { op: "access", path: this.path, mode: this.mode, result },
+          });
         },
       }),
     );
@@ -338,12 +304,9 @@ export function monitor() {
             symbol: "faccessat",
             dir: "leave",
             line: `faccessat(AT_FDCWD, ${q(this.path)}, ${this.mode}) = ${result}`,
-            op: "access",
-            path: this.path,
-            mode: this.mode,
-            result,
             backtrace: bt(this.context),
-          } as Message);
+            extra: { op: "access", path: this.path, mode: this.mode, result },
+          });
         },
       }),
     );
@@ -366,12 +329,9 @@ export function monitor() {
             symbol: "rename",
             dir: "leave",
             line: `rename(${q(this.oldPath)}, ${q(this.newPath)}) = ${result}`,
-            op: "rename",
-            path: this.oldPath,
-            path2: this.newPath,
-            result,
             backtrace: bt(this.context),
-          } as Message);
+            extra: { op: "rename", path: this.oldPath, path2: this.newPath, result },
+          });
         },
       }),
     );
@@ -394,12 +354,9 @@ export function monitor() {
             symbol: "renameat",
             dir: "leave",
             line: `renameat(AT_FDCWD, ${q(this.oldPath)}, AT_FDCWD, ${q(this.newPath)}) = ${result}`,
-            op: "rename",
-            path: this.oldPath,
-            path2: this.newPath,
-            result,
             backtrace: bt(this.context),
-          } as Message);
+            extra: { op: "rename", path: this.oldPath, path2: this.newPath, result },
+          });
         },
       }),
     );
@@ -422,12 +379,9 @@ export function monitor() {
             symbol: "mkdir",
             dir: "leave",
             line: `mkdir(${q(this.path)}, 0${this.mode.toString(8)}) = ${result}`,
-            op: "create",
-            path: this.path,
-            mode: this.mode,
-            result,
             backtrace: bt(this.context),
-          } as Message);
+            extra: { op: "create", path: this.path, mode: this.mode, result },
+          });
         },
       }),
     );
@@ -450,12 +404,9 @@ export function monitor() {
             symbol: "mkdirat",
             dir: "leave",
             line: `mkdirat(AT_FDCWD, ${q(this.path)}, 0${this.mode.toString(8)}) = ${result}`,
-            op: "create",
-            path: this.path,
-            mode: this.mode,
-            result,
             backtrace: bt(this.context),
-          } as Message);
+            extra: { op: "create", path: this.path, mode: this.mode, result },
+          });
         },
       }),
     );
@@ -478,12 +429,9 @@ export function monitor() {
             symbol: "link",
             dir: "leave",
             line: `link(${q(this.oldPath)}, ${q(this.newPath)}) = ${result}`,
-            op: "link",
-            path: this.oldPath,
-            path2: this.newPath,
-            result,
             backtrace: bt(this.context),
-          } as Message);
+            extra: { op: "link", path: this.oldPath, path2: this.newPath, result },
+          });
         },
       }),
     );
@@ -506,12 +454,9 @@ export function monitor() {
             symbol: "symlink",
             dir: "leave",
             line: `symlink(${q(this.oldPath)}, ${q(this.newPath)}) = ${result}`,
-            op: "link",
-            path: this.oldPath,
-            path2: this.newPath,
-            result,
             backtrace: bt(this.context),
-          } as Message);
+            extra: { op: "link", path: this.oldPath, path2: this.newPath, result },
+          });
         },
       }),
     );

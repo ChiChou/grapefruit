@@ -3,13 +3,6 @@ import ObjC from "frida-objc-bridge";
 import { BaseMessage, bt } from "@/common/hooks/context.js";
 import { parse } from "./typecoding.js";
 
-export interface Message extends BaseMessage {
-  cls: string;
-  sel: string;
-  args: string[];
-  ret: string;
-}
-
 const hooked = new Map<string, Map<string, InvocationListener>>();
 
 export function swizzle(cls: string, sel: string) {
@@ -40,28 +33,24 @@ export function swizzle(cls: string, sel: string) {
       send({
         subject: "hook",
         category: "objc",
-        cls,
-        sel,
         symbol: `${cls} ${sel}`,
         dir: "enter",
         line: `[${cls} ${sel}](${argsStr})`,
         backtrace: bt(this.context),
-        args: formatted,
-      });
+        extra: { cls, sel, args: formatted },
+      } satisfies BaseMessage);
     },
     onLeave(retval) {
       const retStr = format(parsed.ret, retval);
       send({
         subject: "hook",
         category: "objc",
-        cls,
-        sel,
         symbol: `${cls} ${sel}`,
         dir: "leave",
         line: `[${cls} ${sel}] → ${retStr}`,
         backtrace: bt(this.context),
-        ret: retStr,
-      });
+        extra: { cls, sel, ret: retStr },
+      } satisfies BaseMessage);
     },
   });
 

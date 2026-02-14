@@ -5,6 +5,7 @@ export interface BaseMessage {
   dir: "enter" | "leave";
   line?: string;
   backtrace?: string[];
+  extra?: Record<string, unknown>;
 }
 
 export function bt(ctx: CpuContext): string[] {

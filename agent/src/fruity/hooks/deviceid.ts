@@ -1,13 +1,6 @@
 import ObjC from "frida-objc-bridge";
 import { BaseMessage } from "@/common/hooks/context.js";
 
-export interface Message extends BaseMessage {
-  subject: "hook";
-  category: "deviceid";
-  original?: string;
-  spoofed?: string;
-}
-
 function randomUUID(): string {
   return ObjC.classes.NSUUID.UUIDString;
 }
@@ -31,8 +24,8 @@ export function spoof() {
     symbol: "init",
     dir: "enter",
     line: `Spoofing IDFV=${FAKE_IDFV}, IDFA=${FAKE_IDFA}`,
-    spoofed: `IDFV=${FAKE_IDFV}, IDFA=${FAKE_IDFA}`,
-  } as Message);
+    extra: { spoofed: `IDFV=${FAKE_IDFV}, IDFA=${FAKE_IDFA}` },
+  } satisfies BaseMessage);
 
   // Hook UIDevice identifierForVendor
   const UIDevice = ObjC.classes.UIDevice;
@@ -55,9 +48,8 @@ export function spoof() {
               symbol: "-[UIDevice identifierForVendor]",
               dir: "leave",
               line: `identifierForVendor() → ${FAKE_IDFV} (was: ${original})`,
-              original,
-              spoofed: FAKE_IDFV,
-            } as Message);
+              extra: { original, spoofed: FAKE_IDFV },
+            } satisfies BaseMessage);
           },
         }),
       );
@@ -85,9 +77,8 @@ export function spoof() {
               symbol: "-[ASIdentifierManager advertisingIdentifier]",
               dir: "leave",
               line: `advertisingIdentifier() → ${FAKE_IDFA} (was: ${original})`,
-              original,
-              spoofed: FAKE_IDFA,
-            } as Message);
+              extra: { original, spoofed: FAKE_IDFA },
+            } satisfies BaseMessage);
           },
         }),
       );

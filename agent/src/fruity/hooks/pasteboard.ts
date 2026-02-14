@@ -1,14 +1,19 @@
 import ObjC from "frida-objc-bridge";
-import { BaseMessage, bt } from "@/common/hooks/context.js";
+import { bt } from "@/common/hooks/context.js";
 
-export interface Message extends BaseMessage {
-  subject: "hook";
-  category: "pasteboard";
-  op: "read" | "write";
-  pasteboardName?: string;
-  isGeneral: boolean;
-  contentType?: string;
-}
+// Helper to get pasteboard name
+const getPasteboardInfo = (
+  self: ObjC.Object,
+): { name: string; isGeneral: boolean; shortName: string } => {
+  try {
+    const name = self.name()?.toString() || "unknown";
+    const isGeneral = name === "com.apple.UIKit.pboard.general";
+    const shortName = isGeneral ? "generalPasteboard" : name;
+    return { name, isGeneral, shortName };
+  } catch {
+    return { name: "unknown", isGeneral: false, shortName: "unknown" };
+  }
+};
 
 /**
  * Hook UIPasteboard operations to monitor clipboard access
@@ -19,20 +24,6 @@ export function monitor() {
   const hooks: InvocationListener[] = [];
   const UIPasteboard = ObjC.classes.UIPasteboard;
   if (!UIPasteboard) return [];
-
-  // Helper to get pasteboard name
-  const getPasteboardInfo = (
-    self: ObjC.Object,
-  ): { name: string; isGeneral: boolean; shortName: string } => {
-    try {
-      const name = self.name()?.toString() || "unknown";
-      const isGeneral = name === "com.apple.UIKit.pboard.general";
-      const shortName = isGeneral ? "generalPasteboard" : name;
-      return { name, isGeneral, shortName };
-    } catch {
-      return { name: "unknown", isGeneral: false, shortName: "unknown" };
-    }
-  };
 
   // Hook string getter
   const stringGetter = UIPasteboard["- string"];
@@ -65,12 +56,9 @@ export function monitor() {
               symbol: "-[UIPasteboard string]",
               dir: "leave",
               line: `[${shortName} string] // read`,
-              op: "read",
-              pasteboardName: name,
-              isGeneral,
-              contentType: "string",
               backtrace: bt(this.context),
-            } as Message,
+              extra: { op: "read", pasteboardName: name, isGeneral, contentType: "string" },
+            },
             content,
           );
         },
@@ -95,12 +83,9 @@ export function monitor() {
             symbol: "-[UIPasteboard strings]",
             dir: "leave",
             line: `[${shortName} strings] // read`,
-            op: "read",
-            pasteboardName: name,
-            isGeneral,
-            contentType: "strings",
             backtrace: bt(this.context),
-          } as Message);
+            extra: { op: "read", pasteboardName: name, isGeneral, contentType: "strings" },
+          });
         },
       }),
     );
@@ -137,12 +122,9 @@ export function monitor() {
               symbol: "-[UIPasteboard setString:]",
               dir: "leave",
               line: `[${shortName} setString:...] // write`,
-              op: "write",
-              pasteboardName: name,
-              isGeneral,
-              contentType: "string",
               backtrace: bt(this.context),
-            } as Message,
+              extra: { op: "write", pasteboardName: name, isGeneral, contentType: "string" },
+            },
             this.content,
           );
         },
@@ -179,12 +161,9 @@ export function monitor() {
               symbol: "-[UIPasteboard dataForPasteboardType:]",
               dir: "leave",
               line: `[${shortName} dataForPasteboardType:"${this.pbType}"] // read`,
-              op: "read",
-              pasteboardName: name,
-              isGeneral,
-              contentType: this.pbType,
               backtrace: bt(this.context),
-            } as Message,
+              extra: { op: "read", pasteboardName: name, isGeneral, contentType: this.pbType },
+            },
             content,
           );
         },
@@ -221,12 +200,9 @@ export function monitor() {
               symbol: "-[UIPasteboard setData:forPasteboardType:]",
               dir: "leave",
               line: `[${shortName} setData:... forPasteboardType:"${this.pbType}"] // write`,
-              op: "write",
-              pasteboardName: name,
-              isGeneral,
-              contentType: this.pbType,
               backtrace: bt(this.context),
-            } as Message,
+              extra: { op: "write", pasteboardName: name, isGeneral, contentType: this.pbType },
+            },
             this.content,
           );
         },
@@ -251,12 +227,9 @@ export function monitor() {
             symbol: "-[UIPasteboard setItems:]",
             dir: "leave",
             line: `[${shortName} setItems:...] // write`,
-            op: "write",
-            pasteboardName: name,
-            isGeneral,
-            contentType: "items",
             backtrace: bt(this.context),
-          } as Message);
+            extra: { op: "write", pasteboardName: name, isGeneral, contentType: "items" },
+          });
         },
       }),
     );
@@ -296,12 +269,9 @@ export function monitor() {
               symbol: "-[UIPasteboard URL]",
               dir: "leave",
               line: `[${shortName} URL] // read`,
-              op: "read",
-              pasteboardName: name,
-              isGeneral,
-              contentType: "URL",
               backtrace: bt(this.context),
-            } as Message,
+              extra: { op: "read", pasteboardName: name, isGeneral, contentType: "URL" },
+            },
             content,
           );
         },
@@ -326,12 +296,9 @@ export function monitor() {
             symbol: "-[UIPasteboard image]",
             dir: "leave",
             line: `[${shortName} image] // read`,
-            op: "read",
-            pasteboardName: name,
-            isGeneral,
-            contentType: "image",
             backtrace: bt(this.context),
-          } as Message);
+            extra: { op: "read", pasteboardName: name, isGeneral, contentType: "image" },
+          });
         },
       }),
     );
