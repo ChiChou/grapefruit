@@ -7,6 +7,7 @@ const TRIM_AMOUNT = 1000;
 export interface LogViewerHandle {
   append: (text: string) => void;
   clear: () => void;
+  scrollToBottom: () => void;
 }
 
 interface LogViewerProps {
@@ -120,7 +121,14 @@ export const LogViewer = forwardRef<LogViewerHandle, LogViewerProps>(
       nextIdRef.current = 0;
     }, []);
 
-    useImperativeHandle(ref, () => ({ append, clear }), [append, clear]);
+    const forceScrollToBottom = useCallback(() => {
+      const container = containerRef.current;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }, []);
+
+    useImperativeHandle(ref, () => ({ append, clear, scrollToBottom: forceScrollToBottom }), [append, clear, forceScrollToBottom]);
 
     useEffect(() => {
       const container = containerRef.current;

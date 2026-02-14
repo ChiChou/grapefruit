@@ -43,6 +43,7 @@ type ClientCallback = (err: Error | null, result: any) => void;
 interface ClientToServerEvents {
   rpc: (mod: string, method: string, args: any[], ack: ClientCallback) => void;
   eval: (source: string, name: string, ack: ClientCallback) => void;
+  clearLog: (type: "syslog" | "agent", ack: ClientCallback) => void;
 }
 
 const manager = frida.getDeviceManager();
@@ -201,6 +202,12 @@ function setupSocketHandlers(
       console.info(`evaluating script: ${name}`);
       ack(new Error("not implemented"), null);
       return;
+    })
+    .on("clearLog", (type, ack) => {
+      logger
+        .empty(type)
+        .then(() => ack(null, true))
+        .catch((err) => ack(err, null));
     })
     .on("disconnect", () => {
       console.info("socket disconnected");
