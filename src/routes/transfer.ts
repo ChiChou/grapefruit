@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
 import { Readable } from "node:stream";
-import { createTransport } from "../lib/transport.ts";
+import { create as createTransport } from "../lib/transport.ts";
 import { getDeviceMiddleware } from "../lib/middleware.ts";
 
 const routes = new Hono()

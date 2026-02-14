@@ -18,7 +18,7 @@ export class Transport {
   }
 }
 
-export async function createTransport(
+export async function create(
   device: Device,
   pid: number,
 ): Promise<Transport> {
