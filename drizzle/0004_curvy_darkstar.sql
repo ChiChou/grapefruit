@@ -1,0 +1,1 @@
+ALTER TABLE `crypto_logs` ADD `data` blob;

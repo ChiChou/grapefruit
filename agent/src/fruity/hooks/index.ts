@@ -1,4 +1,3 @@
-import * as crypto from "./crypto.js";
 import * as sqlite from "./sqlite.js";
 import * as pasteboard from "./pasteboard.js";
 import * as deviceid from "./deviceid.js";
@@ -16,18 +15,10 @@ const HOOK_GROUPS = [
   "deviceid",
   "biometric",
   "sqlite",
-  "crypto",
 ] as const;
 
 function get(group: string) {
-  if (group === "crypto") {
-    return [
-      ...crypto.cccrypt(),
-      ...crypto.x509(),
-      ...crypto.hmac(),
-      ...crypto.hash(),
-    ];
-  } else if (group === "sqlite") {
+  if (group === "sqlite") {
     return [
       ...sqlite.open(),
       ...sqlite.bind(),

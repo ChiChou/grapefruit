@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Lock,
   Database,
   Loader2,
   Clipboard,
@@ -26,12 +25,6 @@ interface HookGroup {
 }
 
 const HOOK_GROUPS: HookGroup[] = [
-  {
-    id: "crypto",
-    icon: <Lock className="h-4 w-4" />,
-    nameKey: "hook_crypto",
-    descKey: "hook_crypto_desc",
-  },
   {
     id: "sqlite",
     icon: <Database className="h-4 w-4" />,
