@@ -1,4 +1,4 @@
-import { ParseArgsConfig } from "node:util";
+import type { ParseArgsConfig } from "node:util";
 
 export const schema: ParseArgsConfig = {
   args: process.argv.slice(2),

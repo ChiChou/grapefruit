@@ -52,7 +52,7 @@ async function main() {
     process.exit(1);
   }
 
-  await $`tar cvf assets.tgz gui/dist agent/dist`;
+  await $`tar cvf assets.tgz gui/dist agent/dist drizzle`;
 
   const fridaModules = ["frida", "frida16"];
 
