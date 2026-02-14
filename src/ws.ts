@@ -1,26 +1,19 @@
 import { type ServerType } from "@hono/node-server";
 import { Server, type Socket } from "socket.io";
 import { SessionDetachReason, type SpawnOptions, type Device } from "frida";
-import fs from "node:fs/promises";
-import path from "node:path";
 
 import frida from "./lib/xvii.ts";
 import env from "./lib/env.ts";
 import { agent } from "./lib/assets.ts";
-import paths from "./lib/paths.ts";
-import { insertHookLog, insertCryptoLog, upsertCapturedRequest } from "./lib/store.ts";
+import { LogWriter } from "./lib/log-writer.ts";
+import * as hookStore from "./lib/store/hooks.ts";
+import * as cryptoStore from "./lib/store/crypto.ts";
+import * as httpStore from "./lib/store/requests.ts";
 
 import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
 
 type Platform = "fruity" | "droid";
 type Mode = "app" | "daemon";
-
-export interface HttpNetworkEvent {
-  event: string;
-  requestId: string;
-  timestamp: number;
-  [key: string]: unknown;
-}
 
 interface SessionParams {
   platform: Platform;
@@ -42,7 +35,7 @@ interface ServerToClientEvents {
   ) => void;
   hook: (msg: BaseHookMessage) => void;
   crypto: (msg: BaseHookMessage, data?: ArrayBuffer) => void;
-  http: (event: HttpNetworkEvent) => void;
+  http: (event: httpStore.HttpNetworkEvent) => void;
 }
 
 type ClientCallback = (err: Error | null, result: any) => void;
@@ -54,44 +47,6 @@ interface ClientToServerEvents {
 
 const manager = frida.getDeviceManager();
 
-class LogWriter {
-  private syslog: fs.FileHandle;
-  private agentLog: fs.FileHandle;
-
-  private constructor(syslog: fs.FileHandle, agentLog: fs.FileHandle) {
-    this.syslog = syslog;
-    this.agentLog = agentLog;
-  }
-
-  static async open(deviceId: string, identifier: string): Promise<LogWriter> {
-    const logsDir = path.join(paths.data, "logs", deviceId, identifier);
-    await fs.mkdir(logsDir, { recursive: true });
-    const [syslog, agentLog] = await Promise.all([
-      fs.open(path.join(logsDir, "syslog.log"), "a"),
-      fs.open(path.join(logsDir, "agent.log"), "a"),
-    ]);
-    return new LogWriter(syslog, agentLog);
-  }
-
-  appendSyslog(text: string) {
-    this.syslog.appendFile(text + "\n");
-  }
-
-  appendAgentLog(level: string, text: string) {
-    this.agentLog.appendFile(`[${level}] ${text}\n`);
-  }
-
-  async close() {
-    await Promise.all([
-      this.syslog.close(),
-      this.agentLog.close(),
-    ]).catch(() => {});
-  }
-}
-
-/**
- * Resolve target PID for app mode - spawn if not frontmost
- */
 async function resolveAppPid(
   device: Device,
   bundleId: string,
@@ -111,7 +66,6 @@ async function resolveAppPid(
   const devParams = await device.querySystemParameters();
   const opt: SpawnOptions = {};
 
-  // Platform-specific spawn options
   if (platform === "fruity") {
     if (devParams.access === "full" && devParams.os.id === "ios") {
       opt.env = {
@@ -123,9 +77,6 @@ async function resolveAppPid(
   return device.spawn(bundleId, opt);
 }
 
-/**
- * Setup socket event handlers for script messages
- */
 function setupScriptHandlers(
   socket: Socket<ClientToServerEvents, ServerToClientEvents>,
   script: Awaited<
@@ -134,43 +85,60 @@ function setupScriptHandlers(
   logger: LogWriter,
   sessionInfo: { deviceId: string; identifier: string },
 ) {
+  const { deviceId, identifier } = sessionInfo;
+
   script.destroyed.connect(() => {
     console.error("script is destroyed");
     socket.disconnect(true);
   });
 
   script.message.connect((message, data) => {
-    if (message.type === "send") {
-      const { payload } = message;
-      const { subject } = payload;
-      if (subject === "syslog" && data) {
-        const text = data.toString();
-        console.log(`[syslog]`, text);
-        socket.emit("syslog", text);
-        logger.appendSyslog(text);
-      } else if (subject === "http") {
+    if (message.type === "error") {
+      console.error("script error:", message);
+      return;
+    }
+
+    if (message.type !== "send") return;
+
+    const { payload } = message;
+    const { subject } = payload;
+
+    switch (subject) {
+      case "syslog":
+        if (data) {
+          const text = data.toString();
+          console.log(`[syslog]`, text);
+          socket.emit("syslog", text);
+          logger.appendSyslog(text);
+        }
+        break;
+
+      case "http":
         console.log(`[http]`, payload);
-        socket.emit("http", payload as HttpNetworkEvent);
+        socket.emit("http", payload as httpStore.HttpNetworkEvent);
         try {
-          upsertCapturedRequest(sessionInfo.deviceId, sessionInfo.identifier, payload);
+          httpStore.upsert(deviceId, identifier, payload);
         } catch (e) {
           console.error("Failed to persist HTTP event:", e);
         }
-      } else {
-        if (subject === "hook") {
-          socket.emit("hook", payload);
-          insertHookLog(sessionInfo.deviceId, sessionInfo.identifier, payload);
-        } else if (subject === "crypto") {
-          socket.emit("crypto", payload, data ? new Uint8Array(data).buffer: undefined);
-          insertCryptoLog(sessionInfo.deviceId, sessionInfo.identifier, payload, data ?? null);
-        } else if (subject === "lifecycle") {
-          socket.emit(subject, payload.event);
-        } else {
-          console.debug("send", payload);
-        }
-      }
-    } else if (message.type === "error") {
-      console.error("script error:", message);
+        break;
+
+      case "hook":
+        socket.emit("hook", payload);
+        hookStore.append(deviceId, identifier, payload);
+        break;
+
+      case "crypto":
+        socket.emit("crypto", payload, data ? new Uint8Array(data).buffer : undefined);
+        cryptoStore.append(deviceId, identifier, payload, data ?? null);
+        break;
+
+      case "lifecycle":
+        socket.emit(subject, payload.event);
+        break;
+
+      default:
+        console.debug("send", payload);
     }
   });
 
@@ -181,9 +149,6 @@ function setupScriptHandlers(
   };
 }
 
-/**
- * Setup socket RPC and lifecycle handlers
- */
 function setupSocketHandlers(
   socket: Socket<ClientToServerEvents, ServerToClientEvents>,
   script: Awaited<
@@ -246,7 +211,6 @@ async function onConnection(
   const { platform, mode, deviceId, bundle, pid: targetPid } = params;
   const device = await manager.getDeviceById(deviceId, env.timeout);
 
-  // Resolve the target PID based on mode
   let pid: number;
   if (mode === "app") {
     if (!bundle) throw new Error("bundle is required for app mode");
@@ -258,12 +222,10 @@ async function onConnection(
 
   const session = await device.attach(pid);
 
-  // Resume only for app mode (spawned processes need resume)
   if (mode === "app") {
     await device.resume(pid).catch(() => {});
   }
 
-  // Open log file handles for the session
   const identifier = mode === "app" ? bundle! : `pid-${pid}`;
   const logHandles = await LogWriter.open(deviceId, identifier);
   const script = await session.createScript(await agent(platform));
@@ -280,12 +242,10 @@ function parseSessionParams(
 ): SessionParams | null {
   const { device, platform, mode, bundle, pid } = query;
 
-  // Validate required params
   if (typeof device !== "string") return null;
   if (platform !== "fruity" && platform !== "droid") return null;
   if (mode !== "app" && mode !== "daemon") return null;
 
-  // Validate mode-specific params
   if (mode === "app" && typeof bundle !== "string") return null;
   if (mode === "daemon" && typeof pid !== "string") return null;
 

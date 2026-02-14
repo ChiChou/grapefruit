@@ -1,16 +1,32 @@
 import frida, { type Device, type Application, type Process } from "./xvii.ts";
 
-import type {
-  Device as DeviceSchema,
-  Application as ApplicationSchema,
-  Process as ProcessSchema,
-} from "@shared/schema.d.ts";
+interface SerializedDevice {
+  id: string;
+  type: "usb" | "local" | "remote";
+  removable: boolean;
+  name: string;
+}
+
+interface SerializedApp {
+  name: string;
+  identifier: string;
+  pid: number;
+}
+
+interface SerializedProcess {
+  name: string;
+  pid: number;
+  path?: string;
+  user?: string;
+  ppid?: number;
+  started?: string;
+}
 
 function isRemovable(dev: Device): boolean {
   return dev.type === frida.DeviceType.Remote && dev.name !== "Local Socket";
 }
 
-export function device(dev: Device): DeviceSchema {
+export function device(dev: Device): SerializedDevice {
   const { name, id, type } = dev;
   return {
     name,
@@ -20,7 +36,7 @@ export function device(dev: Device): DeviceSchema {
   };
 }
 
-export function app(app: Application): ApplicationSchema {
+export function app(app: Application): SerializedApp {
   const { name, identifier, pid } = app;
   return {
     name,
@@ -29,7 +45,7 @@ export function app(app: Application): ApplicationSchema {
   };
 }
 
-export function process(proc: Process): ProcessSchema {
+export function process(proc: Process): SerializedProcess {
   const { name, pid, parameters } = proc;
   const params = parameters as {
     path?: string;

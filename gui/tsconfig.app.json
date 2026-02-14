@@ -15,7 +15,6 @@
       "@agent/*": ["../agent/types/*"],
       "@/common/*": ["../agent/types/common/*"],
       "@/fruity/*": ["../agent/types/fruity/*"],
-      "@shared/schema": ["../shared/schema"]
     },
 
     /* Bundler mode */

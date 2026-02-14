@@ -16,7 +16,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { type Device } from "@shared/schema";
+interface Device {
+  id: string;
+  type: "usb" | "local" | "remote";
+  removable: boolean;
+  name: string;
+}
 
 export function Devices() {
   const [addMenuOpen, setAddMenuOpen] = useState(false);

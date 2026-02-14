@@ -24,7 +24,31 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import type { DeviceInfo, Process } from "@shared/schema";
+interface Process {
+  name: string;
+  pid: number;
+  path?: string;
+  user?: string;
+  ppid?: number;
+  started?: string;
+}
+
+interface DeviceInfo {
+  arch: string;
+  os: {
+    version: string;
+    id: string;
+    name: string;
+  };
+  udid: string;
+  platform: string;
+  name: string;
+  access: string;
+  interfaces?: Array<{
+    type: string;
+    address: string;
+  }>;
+}
 
 type SortField = "pid" | "name" | "user" | "path";
 type SortDirection = "asc" | "desc";
