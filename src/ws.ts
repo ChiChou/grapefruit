@@ -101,7 +101,7 @@ function setupScriptHandlers(
     if (message.type !== "send") return;
 
     const { payload } = message;
-    const { subject } = payload;
+    const { subject } = payload as { subject: string };
 
     switch (subject) {
       case "syslog":
@@ -129,7 +129,11 @@ function setupScriptHandlers(
         break;
 
       case "crypto":
-        socket.emit("crypto", payload, data ? new Uint8Array(data).buffer : undefined);
+        socket.emit(
+          "crypto",
+          payload,
+          data ? new Uint8Array(data).buffer : undefined,
+        );
         cryptoStore.append(deviceId, identifier, payload, data ?? null);
         break;
 
@@ -200,7 +204,10 @@ function setupSocketHandlers(
     })
     .on("disconnect", () => {
       console.info("socket disconnected");
-      script.unload().finally(() => session.detach()).finally(() => logger.close());
+      script
+        .unload()
+        .finally(() => session.detach())
+        .finally(() => logger.close());
     });
 }
 

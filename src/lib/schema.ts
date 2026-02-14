@@ -1,5 +1,11 @@
 import { sql } from "drizzle-orm";
-import { sqliteTable, text, integer, blob, index } from "drizzle-orm/sqlite-core";
+import {
+  sqliteTable,
+  text,
+  integer,
+  blob,
+  index,
+} from "drizzle-orm/sqlite-core";
 
 export const preferences = sqliteTable("preferences", {
   key: text("key").primaryKey(),
