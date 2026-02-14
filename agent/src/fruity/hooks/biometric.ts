@@ -1,13 +1,5 @@
 import ObjC from "frida-objc-bridge";
-import { BaseMessage, bt } from "@/common/hooks/context.js";
-
-export interface Message extends BaseMessage {
-  subject: "hook";
-  category: "biometric";
-  policy?: string;
-  reason?: string;
-  bypassed: boolean;
-}
+import { bt } from "@/common/hooks/context.js";
 
 const LA_POLICIES: Record<number, string> = {
   1: "DeviceOwnerAuthenticationWithBiometrics",
@@ -56,11 +48,9 @@ export function bypass() {
             symbol: "-[LAContext evaluatePolicy:localizedReason:reply:]",
             dir: "leave",
             line: `evaluatePolicy(${policyStr}) → BYPASSED`,
-            policy: policyStr,
-            reason: this.reason,
-            bypassed: true,
             backtrace: bt(this.context),
-          } as Message);
+            extra: { policy: policyStr, reason: this.reason, bypassed: true },
+          });
         },
       }),
     );
@@ -90,9 +80,8 @@ export function bypass() {
             symbol: "-[LAContext canEvaluatePolicy:error:]",
             dir: "leave",
             line: `canEvaluatePolicy(${policyStr}) → YES (forced)`,
-            policy: policyStr,
-            bypassed: true,
-          } as Message);
+            extra: { policy: policyStr, bypassed: true },
+          });
         },
       }),
     );
@@ -126,10 +115,9 @@ export function bypass() {
               "-[LAContext evaluateAccessControl:operation:localizedReason:reply:]",
             dir: "leave",
             line: `evaluateAccessControl(...) → BYPASSED`,
-            reason: this.reason,
-            bypassed: true,
             backtrace: bt(this.context),
-          } as Message);
+            extra: { reason: this.reason, bypassed: true },
+          });
         },
       }),
     );

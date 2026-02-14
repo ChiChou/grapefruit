@@ -70,7 +70,8 @@ export interface HookRecord {
   category: string;
   symbol: string;
   direction: string;
-  payload: string;
+  line: string | null;
+  extra: string | null;
   createdAt: string;
 }
 
@@ -82,6 +83,7 @@ export function insertHookLog(
   identifier: string,
   message: Record<string, unknown>,
 ): void {
+  const extra = message.extra as Record<string, unknown> | undefined;
   db.insert(hooks)
     .values({
       deviceId,
@@ -90,7 +92,8 @@ export function insertHookLog(
       category: (message.category as string) || "unknown",
       symbol: (message.symbol as string) || "unknown",
       direction: (message.dir as string) || "unknown",
-      payload: JSON.stringify(message),
+      line: (message.line as string) || null,
+      extra: extra ? JSON.stringify(extra) : null,
     })
     .run();
 }
@@ -169,6 +172,8 @@ export function deleteHookLogs(deviceId: string, identifier: string): void {
     .where(and(eq(hooks.deviceId, deviceId), eq(hooks.identifier, identifier)))
     .run();
 }
+
+// Crypto logs
 
 // Captured HTTP requests
 

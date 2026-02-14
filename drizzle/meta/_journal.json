@@ -15,6 +15,13 @@
       "when": 1770662099682,
       "tag": "0001_hard_hitman",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1771065600000,
+      "tag": "0002_bent_arclight",
+      "breakpoints": true
     }
   ]
 }

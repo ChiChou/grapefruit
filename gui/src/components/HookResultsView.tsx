@@ -12,7 +12,6 @@ import { List, type ListImperativeAPI } from "react-window";
 import {
   ChevronRight,
   Layers,
-  Lock,
   Database,
   Trash2,
   ChevronsDown,
@@ -35,8 +34,6 @@ import { Badge } from "@/components/ui/badge";
 import { useSession, Status, Mode } from "@/context/SessionContext";
 
 import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
-import type { Message as CryptoHookMessage } from "@agent/fruity/hooks/crypto";
-import type { Message as SQLiteHookMessage } from "@agent/fruity/hooks/sqlite";
 
 // Internal representation with timestamp
 interface HookEntry {
@@ -52,8 +49,6 @@ const THROTTLE_MS = 100;
 // Category icon component
 function CategoryIcon({ category }: { category: string }) {
   switch (category) {
-    case "crypto":
-      return <Lock className="h-3.5 w-3.5" />;
     case "sql":
       return <Database className="h-3.5 w-3.5" />;
     case "pasteboard":
@@ -80,35 +75,9 @@ function formatTime(date: Date): string {
   });
 }
 
-// Format message summary - prefer line field, fallback to computed summary
+// Format message summary
 function formatSummary(message: BaseHookMessage): string {
-  // Use line field if available
-  if (message.line) {
-    return message.line;
-  }
-
-  // Fallback to computed summary for backwards compatibility
-  if (message.category === "crypto") {
-    const crypto = message as CryptoHookMessage;
-    const parts: string[] = [];
-    if (crypto.op) parts.push(crypto.op);
-    if (crypto.algo) parts.push(crypto.algo);
-    if (crypto.details?.type) parts.push(crypto.details.type);
-    if (crypto.details?.len !== undefined) parts.push(`${crypto.details.len}B`);
-    return parts.join(" | ");
-  } else if (message.category === "sql") {
-    const sql = message as SQLiteHookMessage;
-    if (sql.sql) {
-      return sql.sql;
-    }
-    if (sql.filename) {
-      return sql.filename;
-    }
-    if (sql.bindValue !== undefined) {
-      return `bind[${sql.bindIndex}] = ${sql.bindValue}`;
-    }
-  }
-  return "";
+  return message.line || "";
 }
 
 // Summary popover component
@@ -301,8 +270,8 @@ export function HookResultsView() {
 
   const identifier = mode === Mode.App ? bundle : `pid-${pid}`;
 
-  // Load historical hooks
-  const { data: hookHistory } = useQuery<{ hooks: { id: number; timestamp: string; payload: BaseHookMessage }[] }>({
+  // Load historical hooks (exclude crypto category)
+  const { data: hookHistory } = useQuery<{ hooks: Array<{ id: number; timestamp: string; category: string; symbol: string; direction: string; line: string | null; extra?: Record<string, unknown> }> }>({
     queryKey: ["hookHistory", device, identifier],
     queryFn: async () => {
       const res = await fetch(`/api/hooks/${device}/${identifier}?limit=5000`);
@@ -317,12 +286,20 @@ export function HookResultsView() {
   useEffect(() => {
     if (!hookHistory?.hooks?.length) return;
     const historicalEntries: HookEntry[] = hookHistory.hooks
+      .filter((r) => r.category !== "crypto")
       .slice()
       .reverse()
       .map((record) => ({
         id: idCounterRef.current++,
         timestamp: new Date(record.timestamp),
-        message: record.payload,
+        message: {
+          subject: "hook",
+          category: record.category,
+          symbol: record.symbol,
+          dir: record.direction as "enter" | "leave",
+          line: record.line ?? undefined,
+          extra: record.extra,
+        },
       }));
     setEntries(historicalEntries);
   }, [hookHistory]);
@@ -386,6 +363,7 @@ export function HookResultsView() {
     if (status !== Status.Ready || !socket) return;
 
     const handleHook = (message: BaseHookMessage) => {
+      if (message.category === "crypto") return;
       const entry: HookEntry = {
         id: idCounterRef.current++,
         timestamp: new Date(),

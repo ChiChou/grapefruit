@@ -40,7 +40,8 @@ export const hooks = sqliteTable(
     category: text("category").notNull(),
     symbol: text("symbol").notNull(),
     direction: text("direction").notNull(),
-    payload: text("payload").notNull(),
+    line: text("line"),
+    extra: text("extra"),
     createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [

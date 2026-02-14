@@ -310,7 +310,8 @@ api
         category: r.category,
         symbol: r.symbol,
         direction: r.direction,
-        payload: JSON.parse(r.payload),
+        line: r.line,
+        extra: r.extra ? JSON.parse(r.extra) : undefined,
         createdAt: r.createdAt,
       }));
 

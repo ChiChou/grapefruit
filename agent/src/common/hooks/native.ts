@@ -1,10 +1,5 @@
 import { BaseMessage, bt } from "./context.js";
 
-export interface Message extends BaseMessage {
-  module: string | null;
-  name: string;
-}
-
 const hooked = new Map<string | null, Map<string, InvocationListener>>();
 
 /**
@@ -47,25 +42,23 @@ export function hook(module: string | null, name: string): void {
       send({
         subject: "hook",
         category: "native",
-        module,
-        name,
         symbol: symbolName,
         dir: "enter",
         line: `${name}() // enter`,
         backtrace: bt(this.context),
-      });
+        extra: { module, name },
+      } satisfies BaseMessage);
     },
     onLeave(retval) {
       send({
         subject: "hook",
         category: "native",
-        module,
-        name,
         symbol: symbolName,
         dir: "leave",
         line: `${name}() // leave`,
         backtrace: bt(this.context),
-      });
+        extra: { module, name },
+      } satisfies BaseMessage);
     },
   });
 

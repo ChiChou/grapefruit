@@ -1,15 +1,5 @@
 import { BaseMessage, bt } from "@/common/hooks/context.js";
 
-export interface Message extends BaseMessage {
-  subject: "hook";
-  category: "sql";
-  filename?: string;
-  sql?: string;
-
-  bindIndex?: number;
-  bindValue?: number | string | null;
-}
-
 export function open() {
   const sqlite = Process.findModuleByName("libsqlite3.dylib");
   if (!sqlite) return [];
@@ -28,9 +18,9 @@ export function open() {
             symbol: "sqlite3_open",
             dir: "enter",
             line: `sqlite3_open("${filename}")`,
-            filename,
             backtrace: bt(this.context),
-          } as Message);
+            extra: { filename },
+          } satisfies BaseMessage);
         },
       }),
     );
@@ -48,9 +38,9 @@ export function open() {
             symbol: "sqlite3_open16",
             dir: "enter",
             line: `sqlite3_open16("${filename}")`,
-            filename,
             backtrace: bt(this.context),
-          } as Message);
+            extra: { filename },
+          } satisfies BaseMessage);
         },
       }),
     );
@@ -68,9 +58,9 @@ export function open() {
             symbol: "sqlite3_open_v2",
             dir: "enter",
             line: `sqlite3_open_v2("${filename}")`,
-            filename,
             backtrace: bt(this.context),
-          } as Message);
+            extra: { filename },
+          } satisfies BaseMessage);
         },
       }),
     );
@@ -96,8 +86,8 @@ export function exec() {
             dir: "enter",
             line: `sqlite3_exec: ${sql}`,
             backtrace: bt(this.context),
-            sql,
-          } as Message);
+            extra: { sql },
+          } satisfies BaseMessage);
         },
       }),
     ];
@@ -125,8 +115,8 @@ export function prepare() {
             dir: "enter",
             line: `sqlite3_prepare: ${sql}`,
             backtrace: bt(this.context),
-            sql,
-          } as Message);
+            extra: { sql },
+          } satisfies BaseMessage);
         },
       }),
     );
@@ -145,8 +135,8 @@ export function prepare() {
             dir: "enter",
             line: `sqlite3_prepare_v2: ${sql}`,
             backtrace: bt(this.context),
-            sql,
-          } as Message);
+            extra: { sql },
+          } satisfies BaseMessage);
         },
       }),
     );
@@ -165,8 +155,8 @@ export function prepare() {
             dir: "enter",
             line: `sqlite3_prepare_v3: ${sql}`,
             backtrace: bt(this.context),
-            sql,
-          } as Message);
+            extra: { sql },
+          } satisfies BaseMessage);
         },
       }),
     );
@@ -243,10 +233,8 @@ export function bind() {
             dir: "leave",
             line: `bind_${this.type}(?${this.bindIndex}, ${valueStr})${result !== 0 ? ` = ${result}` : ""}`,
             backtrace: bt(this.context),
-            sql: sql,
-            bindIndex: this.bindIndex,
-            bindValue: this.value,
-          } as Message);
+            extra: { sql, bindIndex: this.bindIndex, bindValue: this.value },
+          } satisfies BaseMessage);
         },
       }),
     );
