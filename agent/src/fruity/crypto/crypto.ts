@@ -1,17 +1,6 @@
 import cf from "@/fruity/native/corefoundation.js";
 import { BaseMessage, bt } from "@/common/hooks/context.js";
 
-export interface Message extends BaseMessage {
-  subject: "hook";
-  category: "crypto";
-  op?: "decrypt" | "encrypt";
-  algo?: string;
-  details?: {
-    type: "input" | "output" | "key";
-    len?: number;
-  };
-}
-
 const CC_ALGORITHMS = ["AES", "DES", "3DES", "CAST", "RC4", "RC2"];
 const HMAC_ALGORITHMS = ["SHA1", "MD5", "SHA256", "SHA384", "SHA512", "SHA224"];
 
@@ -29,16 +18,17 @@ export function x509() {
           const len = CFDataGetLength(args[1]);
           const der = p.readByteArray(len);
 
-          const detail: Message = {
-            subject: "hook",
-            category: "crypto",
-            symbol: "SecCertificateCreateWithData",
-            dir: "enter",
-            line: `SecCertificateCreateWithData(data[${len}])`,
-            backtrace: bt(this.context),
-          };
-
-          send(detail, der);
+          send(
+            {
+              subject: "crypto",
+              category: "x509",
+              symbol: "SecCertificateCreateWithData",
+              dir: "enter",
+              line: `SecCertificateCreateWithData(data[${len}])`,
+              backtrace: bt(this.context),
+            } satisfies BaseMessage,
+            der,
+          );
         },
       },
     ),
@@ -64,28 +54,31 @@ export function cccrypt() {
       return Interceptor.attach(addr, {
         onEnter(args) {
           this.symbol = sym;
-          const detail: Message = {
-            subject: "hook",
-            category: "crypto",
-            symbol: sym,
-            dir: "enter",
-            backtrace: bt(this.context),
-          };
 
           if (
             sym === "CCCryptorCreate" ||
             sym === "CCCryptorCreateFromData" ||
             sym === "CCCrypt"
           ) {
-            const op = args[0].toInt32();
+            const opVal = args[0].toInt32();
             const alg = args[1].toInt32();
-            detail.op = op === 0 ? "encrypt" : "decrypt";
-            detail.algo = CC_ALGORITHMS[alg] || "Unknown";
+            const op = opVal === 0 ? "encrypt" : "decrypt";
+            const algo = CC_ALGORITHMS[alg] || "Unknown";
 
             const keyLen = args[4].toInt32();
             const key = args[3].readByteArray(keyLen);
-            detail.line = `${sym}(${detail.op}, ${detail.algo}, key[${keyLen}])`;
-            send({ ...detail, details: { type: "key" } }, key);
+            send(
+              {
+                subject: "crypto",
+                category: "cccrypt",
+                symbol: sym,
+                dir: "enter",
+                line: `${sym}(${op}, ${algo}, key[${keyLen}])`,
+                backtrace: bt(this.context),
+                extra: { op, algo, detailType: "key" },
+              } satisfies BaseMessage,
+              key,
+            );
           }
 
           if (sym === "CCCryptorUpdate" || sym === "CCCrypt") {
@@ -94,9 +87,18 @@ export function cccrypt() {
             const len = args[lenIdx].toInt32();
             const data = args[dataInIdx].readByteArray(len);
 
-            detail.details = { type: "input", len: len };
-            detail.line = `${sym}(input[${len}])`;
-            send(detail, data);
+            send(
+              {
+                subject: "crypto",
+                category: "cccrypt",
+                symbol: sym,
+                dir: "enter",
+                line: `${sym}(input[${len}])`,
+                backtrace: bt(this.context),
+                extra: { detailType: "input", len },
+              } satisfies BaseMessage,
+              data,
+            );
 
             this.outPtr = args[sym === "CCCrypt" ? 8 : 3];
             this.movedPtr = args[sym === "CCCrypt" ? 10 : 5];
@@ -105,8 +107,14 @@ export function cccrypt() {
           if (sym === "CCCryptorFinal") {
             this.outPtr = args[1];
             this.movedPtr = args[3];
-            detail.line = `${sym}()`;
-            send(detail);
+            send({
+              subject: "crypto",
+              category: "cccrypt",
+              symbol: sym,
+              dir: "enter",
+              line: `${sym}()`,
+              backtrace: bt(this.context),
+            } satisfies BaseMessage);
           }
         },
         onLeave(retval) {
@@ -119,15 +127,17 @@ export function cccrypt() {
             const moved = this.movedPtr.readPointer().toInt32();
             if (moved > 0) {
               const outData = this.outPtr.readByteArray(moved);
-              const leaveMsg: Message = {
-                subject: "hook",
-                category: "crypto",
-                symbol: this.symbol,
-                dir: "leave",
-                line: `${this.symbol}() → output[${moved}]`,
-                details: { type: "output", len: moved },
-              };
-              send(leaveMsg, outData);
+              send(
+                {
+                  subject: "crypto",
+                  category: "cccrypt",
+                  symbol: this.symbol,
+                  dir: "leave",
+                  line: `${this.symbol}() → output[${moved}]`,
+                  extra: { detailType: "output", len: moved },
+                } satisfies BaseMessage,
+                outData,
+              );
             }
           }
         },
@@ -150,15 +160,22 @@ export function hash() {
         Interceptor.attach(oneShot, {
           onEnter(args) {
             const len = args[1].toInt32();
+            const backtrace = bt(this.context);
+
+            // workaround: MobileGestalt uses MD5 to obfuscate strings, abvoid
+            // todo: limit all hooks to app binaries only
+            if (backtrace.at(0)?.startsWith('libMobileGestalt.dylib')) return;
+
             send(
               {
-                subject: "hook",
-                category: "crypto",
+                subject: "crypto",
+                category: "hash",
                 symbol: `CC_${alg}`,
                 dir: "enter",
                 line: `CC_${alg}(data[${len}])`,
-                backtrace: bt(this.context),
-              },
+                backtrace,
+                extra: { algo: alg, detailType: "input", len },
+              } satisfies BaseMessage,
               args[0].readByteArray(len),
             );
           },
@@ -174,13 +191,14 @@ export function hash() {
             const len = args[2].toInt32();
             send(
               {
-                subject: "hook",
-                category: "crypto",
+                subject: "crypto",
+                category: "hash",
                 symbol: `CC_${alg}_Update`,
                 dir: "enter",
                 line: `CC_${alg}_Update(data[${len}])`,
                 backtrace: bt(this.context),
-              },
+                extra: { algo: alg, detailType: "input", len },
+              } satisfies BaseMessage,
               args[1].readByteArray(len),
             );
           },
@@ -203,29 +221,30 @@ export function hmac() {
         const alg = args[0].toInt32();
         const keyLen = args[2].toInt32();
         const dataLen = args[4].toInt32();
-        const algoName = HMAC_ALGORITHMS[alg] || "Unknown";
-
-        const detail: Message = {
-          subject: "hook",
-          category: "crypto",
-          symbol: "CCHmac",
-          dir: "enter",
-          line: `CCHmac(${algoName}, key[${keyLen}], data[${dataLen}])`,
-          algo: algoName,
-          backtrace: bt(this.context),
-        };
+        const algo = HMAC_ALGORITHMS[alg] || "Unknown";
 
         send(
-          { ...detail, details: { type: "input" } },
+          {
+            subject: "crypto",
+            category: "hmac",
+            symbol: "CCHmac",
+            dir: "enter",
+            line: `CCHmac(${algo}, key[${keyLen}], data[${dataLen}])`,
+            backtrace: bt(this.context),
+            extra: { algo, detailType: "input", len: dataLen },
+          } satisfies BaseMessage,
           args[3].readByteArray(dataLen),
         );
         send(
           {
-            ...detail,
+            subject: "crypto",
+            category: "hmac",
             symbol: "CCHmac_Key",
+            dir: "enter",
             line: `CCHmac key[${keyLen}]`,
-            details: { type: "key" },
-          },
+            backtrace: bt(this.context),
+            extra: { algo, detailType: "key", len: keyLen },
+          } satisfies BaseMessage,
           args[1].readByteArray(keyLen),
         );
       },
@@ -238,13 +257,14 @@ export function hmac() {
         const len = args[2].toInt32();
         send(
           {
-            subject: "hook",
-            category: "crypto",
+            subject: "crypto",
+            category: "hmac",
             symbol: "CCHmacUpdate",
             dir: "enter",
             line: `CCHmacUpdate(data[${len}])`,
             backtrace: bt(this.context),
-          },
+            extra: { detailType: "input", len },
+          } satisfies BaseMessage,
           args[1].readByteArray(len),
         );
       },

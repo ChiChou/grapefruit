@@ -23,6 +23,7 @@ export interface SessionClientEvents {
   syslog: (text: string) => void;
   invalid: () => void;
   hook: (message: BaseHookMessage) => void;
+  crypto: (message: BaseHookMessage) => void;
   http: (event: HttpNetworkEvent) => void;
 }
 

@@ -8,7 +8,7 @@ import frida from "./lib/xvii.ts";
 import env from "./lib/env.ts";
 import { agent } from "./lib/assets.ts";
 import paths from "./lib/paths.ts";
-import { insertHookLog, upsertCapturedRequest } from "./lib/store.ts";
+import { insertHookLog, insertCryptoLog, upsertCapturedRequest } from "./lib/store.ts";
 
 import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
 
@@ -41,6 +41,7 @@ interface ServerToClientEvents {
     event: "inactive" | "active" | "forerground" | "background",
   ) => void;
   hook: (msg: BaseHookMessage) => void;
+  crypto: (msg: BaseHookMessage, data?: ArrayBuffer) => void;
   http: (event: HttpNetworkEvent) => void;
 }
 
@@ -157,8 +158,11 @@ function setupScriptHandlers(
         }
       } else {
         if (subject === "hook") {
-          socket.emit(subject, payload);
+          socket.emit("hook", payload);
           insertHookLog(sessionInfo.deviceId, sessionInfo.identifier, payload);
+        } else if (subject === "crypto") {
+          socket.emit("crypto", payload, data ? new Uint8Array(data).buffer: undefined);
+          insertCryptoLog(sessionInfo.deviceId, sessionInfo.identifier, payload, data ?? null);
         } else if (subject === "lifecycle") {
           socket.emit(subject, payload.event);
         } else {

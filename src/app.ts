@@ -22,6 +22,9 @@ import {
   queryHookLogs,
   countHookLogs,
   deleteHookLogs,
+  queryCryptoLogs,
+  countCryptoLogs,
+  deleteCryptoLogs,
   queryCapturedRequests,
   countCapturedRequests,
   deleteCapturedRequests,
@@ -345,6 +348,54 @@ api
     } catch (e) {
       console.error("Failed to delete hooks:", e);
       return c.text("Failed to delete hooks", 500);
+    }
+  })
+  // Crypto log endpoints
+  .get("/crypto-logs/:device/:identifier", (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+
+    const limit = parseInt(c.req.query("limit") || "1000", 10);
+    const offset = parseInt(c.req.query("offset") || "0", 10);
+    const since = c.req.query("since");
+
+    try {
+      const records = queryCryptoLogs(deviceId, identifier, {
+        limit,
+        offset,
+        since,
+      });
+
+      const logs = records.map((r) => ({
+        id: r.id,
+        timestamp: r.timestamp,
+        symbol: r.symbol,
+        direction: r.direction,
+        line: r.line,
+        extra: r.extra ? JSON.parse(r.extra) : undefined,
+        backtrace: r.backtrace ? JSON.parse(r.backtrace) : undefined,
+        data: r.data ? Buffer.from(r.data).toString("base64") : undefined,
+        createdAt: r.createdAt,
+      }));
+
+      const total = countCryptoLogs(deviceId, identifier);
+
+      return c.json({ logs, total, limit, offset });
+    } catch (e) {
+      console.error("Failed to query crypto logs:", e);
+      return c.json({ logs: [], total: 0, limit, offset });
+    }
+  })
+  .delete("/crypto-logs/:device/:identifier", (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+
+    try {
+      deleteCryptoLogs(deviceId, identifier);
+      return c.body(null, 204);
+    } catch (e) {
+      console.error("Failed to clear crypto logs:", e);
+      return c.text("Failed to clear crypto logs", 500);
     }
   })
   // HTTP log endpoints

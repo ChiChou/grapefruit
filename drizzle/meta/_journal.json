@@ -22,6 +22,27 @@
       "when": 1771065600000,
       "tag": "0002_bent_arclight",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1771073878049,
+      "tag": "0003_complex_earthquake",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1771075512736,
+      "tag": "0004_curvy_darkstar",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1771083525383,
+      "tag": "0005_tiny_shen",
+      "breakpoints": true
     }
   ]
 }

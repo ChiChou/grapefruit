@@ -1,13 +1,14 @@
 import { useEffect, useState, useRef } from "react";
 import { t } from "i18next";
 import { useQuery } from "@tanstack/react-query";
-import { FileText, Activity, Anchor, Terminal } from "lucide-react";
+import { FileText, Activity, Anchor, Terminal, Lock } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Status, Mode, Platform, useSession } from "@/context/SessionContext";
 
 import { LogViewer, type LogViewerHandle } from "./LogViewer";
 import { HookResultsView } from "./HookResultsView";
+import { CryptoResultsView } from "./CryptoResultsView";
 import { CodeEditorTab } from "./tabs/CodeEditorTab";
 
 const BOTTOM_PANEL_TAB_STATE = "BOTTOM_PANEL_TAB_STATE";
@@ -131,6 +132,13 @@ export function BottomPanelView() {
           {t("hooks")}
         </TabsTrigger>
         <TabsTrigger
+          value="crypto"
+          className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary flex items-center gap-2"
+        >
+          <Lock className="h-4 w-4" />
+          {t("crypto_results")}
+        </TabsTrigger>
+        <TabsTrigger
           value="agent-logs"
           className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary flex items-center gap-2"
         >
@@ -160,6 +168,14 @@ export function BottomPanelView() {
         hidden={activeTab !== "hooks"}
       >
         <HookResultsView />
+      </TabsContent>
+      <TabsContent
+        value="crypto"
+        className="flex-1 overflow-hidden mt-0"
+        forceMount
+        hidden={activeTab !== "crypto"}
+      >
+        <CryptoResultsView />
       </TabsContent>
       <TabsContent
         value="agent-logs"
