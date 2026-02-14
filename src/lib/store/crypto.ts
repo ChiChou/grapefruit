@@ -67,10 +67,7 @@ export function query(
   return rows as CryptoRecord[];
 }
 
-export function count(
-  deviceId: string,
-  identifier: string,
-): number {
+export function count(deviceId: string, identifier: string): number {
   const result = db
     .select({ count: countFn() })
     .from(cryptoLogs)
@@ -85,10 +82,7 @@ export function count(
   return result?.count ?? 0;
 }
 
-export function rm(
-  deviceId: string,
-  identifier: string,
-): void {
+export function rm(deviceId: string, identifier: string): void {
   db.delete(cryptoLogs)
     .where(
       and(

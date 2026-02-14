@@ -42,7 +42,12 @@ function merge(req: CapturedRequest, event: HttpNetworkEvent): void {
   switch (event.event) {
     case "requestWillBeSent": {
       const r = event.request as
-        | { method: string; url: string; headers: Record<string, string>; body?: string }
+        | {
+            method: string;
+            url: string;
+            headers: Record<string, string>;
+            body?: string;
+          }
         | undefined;
       if (!r) break;
       req.method = r.method;
@@ -53,7 +58,12 @@ function merge(req: CapturedRequest, event: HttpNetworkEvent): void {
     }
     case "responseReceived": {
       const r = event.response as
-        | { url?: string; mimeType?: string; statusCode?: number; headers?: Record<string, string> }
+        | {
+            url?: string;
+            mimeType?: string;
+            statusCode?: number;
+            headers?: Record<string, string>;
+          }
         | undefined;
       if (!r) break;
       req.statusCode = r.statusCode;
@@ -65,7 +75,9 @@ function merge(req: CapturedRequest, event: HttpNetworkEvent): void {
     case "dataReceived": {
       try {
         req.size += Number(event.dataLength);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       break;
     }
     case "loadingFinished": {
@@ -179,10 +191,7 @@ export function query(
   return rows.map((r) => JSON.parse(r.data) as CapturedRequest);
 }
 
-export function count(
-  deviceId: string,
-  identifier: string,
-): number {
+export function count(deviceId: string, identifier: string): number {
   const result = db
     .select({ count: countFn() })
     .from(capturedRequests)
@@ -197,10 +206,7 @@ export function count(
   return result?.count ?? 0;
 }
 
-export function rm(
-  deviceId: string,
-  identifier: string,
-): void {
+export function rm(deviceId: string, identifier: string): void {
   db.delete(capturedRequests)
     .where(
       and(

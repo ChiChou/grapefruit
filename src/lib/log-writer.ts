@@ -31,9 +31,8 @@ export class LogWriter {
   }
 
   async close() {
-    await Promise.all([
-      this.syslog.close(),
-      this.agentLog.close(),
-    ]).catch(() => {});
+    await Promise.all([this.syslog.close(), this.agentLog.close()]).catch(
+      () => {},
+    );
   }
 }

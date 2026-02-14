@@ -53,7 +53,10 @@ describe("API tests", () => {
   it("should return error for non-existent device", async () => {
     const r = await app.request("/api/device/nonexistent-device/apps");
     // Note: getDeviceMiddleware throws when device is not found, resulting in 500
-    assert(r.status === 404 || r.status === 500, "Should return 404 or 500 for non-existent device");
+    assert(
+      r.status === 404 || r.status === 500,
+      "Should return 404 or 500 for non-existent device",
+    );
   });
 
   it("should return 404 for missing device param", async () => {
@@ -67,13 +70,20 @@ describe("API tests", () => {
       method: "PUT",
     });
     // PUT returns 204 on success
-    assert(r1.status === 204 || r1.status === 200 || r1.status >= 400, "PUT should return appropriate status");
+    assert(
+      r1.status === 204 || r1.status === 200 || r1.status >= 400,
+      "PUT should return appropriate status",
+    );
 
     // Test removing a non-existent remote device
     const r2 = await app.request("/api/devices/remote/nonexistent", {
       method: "DELETE",
     });
-    assert.strictEqual(r2.status, 404, "DELETE should return 404 for non-existent device");
+    assert.strictEqual(
+      r2.status,
+      404,
+      "DELETE should return 404 for non-existent device",
+    );
   });
 
   it("should return 404 for non-existent app icon", async () => {
@@ -83,7 +93,9 @@ describe("API tests", () => {
       return;
     }
 
-    const r = await app.request(`/api/device/${udid}/icon/com.nonexistent.bundle`);
+    const r = await app.request(
+      `/api/device/${udid}/icon/com.nonexistent.bundle`,
+    );
     assert.strictEqual(r.status, 404, "Should return 404 for non-existent app");
   });
 
@@ -143,7 +155,10 @@ describe("Logs API", () => {
 
   it("should return syslog content", async () => {
     await fs.mkdir(logsDir, { recursive: true });
-    await fs.writeFile(nodePath.join(logsDir, "syslog.log"), "line1\nline2\nline3\n");
+    await fs.writeFile(
+      nodePath.join(logsDir, "syslog.log"),
+      "line1\nline2\nline3\n",
+    );
 
     const r = await app.request(`/api/logs/${device}/${identifier}/syslog`);
     assert.strictEqual(r.status, 200);
@@ -163,10 +178,13 @@ describe("Logs API", () => {
 
   it("should respect limit parameter", async () => {
     await fs.mkdir(logsDir, { recursive: true });
-    const lines = Array.from({ length: 10 }, (_, i) => `line${i}`).join("\n") + "\n";
+    const lines =
+      Array.from({ length: 10 }, (_, i) => `line${i}`).join("\n") + "\n";
     await fs.writeFile(nodePath.join(logsDir, "syslog.log"), lines);
 
-    const r = await app.request(`/api/logs/${device}/${identifier}/syslog?limit=3`);
+    const r = await app.request(
+      `/api/logs/${device}/${identifier}/syslog?limit=3`,
+    );
     const text = await r.text();
     const returned = text.split("\n").filter(Boolean);
     assert.strictEqual(returned.length, 3);
@@ -177,10 +195,15 @@ describe("Logs API", () => {
     await fs.mkdir(logsDir, { recursive: true });
     await fs.writeFile(nodePath.join(logsDir, "syslog.log"), "data\n");
 
-    const r = await app.request(`/api/logs/${device}/${identifier}`, { method: "DELETE" });
+    const r = await app.request(`/api/logs/${device}/${identifier}`, {
+      method: "DELETE",
+    });
     assert.strictEqual(r.status, 204);
 
-    const exists = await fs.access(logsDir).then(() => true, () => false);
+    const exists = await fs.access(logsDir).then(
+      () => true,
+      () => false,
+    );
     assert.strictEqual(exists, false);
   });
 });
@@ -196,7 +219,12 @@ describe("Hooks API", () => {
   it("should return empty hooks list", async () => {
     const r = await app.request(`/api/hooks/${device}/${identifier}`);
     assert.strictEqual(r.status, 200);
-    const body = await r.json() as { hooks: unknown[]; total: number; limit: number; offset: number };
+    const body = (await r.json()) as {
+      hooks: unknown[];
+      total: number;
+      limit: number;
+      offset: number;
+    };
     assert.deepStrictEqual(body.hooks, []);
     assert.strictEqual(body.total, 0);
     assert.strictEqual(body.limit, 1000);
@@ -204,11 +232,19 @@ describe("Hooks API", () => {
   });
 
   it("should return inserted hooks", async () => {
-    hookStore.append(device, identifier, { category: "network", symbol: "send", dir: "out" });
-    hookStore.append(device, identifier, { category: "crypto", symbol: "encrypt", dir: "in" });
+    hookStore.append(device, identifier, {
+      category: "network",
+      symbol: "send",
+      dir: "out",
+    });
+    hookStore.append(device, identifier, {
+      category: "crypto",
+      symbol: "encrypt",
+      dir: "in",
+    });
 
     const r = await app.request(`/api/hooks/${device}/${identifier}`);
-    const body = await r.json() as { hooks: any[]; total: number };
+    const body = (await r.json()) as { hooks: any[]; total: number };
     assert.strictEqual(body.total, 2);
     assert.strictEqual(body.hooks.length, 2);
     // newest first
@@ -220,23 +256,35 @@ describe("Hooks API", () => {
 
   it("should return extra as parsed object", async () => {
     hookStore.append(device, identifier, {
-      category: "c", symbol: "s", dir: "out",
+      category: "c",
+      symbol: "s",
+      dir: "out",
       extra: { key: "value", num: 42 },
     });
 
     const r = await app.request(`/api/hooks/${device}/${identifier}`);
-    const body = await r.json() as { hooks: any[] };
+    const body = (await r.json()) as { hooks: any[] };
     assert.strictEqual(typeof body.hooks[0].extra, "object");
     assert.strictEqual(body.hooks[0].extra.key, "value");
     assert.strictEqual(body.hooks[0].extra.num, 42);
   });
 
   it("should filter by category", async () => {
-    hookStore.append(device, identifier, { category: "network", symbol: "send", dir: "out" });
-    hookStore.append(device, identifier, { category: "crypto", symbol: "enc", dir: "in" });
+    hookStore.append(device, identifier, {
+      category: "network",
+      symbol: "send",
+      dir: "out",
+    });
+    hookStore.append(device, identifier, {
+      category: "crypto",
+      symbol: "enc",
+      dir: "in",
+    });
 
-    const r = await app.request(`/api/hooks/${device}/${identifier}?category=crypto`);
-    const body = await r.json() as { hooks: any[]; total: number };
+    const r = await app.request(
+      `/api/hooks/${device}/${identifier}?category=crypto`,
+    );
+    const body = (await r.json()) as { hooks: any[]; total: number };
     assert.strictEqual(body.total, 1);
     assert.strictEqual(body.hooks.length, 1);
     assert.strictEqual(body.hooks[0].category, "crypto");
@@ -244,11 +292,22 @@ describe("Hooks API", () => {
 
   it("should paginate with limit and offset", async () => {
     for (let i = 0; i < 5; i++) {
-      hookStore.append(device, identifier, { category: "c", symbol: `s${i}`, dir: "out" });
+      hookStore.append(device, identifier, {
+        category: "c",
+        symbol: `s${i}`,
+        dir: "out",
+      });
     }
 
-    const r = await app.request(`/api/hooks/${device}/${identifier}?limit=2&offset=1`);
-    const body = await r.json() as { hooks: any[]; total: number; limit: number; offset: number };
+    const r = await app.request(
+      `/api/hooks/${device}/${identifier}?limit=2&offset=1`,
+    );
+    const body = (await r.json()) as {
+      hooks: any[];
+      total: number;
+      limit: number;
+      offset: number;
+    };
     assert.strictEqual(body.hooks.length, 2);
     assert.strictEqual(body.limit, 2);
     assert.strictEqual(body.offset, 1);
@@ -256,33 +315,53 @@ describe("Hooks API", () => {
   });
 
   it("should clear hooks", async () => {
-    hookStore.append(device, identifier, { category: "c", symbol: "s", dir: "out" });
+    hookStore.append(device, identifier, {
+      category: "c",
+      symbol: "s",
+      dir: "out",
+    });
 
-    const r = await app.request(`/api/hooks/${device}/${identifier}`, { method: "DELETE" });
+    const r = await app.request(`/api/hooks/${device}/${identifier}`, {
+      method: "DELETE",
+    });
     assert.strictEqual(r.status, 204);
 
     const r2 = await app.request(`/api/hooks/${device}/${identifier}`);
-    const body = await r2.json() as { total: number };
+    const body = (await r2.json()) as { total: number };
     assert.strictEqual(body.total, 0);
   });
 
   it("should delete hooks via /db endpoint", async () => {
-    hookStore.append(device, identifier, { category: "c", symbol: "s", dir: "out" });
+    hookStore.append(device, identifier, {
+      category: "c",
+      symbol: "s",
+      dir: "out",
+    });
 
-    const r = await app.request(`/api/hooks/${device}/${identifier}/db`, { method: "DELETE" });
+    const r = await app.request(`/api/hooks/${device}/${identifier}/db`, {
+      method: "DELETE",
+    });
     assert.strictEqual(r.status, 204);
 
     const r2 = await app.request(`/api/hooks/${device}/${identifier}`);
-    const body = await r2.json() as { total: number };
+    const body = (await r2.json()) as { total: number };
     assert.strictEqual(body.total, 0);
   });
 
   it("should isolate hooks by device/identifier", async () => {
-    hookStore.append(device, identifier, { category: "c", symbol: "s", dir: "out" });
-    hookStore.append(device, "com.other.app", { category: "c", symbol: "s", dir: "out" });
+    hookStore.append(device, identifier, {
+      category: "c",
+      symbol: "s",
+      dir: "out",
+    });
+    hookStore.append(device, "com.other.app", {
+      category: "c",
+      symbol: "s",
+      dir: "out",
+    });
 
     const r = await app.request(`/api/hooks/${device}/${identifier}`);
-    const body = await r.json() as { total: number };
+    const body = (await r.json()) as { total: number };
     assert.strictEqual(body.total, 1);
 
     // cleanup other
@@ -301,17 +380,23 @@ describe("Crypto Logs API", () => {
   it("should return empty crypto logs", async () => {
     const r = await app.request(`/api/history/crypto/${device}/${identifier}`);
     assert.strictEqual(r.status, 200);
-    const body = await r.json() as { logs: unknown[]; total: number };
+    const body = (await r.json()) as { logs: unknown[]; total: number };
     assert.deepStrictEqual(body.logs, []);
     assert.strictEqual(body.total, 0);
   });
 
   it("should return inserted crypto logs", async () => {
-    cryptoStore.append(device, identifier, { symbol: "CCCrypt", dir: "encrypt" });
-    cryptoStore.append(device, identifier, { symbol: "SecKeyEncrypt", dir: "decrypt" });
+    cryptoStore.append(device, identifier, {
+      symbol: "CCCrypt",
+      dir: "encrypt",
+    });
+    cryptoStore.append(device, identifier, {
+      symbol: "SecKeyEncrypt",
+      dir: "decrypt",
+    });
 
     const r = await app.request(`/api/history/crypto/${device}/${identifier}`);
-    const body = await r.json() as { logs: any[]; total: number };
+    const body = (await r.json()) as { logs: any[]; total: number };
     assert.strictEqual(body.total, 2);
     assert.strictEqual(body.logs.length, 2);
     // newest first
@@ -321,13 +406,14 @@ describe("Crypto Logs API", () => {
 
   it("should return extra and backtrace as parsed objects", async () => {
     cryptoStore.append(device, identifier, {
-      symbol: "CCCrypt", dir: "encrypt",
+      symbol: "CCCrypt",
+      dir: "encrypt",
       extra: { algo: "AES" },
       backtrace: ["0x1000", "0x2000"],
     });
 
     const r = await app.request(`/api/history/crypto/${device}/${identifier}`);
-    const body = await r.json() as { logs: any[] };
+    const body = (await r.json()) as { logs: any[] };
     assert.strictEqual(typeof body.logs[0].extra, "object");
     assert.strictEqual(body.logs[0].extra.algo, "AES");
     assert(Array.isArray(body.logs[0].backtrace));
@@ -339,8 +425,15 @@ describe("Crypto Logs API", () => {
       cryptoStore.append(device, identifier, { symbol: `sym${i}`, dir: "enc" });
     }
 
-    const r = await app.request(`/api/history/crypto/${device}/${identifier}?limit=2&offset=1`);
-    const body = await r.json() as { logs: any[]; total: number; limit: number; offset: number };
+    const r = await app.request(
+      `/api/history/crypto/${device}/${identifier}?limit=2&offset=1`,
+    );
+    const body = (await r.json()) as {
+      logs: any[];
+      total: number;
+      limit: number;
+      offset: number;
+    };
     assert.strictEqual(body.logs.length, 2);
     assert.strictEqual(body.total, 5);
   });
@@ -348,11 +441,13 @@ describe("Crypto Logs API", () => {
   it("should clear crypto logs", async () => {
     cryptoStore.append(device, identifier, { symbol: "s", dir: "enc" });
 
-    const r = await app.request(`/api/history/crypto/${device}/${identifier}`, { method: "DELETE" });
+    const r = await app.request(`/api/history/crypto/${device}/${identifier}`, {
+      method: "DELETE",
+    });
     assert.strictEqual(r.status, 204);
 
     const r2 = await app.request(`/api/history/crypto/${device}/${identifier}`);
-    const body = await r2.json() as { total: number };
+    const body = (await r2.json()) as { total: number };
     assert.strictEqual(body.total, 0);
   });
 });
@@ -368,7 +463,7 @@ describe("HTTP Logs API", () => {
   it("should return empty http logs", async () => {
     const r = await app.request(`/api/history/http/${device}/${identifier}`);
     assert.strictEqual(r.status, 200);
-    const body = await r.json() as { requests: unknown[]; total: number };
+    const body = (await r.json()) as { requests: unknown[]; total: number };
     assert.deepStrictEqual(body.requests, []);
     assert.strictEqual(body.total, 0);
   });
@@ -388,7 +483,7 @@ describe("HTTP Logs API", () => {
     });
 
     const r = await app.request(`/api/history/http/${device}/${identifier}`);
-    const body = await r.json() as { requests: any[]; total: number };
+    const body = (await r.json()) as { requests: any[]; total: number };
     assert.strictEqual(body.total, 1);
     assert.strictEqual(body.requests[0].method, "GET");
     assert.strictEqual(body.requests[0].url, "https://example.com/api");
@@ -403,11 +498,13 @@ describe("HTTP Logs API", () => {
       request: { method: "POST", url: "https://example.com", headers: {} },
     });
 
-    const r = await app.request(`/api/history/http/${device}/${identifier}`, { method: "DELETE" });
+    const r = await app.request(`/api/history/http/${device}/${identifier}`, {
+      method: "DELETE",
+    });
     assert.strictEqual(r.status, 204);
 
     const r2 = await app.request(`/api/history/http/${device}/${identifier}`);
-    const body = await r2.json() as { total: number };
+    const body = (await r2.json()) as { total: number };
     assert.strictEqual(body.total, 0);
   });
 
@@ -426,7 +523,7 @@ describe("HTTP Logs API", () => {
     });
 
     const r = await app.request(`/api/history/http/${device}/${identifier}`);
-    const body = await r.json() as { total: number };
+    const body = (await r.json()) as { total: number };
     assert.strictEqual(body.total, 1);
 
     // cleanup other

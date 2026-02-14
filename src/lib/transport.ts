@@ -18,10 +18,7 @@ export class Transport {
   }
 }
 
-export async function create(
-  device: Device,
-  pid: number,
-): Promise<Transport> {
+export async function create(device: Device, pid: number): Promise<Transport> {
   const agentSource = await agent("transport");
   const session = await device.attach(pid);
   const script = await session.createScript(agentSource);
