@@ -1,5 +1,8 @@
 import { Hono } from "hono";
+
 import fs from "node:fs/promises";
+import { createReadStream } from "node:fs";
+import { Readable } from "node:stream";
 import nodePath from "node:path";
 
 import paths from "../lib/paths.ts";
@@ -7,14 +10,15 @@ import * as hookStore from "../lib/store/hooks.ts";
 import * as cryptoStore from "../lib/store/crypto.ts";
 import * as httpStore from "../lib/store/requests.ts";
 
+const LOG_TAIL_BYTES = 1024 * 1024; // 1MB
+
 const routes = new Hono()
   .get("/logs/:device/:identifier/:type", async (c) => {
     const deviceId = c.req.param("device");
     const identifier = c.req.param("identifier");
     const type = c.req.param("type");
 
-    const validTypes = ["syslog", "agent"];
-    if (!validTypes.includes(type)) {
+    if (!["syslog", "agent"].includes(type)) {
       return c.text("invalid log type", 400);
     }
 
@@ -27,13 +31,36 @@ const routes = new Hono()
       filename,
     );
 
+    const stat = await fs.stat(logPath).catch(() => null);
+    if (!stat) return c.text("");
+
+    const { size } = stat;
+
+    if (c.req.query("download")) {
+      c.header(
+        "Content-Disposition",
+        `attachment; filename="${identifier}-${filename}"`,
+      );
+      c.header("Content-Type", "text/plain");
+      c.header("Content-Length", size.toString());
+      return c.body(
+        Readable.toWeb(createReadStream(logPath)) as unknown as ReadableStream,
+      );
+    }
+
+    if (size <= LOG_TAIL_BYTES)
+      return c.text(await fs.readFile(logPath, "utf-8"));
+
+    const handle = await fs.open(logPath, "r");
+    const buf = Buffer.alloc(LOG_TAIL_BYTES);
+
     try {
-      const limit = parseInt(c.req.query("limit") || "5000", 10);
-      const content = await fs.readFile(logPath, "utf-8");
-      const lines = content.split("\n").filter((line) => line.length > 0);
-      return c.text(lines.slice(-limit).join("\n"));
-    } catch {
-      return c.text("");
+      await handle.read(buf, 0, LOG_TAIL_BYTES, size - LOG_TAIL_BYTES);
+      const chunk = buf.toString("utf-8");
+      const idx = chunk.indexOf("\n");
+      return c.text(idx === -1 ? chunk : chunk.slice(idx + 1));
+    } finally {
+      await handle.close();
     }
   })
   .delete("/logs/:device/:identifier", async (c) => {

@@ -30,6 +30,11 @@ export class LogWriter {
     this.agentLog.appendFile(`[${level}] ${text}\n`);
   }
 
+  async empty(type: "syslog" | "agent") {
+    const handle = type === "syslog" ? this.syslog : this.agentLog;
+    await handle.truncate(0);
+  }
+
   async close() {
     await Promise.all([this.syslog.close(), this.agentLog.close()]).catch(
       () => {},

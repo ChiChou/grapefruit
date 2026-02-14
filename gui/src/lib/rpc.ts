@@ -34,6 +34,10 @@ export interface SessionServerEvents {
     args: any[],
     ack: (err: Error, result: any) => void,
   ) => void;
+  clearLog: (
+    type: "syslog" | "agent",
+    ack: (err: Error | null, result: any) => void,
+  ) => void;
 }
 
 export type AsyncFruityRPC = RemoteRPC<FruityRPCRoute>;

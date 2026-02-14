@@ -176,19 +176,19 @@ describe("Logs API", () => {
     assert(await r.text(), "[info] hello");
   });
 
-  it("should respect limit parameter", async () => {
+  it("should return full content for small files", async () => {
     await fs.mkdir(logsDir, { recursive: true });
     const lines =
       Array.from({ length: 10 }, (_, i) => `line${i}`).join("\n") + "\n";
     await fs.writeFile(nodePath.join(logsDir, "syslog.log"), lines);
 
     const r = await app.request(
-      `/api/logs/${device}/${identifier}/syslog?limit=3`,
+      `/api/logs/${device}/${identifier}/syslog`,
     );
     const text = await r.text();
     const returned = text.split("\n").filter(Boolean);
-    assert.strictEqual(returned.length, 3);
-    assert.strictEqual(returned[0], "line7");
+    assert.strictEqual(returned.length, 10);
+    assert.strictEqual(returned[0], "line0");
   });
 
   it("should delete logs directory", async () => {
