@@ -16,22 +16,7 @@ interface Application {
   pid: number;
 }
 
-interface DeviceInfo {
-  arch: string;
-  os: {
-    version: string;
-    id: string;
-    name: string;
-  };
-  udid: string;
-  platform: string;
-  name: string;
-  access: string;
-  interfaces?: Array<{
-    type: string;
-    address: string;
-  }>;
-}
+import type { DeviceInfo } from "@/types/device";
 
 function AppCardSkeleton() {
   return (
