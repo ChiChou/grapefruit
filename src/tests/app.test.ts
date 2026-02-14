@@ -5,7 +5,9 @@ import nodePath from "node:path";
 
 import app from "../app.ts";
 import paths from "../lib/paths.ts";
-import { insertHookLog, deleteHookLogs } from "../lib/store.ts";
+import * as hookStore from "../lib/store/hooks.ts";
+import * as cryptoStore from "../lib/store/crypto.ts";
+import * as httpStore from "../lib/store/requests.ts";
 
 describe("API tests", () => {
   it("should start http server", async () => {
@@ -188,7 +190,7 @@ describe("Hooks API", () => {
   const identifier = "com.test.app";
 
   afterEach(() => {
-    deleteHookLogs(device, identifier);
+    hookStore.rm(device, identifier);
   });
 
   it("should return empty hooks list", async () => {
@@ -201,9 +203,9 @@ describe("Hooks API", () => {
     assert.strictEqual(body.offset, 0);
   });
 
-  it("should return inserted hooks with parsed payload", async () => {
-    insertHookLog(device, identifier, { category: "network", symbol: "send", dir: "out", data: "test" });
-    insertHookLog(device, identifier, { category: "crypto", symbol: "encrypt", dir: "in", data: "test2" });
+  it("should return inserted hooks", async () => {
+    hookStore.append(device, identifier, { category: "network", symbol: "send", dir: "out" });
+    hookStore.append(device, identifier, { category: "crypto", symbol: "encrypt", dir: "in" });
 
     const r = await app.request(`/api/hooks/${device}/${identifier}`);
     const body = await r.json() as { hooks: any[]; total: number };
@@ -212,14 +214,26 @@ describe("Hooks API", () => {
     // newest first
     assert.strictEqual(body.hooks[0].category, "crypto");
     assert.strictEqual(body.hooks[1].category, "network");
-    // payload should be parsed JSON, not string
-    assert.strictEqual(typeof body.hooks[0].payload, "object");
-    assert.strictEqual(body.hooks[0].payload.data, "test2");
+    assert.strictEqual(body.hooks[0].symbol, "encrypt");
+    assert.strictEqual(body.hooks[0].direction, "in");
+  });
+
+  it("should return extra as parsed object", async () => {
+    hookStore.append(device, identifier, {
+      category: "c", symbol: "s", dir: "out",
+      extra: { key: "value", num: 42 },
+    });
+
+    const r = await app.request(`/api/hooks/${device}/${identifier}`);
+    const body = await r.json() as { hooks: any[] };
+    assert.strictEqual(typeof body.hooks[0].extra, "object");
+    assert.strictEqual(body.hooks[0].extra.key, "value");
+    assert.strictEqual(body.hooks[0].extra.num, 42);
   });
 
   it("should filter by category", async () => {
-    insertHookLog(device, identifier, { category: "network", symbol: "send", dir: "out" });
-    insertHookLog(device, identifier, { category: "crypto", symbol: "enc", dir: "in" });
+    hookStore.append(device, identifier, { category: "network", symbol: "send", dir: "out" });
+    hookStore.append(device, identifier, { category: "crypto", symbol: "enc", dir: "in" });
 
     const r = await app.request(`/api/hooks/${device}/${identifier}?category=crypto`);
     const body = await r.json() as { hooks: any[]; total: number };
@@ -230,7 +244,7 @@ describe("Hooks API", () => {
 
   it("should paginate with limit and offset", async () => {
     for (let i = 0; i < 5; i++) {
-      insertHookLog(device, identifier, { category: "c", symbol: `s${i}`, dir: "out" });
+      hookStore.append(device, identifier, { category: "c", symbol: `s${i}`, dir: "out" });
     }
 
     const r = await app.request(`/api/hooks/${device}/${identifier}?limit=2&offset=1`);
@@ -242,7 +256,7 @@ describe("Hooks API", () => {
   });
 
   it("should clear hooks", async () => {
-    insertHookLog(device, identifier, { category: "c", symbol: "s", dir: "out" });
+    hookStore.append(device, identifier, { category: "c", symbol: "s", dir: "out" });
 
     const r = await app.request(`/api/hooks/${device}/${identifier}`, { method: "DELETE" });
     assert.strictEqual(r.status, 204);
@@ -253,7 +267,7 @@ describe("Hooks API", () => {
   });
 
   it("should delete hooks via /db endpoint", async () => {
-    insertHookLog(device, identifier, { category: "c", symbol: "s", dir: "out" });
+    hookStore.append(device, identifier, { category: "c", symbol: "s", dir: "out" });
 
     const r = await app.request(`/api/hooks/${device}/${identifier}/db`, { method: "DELETE" });
     assert.strictEqual(r.status, 204);
@@ -264,14 +278,158 @@ describe("Hooks API", () => {
   });
 
   it("should isolate hooks by device/identifier", async () => {
-    insertHookLog(device, identifier, { category: "c", symbol: "s", dir: "out" });
-    insertHookLog(device, "com.other.app", { category: "c", symbol: "s", dir: "out" });
+    hookStore.append(device, identifier, { category: "c", symbol: "s", dir: "out" });
+    hookStore.append(device, "com.other.app", { category: "c", symbol: "s", dir: "out" });
 
     const r = await app.request(`/api/hooks/${device}/${identifier}`);
     const body = await r.json() as { total: number };
     assert.strictEqual(body.total, 1);
 
     // cleanup other
-    deleteHookLogs(device, "com.other.app");
+    hookStore.rm(device, "com.other.app");
+  });
+});
+
+describe("Crypto Logs API", () => {
+  const device = "test-device";
+  const identifier = "com.test.app";
+
+  afterEach(() => {
+    cryptoStore.rm(device, identifier);
+  });
+
+  it("should return empty crypto logs", async () => {
+    const r = await app.request(`/api/crypto-logs/${device}/${identifier}`);
+    assert.strictEqual(r.status, 200);
+    const body = await r.json() as { logs: unknown[]; total: number };
+    assert.deepStrictEqual(body.logs, []);
+    assert.strictEqual(body.total, 0);
+  });
+
+  it("should return inserted crypto logs", async () => {
+    cryptoStore.append(device, identifier, { symbol: "CCCrypt", dir: "encrypt" });
+    cryptoStore.append(device, identifier, { symbol: "SecKeyEncrypt", dir: "decrypt" });
+
+    const r = await app.request(`/api/crypto-logs/${device}/${identifier}`);
+    const body = await r.json() as { logs: any[]; total: number };
+    assert.strictEqual(body.total, 2);
+    assert.strictEqual(body.logs.length, 2);
+    // newest first
+    assert.strictEqual(body.logs[0].symbol, "SecKeyEncrypt");
+    assert.strictEqual(body.logs[1].symbol, "CCCrypt");
+  });
+
+  it("should return extra and backtrace as parsed objects", async () => {
+    cryptoStore.append(device, identifier, {
+      symbol: "CCCrypt", dir: "encrypt",
+      extra: { algo: "AES" },
+      backtrace: ["0x1000", "0x2000"],
+    });
+
+    const r = await app.request(`/api/crypto-logs/${device}/${identifier}`);
+    const body = await r.json() as { logs: any[] };
+    assert.strictEqual(typeof body.logs[0].extra, "object");
+    assert.strictEqual(body.logs[0].extra.algo, "AES");
+    assert(Array.isArray(body.logs[0].backtrace));
+    assert.strictEqual(body.logs[0].backtrace[0], "0x1000");
+  });
+
+  it("should paginate crypto logs", async () => {
+    for (let i = 0; i < 5; i++) {
+      cryptoStore.append(device, identifier, { symbol: `sym${i}`, dir: "enc" });
+    }
+
+    const r = await app.request(`/api/crypto-logs/${device}/${identifier}?limit=2&offset=1`);
+    const body = await r.json() as { logs: any[]; total: number; limit: number; offset: number };
+    assert.strictEqual(body.logs.length, 2);
+    assert.strictEqual(body.total, 5);
+  });
+
+  it("should clear crypto logs", async () => {
+    cryptoStore.append(device, identifier, { symbol: "s", dir: "enc" });
+
+    const r = await app.request(`/api/crypto-logs/${device}/${identifier}`, { method: "DELETE" });
+    assert.strictEqual(r.status, 204);
+
+    const r2 = await app.request(`/api/crypto-logs/${device}/${identifier}`);
+    const body = await r2.json() as { total: number };
+    assert.strictEqual(body.total, 0);
+  });
+});
+
+describe("HTTP Logs API", () => {
+  const device = "test-device";
+  const identifier = "com.test.app";
+
+  afterEach(() => {
+    httpStore.rm(device, identifier);
+  });
+
+  it("should return empty http logs", async () => {
+    const r = await app.request(`/api/http-logs/${device}/${identifier}`);
+    assert.strictEqual(r.status, 200);
+    const body = await r.json() as { requests: unknown[]; total: number };
+    assert.deepStrictEqual(body.requests, []);
+    assert.strictEqual(body.total, 0);
+  });
+
+  it("should return upserted http requests", async () => {
+    httpStore.upsert(device, identifier, {
+      event: "requestWillBeSent",
+      requestId: "req-1",
+      timestamp: 1000,
+      request: { method: "GET", url: "https://example.com/api", headers: {} },
+    });
+    httpStore.upsert(device, identifier, {
+      event: "responseReceived",
+      requestId: "req-1",
+      timestamp: 1100,
+      response: { statusCode: 200, mimeType: "application/json", headers: {} },
+    });
+
+    const r = await app.request(`/api/http-logs/${device}/${identifier}`);
+    const body = await r.json() as { requests: any[]; total: number };
+    assert.strictEqual(body.total, 1);
+    assert.strictEqual(body.requests[0].method, "GET");
+    assert.strictEqual(body.requests[0].url, "https://example.com/api");
+    assert.strictEqual(body.requests[0].statusCode, 200);
+  });
+
+  it("should clear http logs", async () => {
+    httpStore.upsert(device, identifier, {
+      event: "requestWillBeSent",
+      requestId: "req-1",
+      timestamp: 1000,
+      request: { method: "POST", url: "https://example.com", headers: {} },
+    });
+
+    const r = await app.request(`/api/http-logs/${device}/${identifier}`, { method: "DELETE" });
+    assert.strictEqual(r.status, 204);
+
+    const r2 = await app.request(`/api/http-logs/${device}/${identifier}`);
+    const body = await r2.json() as { total: number };
+    assert.strictEqual(body.total, 0);
+  });
+
+  it("should isolate http logs by device/identifier", async () => {
+    httpStore.upsert(device, identifier, {
+      event: "requestWillBeSent",
+      requestId: "req-1",
+      timestamp: 1000,
+      request: { method: "GET", url: "https://a.com", headers: {} },
+    });
+    httpStore.upsert(device, "com.other.app", {
+      event: "requestWillBeSent",
+      requestId: "req-2",
+      timestamp: 1000,
+      request: { method: "GET", url: "https://b.com", headers: {} },
+    });
+
+    const r = await app.request(`/api/http-logs/${device}/${identifier}`);
+    const body = await r.json() as { total: number };
+    assert.strictEqual(body.total, 1);
+
+    // cleanup other
+    httpStore.rm(device, "com.other.app");
   });
 });

@@ -10,7 +10,28 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import type { Application, DeviceInfo } from "@shared/schema";
+interface Application {
+  name: string;
+  identifier: string;
+  pid: number;
+}
+
+interface DeviceInfo {
+  arch: string;
+  os: {
+    version: string;
+    id: string;
+    name: string;
+  };
+  udid: string;
+  platform: string;
+  name: string;
+  access: string;
+  interfaces?: Array<{
+    type: string;
+    address: string;
+  }>;
+}
 
 function AppCardSkeleton() {
   return (

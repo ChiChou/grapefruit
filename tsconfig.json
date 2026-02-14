@@ -13,10 +13,9 @@
     "baseUrl": ".",
     "outDir": "dist",
     "paths": {
-      "@shared/*": ["./shared/*"],
       "@agent/*": ["./agent/types/*"],
     },
   },
-  "include": ["src/**/*", "shared/**/*", "src/index.ts"],
+  "include": ["src/**/*", "src/index.ts"],
   "exclude": ["node_modules", "gui"],
 }
