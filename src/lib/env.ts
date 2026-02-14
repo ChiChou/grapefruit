@@ -1,7 +1,7 @@
 import { hostname } from "node:os";
 import { parseArgs } from "node:util";
 
-import { schema } from "./cli";
+import { schema } from "./cli.ts";
 
 const { values: argv } = parseArgs(schema);
 

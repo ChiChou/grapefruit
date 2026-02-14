@@ -1,9 +1,9 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import env from "./env";
-
-import paths from "./paths";
 import { readFile } from "node:fs/promises";
+
+import env from "./env.ts";
+import paths from "./paths.ts";
 
 // bun does not support embedded directory as a tree
 // extract assets when it's not present

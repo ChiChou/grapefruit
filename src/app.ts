@@ -311,7 +311,7 @@ api
         symbol: r.symbol,
         direction: r.direction,
         payload: JSON.parse(r.payload),
-        created_at: r.created_at,
+        createdAt: r.createdAt,
       }));
 
       const total = countHookLogs(deviceId, identifier, category);
