@@ -47,7 +47,7 @@ export function SymbolsTableView({ symbols, loading, modulePath }: SymbolsTableV
   const { t } = useTranslation();
   const { openFilePanel } = useDock();
   const { fruity, status, platform, mode, device, bundle, pid } = useSession();
-  const { createDocumentWithCode } = useRepl();
+  const { appendCode } = useRepl();
   const navigate = useNavigate();
 
   const hooksPath = `/workspace/${platform}/${device}/${mode}/${mode === Mode.App ? bundle : pid}/hooks`;
@@ -153,9 +153,9 @@ export function SymbolsTableView({ symbols, loading, modulePath }: SymbolsTableV
         name: item.name,
       };
       const code = generateNativeHook(target);
-      createDocumentWithCode(code);
+      appendCode(code);
     },
-    [modulePath, createDocumentWithCode]
+    [modulePath, appendCode]
   );
 
   const handleBatchHook = useCallback(async () => {
@@ -204,9 +204,9 @@ export function SymbolsTableView({ symbols, loading, modulePath }: SymbolsTableV
     });
 
     if (codes.length > 0) {
-      createDocumentWithCode(codes.join("\n"));
+      appendCode(codes.join("\n"));
     }
-  }, [rowSelection, data, modulePath, createDocumentWithCode, isFunction]);
+  }, [rowSelection, data, modulePath, appendCode, isFunction]);
 
   const columns = useMemo<ColumnDef<SymbolItem>[]>(() => {
     const cols: ColumnDef<SymbolItem>[] = [];

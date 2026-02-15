@@ -44,7 +44,7 @@ export function ClassDetailTab({
   const { t } = useTranslation();
   const { theme } = useTheme();
   const { fruity, status, platform, mode, device, bundle, pid } = useSession();
-  const { createDocumentWithCode } = useRepl();
+  const { appendCode } = useRepl();
   const navigate = useNavigate();
 
   const hooksPath = `/workspace/${platform}/${device}/${mode}/${mode === Mode.App ? bundle : pid}/hooks`;
@@ -157,9 +157,9 @@ export function ClassDetailTab({
         sel: methodName,
       };
       const code = generateObjCHook(target);
-      createDocumentWithCode(code);
+      appendCode(code);
     },
-    [classInfo, createDocumentWithCode]
+    [classInfo, appendCode]
   );
 
   const handleBatchHook = useCallback(async () => {
@@ -198,9 +198,9 @@ export function ClassDetailTab({
     }
 
     if (codes.length > 0) {
-      createDocumentWithCode(codes.join("\n"));
+      appendCode(codes.join("\n"));
     }
-  }, [classInfo, selectedMethods, createDocumentWithCode]);
+  }, [classInfo, selectedMethods, appendCode]);
 
   const toggleBatchMode = useCallback(() => {
     setBatchMode((prev) => !prev);
