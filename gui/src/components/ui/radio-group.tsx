@@ -1,10 +1,8 @@
-"use client"
-
 import { Radio as RadioPrimitive } from "@base-ui/react/radio"
 import { RadioGroup as RadioGroupPrimitive } from "@base-ui/react/radio-group"
-import { CircleIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { CircleIcon } from "lucide-react"
 
 function RadioGroup({ className, ...props }: RadioGroupPrimitive.Props) {
   return (
