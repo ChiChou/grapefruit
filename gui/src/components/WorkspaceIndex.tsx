@@ -1,36 +1,20 @@
-import { Platform, Mode, useSession } from "@/context/SessionContext";
-import { GeneralPanel } from "./panels/GeneralPanel";
-import { DroidGeneralPanel } from "./panels/DroidGeneralPanel";
-import { ModulesPanel } from "./panels/ModulesPanel";
-import { PlaceholderPanel } from "./panels/PlaceholderPanel";
+import { Navigate } from "react-router";
+import { Mode, useSession } from "@/context/SessionContext";
 
 /**
- * Renders the default panel for the workspace based on platform and mode.
- * Instead of redirecting, this directly renders the appropriate component.
+ * Redirects to the default tab for the workspace based on platform and mode.
+ * This ensures the URL reflects the active sidebar tab.
  */
 export function WorkspaceIndex() {
-  const { platform, mode } = useSession();
+  const { mode } = useSession();
 
-  // iOS App mode - show GeneralPanel
-  if (platform === Platform.Fruity && mode === Mode.App) {
-    return <GeneralPanel />;
+  if (mode === Mode.App) {
+    return <Navigate to="general" replace />;
   }
 
-  // iOS Daemon mode - show ModulesPanel
-  if (platform === Platform.Fruity && mode === Mode.Daemon) {
-    return <ModulesPanel />;
+  if (mode === Mode.Daemon) {
+    return <Navigate to="modules" replace />;
   }
 
-  // Android App mode - show DroidGeneralPanel
-  if (platform === Platform.Droid && mode === Mode.App) {
-    return <DroidGeneralPanel />;
-  }
-
-  // Android Daemon mode - show ModulesPanel
-  if (platform === Platform.Droid && mode === Mode.Daemon) {
-    return <ModulesPanel />;
-  }
-
-  // Fallback
-  return <PlaceholderPanel />;
+  return <Navigate to="general" replace />;
 }
