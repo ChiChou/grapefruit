@@ -11,6 +11,7 @@ import {
 
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useSession, Status, Mode } from "@/context/SessionContext";
 import { useRpcQuery } from "@/lib/queries";
 import { UserHooksList } from "./UserHooksList";
@@ -100,7 +101,7 @@ export function HookControlPanel() {
   }, [getStorageKey]);
 
   // Fetch initial hook status using TanStack Query
-  const { data: initialStatus } = useRpcQuery<Record<string, boolean>>(
+  const { data: initialStatus, isLoading: isLoadingStatus } = useRpcQuery<Record<string, boolean>>(
     ["hookStatus", device ?? "", bundle ?? "", String(pid ?? "")],
     (api) => api.hook.status()
   );
@@ -174,6 +175,29 @@ export function HookControlPanel() {
   };
 
   const isDisabled = status !== Status.Ready;
+
+  if (isLoadingStatus) {
+    return (
+      <div className="p-3 space-y-4">
+        <Skeleton className="h-5 w-20" />
+        <div className="space-y-3">
+          <Skeleton className="h-3 w-24" />
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-start space-x-3 p-2">
+              <Skeleton className="h-4 w-4 rounded shrink-0 mt-0.5" />
+              <div className="flex-1 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-5 w-9 rounded-full" />
+                </div>
+                <Skeleton className="h-3 w-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-3 space-y-4">

@@ -5,6 +5,7 @@ import { Search } from "lucide-react";
 import { List, type RowComponentProps } from "react-window";
 
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useDock } from "@/context/DockContext";
 import { useRpcQuery } from "@/lib/queries";
@@ -74,8 +75,10 @@ export function ClassesPanel() {
       </div>
       <div className="flex-1 min-h-0 h-full overflow-hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
-            {t("loading")}...
+          <div className="px-3 py-1.5 space-y-2">
+            {Array.from({ length: 16 }).map((_, i) => (
+              <Skeleton key={i} className="h-5" style={{ width: `${40 + (i * 17) % 50}%` }} />
+            ))}
           </div>
         ) : filteredClasses.length === 0 ? (
           <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
@@ -110,12 +113,6 @@ function ClassRow({
 }>) {
   const className = classes[index];
 
-  // Split class name into prefix and name for better visual hierarchy
-  const dotIndex = className.lastIndexOf(".");
-  const hasPrefix = dotIndex > 0;
-  const prefix = hasPrefix ? className.slice(0, dotIndex) : null;
-  const name = hasPrefix ? className.slice(dotIndex + 1) : className;
-
   return (
     <div
       className="px-3 py-1.5 border-b border-border/50 hover:bg-accent/50 transition-colors"
@@ -123,7 +120,7 @@ function ClassRow({
     >
       <button
         type="button"
-        className="flex items-center gap-2 w-full text-left cursor-pointer group"
+        className="text-sm font-mono truncate text-foreground hover:text-primary transition-colors w-full text-left cursor-pointer"
         onClick={() =>
           openFilePanel({
             id: `class_${className}`,
@@ -133,14 +130,7 @@ function ClassRow({
           })
         }
       >
-        {prefix && (
-          <span className="text-xs text-muted-foreground/70 font-medium shrink-0">
-            {prefix}.
-          </span>
-        )}
-        <span className="text-sm font-mono truncate text-foreground group-hover:text-primary transition-colors">
-          {name}
-        </span>
+        {className}
       </button>
     </div>
   );
