@@ -360,7 +360,7 @@ export function JSCTab() {
             {t("no_jscontext_found")}
           </div>
         ) : (
-          <ResizablePanelGroup direction="horizontal">
+          <ResizablePanelGroup orientation="horizontal">
             {/* Left Panel - JSContext List */}
             <ResizablePanel defaultSize={35} minSize={20}>
               <div className="h-full overflow-auto">

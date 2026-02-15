@@ -174,7 +174,7 @@ export function SQLiteEditorTab({
 
   return (
     <ResizablePanelGroup
-      direction="horizontal"
+      orientation="horizontal"
       autoSaveId="sqlite-editor"
       className="h-full"
     >
@@ -203,7 +203,7 @@ export function SQLiteEditorTab({
       </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize={70} minSize={30}>
-        <ResizablePanelGroup direction="vertical" className="h-full">
+        <ResizablePanelGroup orientation="vertical" className="h-full">
           <ResizablePanel defaultSize={50} minSize={20}>
             <div className="h-full flex flex-col">
               <div className="flex items-center gap-2 p-2 border-b">

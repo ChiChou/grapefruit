@@ -339,7 +339,7 @@ export function HttpLogTab() {
         </span>
       </div>
 
-      <ResizablePanelGroup direction="vertical" className="flex-1">
+      <ResizablePanelGroup orientation="vertical" className="flex-1">
         {/* Request List */}
         <ResizablePanel defaultSize={selectedRequest ? 50 : 100} minSize={20}>
           <ScrollArea className="h-full">

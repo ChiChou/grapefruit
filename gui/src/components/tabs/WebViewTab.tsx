@@ -196,11 +196,11 @@ document.title`);
             {t("no_webviews")}
           </div>
         ) : (
-        <ResizablePanelGroup direction="horizontal">
-          {/* Left Panel - WebView List */}
-          <ResizablePanel defaultSize={40} minSize={25}>
-            <div className="h-full overflow-auto">
-              <Table>
+          <ResizablePanelGroup orientation="horizontal">
+            {/* Left Panel - WebView List */}
+            <ResizablePanel defaultSize={40} minSize={25}>
+              <div className="h-full overflow-auto">
+                <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-24">{t("type")}</TableHead>

@@ -173,7 +173,7 @@ function WorkspaceContent() {
     <DockContext.Provider value={dockContextValue}>
       <div className="flex h-screen flex-col">
         <ResizablePanelGroup
-          direction="horizontal"
+          orientation="horizontal"
           className="h-full"
           autoSaveId="workspace-left-split"
         >
@@ -188,7 +188,7 @@ function WorkspaceContent() {
           <ResizablePanel>
             {bottomPanelVisible ? (
               <ResizablePanelGroup
-                direction="vertical"
+                orientation="vertical"
                 className="h-full"
                 autoSaveId="workspace-bottom-split"
               >
