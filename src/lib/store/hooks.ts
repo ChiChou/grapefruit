@@ -4,8 +4,6 @@ import { db } from "./db.ts";
 
 export interface HookRecord {
   id: number;
-  deviceId: string;
-  identifier: string;
   timestamp: string;
   category: string;
   symbol: string;
@@ -15,88 +13,90 @@ export interface HookRecord {
   createdAt: string;
 }
 
-export function append(
-  deviceId: string,
-  identifier: string,
-  message: Record<string, unknown>,
-): void {
-  const extra = message.extra as Record<string, unknown> | undefined;
-  db.insert(hooks)
-    .values({
-      deviceId,
-      identifier,
-      timestamp: new Date().toISOString(),
-      category: (message.category as string) || "unknown",
-      symbol: (message.symbol as string) || "unknown",
-      direction: (message.dir as string) || "unknown",
-      line: (message.line as string) || null,
-      extra: extra ? JSON.stringify(extra) : null,
-    })
-    .run();
-}
+export class HookStore {
+  constructor(
+    private deviceId: string,
+    private identifier: string,
+  ) {}
 
-export function query(
-  deviceId: string,
-  identifier: string,
-  options: {
-    limit?: number;
-    offset?: number;
-    category?: string;
-    since?: string;
-  } = {},
-): HookRecord[] {
-  const { limit = 1000, offset = 0, category, since } = options;
-
-  const conditions = [
-    eq(hooks.deviceId, deviceId),
-    eq(hooks.identifier, identifier),
-  ];
-
-  if (category) {
-    conditions.push(eq(hooks.category, category));
+  append(message: Record<string, unknown>): void {
+    const extra = message.extra as Record<string, unknown> | undefined;
+    db.insert(hooks)
+      .values({
+        deviceId: this.deviceId,
+        identifier: this.identifier,
+        timestamp: new Date().toISOString(),
+        category: (message.category as string) || "unknown",
+        symbol: (message.symbol as string) || "unknown",
+        direction: (message.dir as string) || "unknown",
+        line: (message.line as string) || null,
+        extra: extra ? JSON.stringify(extra) : null,
+      })
+      .run();
   }
 
-  if (since) {
-    conditions.push(gt(hooks.timestamp, since));
+  query(
+    options: {
+      limit?: number;
+      offset?: number;
+      category?: string;
+      since?: string;
+    } = {},
+  ): HookRecord[] {
+    const { limit = 1000, offset = 0, category, since } = options;
+
+    const conditions = [
+      eq(hooks.deviceId, this.deviceId),
+      eq(hooks.identifier, this.identifier),
+    ];
+
+    if (category) {
+      conditions.push(eq(hooks.category, category));
+    }
+
+    if (since) {
+      conditions.push(gt(hooks.timestamp, since));
+    }
+
+    const rows = db
+      .select()
+      .from(hooks)
+      .where(and(...conditions))
+      .orderBy(desc(hooks.id))
+      .limit(limit)
+      .offset(offset)
+      .all();
+
+    return rows as HookRecord[];
   }
 
-  const rows = db
-    .select()
-    .from(hooks)
-    .where(and(...conditions))
-    .orderBy(desc(hooks.id))
-    .limit(limit)
-    .offset(offset)
-    .all();
+  count(category?: string): number {
+    const conditions = [
+      eq(hooks.deviceId, this.deviceId),
+      eq(hooks.identifier, this.identifier),
+    ];
 
-  return rows as HookRecord[];
-}
+    if (category) {
+      conditions.push(eq(hooks.category, category));
+    }
 
-export function count(
-  deviceId: string,
-  identifier: string,
-  category?: string,
-): number {
-  const conditions = [
-    eq(hooks.deviceId, deviceId),
-    eq(hooks.identifier, identifier),
-  ];
+    const result = db
+      .select({ count: countFn() })
+      .from(hooks)
+      .where(and(...conditions))
+      .get();
 
-  if (category) {
-    conditions.push(eq(hooks.category, category));
+    return result?.count ?? 0;
   }
 
-  const result = db
-    .select({ count: countFn() })
-    .from(hooks)
-    .where(and(...conditions))
-    .get();
-
-  return result?.count ?? 0;
-}
-
-export function rm(deviceId: string, identifier: string): void {
-  db.delete(hooks)
-    .where(and(eq(hooks.deviceId, deviceId), eq(hooks.identifier, identifier)))
-    .run();
+  rm(): void {
+    db.delete(hooks)
+      .where(
+        and(
+          eq(hooks.deviceId, this.deviceId),
+          eq(hooks.identifier, this.identifier),
+        ),
+      )
+      .run();
+  }
 }

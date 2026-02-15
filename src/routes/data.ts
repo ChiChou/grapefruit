@@ -6,9 +6,9 @@ import { Readable } from "node:stream";
 import nodePath from "node:path";
 
 import paths from "../lib/paths.ts";
-import * as hookStore from "../lib/store/hooks.ts";
-import * as cryptoStore from "../lib/store/crypto.ts";
-import * as httpStore from "../lib/store/requests.ts";
+import { HookStore } from "../lib/store/hooks.ts";
+import { CryptoStore } from "../lib/store/crypto.ts";
+import { HttpStore } from "../lib/store/requests.ts";
 
 const LOG_TAIL_BYTES = 1024 * 1024; // 1MB
 
@@ -83,7 +83,9 @@ const routes = new Hono()
     const since = c.req.query("since");
 
     try {
-      const records = hookStore.query(deviceId, identifier, {
+      const hookStore = new HookStore(deviceId, identifier);
+
+      const records = hookStore.query({
         limit,
         offset,
         category,
@@ -101,7 +103,7 @@ const routes = new Hono()
         createdAt: r.createdAt,
       }));
 
-      const total = hookStore.count(deviceId, identifier, category);
+      const total = hookStore.count(category);
 
       return c.json({ hooks, total, limit, offset });
     } catch (e) {
@@ -114,7 +116,7 @@ const routes = new Hono()
     const identifier = c.req.param("identifier");
 
     try {
-      hookStore.rm(deviceId, identifier);
+      new HookStore(deviceId, identifier).rm();
       return c.body(null, 204);
     } catch (e) {
       console.error("Failed to clear hooks:", e);
@@ -126,7 +128,7 @@ const routes = new Hono()
     const identifier = c.req.param("identifier");
 
     try {
-      hookStore.rm(deviceId, identifier);
+      new HookStore(deviceId, identifier).rm();
       return c.body(null, 204);
     } catch (e) {
       console.error("Failed to delete hooks:", e);
@@ -143,7 +145,9 @@ const routes = new Hono()
     const since = c.req.query("since");
 
     try {
-      const records = cryptoStore.query(deviceId, identifier, {
+      const cryptoStore = new CryptoStore(deviceId, identifier);
+
+      const records = cryptoStore.query({
         limit,
         offset,
         since,
@@ -161,7 +165,7 @@ const routes = new Hono()
         createdAt: r.createdAt,
       }));
 
-      const total = cryptoStore.count(deviceId, identifier);
+      const total = cryptoStore.count();
 
       return c.json({ logs, total, limit, offset });
     } catch (e) {
@@ -174,7 +178,7 @@ const routes = new Hono()
     const identifier = c.req.param("identifier");
 
     try {
-      cryptoStore.rm(deviceId, identifier);
+      new CryptoStore(deviceId, identifier).rm();
       return c.body(null, 204);
     } catch (e) {
       console.error("Failed to clear crypto logs:", e);
@@ -190,11 +194,10 @@ const routes = new Hono()
     const offset = parseInt(c.req.query("offset") || "0", 10);
 
     try {
-      const requests = httpStore.query(deviceId, identifier, {
-        limit,
-        offset,
-      });
-      const total = httpStore.count(deviceId, identifier);
+      const httpStore = new HttpStore(deviceId, identifier);
+
+      const requests = httpStore.query({ limit, offset });
+      const total = httpStore.count();
 
       return c.json({ requests, total, limit, offset });
     } catch (e) {
@@ -207,7 +210,7 @@ const routes = new Hono()
     const identifier = c.req.param("identifier");
 
     try {
-      httpStore.rm(deviceId, identifier);
+      new HttpStore(deviceId, identifier).rm();
       return c.body(null, 204);
     } catch (e) {
       console.error("Failed to clear http logs:", e);
@@ -221,11 +224,9 @@ const routes = new Hono()
     const requestId = c.req.param("requestId");
 
     try {
-      const attachmentPath = httpStore.getAttachmentPath(
-        deviceId,
-        identifier,
-        requestId,
-      );
+      const httpStore = new HttpStore(deviceId, identifier);
+
+      const attachmentPath = httpStore.getAttachmentPath(requestId);
 
       if (!attachmentPath) {
         return c.text("No attachment found", 404);

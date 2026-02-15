@@ -3,7 +3,7 @@ import fs from "node:fs";
 import nodePath from "node:path";
 import { eq, and, desc, count as countFn } from "drizzle-orm";
 
-import { capturedRequests } from "../schema.ts";
+import { requests } from "../schema.ts";
 import { db } from "./db.ts";
 import paths from "../paths.ts";
 
@@ -42,8 +42,6 @@ export interface HttpNetworkEvent {
   timestamp: number;
   [key: string]: unknown;
 }
-
-export const attachmentsDir = nodePath.join(paths.data, "http-blobs");
 
 function merge(req: CapturedRequest, event: HttpNetworkEvent): void {
   switch (event.event) {
@@ -120,163 +118,161 @@ function merge(req: CapturedRequest, event: HttpNetworkEvent): void {
   }
 }
 
-export function upsert(
-  deviceId: string,
-  identifier: string,
-  event: HttpNetworkEvent,
-): string | null {
-  const requestId = event.requestId || "unknown";
+export class HttpStore {
+  constructor(
+    private deviceId: string,
+    private identifier: string,
+  ) {}
 
-  const existing = db
-    .select({
-      data: capturedRequests.data,
-      attachment: capturedRequests.attachment,
-    })
-    .from(capturedRequests)
-    .where(
-      and(
-        eq(capturedRequests.deviceId, deviceId),
-        eq(capturedRequests.identifier, identifier),
-        eq(capturedRequests.requestId, requestId),
-      ),
-    )
-    .get();
-
-  let req: CapturedRequest;
-  let attachment: string | null;
-
-  if (existing) {
-    req = JSON.parse(existing.data);
-    attachment = existing.attachment;
-  } else {
-    req = {
-      id: requestId,
-      method: "",
-      url: "",
-      requestHeaders: {},
-      size: 0,
-      startTime: event.timestamp,
-    };
-    attachment = nodePath.join(attachmentsDir, randomUUID());
+  get attachmentsDir(): string {
+    return nodePath.join(paths.cache, this.deviceId, this.identifier);
   }
 
-  merge(req, event);
-  req.attachment = attachment;
+  upsert(event: HttpNetworkEvent): string | null {
+    const requestId = event.requestId || "unknown";
 
-  db.insert(capturedRequests)
-    .values({
-      deviceId,
-      identifier,
-      requestId,
-      data: JSON.stringify(req),
-      attachment,
-    })
-    .onConflictDoUpdate({
-      target: [
-        capturedRequests.deviceId,
-        capturedRequests.identifier,
-        capturedRequests.requestId,
-      ],
-      set: {
+    const existing = db
+      .select({
+        data: requests.data,
+        attachment: requests.attachment,
+      })
+      .from(requests)
+      .where(
+        and(
+          eq(requests.deviceId, this.deviceId),
+          eq(requests.identifier, this.identifier),
+          eq(requests.requestId, requestId),
+        ),
+      )
+      .get();
+
+    let req: CapturedRequest;
+    let attachment: string | null;
+
+    if (existing) {
+      req = JSON.parse(existing.data);
+      attachment = existing.attachment;
+    } else {
+      req = {
+        id: requestId,
+        method: "",
+        url: "",
+        requestHeaders: {},
+        size: 0,
+        startTime: event.timestamp,
+      };
+      attachment = nodePath.join(this.attachmentsDir, randomUUID());
+    }
+
+    merge(req, event);
+    req.attachment = attachment;
+
+    db.insert(requests)
+      .values({
+        deviceId: this.deviceId,
+        identifier: this.identifier,
+        requestId,
         data: JSON.stringify(req),
-        updatedAt: new Date().toISOString(),
-      },
-    })
-    .run();
+        attachment,
+      })
+      .onConflictDoUpdate({
+        target: [
+          requests.deviceId,
+          requests.identifier,
+          requests.requestId,
+        ],
+        set: {
+          data: JSON.stringify(req),
+          updatedAt: new Date().toISOString(),
+        },
+      })
+      .run();
 
-  return attachment;
-}
+    return attachment;
+  }
 
-export function query(
-  deviceId: string,
-  identifier: string,
-  options: { limit?: number; offset?: number } = {},
-): CapturedRequest[] {
-  const { limit = 5000, offset = 0 } = options;
+  query(options: { limit?: number; offset?: number } = {}): CapturedRequest[] {
+    const { limit = 5000, offset = 0 } = options;
 
-  const rows = db
-    .select({
-      data: capturedRequests.data,
-      attachment: capturedRequests.attachment,
-    })
-    .from(capturedRequests)
-    .where(
-      and(
-        eq(capturedRequests.deviceId, deviceId),
-        eq(capturedRequests.identifier, identifier),
-      ),
-    )
-    .orderBy(desc(capturedRequests.id))
-    .limit(limit)
-    .offset(offset)
-    .all();
+    const rows = db
+      .select({
+        data: requests.data,
+        attachment: requests.attachment,
+      })
+      .from(requests)
+      .where(
+        and(
+          eq(requests.deviceId, this.deviceId),
+          eq(requests.identifier, this.identifier),
+        ),
+      )
+      .orderBy(desc(requests.id))
+      .limit(limit)
+      .offset(offset)
+      .all();
 
-  return rows.map((r) => {
-    const req = JSON.parse(r.data) as CapturedRequest;
-    req.attachment = r.attachment ?? null;
-    return req;
-  });
-}
+    return rows.map((r) => {
+      const req = JSON.parse(r.data) as CapturedRequest;
+      req.attachment = r.attachment ?? null;
+      return req;
+    });
+  }
 
-export function getAttachmentPath(
-  deviceId: string,
-  identifier: string,
-  requestId: string,
-): string | null {
-  const row = db
-    .select({ attachment: capturedRequests.attachment })
-    .from(capturedRequests)
-    .where(
-      and(
-        eq(capturedRequests.deviceId, deviceId),
-        eq(capturedRequests.identifier, identifier),
-        eq(capturedRequests.requestId, requestId),
-      ),
-    )
-    .get();
+  getAttachmentPath(requestId: string): string | null {
+    const row = db
+      .select({ attachment: requests.attachment })
+      .from(requests)
+      .where(
+        and(
+          eq(requests.deviceId, this.deviceId),
+          eq(requests.identifier, this.identifier),
+          eq(requests.requestId, requestId),
+        ),
+      )
+      .get();
 
-  return row?.attachment ?? null;
-}
+    return row?.attachment ?? null;
+  }
 
-export function count(deviceId: string, identifier: string): number {
-  const result = db
-    .select({ count: countFn() })
-    .from(capturedRequests)
-    .where(
-      and(
-        eq(capturedRequests.deviceId, deviceId),
-        eq(capturedRequests.identifier, identifier),
-      ),
-    )
-    .get();
+  count(): number {
+    const result = db
+      .select({ count: countFn() })
+      .from(requests)
+      .where(
+        and(
+          eq(requests.deviceId, this.deviceId),
+          eq(requests.identifier, this.identifier),
+        ),
+      )
+      .get();
 
-  return result?.count ?? 0;
-}
+    return result?.count ?? 0;
+  }
 
-export function rm(deviceId: string, identifier: string): void {
-  // Clean up attachment files before deleting records
-  const rows = db
-    .select({ attachment: capturedRequests.attachment })
-    .from(capturedRequests)
-    .where(
-      and(
-        eq(capturedRequests.deviceId, deviceId),
-        eq(capturedRequests.identifier, identifier),
-      ),
-    )
-    .all();
+  rm(): void {
+    const rows = db
+      .select({ attachment: requests.attachment })
+      .from(requests)
+      .where(
+        and(
+          eq(requests.deviceId, this.deviceId),
+          eq(requests.identifier, this.identifier),
+        ),
+      )
+      .all();
 
-  rows.forEach((row) => {
-    if (!row.attachment) return;
-    fs.promises.unlink(row.attachment).catch(() => {});
-  });
+    rows.forEach((row) => {
+      if (!row.attachment) return;
+      fs.promises.unlink(row.attachment).catch(() => {});
+    });
 
-  db.delete(capturedRequests)
-    .where(
-      and(
-        eq(capturedRequests.deviceId, deviceId),
-        eq(capturedRequests.identifier, identifier),
-      ),
-    )
-    .run();
+    db.delete(requests)
+      .where(
+        and(
+          eq(requests.deviceId, this.deviceId),
+          eq(requests.identifier, this.identifier),
+        ),
+      )
+      .run();
+  }
 }
