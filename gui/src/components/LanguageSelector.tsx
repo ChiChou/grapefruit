@@ -22,10 +22,10 @@ export function LanguageSelector() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="gap-2">
-          <Languages />
-        </Button>
+      <DropdownMenuTrigger
+        render={<Button variant="outline" size="icon" className="gap-2" />}
+      >
+        <Languages />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         {languages.map((lang) => (

@@ -485,11 +485,8 @@ export function ImportsListView({ path }: ImportsListViewProps) {
                       <div className="flex items-center gap-1">
                         {batchMode && (
                           <Checkbox
-                            checked={
-                              moduleSelectionState === "all" ||
-                              (moduleSelectionState === "some" &&
-                                "indeterminate")
-                            }
+                            checked={moduleSelectionState === "all"}
+                            indeterminate={moduleSelectionState === "some"}
                             onCheckedChange={(checked) => {
                               handleSelectModule(group, !!checked);
                             }}

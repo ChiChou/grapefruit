@@ -247,20 +247,12 @@ export function FileTable({
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-destructive hover:text-destructive"
-                              title={t("delete")}
-                              disabled={isDeleting}
-                            >
+                          <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title={t("delete")} disabled={isDeleting} />}>
                               {isDeleting ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
                                 <Trash2 className="h-4 w-4" />
                               )}
-                            </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="start">
                             <DropdownMenuItem
@@ -282,15 +274,8 @@ export function FileTable({
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          title={t("open_with")}
-                        >
+                      <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7" title={t("open_with")} />}>
                           <SquareArrowOutUpRight className="h-4 w-4" />
-                        </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start">
                         <DropdownMenuItem

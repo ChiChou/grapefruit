@@ -142,10 +142,10 @@ export function Devices() {
           <RefreshCw className="h-4 w-4" />
         </Button>
         <DropdownMenu open={addMenuOpen} onOpenChange={setAddMenuOpen}>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon-sm" title={t("add_device")}>
-              <Plus className="h-4 w-4" />
-            </Button>
+          <DropdownMenuTrigger
+            render={<Button variant="outline" size="icon-sm" title={t("add_device")} />}
+          >
+            <Plus className="h-4 w-4" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-64 p-4">
             <div className="space-y-3">
@@ -208,15 +208,17 @@ export function Devices() {
               </Link>
               {device.type === "remote" && (
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      title={t("delete")}
-                      className="shrink-0 flex-none"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        title={t("delete")}
+                        className="shrink-0 flex-none"
+                      />
+                    }
+                  >
+                    <X className="h-4 w-4" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem

@@ -187,15 +187,9 @@ export function BinaryCookieTab() {
           {t("reload")}
         </Button>
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="destructive"
-              size="sm"
-              disabled={isLoading || cookies.length === 0}
-            >
+          <DropdownMenuTrigger render={<Button variant="destructive" size="sm" disabled={isLoading || cookies.length === 0} />}>
               <Trash2 className="w-4 h-4 mr-2" />
               {t("clear")}
-            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             <DropdownMenuItem
@@ -328,13 +322,8 @@ export function BinaryCookieTab() {
                         }
                       }}
                     >
-                      <PopoverTrigger asChild>
-                        <button
-                          type="button"
-                          className="w-full text-left hover:bg-accent px-1 py-0.5 rounded"
-                        >
+                      <PopoverTrigger render={<button type="button" className="w-full text-left hover:bg-accent px-1 py-0.5 rounded" />}>
                           {formatDate(cookie.expiresDate)}
-                        </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-3" align="start">
                         <div className="flex flex-col gap-3">
@@ -406,15 +395,8 @@ export function BinaryCookieTab() {
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-destructive hover:text-destructive"
-                            title={t("remove")}
-                          >
+                        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title={t("remove")} />}>
                             <Trash2 className="h-4 w-4" />
-                          </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem

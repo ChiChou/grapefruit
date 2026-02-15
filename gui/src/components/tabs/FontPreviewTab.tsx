@@ -124,7 +124,6 @@ export function FontPreviewTab({
     <div className="h-full flex flex-col p-4">
       <div className="flex items-center gap-2 mb-4 flex-wrap">
         <ToggleGroup
-          type="multiple"
           className="rounded-md border"
           value={[
             ...(isBold ? ["bold"] : []),
@@ -140,21 +139,21 @@ export function FontPreviewTab({
           <ToggleGroupItem
             value="bold"
             aria-label="Toggle bold"
-            className="px-2 py-1 text-xs transition-colors rounded-none first:rounded-l-md last:rounded-r-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+            className="px-2 py-1 text-xs transition-colors rounded-none first:rounded-l-md last:rounded-r-md aria-pressed:bg-primary aria-pressed:text-primary-foreground"
           >
             <Bold size="14" />
           </ToggleGroupItem>
           <ToggleGroupItem
             value="italic"
             aria-label="Toggle italic"
-            className="px-2 py-1 text-xs transition-colors rounded-none first:rounded-l-md last:rounded-r-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+            className="px-2 py-1 text-xs transition-colors rounded-none first:rounded-l-md last:rounded-r-md aria-pressed:bg-primary aria-pressed:text-primary-foreground"
           >
             <Italic size="14" />
           </ToggleGroupItem>
           <ToggleGroupItem
             value="underline"
             aria-label="Toggle underline"
-            className="px-2 py-1 text-xs transition-colors rounded-none first:rounded-l-md last:rounded-r-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+            className="px-2 py-1 text-xs transition-colors rounded-none first:rounded-l-md last:rounded-r-md aria-pressed:bg-primary aria-pressed:text-primary-foreground"
           >
             <Underline size="14" />
           </ToggleGroupItem>
@@ -166,7 +165,8 @@ export function FontPreviewTab({
           step={1}
           className="w-32"
           onValueChange={(value) => {
-            const newSize = value[0];
+            const arr = Array.isArray(value) ? value : [value];
+            const newSize = arr[0];
             setFontSize(newSize);
             localStorage.setItem(KEY_SIZE, newSize.toString());
           }}
