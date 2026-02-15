@@ -32,6 +32,14 @@ export type ModeType = (typeof Mode)[keyof typeof Mode];
 export type LoggerCallback = (level: string, message: string) => void;
 export type SysLoggerCallback = (message: string) => void;
 
+export interface FlutterRuntimeInfo {
+  isFlutter: boolean;
+  platform: "android" | "ios";
+  engineModule: string | null;
+  appModule: string | null;
+  hints?: string[];
+}
+
 interface SessionContextType {
   platform: PlatformType | undefined;
   mode: ModeType | undefined;
@@ -46,6 +54,7 @@ interface SessionContextType {
   droid: AsyncDroidRPC | null;
   status: StatusType;
   socket: Socket<SessionClientEvents, SessionServerEvents> | null;
+  flutterRuntime: FlutterRuntimeInfo | null;
 }
 
 const defaultContext: SessionContextType = {
@@ -59,6 +68,7 @@ const defaultContext: SessionContextType = {
   droid: null,
   status: Status.Disconnected,
   socket: null,
+  flutterRuntime: null,
 };
 
 export const SessionContext = React.createContext(defaultContext);

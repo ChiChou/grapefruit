@@ -9,6 +9,7 @@ import {
   Anchor,
   Puzzle,
   Smartphone,
+  MessageSquare,
 } from "lucide-react";
 
 import {
@@ -61,22 +62,26 @@ export function LeftPanelView() {
       { route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
       { route: "urls", icon: <LinkIcon className="h-5 w-5" />, label: "URL Schemes" },
       { route: "hooks", icon: <Anchor className="h-5 w-5" />, label: t("hooks") },
+      { route: "flutter", icon: <MessageSquare className="h-5 w-5" />, label: t("flutter") },
       { route: "geolocation", icon: <MapPin className="h-5 w-5" />, label: t("geolocation_simulation") },
     ],
     [`${Platform.Fruity}:${Mode.Daemon}`]: [
       { route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
       { route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
       { route: "hooks", icon: <Anchor className="h-5 w-5" />, label: t("hooks") },
+      { route: "flutter", icon: <MessageSquare className="h-5 w-5" />, label: t("flutter") },
     ],
     [`${Platform.Droid}:${Mode.App}`]: [
       { route: "general", icon: <Info className="h-5 w-5" />, label: t("general") },
       { route: "components", icon: <Puzzle className="h-5 w-5" />, label: t("components") },
       { route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
       { route: "device", icon: <Smartphone className="h-5 w-5" />, label: t("device_info") },
+      { route: "flutter", icon: <MessageSquare className="h-5 w-5" />, label: t("flutter") },
     ],
     [`${Platform.Droid}:${Mode.Daemon}`]: [
       { route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
       { route: "device", icon: <Smartphone className="h-5 w-5" />, label: t("device_info") },
+      { route: "flutter", icon: <MessageSquare className="h-5 w-5" />, label: t("flutter") },
     ],
   }[navKey] ?? [];
 

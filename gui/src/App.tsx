@@ -20,6 +20,7 @@ import { ClassesPanel } from "./components/panels/ClassesPanel";
 import { URLSchemesPanel } from "./components/panels/URLSchemesPanel";
 import { GeolocationPanel } from "./components/panels/GeolocationPanel";
 import { HooksPanel } from "./components/panels/HooksPanel";
+import { FlutterPanel } from "./components/panels/FlutterPanel";
 import { PlaceholderPanel } from "./components/panels/PlaceholderPanel";
 
 import { Platform, useSession } from "./context/SessionContext";
@@ -62,6 +63,7 @@ function App() {
           <Route path="urls" element={<URLSchemesPanel />} />
           <Route path="geolocation" element={<GeolocationPanel />} />
           <Route path="hooks" element={<HooksPanel />} />
+          <Route path="flutter" element={<FlutterPanel />} />
           {/* Android (droid) panels */}
           <Route path="components" element={<DroidComponentsPanel />} />
           <Route path="device" element={<DroidDevicePanel />} />

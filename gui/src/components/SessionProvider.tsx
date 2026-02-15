@@ -1,14 +1,16 @@
-import { type ReactNode, useMemo, useEffect, useState } from "react";
+import { type ReactNode, useMemo, useEffect, useRef, useState } from "react";
 import { Navigate, useParams, useSearchParams } from "react-router";
 import { io, Socket } from "socket.io-client";
 
 import {
   Status,
   Mode,
+  Platform,
   SessionContext,
   type StatusType,
   type PlatformType,
   type ModeType,
+  type FlutterRuntimeInfo,
 } from "@/context/SessionContext";
 
 import {
@@ -42,6 +44,8 @@ function SessionProvider({ children }: { children: ReactNode }) {
 
   const [status, setStatus] = useState<StatusType>(Status.Disconnected);
   const [pid, setPid] = useState<number | undefined>(targetPid);
+  const [flutterRuntime, setFlutterRuntime] = useState<FlutterRuntimeInfo | null>(null);
+  const detectKeyRef = useRef<string | null>(null);
 
   // Compute project identifier matching server-side logic
   const identifier = useMemo(() => {
@@ -110,6 +114,38 @@ function SessionProvider({ children }: { children: ReactNode }) {
   }, [device, platform, mode, bundle, targetPid, processName]);
 
   useEffect(() => {
+    setFlutterRuntime(null);
+    detectKeyRef.current = null;
+  }, [platform, mode, device, bundle, pid]);
+
+  useEffect(() => {
+    if (status !== Status.Ready || !platform) return;
+
+    const sessionKey = `${platform}:${device}:${mode}:${bundle ?? pid ?? "unknown"}`;
+    if (detectKeyRef.current === sessionKey) return;
+    detectKeyRef.current = sessionKey;
+
+    const runtimeApi = platform === Platform.Fruity ? fruity : droid;
+    if (!runtimeApi) return;
+
+    runtimeApi.flutter
+      .detect()
+      .then((result) => {
+        setFlutterRuntime(result as FlutterRuntimeInfo);
+      })
+      .catch((error) => {
+        console.warn("flutter.detect failed:", error);
+        setFlutterRuntime({
+          isFlutter: false,
+          platform: platform === Platform.Fruity ? "ios" : "android",
+          engineModule: null,
+          appModule: null,
+          hints: ["flutter.detect() failed"],
+        });
+      });
+  }, [status, platform, device, mode, bundle, pid, fruity, droid]);
+
+  useEffect(() => {
     return () => {
       if (status === Status.Ready && socket) {
         console.debug("disconnect for", bundle || targetPid);
@@ -130,8 +166,21 @@ function SessionProvider({ children }: { children: ReactNode }) {
       droid,
       status,
       socket,
+      flutterRuntime,
     }),
-    [platform, mode, device, bundle, pid, identifier, fruity, droid, status, socket],
+    [
+      platform,
+      mode,
+      device,
+      bundle,
+      pid,
+      identifier,
+      fruity,
+      droid,
+      status,
+      socket,
+      flutterRuntime,
+    ],
   );
 
   // Validate required params
