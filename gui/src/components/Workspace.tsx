@@ -159,11 +159,40 @@ function WorkspaceContent() {
   };
 
   const createDefaultLayout = (dockApi: DockviewApi) => {
-    const defaultPanels: Record<string, { id: string; component: string; tabComponent?: string; title: string; params?: Record<string, string> }> = {
-      [`${Platform.Fruity}:${Mode.App}`]: { id: "quickstart_tab", component: "quickstart", tabComponent: "noClose", title: t("quickstart") },
-      [`${Platform.Fruity}:${Mode.Daemon}`]: { id: "finder_tab", component: "finder", title: "Finder", params: { path: "/" } },
-      [`${Platform.Droid}:${Mode.App}`]: { id: "finder_tab", component: "finder", title: "Finder", params: { path: "~" } },
-      [`${Platform.Droid}:${Mode.Daemon}`]: { id: "finder_tab", component: "finder", title: "Finder", params: { path: "/" } },
+    const defaultPanels: Record<
+      string,
+      {
+        id: string;
+        component: string;
+        tabComponent?: string;
+        title: string;
+        params?: Record<string, string>;
+      }
+    > = {
+      [`${Platform.Fruity}:${Mode.App}`]: {
+        id: "quickstart_tab",
+        component: "quickstart",
+        tabComponent: "noClose",
+        title: t("quickstart"),
+      },
+      [`${Platform.Fruity}:${Mode.Daemon}`]: {
+        id: "finder_tab",
+        component: "finder",
+        title: "Finder",
+        params: { path: "/" },
+      },
+      [`${Platform.Droid}:${Mode.App}`]: {
+        id: "finder_tab",
+        component: "finder",
+        title: "Finder",
+        params: { path: "~" },
+      },
+      [`${Platform.Droid}:${Mode.Daemon}`]: {
+        id: "finder_tab",
+        component: "finder",
+        title: "Finder",
+        params: { path: "/" },
+      },
     };
     const panel = defaultPanels[`${platform}:${mode}`];
     if (panel) dockApi.addPanel(panel);

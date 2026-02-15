@@ -84,7 +84,8 @@ function ValueIcon({ value }: { value: unknown }) {
 }
 
 function ValuePreview({ value }: { value: unknown }) {
-  if (value === null) return <span className="text-muted-foreground">null</span>;
+  if (value === null)
+    return <span className="text-muted-foreground">null</span>;
   if (value === undefined)
     return <span className="text-muted-foreground">undefined</span>;
   if (typeof value === "boolean") {

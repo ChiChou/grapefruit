@@ -72,7 +72,9 @@ export function URLSchemesPanel() {
               {error && (
                 <Alert variant="destructive">
                   <AlertTitle>{t("error")}</AlertTitle>
-                  <AlertDescription>{(error as Error)?.message}</AlertDescription>
+                  <AlertDescription>
+                    {(error as Error)?.message}
+                  </AlertDescription>
                 </Alert>
               )}
               {isLoading ? (

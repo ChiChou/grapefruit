@@ -191,10 +191,19 @@ function DetailPanel({ entry }: { entry: CryptoEntry }) {
   const hasBt = !!message.backtrace?.length;
 
   const savedTab = localStorage.getItem(CRYPTO_DETAIL_TAB_STATE);
-  const availableTabs = ["detail", ...(hasData ? ["hexdump"] : []), ...(hasBt ? ["backtrace"] : [])];
-  const defaultTab = savedTab && availableTabs.includes(savedTab)
-    ? savedTab
-    : hasData ? "hexdump" : hasBt ? "backtrace" : "detail";
+  const availableTabs = [
+    "detail",
+    ...(hasData ? ["hexdump"] : []),
+    ...(hasBt ? ["backtrace"] : []),
+  ];
+  const defaultTab =
+    savedTab && availableTabs.includes(savedTab)
+      ? savedTab
+      : hasData
+        ? "hexdump"
+        : hasBt
+          ? "backtrace"
+          : "detail";
 
   return (
     <Tabs
@@ -208,7 +217,9 @@ function DetailPanel({ entry }: { entry: CryptoEntry }) {
           <TabsTrigger value="hexdump">{t("crypto_hexdump_tab")}</TabsTrigger>
         )}
         {hasBt && (
-          <TabsTrigger value="backtrace">{t("crypto_backtrace_tab")}</TabsTrigger>
+          <TabsTrigger value="backtrace">
+            {t("crypto_backtrace_tab")}
+          </TabsTrigger>
         )}
       </TabsList>
 
@@ -587,7 +598,7 @@ export function CryptoResultsView() {
 
       {/* Two-column content */}
       <ResizablePanelGroup
-        direction="horizontal"
+        orientation="horizontal"
         className="flex-1 min-h-0"
         autoSaveId="crypto-results-split"
       >
