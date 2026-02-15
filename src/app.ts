@@ -1,9 +1,12 @@
+import { readFile } from "node:fs/promises";
+
 import { Hono } from "hono";
 import { logger } from "hono/logger";
 import { prettyJSON } from "hono/pretty-json";
 
 import getVersion from "./lib/version.ts";
 import env from "./lib/env.ts";
+import { asset } from "./lib/assets.ts";
 
 import deviceRoutes from "./routes/devices.ts";
 import transferRoutes from "./routes/transfer.ts";
@@ -27,6 +30,16 @@ api.get("/version", async (c) => {
     frida: await getVersion(env.frida === 16 ? "frida16" : "frida"),
     igf: version,
   });
+});
+
+api.get("/d.ts/pack", async (c) => {
+  const p = await asset("agent", "dist", "types", `frida${env.frida}.json`);
+  try {
+    const data = await readFile(p, "utf8");
+    return c.json(JSON.parse(data));
+  } catch {
+    return c.notFound();
+  }
 });
 
 api.route("/", deviceRoutes);
