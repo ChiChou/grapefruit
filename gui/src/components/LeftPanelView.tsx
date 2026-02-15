@@ -9,7 +9,6 @@ import {
   Anchor,
   Puzzle,
   Smartphone,
-  MessageSquare,
 } from "lucide-react";
 
 import {
@@ -27,9 +26,31 @@ interface NavItemProps {
   to: string;
   icon: React.ReactNode;
   label: string;
+  disabled?: boolean;
 }
 
-function NavItem({ to, icon, label }: NavItemProps) {
+function FlutterIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
+      <path d="M14 38 36 16h14L28 38H14z" fill="#54C5F8" />
+      <path d="M28 52 40 40h14L42 52H28z" fill="#01579B" />
+      <path d="M28 38l12 12h14L42 38H28z" fill="#29B6F6" />
+    </svg>
+  );
+}
+
+function NavItem({ to, icon, label, disabled = false }: NavItemProps) {
+  if (disabled) {
+    return (
+      <div className="p-2 flex items-center justify-center opacity-40 cursor-not-allowed">
+        <Tooltip>
+          <TooltipTrigger>{icon}</TooltipTrigger>
+          <TooltipContent side="right">{label}</TooltipContent>
+        </Tooltip>
+      </div>
+    );
+  }
+
   return (
     <NavLink
       to={to}
@@ -48,40 +69,66 @@ function NavItem({ to, icon, label }: NavItemProps) {
 }
 
 export function LeftPanelView() {
-  const { device, bundle, platform, mode, pid } = useSession();
+  const { device, bundle, platform, mode, pid, flutterRuntime } = useSession();
 
   // Determine the target for URL (bundle for app mode, pid for daemon mode)
   const target = mode === Mode.App ? bundle : pid;
   const basePath = `/workspace/${platform}/${device}/${mode}/${target}`;
+  const flutterDisabled = flutterRuntime?.isFlutter === false;
 
   const navKey = `${platform}:${mode}`;
-  const navItems: { route: string; icon: React.ReactNode; label: string }[] = {
+  const navItems: {
+    route: string;
+    icon: React.ReactNode;
+    label: string;
+    disabled?: boolean;
+  }[] = {
     [`${Platform.Fruity}:${Mode.App}`]: [
       { route: "general", icon: <Info className="h-5 w-5" />, label: t("general") },
       { route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
       { route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
       { route: "urls", icon: <LinkIcon className="h-5 w-5" />, label: "URL Schemes" },
       { route: "hooks", icon: <Anchor className="h-5 w-5" />, label: t("hooks") },
-      { route: "flutter", icon: <MessageSquare className="h-5 w-5" />, label: t("flutter") },
+      {
+        route: "flutter",
+        icon: <FlutterIcon className="h-5 w-5" />,
+        label: t("flutter"),
+        disabled: flutterDisabled,
+      },
       { route: "geolocation", icon: <MapPin className="h-5 w-5" />, label: t("geolocation_simulation") },
     ],
     [`${Platform.Fruity}:${Mode.Daemon}`]: [
       { route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
       { route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
       { route: "hooks", icon: <Anchor className="h-5 w-5" />, label: t("hooks") },
-      { route: "flutter", icon: <MessageSquare className="h-5 w-5" />, label: t("flutter") },
+      {
+        route: "flutter",
+        icon: <FlutterIcon className="h-5 w-5" />,
+        label: t("flutter"),
+        disabled: flutterDisabled,
+      },
     ],
     [`${Platform.Droid}:${Mode.App}`]: [
       { route: "general", icon: <Info className="h-5 w-5" />, label: t("general") },
       { route: "components", icon: <Puzzle className="h-5 w-5" />, label: t("components") },
       { route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
       { route: "device", icon: <Smartphone className="h-5 w-5" />, label: t("device_info") },
-      { route: "flutter", icon: <MessageSquare className="h-5 w-5" />, label: t("flutter") },
+      {
+        route: "flutter",
+        icon: <FlutterIcon className="h-5 w-5" />,
+        label: t("flutter"),
+        disabled: flutterDisabled,
+      },
     ],
     [`${Platform.Droid}:${Mode.Daemon}`]: [
       { route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
       { route: "device", icon: <Smartphone className="h-5 w-5" />, label: t("device_info") },
-      { route: "flutter", icon: <MessageSquare className="h-5 w-5" />, label: t("flutter") },
+      {
+        route: "flutter",
+        icon: <FlutterIcon className="h-5 w-5" />,
+        label: t("flutter"),
+        disabled: flutterDisabled,
+      },
     ],
   }[navKey] ?? [];
 
@@ -102,6 +149,7 @@ export function LeftPanelView() {
                 to={`${basePath}/${item.route}`}
                 icon={item.icon}
                 label={item.label}
+                disabled={item.disabled}
               />
             ))}
           </div>
