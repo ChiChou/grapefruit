@@ -195,8 +195,8 @@ export function AppsView() {
         <Button variant="default" size="sm">
           {t("apps")}
         </Button>
-        <Button variant="outline" size="sm" asChild>
-          <Link to={`/list/${udid}/processes`}>{t("processes")}</Link>
+        <Button variant="outline" size="sm" render={<Link to={`/list/${udid}/processes`} />}>
+          {t("processes")}
         </Button>
       </div>
 

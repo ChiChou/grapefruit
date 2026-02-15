@@ -299,16 +299,8 @@ export function UserDefaultsTab() {
                             }
                           }}
                         >
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => startDateEdit(item)}
-                              title={t("edit")}
-                            >
+                          <PopoverTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startDateEdit(item)} title={t("edit")} />}>
                               <CalendarIcon className="h-4 w-4" />
-                            </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-3" align="end">
                             <Calendar
@@ -386,15 +378,8 @@ export function UserDefaultsTab() {
                         </Popover>
                       )}
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-destructive hover:text-destructive"
-                            title={t("remove")}
-                          >
+                        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title={t("remove")} />}>
                             <Trash2 className="h-4 w-4" />
-                          </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem

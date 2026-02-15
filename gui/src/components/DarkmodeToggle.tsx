@@ -18,19 +18,21 @@ export function DarkmodeToggle() {
   return (
     <Tooltip>
       <TooltipContent>{t("toggle_dark_mode")}</TooltipContent>
-      <TooltipTrigger asChild>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={toggleDarkMode}
-          aria-label={t("toggle_dark_mode")}
-        >
-          {theme === "dark" ? (
-            <SunIcon className="h-5 w-5" />
-          ) : (
-            <MoonIcon className="h-5 w-5" />
-          )}
-        </Button>
+      <TooltipTrigger
+        render={
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={toggleDarkMode}
+            aria-label={t("toggle_dark_mode")}
+          />
+        }
+      >
+        {theme === "dark" ? (
+          <SunIcon className="h-5 w-5" />
+        ) : (
+          <MoonIcon className="h-5 w-5" />
+        )}
       </TooltipTrigger>
     </Tooltip>
   );

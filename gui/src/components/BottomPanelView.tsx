@@ -120,35 +120,35 @@ export function BottomPanelView() {
       <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0">
         <TabsTrigger
           value="logs"
-          className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary flex items-center gap-2"
+          className="rounded-none border-b-2 border-transparent data-active:border-primary flex items-center gap-2"
         >
           <FileText className="h-4 w-4" />
           {t("logs")}
         </TabsTrigger>
         <TabsTrigger
           value="hooks"
-          className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary flex items-center gap-2"
+          className="rounded-none border-b-2 border-transparent data-active:border-primary flex items-center gap-2"
         >
           <Anchor className="h-4 w-4" />
           {t("hooks")}
         </TabsTrigger>
         <TabsTrigger
           value="crypto"
-          className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary flex items-center gap-2"
+          className="rounded-none border-b-2 border-transparent data-active:border-primary flex items-center gap-2"
         >
           <Lock className="h-4 w-4" />
           {t("crypto_results")}
         </TabsTrigger>
         <TabsTrigger
           value="agent-logs"
-          className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary flex items-center gap-2"
+          className="rounded-none border-b-2 border-transparent data-active:border-primary flex items-center gap-2"
         >
           <Activity className="h-4 w-4" />
           {t("agent_logs")}
         </TabsTrigger>
         <TabsTrigger
           value="repl"
-          className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary flex items-center gap-2"
+          className="rounded-none border-b-2 border-transparent data-active:border-primary flex items-center gap-2"
         >
           <Terminal className="h-4 w-4" />
           {t("code_editor")}
@@ -157,7 +157,7 @@ export function BottomPanelView() {
       <TabsContent
         value="logs"
         className="flex-1 overflow-hidden mt-0"
-        forceMount
+        keepMounted
         hidden={activeTab !== "logs"}
       >
         <div className="relative h-full">
@@ -175,11 +175,9 @@ export function BottomPanelView() {
               variant="secondary"
               size="icon"
               className="h-8 w-8 rounded-full shadow-md"
-              asChild
+              render={<a href={`/api/logs/${device}/${identifier}/syslog?download=1`} download />}
             >
-              <a href={`/api/logs/${device}/${identifier}/syslog?download=1`} download>
-                <Download className="h-4 w-4" />
-              </a>
+              <Download className="h-4 w-4" />
             </Button>
             <Button
               variant="secondary"
@@ -198,7 +196,7 @@ export function BottomPanelView() {
       <TabsContent
         value="hooks"
         className="flex-1 overflow-hidden mt-0"
-        forceMount
+        keepMounted
         hidden={activeTab !== "hooks"}
       >
         <HookResultsView />
@@ -206,7 +204,7 @@ export function BottomPanelView() {
       <TabsContent
         value="crypto"
         className="flex-1 overflow-hidden mt-0"
-        forceMount
+        keepMounted
         hidden={activeTab !== "crypto"}
       >
         <CryptoResultsView />
@@ -214,7 +212,7 @@ export function BottomPanelView() {
       <TabsContent
         value="agent-logs"
         className="flex-1 overflow-hidden mt-0"
-        forceMount
+        keepMounted
         hidden={activeTab !== "agent-logs"}
       >
         <div className="relative h-full">
@@ -232,11 +230,9 @@ export function BottomPanelView() {
               variant="secondary"
               size="icon"
               className="h-8 w-8 rounded-full shadow-md"
-              asChild
+              render={<a href={`/api/logs/${device}/${identifier}/agent?download=1`} download />}
             >
-              <a href={`/api/logs/${device}/${identifier}/agent?download=1`} download>
-                <Download className="h-4 w-4" />
-              </a>
+              <Download className="h-4 w-4" />
             </Button>
             <Button
               variant="secondary"
@@ -255,7 +251,7 @@ export function BottomPanelView() {
       <TabsContent
         value="repl"
         className="flex-1 overflow-hidden mt-0"
-        forceMount
+        keepMounted
         hidden={activeTab !== "repl"}
       >
         <CodeEditorTab />

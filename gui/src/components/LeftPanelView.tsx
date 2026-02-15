@@ -39,7 +39,7 @@ function NavItem({ to, icon, label }: NavItemProps) {
       }
     >
       <Tooltip>
-        <TooltipTrigger asChild>{icon}</TooltipTrigger>
+        <TooltipTrigger>{icon}</TooltipTrigger>
         <TooltipContent side="right">{label}</TooltipContent>
       </Tooltip>
     </NavLink>

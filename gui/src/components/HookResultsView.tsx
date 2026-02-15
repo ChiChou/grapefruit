@@ -100,13 +100,11 @@ function SummaryPopover({ summary }: { summary: string }) {
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <span
+      <PopoverTrigger render={<span
           className="font-mono text-muted-foreground truncate flex-1 min-w-0 cursor-pointer hover:text-foreground"
           title={summary}
-        >
+        />}>
           {summary}
-        </span>
       </PopoverTrigger>
       <PopoverContent className="w-[500px] p-0" align="start">
         <div className="flex items-center justify-end p-2 border-b">
@@ -153,10 +151,8 @@ function StackTracePopover({
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-6 px-1.5">
+      <PopoverTrigger render={<Button variant="outline" size="sm" className="h-6 px-1.5" />}>
           <Layers className="h-3 w-3" />
-        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[600px] p-0" align="end">
         <div className="p-3 border-b">

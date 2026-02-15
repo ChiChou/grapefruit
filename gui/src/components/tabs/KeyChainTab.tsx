@@ -299,8 +299,7 @@ export function KeyChainTab() {
                     open={protFilterOpen}
                     onOpenChange={setProtFilterOpen}
                   >
-                    <PopoverTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 px-1">
+                    <PopoverTrigger render={<Button variant="ghost" size="sm" className="h-8 px-1" />}>
                         <Server className="w-4 h-4 inline mr-1" />
                         {t("prot")}
                         {selectedProts.size > 0 && (
@@ -308,7 +307,6 @@ export function KeyChainTab() {
                             {selectedProts.size}
                           </span>
                         )}
-                      </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-100 p-3" align="start">
                       <div className="flex flex-col gap-2">
@@ -355,15 +353,13 @@ export function KeyChainTab() {
                     open={classFilterOpen}
                     onOpenChange={setClassFilterOpen}
                   >
-                    <PopoverTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 px-1">
+                    <PopoverTrigger render={<Button variant="ghost" size="sm" className="h-8 px-1" />}>
                         {t("class")}
                         {selectedClasses.size > 0 && (
                           <span className="ml-1 text-xs bg-primary text-primary-foreground rounded-full px-1.5">
                             {selectedClasses.size}
                           </span>
                         )}
-                      </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-48 p-3" align="start">
                       <div className="flex flex-col gap-2">
@@ -469,15 +465,8 @@ export function KeyChainTab() {
                     >
                       <div className="flex justify-end gap-1">
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-destructive hover:text-destructive"
-                              title={t("remove")}
-                            >
+                          <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title={t("remove")} />}>
                               <Trash2 className="h-4 w-4" />
-                            </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem

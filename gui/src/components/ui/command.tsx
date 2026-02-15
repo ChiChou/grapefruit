@@ -36,11 +36,14 @@ function CommandDialog({
   className,
   showCloseButton = true,
   ...props
-}: React.ComponentProps<typeof Dialog> & {
+}: {
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
   title?: string
   description?: string
   className?: string
   showCloseButton?: boolean
+  children?: React.ReactNode
 }) {
   return (
     <Dialog {...props}>

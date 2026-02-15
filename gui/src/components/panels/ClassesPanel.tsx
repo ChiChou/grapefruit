@@ -40,9 +40,11 @@ export function ClassesPanel() {
     <div className="h-full flex flex-col">
       <div className="p-3 space-y-3 border-b border-border/50">
         <ToggleGroup
-          type="single"
-          value={scope}
-          onValueChange={handleScopeChange}
+          value={[scope]}
+          onValueChange={(values) => {
+            const last = values[values.length - 1];
+            if (last) handleScopeChange(last);
+          }}
           variant="outline"
           size="sm"
           className="w-full"

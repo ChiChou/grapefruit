@@ -268,50 +268,42 @@ export function UIDumpTab() {
       <div className="flex items-center justify-between p-3 border-b border-border">
         <ButtonGroup>
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
+            <TooltipTrigger render={<Button
                 variant="outline"
                 size="sm"
                 onClick={() => refetch()}
                 disabled={isLoading}
-              >
+              />}>
                 <RefreshCw
                   className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
                 />
-              </Button>
             </TooltipTrigger>
             <TooltipContent>{t("reload")}</TooltipContent>
           </Tooltip>
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="sm" onClick={handleExpandAll}>
+            <TooltipTrigger render={<Button variant="outline" size="sm" onClick={handleExpandAll} />}>
                 <ChevronsUpDown className="h-4 w-4" />
-              </Button>
             </TooltipTrigger>
             <TooltipContent>{t("expand_all")}</TooltipContent>
           </Tooltip>
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="sm" onClick={handleCollapseAll}>
+            <TooltipTrigger render={<Button variant="outline" size="sm" onClick={handleCollapseAll} />}>
                 <ChevronsDownUp className="h-4 w-4" />
-              </Button>
             </TooltipTrigger>
             <TooltipContent>{t("collapse_all")}</TooltipContent>
           </Tooltip>
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
+            <TooltipTrigger render={<Button
                 variant="outline"
                 size="sm"
                 onClick={handleCopy}
                 className={copied ? "text-green-600 border-green-600 dark:text-green-400 dark:border-green-400" : ""}
-              >
+              />}>
                 {copied ? (
                   <Check className="h-4 w-4" />
                 ) : (
                   <Copy className="h-4 w-4" />
                 )}
-              </Button>
             </TooltipTrigger>
             <TooltipContent>{copied ? t("copied") : t("copy")}</TooltipContent>
           </Tooltip>

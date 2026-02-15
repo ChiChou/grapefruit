@@ -232,7 +232,7 @@ export function TextEditorTab({
     <div className="h-full flex flex-col bg-background">
       <div className="flex-none px-4 py-2 bg-muted/50 border-b flex justify-between items-center gap-4">
         <span className="truncate text-sm">{fullPath}</span>
-        <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+        <Select value={selectedLanguage} onValueChange={(v) => { if (v) setSelectedLanguage(v) }}>
           <SelectTrigger className="w-40">
             <SelectValue />
           </SelectTrigger>

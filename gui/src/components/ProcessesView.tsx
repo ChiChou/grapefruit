@@ -205,8 +205,8 @@ export function ProcessesView() {
       {deviceInfo ? <DeviceHeader deviceInfo={deviceInfo} /> : <></>}
 
       <div className="mb-4 flex gap-2">
-        <Button variant="outline" size="sm" asChild>
-          <Link to={`/list/${udid}/apps`}>{t("apps")}</Link>
+        <Button variant="outline" size="sm" render={<Link to={`/list/${udid}/apps`} />}>
+          {t("apps")}
         </Button>
         <Button variant="default" size="sm">
           {t("processes")}
@@ -270,15 +270,17 @@ export function ProcessesView() {
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          type="button"
-                          onClick={(e) => e.stopPropagation()}
-                          className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-muted-foreground hover:text-red-500 transition-colors"
-                          title={t("kill_process")}
-                        >
-                          <XCircle className="w-4 h-4" />
-                        </button>
+                      <DropdownMenuTrigger
+                        render={
+                          <button
+                            type="button"
+                            onClick={(e) => e.stopPropagation()}
+                            className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-muted-foreground hover:text-red-500 transition-colors"
+                            title={t("kill_process")}
+                          />
+                        }
+                      >
+                        <XCircle className="w-4 h-4" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem

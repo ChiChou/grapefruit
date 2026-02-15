@@ -66,17 +66,15 @@ function BooleanBadge({ value, label, t }: { value: boolean | undefined; label: 
   if (value === undefined) return null;
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <span
+      <TooltipTrigger render={<span
           className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded ${
             value
               ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
               : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
           }`}
-        >
+        />}>
           {value ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
           {label}
-        </span>
       </TooltipTrigger>
       <TooltipContent>
         {label}: {value ? t("enabled") : t("disabled")}

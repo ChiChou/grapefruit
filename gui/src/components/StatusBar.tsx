@@ -88,16 +88,18 @@ export function StatusBar({
       className={`${getStatusColor()} px-4 py-1 text-xs text-white flex items-center justify-between`}
     >
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            className="hover:bg-white/20 px-1 py-0.5 rounded transition-colors cursor-pointer flex items-center gap-1.5"
-          >
-            {getStatusIcon()}
-            {status === Status.Ready && t("connected")}
-            {status === Status.Connecting && t("connecting")}
-            {status === Status.Disconnected && t("disconnected")}
-          </button>
+        <DropdownMenuTrigger
+          render={
+            <button
+              type="button"
+              className="hover:bg-white/20 px-1 py-0.5 rounded transition-colors cursor-pointer flex items-center gap-1.5"
+            />
+          }
+        >
+          {getStatusIcon()}
+          {status === Status.Ready && t("connected")}
+          {status === Status.Connecting && t("connecting")}
+          {status === Status.Disconnected && t("disconnected")}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
           <DropdownMenuItem onClick={handleReloadPage}>
