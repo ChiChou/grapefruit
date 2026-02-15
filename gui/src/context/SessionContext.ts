@@ -38,6 +38,8 @@ interface SessionContextType {
   device: string | undefined;
   bundle: string | undefined;
   pid: number | undefined;
+  /** Project identifier for data API calls (bundle ID for app, name-hash for daemon) */
+  identifier: string | undefined;
   /** Typed iOS RPC API. Throws if connected to Android. */
   fruity: AsyncFruityRPC | null;
   /** Typed Android RPC API. Throws if connected to iOS. */
@@ -52,6 +54,7 @@ const defaultContext: SessionContextType = {
   device: undefined,
   bundle: undefined,
   pid: undefined,
+  identifier: undefined,
   fruity: null,
   droid: null,
   status: Status.Disconnected,

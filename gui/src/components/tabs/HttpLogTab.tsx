@@ -19,7 +19,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 
-import { useSession, Status, Mode } from "@/context/SessionContext";
+import { useSession, Status } from "@/context/SessionContext";
 import type { HttpNetworkEvent } from "@/lib/rpc";
 
 interface WebSocketMessage {
@@ -257,15 +257,13 @@ function HeadersView({
 }
 
 export function HttpLogTab() {
-  const { socket, status, device, bundle, pid, mode } = useSession();
+  const { socket, status, device, identifier } = useSession();
 
   const [requests, setRequests] = useState<Map<string, CapturedRequest>>(
     () => new Map(),
   );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const tableEndRef = useRef<HTMLDivElement>(null);
-
-  const identifier = mode === Mode.App ? bundle : `pid-${pid}`;
 
   const handleEvent = useCallback((event: HttpNetworkEvent) => {
     setRequests((prev) => {

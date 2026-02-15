@@ -245,7 +245,7 @@ export function ProcessesView() {
                 <TableRow key={process.pid} className="cursor-pointer">
                   <TableCell>
                     <Link
-                      to={`/workspace/${platform}/${udid}/daemon/${process.pid}`}
+                      to={`/workspace/${platform}/${udid}/daemon/${process.pid}?name=${encodeURIComponent(process.name)}`}
                       className="text-amber-600 dark:text-amber-400 hover:underline"
                     >
                       {process.pid}
@@ -253,7 +253,7 @@ export function ProcessesView() {
                   </TableCell>
                   <TableCell>
                     <Link
-                      to={`/workspace/${platform}/${udid}/daemon/${process.pid}`}
+                      to={`/workspace/${platform}/${udid}/daemon/${process.pid}?name=${encodeURIComponent(process.name)}`}
                       className="block"
                     >
                       {process.name}

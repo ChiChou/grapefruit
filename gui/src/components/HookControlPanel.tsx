@@ -12,7 +12,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSession, Status, Mode } from "@/context/SessionContext";
+import { useSession, Status } from "@/context/SessionContext";
 import { useRpcQuery } from "@/lib/queries";
 import { UserHooksList } from "./UserHooksList";
 
@@ -60,22 +60,16 @@ const HOOK_GROUPS: HookGroup[] = [
 
 export function HookControlPanel() {
   const { t } = useTranslation();
-  const { fruity, status, device, bundle, pid, mode } = useSession();
+  const { fruity, status, device, identifier } = useSession();
   const [hookStatus, setHookStatus] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const restoredRef = useRef(false);
 
   // Generate storage key based on device and identifier
   const getStorageKey = useCallback(() => {
-    if (!device) return null;
-    if (mode === Mode.App && bundle) {
-      return `${HOOKS_STORAGE_PREFIX}${device}|${bundle}`;
-    } else if (mode === Mode.Daemon && pid) {
-      // For daemon mode, use pid (note: pid changes between launches)
-      return `${HOOKS_STORAGE_PREFIX}${device}|pid-${pid}`;
-    }
-    return null;
-  }, [device, bundle, pid, mode]);
+    if (!device || !identifier) return null;
+    return `${HOOKS_STORAGE_PREFIX}${device}|${identifier}`;
+  }, [device, identifier]);
 
   // Load saved hooks from localStorage
   const loadSavedHooks = useCallback((): string[] => {
@@ -102,7 +96,7 @@ export function HookControlPanel() {
 
   // Fetch initial hook status using TanStack Query
   const { data: initialStatus, isLoading: isLoadingStatus } = useRpcQuery<Record<string, boolean>>(
-    ["hookStatus", device ?? "", bundle ?? "", String(pid ?? "")],
+    ["hookStatus", device ?? "", identifier ?? ""],
     (api) => api.hook.status()
   );
 
@@ -142,7 +136,7 @@ export function HookControlPanel() {
   // Reset restored flag when session changes
   useEffect(() => {
     restoredRef.current = false;
-  }, [device, bundle, pid]);
+  }, [device, identifier]);
 
   const handleToggle = async (groupId: string, enabled: boolean) => {
     if (!fruity) return;
