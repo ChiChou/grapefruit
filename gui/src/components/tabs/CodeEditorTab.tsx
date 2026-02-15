@@ -10,6 +10,16 @@ import { useRepl } from "@/context/useRepl";
 const FRIDA_DTS_URL =
   "https://cdn.jsdelivr.net/npm/@types/frida-gum/index.d.ts";
 
+// todo:
+// import following scripts under frida 17
+//
+// https://cdn.jsdelivr.net/npm/frida-objc-bridge/index.d.ts
+// https://cdn.jsdelivr.net/npm/frida-java-bridge/index.d.ts
+// https://cdn.jsdelivr.net/npm/frida-swift-bridge/dist/index.d.ts
+//
+// if frida version == 16, load a different version of @types/frida-gum
+// https://cdn.jsdelivr.net/npm/@types/frida-gum@18/index.d.ts
+
 let fridaTypes: string | null = null;
 const fridaTypesPromise = fetch(FRIDA_DTS_URL)
   .then((r) => (r.ok ? r.text() : null))
@@ -96,7 +106,12 @@ export function CodeEditorTab() {
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between px-3 py-1.5 border-b bg-muted/30">
         <div className="flex items-center gap-1">
-          <Button variant="default" size="sm" className="h-7 px-2 gap-1.5" disabled>
+          <Button
+            variant="default"
+            size="sm"
+            className="h-7 px-2 gap-1.5"
+            disabled
+          >
             <Play className="h-3.5 w-3.5" />
             {t("run")}
           </Button>
