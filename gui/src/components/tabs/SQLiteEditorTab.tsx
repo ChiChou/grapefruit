@@ -40,7 +40,8 @@ export function SQLiteEditorTab({
   const { t } = useTranslation();
   const { theme } = useTheme();
   const { fruity, droid, platform } = useSession();
-  const sqlite = (platform === Platform.Droid ? droid?.sqlite : fruity?.sqlite) ?? null;
+  const sqlite =
+    (platform === Platform.Droid ? droid?.sqlite : fruity?.sqlite) ?? null;
 
   const [filteredTables, setFilteredTables] = useState<string[]>([]);
   const [tableSearch, setTableSearch] = useState("");
@@ -92,7 +93,11 @@ export function SQLiteEditorTab({
   });
 
   // Mutation for executing arbitrary SQL
-  const queryMutation = useMutation<unknown[][], Error, { handle: number; sql: string }>({
+  const queryMutation = useMutation<
+    unknown[][],
+    Error,
+    { handle: number; sql: string }
+  >({
     mutationFn: ({ handle, sql }) => sqlite!.query(handle, sql),
   });
 
@@ -152,7 +157,7 @@ export function SQLiteEditorTab({
   // Determine if execute button should be disabled
   const executeDisabled = useMemo(
     () => isExecuting || !sql.trim() || dbHandle === undefined,
-    [isExecuting, sql, dbHandle]
+    [isExecuting, sql, dbHandle],
   );
 
   if (isLoading) {
