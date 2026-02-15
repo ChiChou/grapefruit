@@ -219,6 +219,7 @@
   "show_panel": "Show Panel",
   "quickstart": "Quick Start",
   "quickstart_description": "Runtime mobile application analysis toolkit for iOS",
+  "quickstart_finder_desc": "Browse app home directory and files",
   "quickstart_lsof_desc": "List open file descriptors and sockets",
   "quickstart_infoplist_desc": "View application configuration",
   "quickstart_entitlements_desc": "Inspect app capabilities and permissions",
