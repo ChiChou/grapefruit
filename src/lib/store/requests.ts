@@ -1,6 +1,11 @@
+import { randomUUID } from "node:crypto";
+import fs from "node:fs";
+import nodePath from "node:path";
 import { eq, and, desc, count as countFn } from "drizzle-orm";
+
 import { capturedRequests } from "../schema.ts";
 import { db } from "./db.ts";
+import paths from "../paths.ts";
 
 interface WebSocketMessage {
   direction: "send" | "receive";
@@ -24,11 +29,11 @@ export interface CapturedRequest {
   requestHeaders: Record<string, string>;
   responseHeaders?: Record<string, string>;
   requestBody?: string;
-  responseBody?: string;
   error?: string;
   mechanism?: string;
   isWebSocket?: boolean;
   wsMessages?: WebSocketMessage[];
+  attachment?: string | null;
 }
 
 export interface HttpNetworkEvent {
@@ -37,6 +42,8 @@ export interface HttpNetworkEvent {
   timestamp: number;
   [key: string]: unknown;
 }
+
+export const attachmentsDir = nodePath.join(paths.data, "http-blobs");
 
 function merge(req: CapturedRequest, event: HttpNetworkEvent): void {
   switch (event.event) {
@@ -81,7 +88,6 @@ function merge(req: CapturedRequest, event: HttpNetworkEvent): void {
       break;
     }
     case "loadingFinished": {
-      req.responseBody = event.responseBody as string | undefined;
       req.endTime = event.timestamp;
       req.duration = event.timestamp - req.startTime;
       break;
@@ -118,11 +124,14 @@ export function upsert(
   deviceId: string,
   identifier: string,
   event: HttpNetworkEvent,
-): void {
+): string | null {
   const requestId = event.requestId || "unknown";
 
   const existing = db
-    .select()
+    .select({
+      data: capturedRequests.data,
+      attachment: capturedRequests.attachment,
+    })
     .from(capturedRequests)
     .where(
       and(
@@ -134,8 +143,11 @@ export function upsert(
     .get();
 
   let req: CapturedRequest;
+  let attachment: string | null;
+
   if (existing) {
     req = JSON.parse(existing.data);
+    attachment = existing.attachment;
   } else {
     req = {
       id: requestId,
@@ -145,26 +157,34 @@ export function upsert(
       size: 0,
       startTime: event.timestamp,
     };
+    attachment = nodePath.join(attachmentsDir, randomUUID());
   }
 
   merge(req, event);
+  req.attachment = attachment;
 
-  const now = new Date().toISOString();
-  if (existing) {
-    db.update(capturedRequests)
-      .set({ data: JSON.stringify(req), updatedAt: now })
-      .where(eq(capturedRequests.id, existing.id))
-      .run();
-  } else {
-    db.insert(capturedRequests)
-      .values({
-        deviceId,
-        identifier,
-        requestId,
+  db.insert(capturedRequests)
+    .values({
+      deviceId,
+      identifier,
+      requestId,
+      data: JSON.stringify(req),
+      attachment,
+    })
+    .onConflictDoUpdate({
+      target: [
+        capturedRequests.deviceId,
+        capturedRequests.identifier,
+        capturedRequests.requestId,
+      ],
+      set: {
         data: JSON.stringify(req),
-      })
-      .run();
-  }
+        updatedAt: new Date().toISOString(),
+      },
+    })
+    .run();
+
+  return attachment;
 }
 
 export function query(
@@ -175,7 +195,10 @@ export function query(
   const { limit = 5000, offset = 0 } = options;
 
   const rows = db
-    .select({ data: capturedRequests.data })
+    .select({
+      data: capturedRequests.data,
+      attachment: capturedRequests.attachment,
+    })
     .from(capturedRequests)
     .where(
       and(
@@ -188,7 +211,31 @@ export function query(
     .offset(offset)
     .all();
 
-  return rows.map((r) => JSON.parse(r.data) as CapturedRequest);
+  return rows.map((r) => {
+    const req = JSON.parse(r.data) as CapturedRequest;
+    req.attachment = r.attachment ?? null;
+    return req;
+  });
+}
+
+export function getAttachmentPath(
+  deviceId: string,
+  identifier: string,
+  requestId: string,
+): string | null {
+  const row = db
+    .select({ attachment: capturedRequests.attachment })
+    .from(capturedRequests)
+    .where(
+      and(
+        eq(capturedRequests.deviceId, deviceId),
+        eq(capturedRequests.identifier, identifier),
+        eq(capturedRequests.requestId, requestId),
+      ),
+    )
+    .get();
+
+  return row?.attachment ?? null;
 }
 
 export function count(deviceId: string, identifier: string): number {
@@ -207,6 +254,23 @@ export function count(deviceId: string, identifier: string): number {
 }
 
 export function rm(deviceId: string, identifier: string): void {
+  // Clean up attachment files before deleting records
+  const rows = db
+    .select({ attachment: capturedRequests.attachment })
+    .from(capturedRequests)
+    .where(
+      and(
+        eq(capturedRequests.deviceId, deviceId),
+        eq(capturedRequests.identifier, identifier),
+      ),
+    )
+    .all();
+
+  rows.forEach((row) => {
+    if (!row.attachment) return;
+    fs.promises.unlink(row.attachment).catch(() => {});
+  });
+
   db.delete(capturedRequests)
     .where(
       and(

@@ -5,6 +5,7 @@ import {
   integer,
   blob,
   index,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
 export const preferences = sqliteTable("preferences", {
@@ -20,6 +21,7 @@ export const capturedRequests = sqliteTable(
     identifier: text("identifier").notNull(),
     requestId: text("request_id").notNull(),
     data: text("data").notNull(),
+    attachment: text("attachment"),
     createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
     updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
   },
@@ -28,7 +30,7 @@ export const capturedRequests = sqliteTable(
       table.deviceId,
       table.identifier,
     ),
-    index("idx_captured_requests_request_id").on(
+    uniqueIndex("idx_captured_requests_request_id").on(
       table.deviceId,
       table.identifier,
       table.requestId,

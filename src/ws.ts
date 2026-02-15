@@ -1,4 +1,5 @@
 import { type ServerType } from "@hono/node-server";
+import fs from "node:fs";
 import { Server, type Socket } from "socket.io";
 import { SessionDetachReason, type SpawnOptions, type Device } from "frida";
 
@@ -118,7 +119,13 @@ function setupScriptHandlers(
         console.log(`[http]`, payload);
         socket.emit("http", payload as httpStore.HttpNetworkEvent);
         try {
-          httpStore.upsert(deviceId, identifier, payload);
+          const attachment = httpStore.upsert(deviceId, identifier, payload);
+          if (attachment && data) {
+            fs.promises
+              .mkdir(httpStore.attachmentsDir, { recursive: true })
+              .then(() => fs.promises.appendFile(attachment, Buffer.from(data)))
+              .catch((e) => console.error("Failed to write attachment:", e));
+          }
         } catch (e) {
           console.error("Failed to persist HTTP event:", e);
         }

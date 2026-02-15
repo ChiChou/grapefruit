@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Trash2, ArrowUp, ArrowDown } from "lucide-react";
+import { Trash2, ArrowUp, ArrowDown, Download } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -49,6 +49,7 @@ interface CapturedRequest {
   mechanism?: string;
   isWebSocket?: boolean;
   wsMessages?: WebSocketMessage[];
+  attachment?: string | null;
 }
 
 function formatSize(bytes: bigint | number): string {
@@ -172,6 +173,8 @@ function handleEventPure(
       entry.responseBody = event["responseBody"] as string | undefined;
       entry.endTime = event.timestamp;
       entry.duration = event.timestamp - entry.startTime;
+      entry.attachment =
+        (event["attachment"] as string | undefined) ?? entry.attachment;
       break;
     }
     case "loadingFailed": {
@@ -487,23 +490,41 @@ export function HttpLogTab() {
                             ` (Error: ${selectedRequest.error})`}
                         </pre>
                       </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <div className="text-xs font-semibold text-muted-foreground mb-1">
-                            Headers
-                          </div>
-                          <HeadersView
-                            headers={selectedRequest.responseHeaders}
-                          />
+                      <div>
+                        <div className="text-xs font-semibold text-muted-foreground mb-1">
+                          Headers
                         </div>
-                        <div>
-                          <div className="text-xs font-semibold text-muted-foreground mb-1">
+                        <HeadersView
+                          headers={selectedRequest.responseHeaders}
+                        />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="text-xs font-semibold text-muted-foreground">
                             Body
                           </div>
-                          <pre className="text-xs font-mono whitespace-pre-wrap break-all max-h-96 overflow-auto">
-                            {selectedRequest.responseBody || "(none)"}
-                          </pre>
+                          {selectedRequest.attachment && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-5 px-1.5 text-[10px]"
+                              onClick={() => {
+                                const link = document.createElement("a");
+                                link.href = `/api/history/http/${device}/${identifier}/attachment/${encodeURIComponent(selectedRequest.id)}`;
+                                link.download = selectedRequest.id;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              }}
+                            >
+                              <Download className="w-3 h-3 mr-0.5" />
+                              Download
+                            </Button>
+                          )}
                         </div>
+                        <pre className="text-xs font-mono whitespace-pre-wrap break-all max-h-96 overflow-auto">
+                          {selectedRequest.responseBody || "(none)"}
+                        </pre>
                       </div>
                     </div>
                   </ScrollArea>
