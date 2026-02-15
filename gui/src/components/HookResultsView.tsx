@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { useSession, Status, Mode } from "@/context/SessionContext";
+import { useSession, Status } from "@/context/SessionContext";
 
 import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
 
@@ -251,7 +251,7 @@ function HookRow(
 
 export function HookResultsView() {
   const { t } = useTranslation();
-  const { socket, status, device, bundle, pid, mode } = useSession();
+  const { socket, status, device, identifier } = useSession();
   const [entries, setEntries] = useState<HookEntry[]>([]);
   const listRef = useRef<ListImperativeAPI>(null);
   const idCounterRef = useRef(0);
@@ -263,8 +263,6 @@ export function HookResultsView() {
 
   // Auto-scroll state
   const [autoScroll, setAutoScroll] = useState(true);
-
-  const identifier = mode === Mode.App ? bundle : `pid-${pid}`;
 
   // Load historical hooks (exclude crypto category)
   const { data: hookHistory } = useQuery<{ hooks: Array<{ id: number; timestamp: string; category: string; symbol: string; direction: string; line: string | null; extra?: Record<string, unknown> }> }>({

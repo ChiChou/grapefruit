@@ -14,7 +14,7 @@ import {
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Status, Mode, Platform, useSession } from "@/context/SessionContext";
+import { Status, Platform, useSession } from "@/context/SessionContext";
 
 import { LogViewer, type LogViewerHandle } from "./LogViewer";
 import { HookResultsView } from "./HookResultsView";
@@ -24,7 +24,7 @@ import { CodeEditorTab } from "./tabs/CodeEditorTab";
 const BOTTOM_PANEL_TAB_STATE = "BOTTOM_PANEL_TAB_STATE";
 
 export function BottomPanelView() {
-  const { fruity, droid, platform, status, socket, device, bundle, pid, mode } =
+  const { fruity, droid, platform, status, socket, device, identifier } =
     useSession();
   const [activeTab, setActiveTab] = useState<string>(() => {
     try {
@@ -37,7 +37,6 @@ export function BottomPanelView() {
   const syslogRef = useRef<LogViewerHandle>(null);
   const logRef = useRef<LogViewerHandle>(null);
 
-  const identifier = mode === Mode.App ? bundle : `pid-${pid}`;
 
   const { data: syslogHistory } = useQuery<string>({
     queryKey: ["logHistory", device, identifier, "syslog"],

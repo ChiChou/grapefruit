@@ -22,7 +22,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { useSession, Status, Mode } from "@/context/SessionContext";
+import { useSession, Status } from "@/context/SessionContext";
 import { useRpcQuery } from "@/lib/queries";
 
 import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
@@ -304,7 +304,7 @@ function DetailPanel({ entry }: { entry: CryptoEntry }) {
 
 export function CryptoResultsView() {
   const { t } = useTranslation();
-  const { fruity, socket, status, device, bundle, pid, mode } = useSession();
+  const { fruity, socket, status, device, identifier } = useSession();
   const [entries, setEntries] = useState<CryptoEntry[]>([]);
   const listRef = useRef<ListImperativeAPI>(null);
   const idCounterRef = useRef(0);
@@ -324,11 +324,9 @@ export function CryptoResultsView() {
   const [cryptoStatus, setCryptoStatus] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
 
-  const identifier = mode === Mode.App ? bundle : `pid-${pid}`;
-
   // Fetch crypto sub-group status
   const { data: initialStatus } = useRpcQuery<Record<string, boolean>>(
-    ["cryptoStatus", device ?? "", bundle ?? "", String(pid ?? "")],
+    ["cryptoStatus", device ?? "", identifier ?? ""],
     (api) => api.crypto.status(),
   );
 
