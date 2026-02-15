@@ -299,6 +299,36 @@ describe("Hooks API", () => {
     assert.strictEqual(body.hooks[0].category, "crypto");
   });
 
+  it("should store and query flutter.channel hooks", async () => {
+    hookStore.append(device, identifier, {
+      category: "flutter.channel",
+      symbol: "android.MethodChannel.invokeMethod",
+      dir: "leave",
+      line: "[Native->Dart] channel=plugins.flutter.io/share method=share",
+      extra: {
+        platform: "android",
+        type: "method",
+        dir: "native->dart",
+        channel: "plugins.flutter.io/share",
+        method: "share",
+        args: { text: "hello" },
+        codec: "standard",
+      },
+    });
+
+    const r = await app.request(
+      `/api/hooks/${device}/${identifier}?category=flutter.channel`,
+    );
+    assert.strictEqual(r.status, 200);
+
+    const body = (await r.json()) as { hooks: any[]; total: number };
+    assert.strictEqual(body.total, 1);
+    assert.strictEqual(body.hooks.length, 1);
+    assert.strictEqual(body.hooks[0].category, "flutter.channel");
+    assert.strictEqual(body.hooks[0].extra.channel, "plugins.flutter.io/share");
+    assert.strictEqual(body.hooks[0].extra.method, "share");
+  });
+
   it("should paginate with limit and offset", async () => {
     const { hooks: hookStore } = getStores();
     for (let i = 0; i < 5; i++) {
