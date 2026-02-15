@@ -58,7 +58,7 @@ export function PlistView({
           value={viewMode}
           onValueChange={(v) => setViewMode(v as "tree" | "text")}
         >
-          <TabsList className="w-auto h-8">
+          <TabsList variant="line" className="w-auto h-8">
             <TabsTrigger value="tree" className="px-3">
               {t("tree")}
             </TabsTrigger>

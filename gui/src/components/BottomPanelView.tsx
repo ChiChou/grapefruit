@@ -1,7 +1,16 @@
 import { useEffect, useState, useRef } from "react";
 import { t } from "i18next";
 import { useQuery } from "@tanstack/react-query";
-import { FileText, Activity, Anchor, Terminal, Lock, ArrowDown, Trash2, Download } from "lucide-react";
+import {
+  FileText,
+  Activity,
+  Anchor,
+  Terminal,
+  Lock,
+  ArrowDown,
+  Trash2,
+  Download,
+} from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -15,7 +24,8 @@ import { CodeEditorTab } from "./tabs/CodeEditorTab";
 const BOTTOM_PANEL_TAB_STATE = "BOTTOM_PANEL_TAB_STATE";
 
 export function BottomPanelView() {
-  const { fruity, droid, platform, status, socket, device, bundle, pid, mode } = useSession();
+  const { fruity, droid, platform, status, socket, device, bundle, pid, mode } =
+    useSession();
   const [activeTab, setActiveTab] = useState<string>(() => {
     try {
       return localStorage.getItem(BOTTOM_PANEL_TAB_STATE) || "logs";
@@ -32,7 +42,9 @@ export function BottomPanelView() {
   const { data: syslogHistory } = useQuery<string>({
     queryKey: ["logHistory", device, identifier, "syslog"],
     queryFn: async () => {
-      const res = await fetch(`/api/logs/${device}/${identifier}/syslog?limit=5000`);
+      const res = await fetch(
+        `/api/logs/${device}/${identifier}/syslog?limit=5000`,
+      );
       if (!res.ok) throw new Error("Failed to load syslog history");
       return res.text();
     },
@@ -44,7 +56,9 @@ export function BottomPanelView() {
   const { data: agentLogHistory } = useQuery<string>({
     queryKey: ["logHistory", device, identifier, "agent"],
     queryFn: async () => {
-      const res = await fetch(`/api/logs/${device}/${identifier}/agent?limit=5000`);
+      const res = await fetch(
+        `/api/logs/${device}/${identifier}/agent?limit=5000`,
+      );
       if (!res.ok) throw new Error("Failed to load agent log history");
       return res.text();
     },
@@ -175,7 +189,12 @@ export function BottomPanelView() {
               variant="secondary"
               size="icon"
               className="h-8 w-8 rounded-full shadow-md"
-              render={<a href={`/api/logs/${device}/${identifier}/syslog?download=1`} download />}
+              render={
+                <a
+                  href={`/api/logs/${device}/${identifier}/syslog?download=1`}
+                  download
+                />
+              }
             >
               <Download className="h-4 w-4" />
             </Button>
@@ -230,7 +249,12 @@ export function BottomPanelView() {
               variant="secondary"
               size="icon"
               className="h-8 w-8 rounded-full shadow-md"
-              render={<a href={`/api/logs/${device}/${identifier}/agent?download=1`} download />}
+              render={
+                <a
+                  href={`/api/logs/${device}/${identifier}/agent?download=1`}
+                  download
+                />
+              }
             >
               <Download className="h-4 w-4" />
             </Button>
