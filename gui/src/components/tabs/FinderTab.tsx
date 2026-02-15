@@ -262,7 +262,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
 
   return (
     <>
-      <ResizablePanelGroup direction="horizontal" autoSaveId="finder-split">
+      <ResizablePanelGroup orientation="horizontal" autoSaveId="finder-split">
         <ResizablePanel defaultSize={15} minSize={5} maxSize={80}>
           <Tabs
             value={activeTab}

@@ -66,7 +66,7 @@ export function URLSchemesPanel() {
         </div>
       </div>
       {selectedScheme ? (
-        <ResizablePanelGroup direction="vertical" className="flex-1 min-h-0">
+        <ResizablePanelGroup orientation="vertical" className="flex-1 min-h-0">
           <ResizablePanel defaultSize={60} minSize={30}>
             <div className="flex-1 overflow-auto p-4 pt-2 h-full">
               {error && (

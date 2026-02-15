@@ -248,6 +248,7 @@ export function BottomPanelView() {
               variant="secondary"
               size="icon"
               className="h-8 w-8 rounded-full shadow-md"
+              nativeButton={false}
               render={
                 <a
                   href={`/api/logs/${device}/${identifier}/agent?download=1`}
