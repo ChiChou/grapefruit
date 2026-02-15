@@ -5,6 +5,7 @@ import { List, type RowComponentProps } from "react-window";
 
 import { useDock } from "@/context/DockContext";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useRpcQuery, useDroidRpcQuery } from "@/lib/queries";
 import { Platform, useSession } from "@/context/SessionContext";
 import type { ModuleInfo } from "@agent/common/symbol";
@@ -65,8 +66,14 @@ export function ModulesPanel() {
       </div>
       <div className="flex-1 min-h-0 h-full">
         {isLoading ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
-            {t("loading")}...
+          <div className="px-4 space-y-3">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="space-y-1.5">
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-3 w-64" />
+                <Skeleton className="h-3 w-80" />
+              </div>
+            ))}
           </div>
         ) : (
           <div className="flex h-full">
