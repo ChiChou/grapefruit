@@ -300,7 +300,8 @@ describe("Hooks API", () => {
   });
 
   it("should store and query flutter.channel hooks", async () => {
-    hookStore.append(device, identifier, {
+    const { hooks: hookStore } = getStores();
+    hookStore.append({
       category: "flutter.channel",
       symbol: "android.MethodChannel.invokeMethod",
       dir: "leave",
