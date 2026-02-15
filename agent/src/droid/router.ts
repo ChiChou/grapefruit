@@ -2,6 +2,7 @@ import * as activities from "./modules/activities.js";
 import * as app from "./modules/app.js";
 import * as device from "./modules/device.js";
 import * as fs from "./modules/fs.js";
+import * as flutter from "./modules/flutter.js";
 import * as provider from "./modules/provider.js";
 import * as receivers from "./modules/receivers.js";
 import * as services from "./modules/services.js";
@@ -17,6 +18,7 @@ export default {
   app,
   device,
   fs,
+  flutter,
   memory,
   native,
   provider,

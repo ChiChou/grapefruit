@@ -4,6 +4,7 @@ import * as cookies from "./modules/cookies.js";
 import * as crypto from "./crypto/index.js";
 import * as entitlements from "./modules/entitlements.js";
 import * as fs from "./modules/fs.js";
+import * as flutter from "./modules/flutter.js";
 import * as geolocation from "./modules/geolocation.js";
 import * as hook from "./hooks/index.js";
 import * as info from "./modules/info.js";
@@ -33,6 +34,7 @@ export default {
   crypto,
   entitlements,
   fs,
+  flutter,
   geolocation,
   hook,
   info,
