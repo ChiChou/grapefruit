@@ -100,7 +100,7 @@ function SummaryPopover({ summary }: { summary: string }) {
 
   return (
     <Popover>
-      <PopoverTrigger render={<span
+      <PopoverTrigger nativeButton={false} render={<span
           className="font-mono text-muted-foreground truncate flex-1 min-w-0 cursor-pointer hover:text-foreground"
           title={summary}
         />}>

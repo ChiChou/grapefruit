@@ -205,7 +205,7 @@ export function ProcessesView() {
       {deviceInfo ? <DeviceHeader deviceInfo={deviceInfo} /> : <></>}
 
       <div className="mb-4 flex gap-2">
-        <Button variant="outline" size="sm" render={<Link to={`/list/${udid}/apps`} />}>
+        <Button variant="outline" size="sm" nativeButton={false} render={<Link to={`/list/${udid}/apps`} />}>
           {t("apps")}
         </Button>
         <Button variant="default" size="sm">
