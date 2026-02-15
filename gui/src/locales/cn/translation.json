@@ -128,6 +128,8 @@
   "clear_all_cookies_confirmation": "确定要清空所有 Cookie 吗？",
   "save": "保存",
   "discard": "放弃",
+  "unsaved_changes": "未保存的更改",
+  "unsaved_changes_description": "此文档有未保存的更改，删除后将丢失。确定要删除吗？",
   "acl": "访问控制列表",
   "path": "路径",
   "require_biometric_id": "显示需要生物识别 id 的项目",

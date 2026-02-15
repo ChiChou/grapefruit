@@ -128,6 +128,8 @@
   "clear_all_cookies_confirmation": "Are you sure to clear all cookies?",
   "save": "Save",
   "discard": "Discard",
+  "unsaved_changes": "Unsaved Changes",
+  "unsaved_changes_description": "This document has unsaved changes that will be lost. Are you sure you want to delete it?",
   "acl": "Access Control List",
   "path": "Path",
   "require_biometric_id": "Display Items That Require Biometric ID",

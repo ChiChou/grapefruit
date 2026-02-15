@@ -40,7 +40,7 @@ export function ImportsListView({ path }: ImportsListViewProps) {
   const { openFilePanel } = useDock();
   const { t } = useTranslation();
   const { fruity, status, platform, mode, device, bundle, pid } = useSession();
-  const { createDocumentWithCode } = useRepl();
+  const { appendCode } = useRepl();
   const navigate = useNavigate();
 
   const hooksPath = `/workspace/${platform}/${device}/${mode}/${mode === Mode.App ? bundle : pid}/hooks`;
@@ -244,7 +244,7 @@ export function ImportsListView({ path }: ImportsListViewProps) {
       name: imp.name,
     };
     const code = generateNativeHook(target);
-    createDocumentWithCode(code);
+    appendCode(code);
   };
 
   const handleBatchHook = async () => {
@@ -284,7 +284,7 @@ export function ImportsListView({ path }: ImportsListViewProps) {
     }
 
     if (codes.length > 0) {
-      createDocumentWithCode(codes.join("\n"));
+      appendCode(codes.join("\n"));
     }
   };
 

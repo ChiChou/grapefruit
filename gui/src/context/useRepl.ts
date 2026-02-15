@@ -1,33 +1,19 @@
 import { createContext, useContext } from "react";
 
-export interface ReplDocument {
-  id: string;
-  name: string;
-  content: string;
-}
-
 export interface ReplContextType {
-  documents: ReplDocument[];
-  activeDocId: string | null;
-  addDocument: (name?: string, content?: string) => string;
-  removeDocument: (id: string) => void;
-  updateDocument: (id: string, content: string) => void;
-  renameDocument: (id: string, name: string) => void;
-  setActiveDocument: (id: string) => void;
-  appendToActiveDocument: (code: string) => void;
-  createDocumentWithCode: (code: string, name?: string) => string;
+  content: string;
+  setContent: (content: string) => void;
+  appendCode: (code: string) => void;
+  save: () => void;
+  dirty: boolean;
 }
 
 const defaultContext: ReplContextType = {
-  documents: [],
-  activeDocId: null,
-  addDocument: () => "",
-  removeDocument: () => {},
-  updateDocument: () => {},
-  renameDocument: () => {},
-  setActiveDocument: () => {},
-  appendToActiveDocument: () => {},
-  createDocumentWithCode: () => "",
+  content: "",
+  setContent: () => {},
+  appendCode: () => {},
+  save: () => {},
+  dirty: false,
 };
 
 export const ReplContext = createContext<ReplContextType>(defaultContext);
