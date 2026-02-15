@@ -219,6 +219,7 @@
   "show_panel": "显示面板",
   "quickstart": "快速开始",
   "quickstart_description": "iOS 移动应用运行时分析工具",
+  "quickstart_finder_desc": "浏览应用主目录和文件",
   "quickstart_lsof_desc": "列出打开的文件描述符和套接字",
   "quickstart_infoplist_desc": "查看应用配置信息",
   "quickstart_entitlements_desc": "检查应用权限和能力",
