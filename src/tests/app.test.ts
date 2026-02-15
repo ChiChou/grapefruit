@@ -5,9 +5,20 @@ import nodePath from "node:path";
 
 import app from "../app.ts";
 import paths from "../lib/paths.ts";
-import * as hookStore from "../lib/store/hooks.ts";
-import * as cryptoStore from "../lib/store/crypto.ts";
-import * as httpStore from "../lib/store/requests.ts";
+import { HookStore } from "../lib/store/hooks.ts";
+import { CryptoStore } from "../lib/store/crypto.ts";
+import { HttpStore } from "../lib/store/requests.ts";
+
+const device = "test-device";
+const identifier = "com.test.app";
+
+function getStores() {
+  return {
+    hooks: new HookStore(device, identifier),
+    crypto: new CryptoStore(device, identifier),
+    http: new HttpStore(device, identifier),
+  };
+}
 
 describe("API tests", () => {
   it("should start http server", async () => {
@@ -133,8 +144,6 @@ describe("API tests", () => {
 });
 
 describe("Logs API", () => {
-  const device = "test-device";
-  const identifier = "com.test.app";
   const logsDir = nodePath.join(paths.data, "logs", device, identifier);
 
   afterEach(async () => {
@@ -209,11 +218,8 @@ describe("Logs API", () => {
 });
 
 describe("Hooks API", () => {
-  const device = "test-device";
-  const identifier = "com.test.app";
-
   afterEach(() => {
-    hookStore.rm(device, identifier);
+    getStores().hooks.rm();
   });
 
   it("should return empty hooks list", async () => {
@@ -232,12 +238,13 @@ describe("Hooks API", () => {
   });
 
   it("should return inserted hooks", async () => {
-    hookStore.append(device, identifier, {
+    const { hooks: hookStore } = getStores();
+    hookStore.append({
       category: "network",
       symbol: "send",
       dir: "out",
     });
-    hookStore.append(device, identifier, {
+    hookStore.append({
       category: "crypto",
       symbol: "encrypt",
       dir: "in",
@@ -255,7 +262,8 @@ describe("Hooks API", () => {
   });
 
   it("should return extra as parsed object", async () => {
-    hookStore.append(device, identifier, {
+    const { hooks: hookStore } = getStores();
+    hookStore.append({
       category: "c",
       symbol: "s",
       dir: "out",
@@ -270,12 +278,13 @@ describe("Hooks API", () => {
   });
 
   it("should filter by category", async () => {
-    hookStore.append(device, identifier, {
+    const { hooks: hookStore } = getStores();
+    hookStore.append({
       category: "network",
       symbol: "send",
       dir: "out",
     });
-    hookStore.append(device, identifier, {
+    hookStore.append({
       category: "crypto",
       symbol: "enc",
       dir: "in",
@@ -291,8 +300,9 @@ describe("Hooks API", () => {
   });
 
   it("should paginate with limit and offset", async () => {
+    const { hooks: hookStore } = getStores();
     for (let i = 0; i < 5; i++) {
-      hookStore.append(device, identifier, {
+      hookStore.append({
         category: "c",
         symbol: `s${i}`,
         dir: "out",
@@ -315,7 +325,8 @@ describe("Hooks API", () => {
   });
 
   it("should clear hooks", async () => {
-    hookStore.append(device, identifier, {
+    const { hooks: hookStore } = getStores();
+    hookStore.append({
       category: "c",
       symbol: "s",
       dir: "out",
@@ -332,7 +343,8 @@ describe("Hooks API", () => {
   });
 
   it("should delete hooks via /db endpoint", async () => {
-    hookStore.append(device, identifier, {
+    const { hooks: hookStore } = getStores();
+    hookStore.append({
       category: "c",
       symbol: "s",
       dir: "out",
@@ -349,12 +361,15 @@ describe("Hooks API", () => {
   });
 
   it("should isolate hooks by device/identifier", async () => {
-    hookStore.append(device, identifier, {
+    const { hooks: hookStore } = getStores();
+    hookStore.append({
       category: "c",
       symbol: "s",
       dir: "out",
     });
-    hookStore.append(device, "com.other.app", {
+
+    const otherHooks = new HookStore(device, "com.other.app");
+    otherHooks.append({
       category: "c",
       symbol: "s",
       dir: "out",
@@ -365,16 +380,13 @@ describe("Hooks API", () => {
     assert.strictEqual(body.total, 1);
 
     // cleanup other
-    hookStore.rm(device, "com.other.app");
+    otherHooks.rm();
   });
 });
 
 describe("Crypto Logs API", () => {
-  const device = "test-device";
-  const identifier = "com.test.app";
-
   afterEach(() => {
-    cryptoStore.rm(device, identifier);
+    getStores().crypto.rm();
   });
 
   it("should return empty crypto logs", async () => {
@@ -386,11 +398,12 @@ describe("Crypto Logs API", () => {
   });
 
   it("should return inserted crypto logs", async () => {
-    cryptoStore.append(device, identifier, {
+    const { crypto: cryptoStore } = getStores();
+    cryptoStore.append({
       symbol: "CCCrypt",
       dir: "encrypt",
     });
-    cryptoStore.append(device, identifier, {
+    cryptoStore.append({
       symbol: "SecKeyEncrypt",
       dir: "decrypt",
     });
@@ -405,7 +418,8 @@ describe("Crypto Logs API", () => {
   });
 
   it("should return extra and backtrace as parsed objects", async () => {
-    cryptoStore.append(device, identifier, {
+    const { crypto: cryptoStore } = getStores();
+    cryptoStore.append({
       symbol: "CCCrypt",
       dir: "encrypt",
       extra: { algo: "AES" },
@@ -421,8 +435,9 @@ describe("Crypto Logs API", () => {
   });
 
   it("should paginate crypto logs", async () => {
+    const { crypto: cryptoStore } = getStores();
     for (let i = 0; i < 5; i++) {
-      cryptoStore.append(device, identifier, { symbol: `sym${i}`, dir: "enc" });
+      cryptoStore.append({ symbol: `sym${i}`, dir: "enc" });
     }
 
     const r = await app.request(
@@ -439,7 +454,8 @@ describe("Crypto Logs API", () => {
   });
 
   it("should clear crypto logs", async () => {
-    cryptoStore.append(device, identifier, { symbol: "s", dir: "enc" });
+    const { crypto: cryptoStore } = getStores();
+    cryptoStore.append({ symbol: "s", dir: "enc" });
 
     const r = await app.request(`/api/history/crypto/${device}/${identifier}`, {
       method: "DELETE",
@@ -453,11 +469,8 @@ describe("Crypto Logs API", () => {
 });
 
 describe("HTTP Logs API", () => {
-  const device = "test-device";
-  const identifier = "com.test.app";
-
   afterEach(() => {
-    httpStore.rm(device, identifier);
+    getStores().http.rm();
   });
 
   it("should return empty http logs", async () => {
@@ -469,13 +482,14 @@ describe("HTTP Logs API", () => {
   });
 
   it("should return upserted http requests", async () => {
-    httpStore.upsert(device, identifier, {
+    const { http: httpStore } = getStores();
+    httpStore.upsert({
       event: "requestWillBeSent",
       requestId: "req-1",
       timestamp: 1000,
       request: { method: "GET", url: "https://example.com/api", headers: {} },
     });
-    httpStore.upsert(device, identifier, {
+    httpStore.upsert({
       event: "responseReceived",
       requestId: "req-1",
       timestamp: 1100,
@@ -491,7 +505,8 @@ describe("HTTP Logs API", () => {
   });
 
   it("should clear http logs", async () => {
-    httpStore.upsert(device, identifier, {
+    const { http: httpStore } = getStores();
+    httpStore.upsert({
       event: "requestWillBeSent",
       requestId: "req-1",
       timestamp: 1000,
@@ -509,13 +524,16 @@ describe("HTTP Logs API", () => {
   });
 
   it("should isolate http logs by device/identifier", async () => {
-    httpStore.upsert(device, identifier, {
+    const { http: httpStore } = getStores();
+    httpStore.upsert({
       event: "requestWillBeSent",
       requestId: "req-1",
       timestamp: 1000,
       request: { method: "GET", url: "https://a.com", headers: {} },
     });
-    httpStore.upsert(device, "com.other.app", {
+
+    const otherHttp = new HttpStore(device, "com.other.app");
+    otherHttp.upsert({
       event: "requestWillBeSent",
       requestId: "req-2",
       timestamp: 1000,
@@ -527,6 +545,6 @@ describe("HTTP Logs API", () => {
     assert.strictEqual(body.total, 1);
 
     // cleanup other
-    httpStore.rm(device, "com.other.app");
+    otherHttp.rm();
   });
 });

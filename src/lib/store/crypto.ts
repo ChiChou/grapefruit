@@ -1,11 +1,9 @@
 import { eq, and, gt, desc, count as countFn } from "drizzle-orm";
-import { cryptoLogs } from "../schema.ts";
+import { crypto } from "../schema.ts";
 import { db } from "./db.ts";
 
 export interface CryptoRecord {
   id: number;
-  deviceId: string;
-  identifier: string;
   timestamp: string;
   symbol: string;
   direction: string;
@@ -16,79 +14,79 @@ export interface CryptoRecord {
   createdAt: string;
 }
 
-export function append(
-  deviceId: string,
-  identifier: string,
-  message: Record<string, unknown>,
-  data?: Buffer | null,
-): void {
-  const extra = message.extra as Record<string, unknown> | undefined;
-  const btrace = message.backtrace as string[] | undefined;
-  db.insert(cryptoLogs)
-    .values({
-      deviceId,
-      identifier,
-      timestamp: new Date().toISOString(),
-      symbol: (message.symbol as string) || "unknown",
-      direction: (message.dir as string) || "unknown",
-      line: (message.line as string) || null,
-      extra: extra ? JSON.stringify(extra) : null,
-      backtrace: btrace?.length ? JSON.stringify(btrace) : null,
-      data: data ?? null,
-    })
-    .run();
-}
+export class CryptoStore {
+  constructor(
+    private deviceId: string,
+    private identifier: string,
+  ) {}
 
-export function query(
-  deviceId: string,
-  identifier: string,
-  options: { limit?: number; offset?: number; since?: string } = {},
-): CryptoRecord[] {
-  const { limit = 1000, offset = 0, since } = options;
-
-  const conditions = [
-    eq(cryptoLogs.deviceId, deviceId),
-    eq(cryptoLogs.identifier, identifier),
-  ];
-
-  if (since) {
-    conditions.push(gt(cryptoLogs.timestamp, since));
+  append(message: Record<string, unknown>, data?: Buffer | null): void {
+    const extra = message.extra as Record<string, unknown> | undefined;
+    const btrace = message.backtrace as string[] | undefined;
+    db.insert(crypto)
+      .values({
+        deviceId: this.deviceId,
+        identifier: this.identifier,
+        timestamp: new Date().toISOString(),
+        symbol: (message.symbol as string) || "unknown",
+        direction: (message.dir as string) || "unknown",
+        line: (message.line as string) || null,
+        extra: extra ? JSON.stringify(extra) : null,
+        backtrace: btrace?.length ? JSON.stringify(btrace) : null,
+        data: data ?? null,
+      })
+      .run();
   }
 
-  const rows = db
-    .select()
-    .from(cryptoLogs)
-    .where(and(...conditions))
-    .orderBy(desc(cryptoLogs.id))
-    .limit(limit)
-    .offset(offset)
-    .all();
+  query(
+    options: { limit?: number; offset?: number; since?: string } = {},
+  ): CryptoRecord[] {
+    const { limit = 1000, offset = 0, since } = options;
 
-  return rows as CryptoRecord[];
-}
+    const conditions = [
+      eq(crypto.deviceId, this.deviceId),
+      eq(crypto.identifier, this.identifier),
+    ];
 
-export function count(deviceId: string, identifier: string): number {
-  const result = db
-    .select({ count: countFn() })
-    .from(cryptoLogs)
-    .where(
-      and(
-        eq(cryptoLogs.deviceId, deviceId),
-        eq(cryptoLogs.identifier, identifier),
-      ),
-    )
-    .get();
+    if (since) {
+      conditions.push(gt(crypto.timestamp, since));
+    }
 
-  return result?.count ?? 0;
-}
+    const rows = db
+      .select()
+      .from(crypto)
+      .where(and(...conditions))
+      .orderBy(desc(crypto.id))
+      .limit(limit)
+      .offset(offset)
+      .all();
 
-export function rm(deviceId: string, identifier: string): void {
-  db.delete(cryptoLogs)
-    .where(
-      and(
-        eq(cryptoLogs.deviceId, deviceId),
-        eq(cryptoLogs.identifier, identifier),
-      ),
-    )
-    .run();
+    return rows as CryptoRecord[];
+  }
+
+  count(): number {
+    const result = db
+      .select({ count: countFn() })
+      .from(crypto)
+      .where(
+        and(
+          eq(crypto.deviceId, this.deviceId),
+          eq(crypto.identifier, this.identifier),
+        ),
+      )
+      .get();
+
+    return result?.count ?? 0;
+  }
+
+  rm(): void {
+    db.delete(crypto)
+      .where(
+        and(
+          eq(crypto.deviceId, this.deviceId),
+          eq(crypto.identifier, this.identifier),
+        ),
+      )
+      .run();
+  }
 }

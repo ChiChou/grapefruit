@@ -7,9 +7,9 @@ import frida from "./lib/xvii.ts";
 import env from "./lib/env.ts";
 import { agent } from "./lib/assets.ts";
 import { LogWriter } from "./lib/log-writer.ts";
-import * as hookStore from "./lib/store/hooks.ts";
-import * as cryptoStore from "./lib/store/crypto.ts";
-import * as httpStore from "./lib/store/requests.ts";
+import { HttpStore, type HttpNetworkEvent } from "./lib/store/requests.ts";
+import { HookStore } from "./lib/store/hooks.ts";
+import { CryptoStore } from "./lib/store/crypto.ts";
 
 import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
 
@@ -22,6 +22,7 @@ interface SessionParams {
   deviceId: string;
   bundle?: string;
   pid?: number;
+  name?: string;
 }
 
 interface ServerToClientEvents {
@@ -36,7 +37,7 @@ interface ServerToClientEvents {
   ) => void;
   hook: (msg: BaseHookMessage) => void;
   crypto: (msg: BaseHookMessage, data?: ArrayBuffer) => void;
-  http: (event: httpStore.HttpNetworkEvent) => void;
+  http: (event: HttpNetworkEvent) => void;
 }
 
 type ClientCallback = (err: Error | null, result: any) => void;
@@ -45,6 +46,15 @@ interface ClientToServerEvents {
   rpc: (mod: string, method: string, args: any[], ack: ClientCallback) => void;
   eval: (source: string, name: string, ack: ClientCallback) => void;
   clearLog: (type: "syslog" | "agent", ack: ClientCallback) => void;
+}
+
+function fnv1a(input: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = (hash * 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, "0");
 }
 
 const manager = frida.getDeviceManager();
@@ -79,16 +89,20 @@ async function resolveAppPid(
   return device.spawn(bundleId, opt);
 }
 
+interface SessionStores {
+  http: HttpStore;
+  hooks: HookStore;
+  crypto: CryptoStore;
+}
+
 function setupScriptHandlers(
   socket: Socket<ClientToServerEvents, ServerToClientEvents>,
   script: Awaited<
     ReturnType<typeof import("frida").Session.prototype.createScript>
   >,
   logger: LogWriter,
-  sessionInfo: { deviceId: string; identifier: string },
+  stores: SessionStores,
 ) {
-  const { deviceId, identifier } = sessionInfo;
-
   script.destroyed.connect(() => {
     console.error("script is destroyed");
     socket.disconnect(true);
@@ -117,12 +131,12 @@ function setupScriptHandlers(
 
       case "http":
         console.log(`[http]`, payload);
-        socket.emit("http", payload as httpStore.HttpNetworkEvent);
+        socket.emit("http", payload as HttpNetworkEvent);
         try {
-          const attachment = httpStore.upsert(deviceId, identifier, payload);
+          const attachment = stores.http.upsert(payload);
           if (attachment && data) {
             fs.promises
-              .mkdir(httpStore.attachmentsDir, { recursive: true })
+              .mkdir(stores.http.attachmentsDir, { recursive: true })
               .then(() => fs.promises.appendFile(attachment, Buffer.from(data)))
               .catch((e) => console.error("Failed to write attachment:", e));
           }
@@ -133,7 +147,7 @@ function setupScriptHandlers(
 
       case "hook":
         socket.emit("hook", payload);
-        hookStore.append(deviceId, identifier, payload);
+        stores.hooks.append(payload);
         break;
 
       case "crypto":
@@ -142,7 +156,7 @@ function setupScriptHandlers(
           payload,
           data ? new Uint8Array(data).buffer : undefined,
         );
-        cryptoStore.append(deviceId, identifier, payload, data ?? null);
+        stores.crypto.append(payload, data ?? null);
         break;
 
       case "lifecycle":
@@ -229,7 +243,14 @@ async function onConnection(
   socket: Socket<ClientToServerEvents, ServerToClientEvents>,
   params: SessionParams,
 ) {
-  const { platform, mode, deviceId, bundle, pid: targetPid } = params;
+  const {
+    platform,
+    mode,
+    deviceId,
+    bundle,
+    pid: targetPid,
+    name: processName,
+  } = params;
   const device = await manager.getDeviceById(deviceId, env.timeout);
 
   let pid: number;
@@ -247,11 +268,26 @@ async function onConnection(
     await device.resume(pid).catch(() => {});
   }
 
-  const identifier = mode === "app" ? bundle! : `pid-${pid}`;
+  // Compute project identifier
+  let identifier: string;
+  if (mode === "app") {
+    identifier = bundle!;
+  } else {
+    const pname = processName || `pid`;
+    identifier = `${pname}-${fnv1a(pname + pid)}`;
+  }
+
+  // Create store instances
+  const stores: SessionStores = {
+    http: new HttpStore(deviceId, identifier),
+    hooks: new HookStore(deviceId, identifier),
+    crypto: new CryptoStore(deviceId, identifier),
+  };
+
   const logHandles = await LogWriter.open(deviceId, identifier);
   const script = await session.createScript(await agent(platform));
 
-  setupScriptHandlers(socket, script, logHandles, { deviceId, identifier });
+  setupScriptHandlers(socket, script, logHandles, stores);
   setupSocketHandlers(socket, script, session, logHandles);
 
   await script.load();
@@ -261,7 +297,7 @@ async function onConnection(
 function parseSessionParams(
   query: Record<string, unknown>,
 ): SessionParams | null {
-  const { device, platform, mode, bundle, pid } = query;
+  const { device, platform, mode, bundle, pid, name } = query;
 
   if (typeof device !== "string") return null;
   if (platform !== "fruity" && platform !== "droid") return null;
@@ -276,6 +312,7 @@ function parseSessionParams(
     mode: mode as Mode,
     bundle: mode === "app" ? (bundle as string) : undefined,
     pid: mode === "daemon" ? parseInt(pid as string, 10) : undefined,
+    name: typeof name === "string" ? name : undefined,
   };
 }
 
