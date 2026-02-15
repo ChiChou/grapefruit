@@ -149,7 +149,7 @@ export function QuickStartTab() {
       id: "http_log_tab",
       component: "httpLog",
       title: "HTTP Log",
-      desc: "Capture NSURLSession network traffic",
+      desc: t("quickstart_httplog_desc"),
     },
   ];
 

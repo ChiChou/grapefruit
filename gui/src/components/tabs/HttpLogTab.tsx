@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Trash2, Copy, Check, ArrowUp, ArrowDown } from "lucide-react";
+import { Trash2, ArrowUp, ArrowDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -74,16 +74,6 @@ function statusColor(code: number | undefined): string {
   if (code >= 300 && code < 400) return "text-yellow-600";
   if (code >= 400) return "text-red-600";
   return "";
-}
-
-function generateCurl(req: CapturedRequest): string {
-  let cmd = `curl '${req.url}'`;
-  if (req.method !== "GET") cmd += ` -X ${req.method}`;
-  for (const [k, v] of Object.entries(req.requestHeaders)) {
-    cmd += ` \\\n  -H '${k}: ${v}'`;
-  }
-  if (req.requestBody) cmd += ` \\\n  --data-raw '${req.requestBody}'`;
-  return cmd;
 }
 
 function parseUrl(raw: string): {
@@ -263,27 +253,6 @@ function HeadersView({
   );
 }
 
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <Button variant="outline" size="sm" onClick={handleCopy}>
-      {copied ? (
-        <Check className="w-4 h-4 mr-1" />
-      ) : (
-        <Copy className="w-4 h-4 mr-1" />
-      )}
-      {copied ? "Copied" : "Copy"}
-    </Button>
-  );
-}
-
 export function HttpLogTab() {
   const { socket, status, device, bundle, pid, mode } = useSession();
 
@@ -431,10 +400,9 @@ export function HttpLogTab() {
             <ResizableHandle />
             <ResizablePanel defaultSize={50} minSize={20}>
               <Tabs defaultValue="request" className="h-full flex flex-col">
-                <TabsList className="mx-2 mt-2">
+                <TabsList variant="line" className="mx-2 mt-2">
                   <TabsTrigger value="request">Request</TabsTrigger>
                   <TabsTrigger value="response">Response</TabsTrigger>
-                  <TabsTrigger value="curl">cURL</TabsTrigger>
                   {selectedRequest.isWebSocket && (
                     <TabsTrigger value="messages">
                       Messages
@@ -537,19 +505,6 @@ export function HttpLogTab() {
                           </pre>
                         </div>
                       </div>
-                    </div>
-                  </ScrollArea>
-                </TabsContent>
-
-                <TabsContent value="curl" className="overflow-auto">
-                  <ScrollArea className="h-full">
-                    <div className="p-3 space-y-2">
-                      <div className="flex justify-end">
-                        <CopyButton text={generateCurl(selectedRequest)} />
-                      </div>
-                      <pre className="text-xs font-mono bg-muted p-2 rounded whitespace-pre-wrap break-all">
-                        {generateCurl(selectedRequest)}
-                      </pre>
                     </div>
                   </ScrollArea>
                 </TabsContent>

@@ -55,26 +55,26 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
   const loadDirectory = useCallback(
     async (
       path: string,
-    ): Promise<
-      import("@agent/fruity/modules/fs").DirectoryListing
-    > => {
+    ): Promise<import("@agent/fruity/modules/fs").DirectoryListing> => {
       if (!fsApi) return { cwd: "", list: [] };
       return fsApi.fs.ls(path);
     },
     [fsApi],
   );
 
-  const fruityRenameMutation = useRpcMutation<boolean, { src: string; dst: string }>(
-    (api, { src, dst }) => api.fs.mv(src, dst),
-  );
+  const fruityRenameMutation = useRpcMutation<
+    boolean,
+    { src: string; dst: string }
+  >((api, { src, dst }) => api.fs.mv(src, dst));
 
   const fruityDeleteMutation = useRpcMutation<boolean, { path: string }>(
     (api, { path }) => api.fs.rm(path),
   );
 
-  const droidRenameMutation = useDroidRpcMutation<boolean, { src: string; dst: string }>(
-    (api, { src, dst }) => api.fs.mv(src, dst),
-  );
+  const droidRenameMutation = useDroidRpcMutation<
+    boolean,
+    { src: string; dst: string }
+  >((api, { src, dst }) => api.fs.mv(src, dst));
 
   const droidDeleteMutation = useDroidRpcMutation<boolean, { path: string }>(
     (api, { path }) => api.fs.rm(path),
@@ -170,7 +170,13 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
   );
 
   const uploadFileMutation = useMutation({
-    mutationFn: async ({ file, targetPath }: { file: File; targetPath: string }) => {
+    mutationFn: async ({
+      file,
+      targetPath,
+    }: {
+      file: File;
+      targetPath: string;
+    }) => {
       const formData = new FormData();
       formData.append("path", targetPath);
       formData.append("file", file);
@@ -229,7 +235,14 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
         handleDirectorySelect(fullCwd);
       }, 500);
     },
-    [activeTab, pid, device, fullCwd, handleDirectorySelect, uploadFileMutation],
+    [
+      activeTab,
+      pid,
+      device,
+      fullCwd,
+      handleDirectorySelect,
+      uploadFileMutation,
+    ],
   );
 
   useEffect(() => {
@@ -256,7 +269,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
             onValueChange={(v) => setActiveTab(v as "bundle" | "home")}
             className="h-full flex flex-col"
           >
-            <TabsList className="w-full rounded-none">
+            <TabsList variant="line" className="w-full">
               <TabsTrigger value="home" className="flex-1">
                 {t("home")}
               </TabsTrigger>
