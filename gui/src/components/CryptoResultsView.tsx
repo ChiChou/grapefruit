@@ -9,12 +9,7 @@ import {
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { List, type ListImperativeAPI } from "react-window";
-import {
-  ChevronRight,
-  Trash2,
-  ChevronsDown,
-  Loader2,
-} from "lucide-react";
+import { ChevronRight, Trash2, ChevronsDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -185,6 +180,8 @@ function CryptoRow(
   );
 }
 
+const CRYPTO_DETAIL_TAB_STATE = "CRYPTO_DETAIL_TAB_STATE";
+
 function DetailPanel({ entry }: { entry: CryptoEntry }) {
   const { t } = useTranslation();
   const { message, data } = entry;
@@ -192,11 +189,20 @@ function DetailPanel({ entry }: { entry: CryptoEntry }) {
 
   const hasData = !!data;
   const hasBt = !!message.backtrace?.length;
-  const defaultTab = hasData ? "hexdump" : hasBt ? "backtrace" : "detail";
+
+  const savedTab = localStorage.getItem(CRYPTO_DETAIL_TAB_STATE);
+  const availableTabs = ["detail", ...(hasData ? ["hexdump"] : []), ...(hasBt ? ["backtrace"] : [])];
+  const defaultTab = savedTab && availableTabs.includes(savedTab)
+    ? savedTab
+    : hasData ? "hexdump" : hasBt ? "backtrace" : "detail";
 
   return (
-    <Tabs defaultValue={defaultTab} className="h-full flex flex-col">
-      <TabsList className="mx-2 mt-2 shrink-0">
+    <Tabs
+      defaultValue={defaultTab}
+      onValueChange={(v) => localStorage.setItem(CRYPTO_DETAIL_TAB_STATE, v)}
+      className="h-full flex flex-col"
+    >
+      <TabsList variant="line" className="mx-2 mt-2 shrink-0">
         <TabsTrigger value="detail">{t("crypto_detail_tab")}</TabsTrigger>
         {hasData && (
           <TabsTrigger value="hexdump">{t("crypto_hexdump_tab")}</TabsTrigger>
@@ -540,20 +546,16 @@ export function CryptoResultsView() {
         <div className="flex items-center gap-4">
           {CRYPTO_GROUPS.map((group) => (
             <div key={group} className="flex items-center gap-1.5">
-              {loading[group] ? (
-                <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-              ) : (
-                <Switch
-                  id={`crypto-${group}`}
-                  checked={cryptoStatus[group] || false}
-                  onCheckedChange={(checked) => handleToggle(group, checked)}
-                  disabled={isDisabled}
-                  className="scale-75"
-                />
-              )}
+              <Switch
+                id={`crypto-${group}`}
+                checked={cryptoStatus[group] || false}
+                onCheckedChange={(checked) => handleToggle(group, checked)}
+                disabled={isDisabled || loading[group]}
+                className="scale-75"
+              />
               <Label
                 htmlFor={`crypto-${group}`}
-                className="text-xs cursor-pointer"
+                className={`text-xs cursor-pointer ${loading[group] ? "animate-pulse" : ""}`}
               >
                 {t(`crypto_${group}`)}
               </Label>
