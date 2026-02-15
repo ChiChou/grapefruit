@@ -213,6 +213,44 @@ const routes = new Hono()
       console.error("Failed to clear http logs:", e);
       return c.text("Failed to clear http logs", 500);
     }
+  })
+  // HTTP attachment download
+  .get("/history/http/:device/:identifier/attachment/:requestId", async (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+    const requestId = c.req.param("requestId");
+
+    try {
+      const attachmentPath = httpStore.getAttachmentPath(
+        deviceId,
+        identifier,
+        requestId,
+      );
+
+      if (!attachmentPath) {
+        return c.text("No attachment found", 404);
+      }
+
+      const stat = await fs.stat(attachmentPath).catch(() => null);
+      if (!stat) {
+        return c.text("Attachment file not found", 404);
+      }
+
+      c.header(
+        "Content-Disposition",
+        `attachment; filename="${requestId}"`,
+      );
+      c.header("Content-Type", "application/octet-stream");
+      c.header("Content-Length", stat.size.toString());
+      return c.body(
+        Readable.toWeb(
+          createReadStream(attachmentPath),
+        ) as unknown as ReadableStream,
+      );
+    } catch (e) {
+      console.error("Failed to serve attachment:", e);
+      return c.text("Failed to serve attachment", 500);
+    }
   });
 
 export default routes;

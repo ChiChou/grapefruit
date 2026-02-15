@@ -4,7 +4,6 @@ import type {
   NSObject,
   NSString,
   NSData,
-  NSMutableData,
   NSError,
   NSURL,
   NSURLRequest,
@@ -40,13 +39,17 @@ interface NetworkEvent {
 
 interface RequestState {
   request: NSURLRequest | null;
-  dataAccumulator: NSMutableData | null;
+  mechanismRecorded?: boolean;
 }
 
 const hooks: InvocationListener[] = [];
 
-function emitNetworkEvent(event: NetworkEvent): void {
-  send({ subject, ...event });
+function emitNetworkEvent(event: NetworkEvent, data?: ArrayBuffer | null): void {
+  if (data) {
+    send({ subject, ...event }, data);
+  } else {
+    send({ subject, ...event });
+  }
 }
 
 const requestStates = new Map<string, RequestState>();
@@ -54,7 +57,7 @@ const requestStates = new Map<string, RequestState>();
 function getRequestState(requestId: string): RequestState {
   let state = requestStates.get(requestId);
   if (!state) {
-    state = { request: null, dataAccumulator: null };
+    state = { request: null };
     requestStates.set(requestId, state);
   }
   return state;
@@ -155,26 +158,6 @@ function serializeResponse(response: NSURLResponse): SerializedResponse {
   return serialized;
 }
 
-function serializeBody(
-  data: NSData | null,
-  maxSize: number = 10000,
-): string | null {
-  if (!data) return null;
-  try {
-    const length = data.length();
-    if (length === 0) return null;
-    if (length > maxSize) return `<${length} bytes, too large>`;
-
-    const bodyString = ObjC.classes.NSString.alloc().initWithData_encoding_(
-      data,
-      4,
-    ) as NSString | null;
-    return bodyString ? bodyString.toString() : `<${length} bytes, binary>`;
-  } catch (e) {
-    return `<error: ${e}>`;
-  }
-}
-
 function recordRequestWillBeSent(
   requestId: string,
   request: NSURLRequest,
@@ -207,25 +190,25 @@ function recordResponseReceived(
 function recordDataReceived(
   requestId: string,
   dataLength: number | string,
+  data?: ArrayBuffer | null,
 ): void {
-  emitNetworkEvent({
-    event: "dataReceived",
-    requestId,
-    timestamp: Date.now(),
-    dataLength:
-      typeof dataLength === "string" ? dataLength : String(dataLength),
-  });
+  emitNetworkEvent(
+    {
+      event: "dataReceived",
+      requestId,
+      timestamp: Date.now(),
+      dataLength:
+        typeof dataLength === "string" ? dataLength : String(dataLength),
+    },
+    data,
+  );
 }
 
-function recordLoadingFinished(
-  requestId: string,
-  responseBody: NSData | null,
-): void {
+function recordLoadingFinished(requestId: string): void {
   emitNetworkEvent({
     event: "loadingFinished",
     requestId,
     timestamp: Date.now(),
-    responseBody: serializeBody(responseBody),
   });
 }
 
@@ -335,15 +318,9 @@ function hookDelegateMethods() {
         const dataTask = wrapObjC<NSURLSessionDataTask>(args[3]);
         const requestId = getOrAssignTaskId(dataTask);
         const data = wrapObjC<NSData>(args[4]);
-        const state = getRequestState(requestId);
-
-        if (!state.dataAccumulator) {
-          state.dataAccumulator =
-            ObjC.classes.NSMutableData.alloc().init() as NSMutableData;
-        }
-
-        state.dataAccumulator.appendData_(data);
-        recordDataReceived(requestId, data.length());
+        const len = data.length();
+        const chunk = len > 0 ? data.bytes().readByteArray(len) : null;
+        recordDataReceived(requestId, len, chunk);
       },
     },
     "URLSession:task:didCompleteWithError:": {
@@ -361,8 +338,7 @@ function hookDelegateMethods() {
         if (!args[4].isNull()) {
           recordLoadingFailed(requestId, wrapObjC<NSError>(args[4]));
         } else {
-          const state = getRequestState(requestId);
-          recordLoadingFinished(requestId, state.dataAccumulator);
+          recordLoadingFinished(requestId);
         }
         removeRequestState(requestId);
       },
@@ -383,9 +359,8 @@ function hookDelegateMethods() {
           const requestId = getOrAssignTaskId(downloadTask);
           const state = getRequestState(requestId);
 
-          if (!state.dataAccumulator) {
-            state.dataAccumulator =
-              ObjC.classes.NSMutableData.alloc().init() as NSMutableData;
+          if (!state.mechanismRecorded) {
+            state.mechanismRecorded = true;
 
             const response = downloadTask.response();
             if (response) {
@@ -404,7 +379,6 @@ function hookDelegateMethods() {
       onEnter(args) {
         const downloadTask = wrapObjC<NSURLSessionDownloadTask>(args[3]);
         const requestId = getOrAssignTaskId(downloadTask);
-        const state = getRequestState(requestId);
 
         if (!args[4].isNull()) {
           const fileURL = wrapObjC<NSURL>(args[4]);
@@ -420,10 +394,10 @@ function hookDelegateMethods() {
             ) as NSData;
 
             if (fileData) {
-              state.dataAccumulator =
-                ObjC.classes.NSMutableData.alloc().initWithData_(
-                  fileData,
-                ) as NSMutableData;
+              const len = fileData.length();
+              const chunk =
+                len > 0 ? fileData.bytes().readByteArray(len) : null;
+              recordDataReceived(requestId, len, chunk);
             }
           }
         }
@@ -517,19 +491,27 @@ function hookNSURLSessionAsyncMethods() {
               recordResponseReceived(rid, wrapObjC<NSURLResponse>(response));
             }
             if (isDownload) {
-              let fileData: NSData | null = null;
               if (!first.isNull()) {
-                fileData = ObjC.classes.NSData.dataWithContentsOfURL_(
+                const fileData = ObjC.classes.NSData.dataWithContentsOfURL_(
                   wrapObjC<NSURL>(first),
                 ) as NSData | null;
+                if (fileData) {
+                  const len = fileData.length();
+                  const chunk =
+                    len > 0 ? fileData.bytes().readByteArray(len) : null;
+                  recordDataReceived(rid, len, chunk);
+                }
               }
-              recordLoadingFinished(rid, fileData);
+              recordLoadingFinished(rid);
             } else {
               const nsdata = first.isNull() ? null : wrapObjC<NSData>(first);
               if (nsdata) {
-                recordDataReceived(rid, nsdata.length());
+                const len = nsdata.length();
+                const chunk =
+                  len > 0 ? nsdata.bytes().readByteArray(len) : null;
+                recordDataReceived(rid, len, chunk);
               }
-              recordLoadingFinished(rid, nsdata);
+              recordLoadingFinished(rid);
             }
           }
           removeRequestState(rid);
@@ -634,9 +616,6 @@ function hookNSURLConnectionDelegateMethods() {
         const connection = new ObjC.Object(args[2]);
         const response = wrapObjC<NSURLResponse>(args[3]);
         const requestId = getOrAssignConnectionId(connection);
-        const state = getRequestState(requestId);
-        state.dataAccumulator =
-          ObjC.classes.NSMutableData.alloc().init() as NSMutableData;
         recordResponseReceived(requestId, response);
       },
     },
@@ -645,22 +624,16 @@ function hookNSURLConnectionDelegateMethods() {
         const connection = new ObjC.Object(args[2]);
         const data = wrapObjC<NSData>(args[3]);
         const requestId = getOrAssignConnectionId(connection);
-        const state = getRequestState(requestId);
-
-        if (!state.dataAccumulator) {
-          state.dataAccumulator =
-            ObjC.classes.NSMutableData.alloc().init() as NSMutableData;
-        }
-        state.dataAccumulator.appendData_(data);
-        recordDataReceived(requestId, data.length());
+        const len = data.length();
+        const chunk = len > 0 ? data.bytes().readByteArray(len) : null;
+        recordDataReceived(requestId, len, chunk);
       },
     },
     "connectionDidFinishLoading:": {
       onEnter(args) {
         const connection = new ObjC.Object(args[2]);
         const requestId = getOrAssignConnectionId(connection);
-        const state = getRequestState(requestId);
-        recordLoadingFinished(requestId, state.dataAccumulator);
+        recordLoadingFinished(requestId);
         removeRequestState(requestId);
       },
     },
@@ -749,9 +722,14 @@ function hookNSURLConnectionAsyncMethods() {
                       ? null
                       : wrapObjC<NSData>(data);
                     if (nsdata) {
-                      recordDataReceived(rid, nsdata.length());
+                      const len = nsdata.length();
+                      const chunk =
+                        len > 0
+                          ? nsdata.bytes().readByteArray(len)
+                          : null;
+                      recordDataReceived(rid, len, chunk);
                     }
-                    recordLoadingFinished(rid, nsdata);
+                    recordLoadingFinished(rid);
                   }
                 },
               }),
