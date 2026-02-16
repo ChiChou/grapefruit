@@ -5,7 +5,7 @@ import { SessionDetachReason, type SpawnOptions, type Device } from "frida";
 
 import frida from "./lib/xvii.ts";
 import env from "./lib/env.ts";
-import { agent } from "./lib/assets.ts";
+import { agent, asset } from "./lib/assets.ts";
 import { LogWriter } from "./lib/log-writer.ts";
 import { HttpStore, type HttpNetworkEvent } from "./lib/store/requests.ts";
 import { HookStore } from "./lib/store/hooks.ts";
@@ -95,6 +95,17 @@ interface SessionStores {
   crypto: CryptoStore;
 }
 
+async function loadBridge(name: string) {
+  const valid = ["objc", "java", "swift"];
+  const lower = name.toLowerCase();
+
+  if (!valid.includes(lower)) throw new Error(`Invalid bridge name: ${name}`);
+
+  const p = await asset("agent", "dist", "bridges", `${lower}.js`);
+  const source = await fs.promises.readFile(p, "utf8");
+  return { filename: `${name}.js`, source };
+}
+
 function setupScriptHandlers(
   socket: Socket<ClientToServerEvents, ServerToClientEvents>,
   script: Awaited<
@@ -120,6 +131,16 @@ function setupScriptHandlers(
     const { subject } = payload as { subject: string };
 
     switch (subject) {
+      case "frida:load-bridge":
+        loadBridge(payload.name)
+          .then((result) =>
+            script.post({ type: "frida:bridge-loaded", ...result }),
+          )
+          .catch((err) =>
+            console.error(`Failed to load bridge ${payload.name}:`, err),
+          );
+        break;
+
       case "syslog":
         if (data) {
           const text = data.toString();
@@ -221,8 +242,10 @@ function setupSocketHandlers(
     })
     .on("eval", (source, name, ack) => {
       console.info(`evaluating script: ${name}`);
-      ack(new Error("not implemented"), null);
-      return;
+      script.exports
+        .invoke("script", "evaluate", [source, name])
+        .then((result: unknown) => ack(null, result))
+        .catch((err: Error) => ack(err, null));
     })
     .on("clearLog", (type, ack) => {
       logger

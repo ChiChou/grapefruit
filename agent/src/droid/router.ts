@@ -10,6 +10,7 @@ import * as memory from "@/common/memory.js";
 import * as native from "@/common/hooks/native.js";
 import * as sqlite from "@/common/sqlite.js";
 import * as symbol from "@/common/symbol.js";
+import * as script from "@/common/script.js";
 import * as syslog from "@/common/syslog.js";
 
 export default {
@@ -21,6 +22,7 @@ export default {
   native,
   provider,
   receivers,
+  script,
   services,
   sqlite,
   symbol,

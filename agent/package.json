@@ -12,7 +12,6 @@
     "build:fruity": "frida-compile src/fruity/index.ts -o dist/fruity.js",
     "build:droid": "frida-compile src/droid/index.ts -o dist/droid.js",
     "build:transport": "frida-compile src/transport.ts -o dist/transport.js",
-    "build:userscript": "frida-compile src/userscript.ts -o dist/userscript.js",
     "watch:fruity": "bun run build:fruity -- --watch",
     "watch:droid": "bun run build:droid -- --watch",
     "watch:transport": "bun run build:transport -- --watch",
