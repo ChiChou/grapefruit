@@ -1,5 +1,7 @@
 import Java from "frida-java-bridge";
 
+import { getContext } from "../lib/context.js";
+
 export interface QueryResult {
   columns: string[];
   rows: (string | number | null)[][];
@@ -21,11 +23,6 @@ export interface QueryOptions {
   selection?: string;
   selectionArgs?: string[];
   sortOrder?: string;
-}
-
-function getContext() {
-  const ActivityThread = Java.use("android.app.ActivityThread");
-  return ActivityThread.currentApplication().getApplicationContext();
 }
 
 export function query(uri: string, options?: QueryOptions) {

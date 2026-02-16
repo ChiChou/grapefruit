@@ -1,23 +1,14 @@
 import Java from "frida-java-bridge";
 
+import { getContext } from "../lib/context.js";
+import { buildIntent, type IntentOptions } from "../lib/intent.js";
+
+export type { IntentOptions as BroadcastOptions };
+
 export interface ReceiverEntry {
   name: string;
   exported: boolean;
   permission: string | null;
-}
-
-export interface BroadcastOptions {
-  action?: string;
-  component?: string;
-  data?: string;
-  categories?: string[];
-  extras?: Record<string, string | number | boolean>;
-  mimeType?: string;
-}
-
-function getContext() {
-  const ActivityThread = Java.use("android.app.ActivityThread");
-  return ActivityThread.currentApplication().getApplicationContext();
 }
 
 export function list() {
@@ -50,53 +41,11 @@ export function list() {
   });
 }
 
-export function send(options: BroadcastOptions) {
+export function send(options: IntentOptions) {
   return new Promise<void>((resolve, reject) => {
     Java.perform(() => {
       try {
-        const Intent = Java.use("android.content.Intent");
-        const ComponentName = Java.use("android.content.ComponentName");
-        const Uri = Java.use("android.net.Uri");
-
-        const intent = Intent.$new();
-
-        if (options.action) intent.setAction(options.action);
-
-        if (options.component) {
-          const parts = options.component.split("/");
-          if (parts.length === 2) {
-            intent.setComponent(ComponentName.$new(parts[0], parts[1]));
-          }
-        }
-
-        if (options.data) intent.setData(Uri.parse(options.data));
-
-        if (options.mimeType) {
-          if (options.data) {
-            intent.setDataAndType(Uri.parse(options.data), options.mimeType);
-          } else {
-            intent.setType(options.mimeType);
-          }
-        }
-
-        if (options.categories) {
-          for (const cat of options.categories) {
-            intent.addCategory(cat);
-          }
-        }
-
-        if (options.extras) {
-          for (const [key, value] of Object.entries(options.extras)) {
-            if (typeof value === "string") {
-              intent.putExtra(key, Java.use("java.lang.String").$new(value));
-            } else if (typeof value === "number") {
-              intent.putExtra(key, Java.use("java.lang.Integer").$new(value));
-            } else if (typeof value === "boolean") {
-              intent.putExtra(key, Java.use("java.lang.Boolean").$new(value));
-            }
-          }
-        }
-
+        const intent = buildIntent(options);
         getContext().sendBroadcast(intent);
         resolve();
       } catch (e) {

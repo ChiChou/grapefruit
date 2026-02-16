@@ -1,6 +1,8 @@
 import { getGlobalExport } from "@/lib/polyfill.js";
 import Java from "frida-java-bridge";
 
+import { getContext } from "../lib/context.js";
+
 export interface MetaData {
   name: string;
   dir: boolean;
@@ -32,11 +34,6 @@ export interface FileAttributes {
 // ---------------------------------------------------------------------------
 // helpers
 // ---------------------------------------------------------------------------
-
-function getContext() {
-  const ActivityThread = Java.use("android.app.ActivityThread");
-  return ActivityThread.currentApplication().getApplicationContext();
-}
 
 function expandPath(path: string): string {
   if (path.startsWith("~/") || path === "~") {

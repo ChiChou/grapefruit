@@ -1,22 +1,14 @@
 import Java from "frida-java-bridge";
 
+import { getContext } from "../lib/context.js";
+import { buildIntent, type IntentOptions } from "../lib/intent.js";
+
+export type { IntentOptions };
+
 export interface ServiceEntry {
   name: string;
   exported: boolean;
   permission: string | null;
-}
-
-export interface IntentOptions {
-  action?: string;
-  component?: string;
-  data?: string;
-  categories?: string[];
-  extras?: Record<string, string | number | boolean>;
-}
-
-function getContext() {
-  const ActivityThread = Java.use("android.app.ActivityThread");
-  return ActivityThread.currentApplication().getApplicationContext();
 }
 
 export function list() {
@@ -47,45 +39,6 @@ export function list() {
       resolve(result);
     });
   });
-}
-
-function buildIntent(options: IntentOptions): Java.Wrapper {
-  const Intent = Java.use("android.content.Intent");
-  const ComponentName = Java.use("android.content.ComponentName");
-  const Uri = Java.use("android.net.Uri");
-
-  const intent = Intent.$new();
-
-  if (options.action) intent.setAction(options.action);
-
-  if (options.component) {
-    const parts = options.component.split("/");
-    if (parts.length === 2) {
-      intent.setComponent(ComponentName.$new(parts[0], parts[1]));
-    }
-  }
-
-  if (options.data) intent.setData(Uri.parse(options.data));
-
-  if (options.categories) {
-    for (const cat of options.categories) {
-      intent.addCategory(cat);
-    }
-  }
-
-  if (options.extras) {
-    for (const [key, value] of Object.entries(options.extras)) {
-      if (typeof value === "string") {
-        intent.putExtra(key, Java.use("java.lang.String").$new(value));
-      } else if (typeof value === "number") {
-        intent.putExtra(key, Java.use("java.lang.Integer").$new(value));
-      } else if (typeof value === "boolean") {
-        intent.putExtra(key, Java.use("java.lang.Boolean").$new(value));
-      }
-    }
-  }
-
-  return intent;
 }
 
 export function start(options: IntentOptions) {
