@@ -11,6 +11,18 @@
 
 import ObjC from "frida-objc-bridge";
 
+import {
+  test,
+  skip,
+  json,
+  assert,
+  assertType,
+  assertArray,
+  assertKeys,
+  assertNonEmpty,
+  summary,
+} from "@/common/test-runner.js";
+
 import * as info from "./modules/info.js";
 import * as checksec from "./modules/checksec.js";
 import * as entitlements from "./modules/entitlements.js";
@@ -22,74 +34,27 @@ import * as userdefaults from "./modules/userdefaults.js";
 import * as lsof from "./modules/lsof.js";
 
 // ---------------------------------------------------------------------------
-// helpers
-// ---------------------------------------------------------------------------
-
-let passed = 0;
-let failed = 0;
-let skipped = 0;
-const errors: string[] = [];
-
-function log(msg: string) {
-  console.log(msg);
-}
-
-function json(obj: unknown, indent = 2) {
-  return JSON.stringify(obj, null, indent);
-}
-
-async function test(name: string, fn: () => Promise<void>) {
-  try {
-    await fn();
-    passed++;
-    log(`  PASS  ${name}`);
-  } catch (e) {
-    failed++;
-    const msg = e instanceof Error ? e.message : String(e);
-    errors.push(`${name}: ${msg}`);
-    log(`  FAIL  ${name} - ${msg}`);
-  }
-}
-
-function skip(name: string, reason: string) {
-  skipped++;
-  log(`  SKIP  ${name} - ${reason}`);
-}
-
-function assert(cond: boolean, msg: string) {
-  if (!cond) throw new Error(`assertion failed: ${msg}`);
-}
-
-function assertType(value: unknown, type: string, label: string) {
-  assert(typeof value === type, `${label}: expected ${type}, got ${typeof value}`);
-}
-
-function assertArray(value: unknown, label: string): asserts value is unknown[] {
-  assert(Array.isArray(value), `${label}: expected array`);
-}
-
-function assertKeys(obj: Record<string, unknown>, keys: string[], label: string) {
-  for (const k of keys) {
-    assert(k in obj, `${label}: missing key "${k}"`);
-  }
-}
-
-function assertNonEmpty(arr: unknown[], label: string) {
-  assert(arr.length > 0, `${label}: expected non-empty array`);
-}
-
-// ---------------------------------------------------------------------------
 // test suites
 // ---------------------------------------------------------------------------
 
 async function testInfo() {
-  log("\n--- info ---");
+  console.log("\n--- info ---");
 
   await test("info.basics returns app info fields", async () => {
     const b = info.basics();
     assertKeys(
       b as unknown as Record<string, unknown>,
-      ["tmp", "home", "id", "label", "path", "main", "version", "semVer", "minOS"],
+      [
+        "tmp",
+        "home",
+        "id",
+        "label",
+        "path",
+        "main",
+        "version",
+        "semVer",
+        "minOS",
+      ],
       "info.basics",
     );
     assertType(b.id, "string", "id");
@@ -98,18 +63,22 @@ async function testInfo() {
     assert(b.path.startsWith("/"), "path should be absolute");
     assertType(b.home, "string", "home");
     assert(b.home.startsWith("/"), "home should be absolute");
-    log(`    id=${b.id} label=${b.label} ver=${b.version} semVer=${b.semVer}`);
-    log(`    home=${b.home}`);
-    log(`    path=${b.path}`);
+    console.log(
+      `    id=${b.id} label=${b.label} ver=${b.version} semVer=${b.semVer}`,
+    );
+    console.log(`    home=${b.home}`);
+    console.log(`    path=${b.path}`);
   });
 
   await test("info.urls returns URL schemes array", async () => {
     const u = info.urls();
     assertArray(u, "urls");
-    log(`    ${u.length} URL schemes`);
+    console.log(`    ${u.length} URL schemes`);
     if (u.length > 0) {
       const first = u[0];
-      log(`    first: name=${first.name} schemes=${first.schemes?.join(",")}`);
+      console.log(
+        `    first: name=${first.name} schemes=${first.schemes?.join(",")}`,
+      );
     }
   });
 
@@ -118,8 +87,11 @@ async function testInfo() {
     assertType(p, "object", "plist");
     assert(p !== null, "plist should not be null");
     const dict = p as Record<string, unknown>;
-    assert("CFBundleIdentifier" in dict, "plist should contain CFBundleIdentifier");
-    log(`    CFBundleIdentifier=${dict.CFBundleIdentifier}`);
+    assert(
+      "CFBundleIdentifier" in dict,
+      "plist should contain CFBundleIdentifier",
+    );
+    console.log(`    CFBundleIdentifier=${dict.CFBundleIdentifier}`);
   });
 
   await test("info.processInfo returns process fields", async () => {
@@ -135,12 +107,14 @@ async function testInfo() {
     assertType(p.pageSize, "number", "pageSize");
     assert(p.pointerSize > 0, "pointerSize should be > 0");
     assert(p.pageSize > 0, "pageSize should be > 0");
-    log(`    platform=${p.platform} arch=${p.arch} ptrSize=${p.pointerSize} pageSize=${p.pageSize}`);
+    console.log(
+      `    platform=${p.platform} arch=${p.arch} ptrSize=${p.pointerSize} pageSize=${p.pageSize}`,
+    );
   });
 }
 
 async function testChecksec() {
-  log("\n--- checksec ---");
+  console.log("\n--- checksec ---");
 
   await test("checksec.flags returns security flags", async () => {
     const f = checksec.flags();
@@ -153,27 +127,29 @@ async function testChecksec() {
     assertType(f.arc, "boolean", "arc");
     assertType(f.canary, "boolean", "canary");
     assertType(f.encrypted, "boolean", "encrypted");
-    log(`    pie=${f.pie} arc=${f.arc} canary=${f.canary} encrypted=${f.encrypted}`);
+    console.log(
+      `    pie=${f.pie} arc=${f.arc} canary=${f.canary} encrypted=${f.encrypted}`,
+    );
   });
 }
 
 async function testEntitlements() {
-  log("\n--- entitlements ---");
+  console.log("\n--- entitlements ---");
 
   await test("entitlements.plist returns entitlements dict", async () => {
     const p = entitlements.plist();
     assertType(p, "object", "plist");
     assert(p !== null, "plist should not be null");
     const keys = Object.keys(p as Record<string, unknown>);
-    log(`    ${keys.length} entitlement keys`);
+    console.log(`    ${keys.length} entitlement keys`);
     if (keys.length > 0) {
-      log(`    first key: ${keys[0]}`);
+      console.log(`    first key: ${keys[0]}`);
     }
   });
 }
 
 async function testClassdump() {
-  log("\n--- classdump ---");
+  console.log("\n--- classdump ---");
 
   await test("classdump.list __main__ returns classes", async () => {
     const classes = classdump.list("__main__");
@@ -182,30 +158,43 @@ async function testClassdump() {
     for (const c of classes.slice(0, 3)) {
       assertType(c, "string", "class name");
     }
-    log(`    ${classes.length} classes in __main__`);
-    log(`    first: ${classes[0]}`);
+    console.log(`    ${classes.length} classes in __main__`);
+    console.log(`    first: ${classes[0]}`);
   });
 
   await test("classdump.list __app__ returns classes", async () => {
     const classes = classdump.list("__app__");
     assertArray(classes, "list");
     assertNonEmpty(classes, "list");
-    log(`    ${classes.length} classes in __app__`);
+    console.log(`    ${classes.length} classes in __app__`);
   });
 
   await test("classdump.inspect on NSObject returns class detail", async () => {
     const detail = classdump.inspect("NSObject");
     assertKeys(
       detail as unknown as Record<string, unknown>,
-      ["name", "protocols", "methods", "ownMethods", "proto", "ivars", "module", "properties"],
+      [
+        "name",
+        "protocols",
+        "methods",
+        "ownMethods",
+        "proto",
+        "ivars",
+        "module",
+        "properties",
+      ],
       "inspect",
     );
     assert(detail.name === "NSObject", `name mismatch: ${detail.name}`);
     assertArray(detail.methods, "methods");
     assertNonEmpty(detail.methods, "methods");
     assertArray(detail.proto, "proto");
-    log(`    name=${detail.name} methods=${detail.methods.length} ivars=${detail.ivars.length}`);
-    log(`    protocols: ${Object.keys(detail.protocols).join(", ").slice(0, 80)}`);
+    console.log(
+      `    name=${detail.name} methods=${detail.methods.length} ivars=${detail.ivars.length}`,
+    );
+    console.log(
+      `    protocols: ${Object.keys(detail.protocols).join(", ").slice(0, 80)}`,
+    );
   });
 
   await test("classdump.inspect method entries have expected keys", async () => {
@@ -219,7 +208,7 @@ async function testClassdump() {
     assertType(m.name, "string", "method name");
     assertType(m.impl, "string", "method impl");
     assertType(m.types, "string", "method types");
-    log(`    sample method: ${m.name}`);
+    console.log(`    sample method: ${m.name}`);
   });
 
   await test("classdump.inspect on nonexistent class throws", async () => {
@@ -230,17 +219,17 @@ async function testClassdump() {
       threw = true;
     }
     assert(threw, "should throw for nonexistent class");
-    log("    correctly threw for nonexistent class");
+    console.log("    correctly threw for nonexistent class");
   });
 }
 
 async function testCookies() {
-  log("\n--- cookies ---");
+  console.log("\n--- cookies ---");
 
   await test("cookies.list returns array of cookies", async () => {
     const all = cookies.list();
     assertArray(all, "list");
-    log(`    ${all.length} cookies`);
+    console.log(`    ${all.length} cookies`);
     if (all.length > 0) {
       const c = all[0];
       assertKeys(
@@ -251,7 +240,7 @@ async function testCookies() {
       assertType(c.name, "string", "name");
       assertType(c.value, "string", "value");
       assertType(c.domain, "string", "domain");
-      log(`    first: name=${c.name} domain=${c.domain}`);
+      console.log(`    first: name=${c.name} domain=${c.domain}`);
     }
   });
 
@@ -260,7 +249,7 @@ async function testCookies() {
 }
 
 async function testFs() {
-  log("\n--- fs ---");
+  console.log("\n--- fs ---");
 
   await test("fs.ls ~ returns app home directory listing", async () => {
     const result = fs.ls("~");
@@ -272,8 +261,8 @@ async function testFs() {
     assertType(result.cwd, "string", "cwd");
     assertArray(result.list, "list");
     assert(result.cwd.startsWith("/"), "cwd should be absolute path");
-    log(`    cwd=${result.cwd}`);
-    log(`    ${result.list.length} entries`);
+    console.log(`    cwd=${result.cwd}`);
+    console.log(`    ${result.list.length} entries`);
     if (result.list.length > 0) {
       const first = result.list[0];
       assertKeys(
@@ -281,7 +270,9 @@ async function testFs() {
         ["name", "dir", "size", "created", "symlink", "writable"],
         "MetaData",
       );
-      log(`    first: ${first.name} (dir=${first.dir} size=${first.size})`);
+      console.log(
+        `    first: ${first.name} (dir=${first.dir} size=${first.size})`,
+      );
     }
   });
 
@@ -290,8 +281,8 @@ async function testFs() {
     assertArray(result.list, "list");
     assertNonEmpty(result.list, "list");
     assert(result.cwd.includes(".app"), "bundle path should contain .app");
-    log(`    cwd=${result.cwd}`);
-    log(`    ${result.list.length} entries`);
+    console.log(`    cwd=${result.cwd}`);
+    console.log(`    ${result.list.length} entries`);
   });
 
   await test("fs.ls with invalid path throws", async () => {
@@ -302,7 +293,7 @@ async function testFs() {
       threw = true;
     }
     assert(threw, "should throw for invalid path");
-    log("    correctly threw for invalid path");
+    console.log("    correctly threw for invalid path");
   });
 
   await test("fs.attrs on app home dir returns stat fields", async () => {
@@ -316,7 +307,9 @@ async function testFs() {
     assertType(a.uid, "number", "uid");
     assertType(a.gid, "number", "gid");
     assertType(a.perm, "number", "perm");
-    log(`    uid=${a.uid} gid=${a.gid} perm=${a.perm.toString(8)} type=${a.type}`);
+    console.log(
+      `    uid=${a.uid} gid=${a.gid} perm=${a.perm.toString(8)} type=${a.type}`,
+    );
   });
 
   await test("fs.text reads a text file", async () => {
@@ -327,8 +320,11 @@ async function testFs() {
     const content = fs.text(testPath);
     assertType(content, "string", "content");
     assert(content.length > 0, "content should be non-empty");
-    assert(content === "text read test content\n", `content mismatch: ${json(content)}`);
-    log(`    read ${content.length} chars`);
+    assert(
+      content === "text read test content\n",
+      `content mismatch: ${json(content)}`,
+    );
+    console.log(`    read ${content.length} chars`);
 
     fs.rm(testPath);
   });
@@ -343,11 +339,11 @@ async function testFs() {
 
     const readBack = fs.text(testPath);
     assert(readBack === testContent, `round-trip mismatch: ${json(readBack)}`);
-    log(`    wrote and read back ${testContent.length} chars`);
+    console.log(`    wrote and read back ${testContent.length} chars`);
 
     // cleanup
     fs.rm(testPath);
-    log("    cleaned up test file");
+    console.log("    cleaned up test file");
   });
 
   await test("fs.data reads binary data", async () => {
@@ -358,7 +354,7 @@ async function testFs() {
     const buf = fs.data(testPath);
     assert(buf !== null, "data should not return null");
     assert(buf!.byteLength > 0, "data should be non-empty");
-    log(`    read ${buf!.byteLength} bytes`);
+    console.log(`    read ${buf!.byteLength} bytes`);
 
     fs.rm(testPath);
   });
@@ -371,7 +367,7 @@ async function testFs() {
     const buf = fs.preview(testPath);
     assert(buf !== null, "preview should not return null");
     assert(buf!.byteLength > 0, "preview should be non-empty");
-    log(`    preview read ${buf!.byteLength} bytes`);
+    console.log(`    preview read ${buf!.byteLength} bytes`);
 
     fs.rm(testPath);
   });
@@ -387,7 +383,7 @@ async function testFs() {
 
     const content = fs.text(dstPath);
     assert(content === "copy test content", `copy mismatch: ${json(content)}`);
-    log("    copied and verified");
+    console.log("    copied and verified");
 
     fs.rm(srcPath);
     fs.rm(dstPath);
@@ -413,7 +409,7 @@ async function testFs() {
       srcExists = false;
     }
     assert(!srcExists, "source should not exist after mv");
-    log("    moved and verified");
+    console.log("    moved and verified");
 
     fs.rm(dstPath);
   });
@@ -426,22 +422,24 @@ async function testFs() {
     try {
       const p = fs.plist(plistPath);
       assertType(p, "object", "plist");
-      log(`    read plist from ${plistPath}`);
+      console.log(`    read plist from ${plistPath}`);
     } catch (_) {
       // some apps may not have a readable Info.plist on disk
       threw = true;
-      log("    Info.plist not readable from disk (expected for some apps)");
+      console.log(
+        "    Info.plist not readable from disk (expected for some apps)",
+      );
     }
   });
 }
 
 async function testKeychain() {
-  log("\n--- keychain ---");
+  console.log("\n--- keychain ---");
 
   await test("keychain.list returns array of items", async () => {
     const items = keychain.list();
     assertArray(items, "list");
-    log(`    ${items.length} keychain items`);
+    console.log(`    ${items.length} keychain items`);
     if (items.length > 0) {
       const first = items[0];
       assertKeys(
@@ -449,7 +447,9 @@ async function testKeychain() {
         ["clazz"],
         "keychain item",
       );
-      log(`    first: clazz=${first.clazz} service=${first.service} account=${first.account}`);
+      console.log(
+        `    first: clazz=${first.clazz} service=${first.service} account=${first.account}`,
+      );
     }
   });
 
@@ -457,14 +457,14 @@ async function testKeychain() {
 }
 
 async function testUserDefaults() {
-  log("\n--- userdefaults ---");
+  console.log("\n--- userdefaults ---");
 
   await test("userdefaults.enumerate returns dict of entries", async () => {
     const defaults = userdefaults.enumerate();
     assertType(defaults, "object", "enumerate");
     const keys = Object.keys(defaults);
     assert(keys.length > 0, "should have at least one user default");
-    log(`    ${keys.length} user defaults`);
+    console.log(`    ${keys.length} user defaults`);
 
     // check structure of first entry
     const firstKey = keys[0];
@@ -476,7 +476,7 @@ async function testUserDefaults() {
     );
     assertType(entry.type, "string", "type");
     assertType(entry.readable, "string", "readable");
-    log(`    first: key=${firstKey} type=${entry.type}`);
+    console.log(`    first: key=${firstKey} type=${entry.type}`);
   });
 
   skip("userdefaults.update", "side-effect: modifies user defaults");
@@ -484,7 +484,7 @@ async function testUserDefaults() {
 }
 
 async function testLsof() {
-  log("\n--- lsof ---");
+  console.log("\n--- lsof ---");
 
   await test("lsof.fds returns open file descriptors", async () => {
     const fds = lsof.fds();
@@ -493,20 +493,26 @@ async function testLsof() {
 
     const vnodes = fds.filter((fd) => fd.type === "vnode");
     const sockets = fds.filter((fd) => fd.type === "socket");
-    log(`    ${fds.length} open fds (${vnodes.length} vnodes, ${sockets.length} sockets)`);
+    console.log(
+      `    ${fds.length} open fds (${vnodes.length} vnodes, ${sockets.length} sockets)`,
+    );
 
     if (vnodes.length > 0) {
       const v = vnodes[0];
       assertType(v.fd, "number", "fd");
       assert("path" in v, "vnode should have path");
-      log(`    first vnode: fd=${v.fd} path=${(v as { path: string }).path}`);
+      console.log(
+        `    first vnode: fd=${v.fd} path=${(v as { path: string }).path}`,
+      );
     }
 
     if (sockets.length > 0) {
       const s = sockets[0];
       assertType(s.fd, "number", "fd");
       assert("protocol" in s, "socket should have protocol");
-      log(`    first socket: fd=${s.fd} protocol=${(s as { protocol: string }).protocol}`);
+      console.log(
+        `    first socket: fd=${s.fd} protocol=${(s as { protocol: string }).protocol}`,
+      );
     }
   });
 }
@@ -516,10 +522,12 @@ async function testLsof() {
 // ---------------------------------------------------------------------------
 
 async function run() {
-  log("=== fruity module tests ===");
+  console.log("=== fruity module tests ===");
 
-  const bundleId = ObjC.classes.NSBundle.mainBundle().bundleIdentifier().toString();
-  log(`target bundle: ${bundleId}\n`);
+  const bundleId = ObjC.classes.NSBundle.mainBundle()
+    .bundleIdentifier()
+    .toString();
+  console.log(`target bundle: ${bundleId}\n`);
 
   await testInfo();
   await testChecksec();
@@ -531,19 +539,13 @@ async function run() {
   await testUserDefaults();
   await testLsof();
 
-  log("\n=== summary ===");
-  log(`  ${passed} passed, ${failed} failed, ${skipped} skipped`);
-
-  if (errors.length > 0) {
-    log("\nfailures:");
-    for (const e of errors) {
-      log(`  - ${e}`);
-    }
-  }
+  summary();
 }
 
 ObjC.schedule(ObjC.mainQueue, () => {
   run().catch((e) => {
-    log(`\nFATAL: ${e instanceof Error ? e.stack || e.message : String(e)}`);
+    console.log(
+      `\nFATAL: ${e instanceof Error ? e.stack || e.message : String(e)}`,
+    );
   });
 });

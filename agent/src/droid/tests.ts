@@ -11,69 +11,23 @@
 
 import Java from "frida-java-bridge";
 
+import {
+  test,
+  skip,
+  json,
+  assert,
+  assertType,
+  assertArray,
+  assertKeys,
+  assertNonEmpty,
+  summary,
+} from "@/common/test-runner.js";
 import * as activities from "./modules/activities.js";
 import * as services from "./modules/services.js";
 import * as receivers from "./modules/receivers.js";
 import * as provider from "./modules/provider.js";
 import * as device from "./modules/device.js";
 import * as fs from "./modules/fs.js";
-
-// ---------------------------------------------------------------------------
-// helpers
-// ---------------------------------------------------------------------------
-
-let passed = 0;
-let failed = 0;
-let skipped = 0;
-const errors: string[] = [];
-
-function log(msg: string) {
-  console.log(msg);
-}
-
-function json(obj: unknown, indent = 2) {
-  return JSON.stringify(obj, null, indent);
-}
-
-async function test(name: string, fn: () => Promise<void>) {
-  try {
-    await fn();
-    passed++;
-    log(`  PASS  ${name}`);
-  } catch (e) {
-    failed++;
-    const msg = e instanceof Error ? e.message : String(e);
-    errors.push(`${name}: ${msg}`);
-    log(`  FAIL  ${name} - ${msg}`);
-  }
-}
-
-function skip(name: string, reason: string) {
-  skipped++;
-  log(`  SKIP  ${name} - ${reason}`);
-}
-
-function assert(cond: boolean, msg: string) {
-  if (!cond) throw new Error(`assertion failed: ${msg}`);
-}
-
-function assertType(value: unknown, type: string, label: string) {
-  assert(typeof value === type, `${label}: expected ${type}, got ${typeof value}`);
-}
-
-function assertArray(value: unknown, label: string): asserts value is unknown[] {
-  assert(Array.isArray(value), `${label}: expected array`);
-}
-
-function assertKeys(obj: Record<string, unknown>, keys: string[], label: string) {
-  for (const k of keys) {
-    assert(k in obj, `${label}: missing key "${k}"`);
-  }
-}
-
-function assertNonEmpty(arr: unknown[], label: string) {
-  assert(arr.length > 0, `${label}: expected non-empty array`);
-}
 
 // ---------------------------------------------------------------------------
 // test suites
@@ -93,7 +47,9 @@ async function testDevice() {
     assert(d.sdk > 0, "sdk should be > 0");
     assertType(d.model, "string", "model");
     assert(d.model.length > 0, "model should be non-empty");
-    log(`    model=${d.model} brand=${d.brand} sdk=${d.sdk} release=${d.release}`);
+    log(
+      `    model=${d.model} brand=${d.brand} sdk=${d.sdk} release=${d.release}`,
+    );
   });
 
   await test("device.properties returns key-value map", async () => {
@@ -153,7 +109,10 @@ async function testServices() {
     log(`    first: ${all[0].name}`);
   });
 
-  skip("services.start", "side-effect: requires a known safe service component");
+  skip(
+    "services.start",
+    "side-effect: requires a known safe service component",
+  );
   skip("services.stop", "side-effect: requires a running service");
 }
 
@@ -200,7 +159,10 @@ async function testProvider() {
     );
     assertArray(result.columns, "columns");
     assertArray(result.rows, "rows");
-    assert(result.columns.length === 2, `expected 2 columns, got ${result.columns.length}`);
+    assert(
+      result.columns.length === 2,
+      `expected 2 columns, got ${result.columns.length}`,
+    );
     log(`    columns: ${result.columns.join(", ")}`);
     log(`    ${result.rows.length} rows`);
     if (result.rows.length > 0) {
@@ -297,7 +259,9 @@ async function testFs() {
     assertType(a.gid, "number", "gid");
     assertType(a.perm, "number", "perm");
     assert(a.type === "directory", `expected directory, got ${a.type}`);
-    log(`    uid=${a.uid} gid=${a.gid} perm=${a.perm.toString(8)} type=${a.type}`);
+    log(
+      `    uid=${a.uid} gid=${a.gid} perm=${a.perm.toString(8)} type=${a.type}`,
+    );
   });
 
   await test("fs.text reads a text file", async () => {
@@ -308,7 +272,10 @@ async function testFs() {
     const content = await fs.text(testPath);
     assertType(content, "string", "content");
     assert(content.length > 0, "content should be non-empty");
-    assert(content === "text read test content\n", `content mismatch: ${json(content)}`);
+    assert(
+      content === "text read test content\n",
+      `content mismatch: ${json(content)}`,
+    );
     log(`    read ${content.length} chars`);
 
     await fs.rm(testPath);
@@ -402,7 +369,10 @@ async function testFs() {
 
   await test("fs.expandPath ~ resolves to app data dir", async () => {
     const result = await fs.ls("~");
-    assert(result.cwd.includes("/data/"), `expected data path, got ${result.cwd}`);
+    assert(
+      result.cwd.includes("/data/"),
+      `expected data path, got ${result.cwd}`,
+    );
     log(`    ~ = ${result.cwd}`);
   });
 }
@@ -421,15 +391,7 @@ async function run() {
   await testProvider();
   await testFs();
 
-  log("\n=== summary ===");
-  log(`  ${passed} passed, ${failed} failed, ${skipped} skipped`);
-
-  if (errors.length > 0) {
-    log("\nfailures:");
-    for (const e of errors) {
-      log(`  - ${e}`);
-    }
-  }
+  summary();
 }
 
 Java.perform(() => {
@@ -443,7 +405,9 @@ Java.perform(() => {
     methods: {
       run() {
         run().catch((e) => {
-          log(`\nFATAL: ${e instanceof Error ? e.stack || e.message : String(e)}`);
+          log(
+            `\nFATAL: ${e instanceof Error ? e.stack || e.message : String(e)}`,
+          );
         });
       },
     },
