@@ -42,6 +42,17 @@ function SessionProvider({ children }: { children: ReactNode }) {
 
   const [status, setStatus] = useState<StatusType>(Status.Disconnected);
   const [pid, setPid] = useState<number | undefined>(targetPid);
+  const [fridaMajor, setFridaMajor] = useState(17);
+
+  useEffect(() => {
+    fetch("/api/version")
+      .then((r) => r.json())
+      .then((v: { frida: string }) => {
+        const major = parseInt(v.frida, 10);
+        if (major === 16 || major === 17) setFridaMajor(major);
+      })
+      .catch(() => {});
+  }, []);
 
   // Compute project identifier matching server-side logic
   const identifier = useMemo(() => {
@@ -130,8 +141,9 @@ function SessionProvider({ children }: { children: ReactNode }) {
       droid,
       status,
       socket,
+      fridaMajor,
     }),
-    [platform, mode, device, bundle, pid, identifier, fruity, droid, status, socket],
+    [platform, mode, device, bundle, pid, identifier, fruity, droid, status, socket, fridaMajor],
   );
 
   // Validate required params

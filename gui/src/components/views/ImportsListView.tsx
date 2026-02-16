@@ -36,7 +36,7 @@ const DEFAULT_WIDTHS = {
 export function ImportsListView({ path }: ImportsListViewProps) {
   const { openFilePanel } = useDock();
   const { t } = useTranslation();
-  const { fruity, status, platform, mode, device, bundle, pid } = useSession();
+  const { fruity, status, platform, mode, device, bundle, pid, fridaMajor } = useSession();
   const { appendCode } = useRepl();
   const navigate = useNavigate();
 
@@ -240,7 +240,7 @@ export function ImportsListView({ path }: ImportsListViewProps) {
       module,
       name: imp.name,
     };
-    const code = native(target);
+    const code = native(target, fridaMajor);
     appendCode(code);
   };
 
@@ -277,7 +277,7 @@ export function ImportsListView({ path }: ImportsListViewProps) {
         module,
         name,
       };
-      codes.push(native(target));
+      codes.push(native(target, fridaMajor));
     }
 
     if (codes.length > 0) {

@@ -26,45 +26,65 @@ export interface ObjCHookTarget {
 
 export type HookTarget = NativeHookTarget | ObjCHookTarget;
 
+const interceptorBlock = (name: string) => `Interceptor.attach(addr, {
+  onEnter(args) {
+    console.log("[${name}] called");
+    // console.log("  arg0:", args[0]);
+  },
+  onLeave(retval) {
+    console.log("[${name}] returned:", retval);
+  }
+});`;
+
 /**
  * Generate Frida hook code for a native function
  */
-export function native(target: NativeHookTarget): string {
+export function native(target: NativeHookTarget, fridaMajor: number = 17): string {
   const { module, name } = target;
-  const varName = sanitizeName(name);
-  const addrVar = `${varName}Addr`;
 
-  if (module) {
-    // Module-specific export
-    return `// Hook ${module}!${name}
-const ${addrVar} = Module.findExportByName(${JSON.stringify(module)}, ${JSON.stringify(name)});
-if (${addrVar}) {
-  Interceptor.attach(${addrVar}, {
-    onEnter(args) {
-      console.log("[${name}] called");
-      // console.log("  arg0:", args[0]);
-    },
-    onLeave(retval) {
-      console.log("[${name}] returned:", retval);
+  if (fridaMajor >= 17) {
+    if (module) {
+      return `// Hook ${module}!${name}
+{
+  const mod = Process.findModuleByName(${JSON.stringify(module)});
+  if (mod) {
+    const addr = mod.findExportByName(${JSON.stringify(name)});
+    if (addr) {
+      ${interceptorBlock(name)}
     }
-  });
+  }
+}
+`;
+    }
+
+    return `// Hook ${name}
+{
+  const addr = Module.findGlobalExportByName(${JSON.stringify(name)});
+  if (addr) {
+    ${interceptorBlock(name)}
+  }
 }
 `;
   }
 
-  // Global export (null module)
+  // Frida 16
+  if (module) {
+    return `// Hook ${module}!${name}
+{
+  const addr = Module.findExportByName(${JSON.stringify(module)}, ${JSON.stringify(name)});
+  if (addr) {
+    ${interceptorBlock(name)}
+  }
+}
+`;
+  }
+
   return `// Hook ${name}
-const ${addrVar} = Module.findExportByName(null, ${JSON.stringify(name)});
-if (${addrVar}) {
-  Interceptor.attach(${addrVar}, {
-    onEnter(args) {
-      console.log("[${name}] called");
-      // console.log("  arg0:", args[0]);
-    },
-    onLeave(retval) {
-      console.log("[${name}] returned:", retval);
-    }
-  });
+{
+  const addr = Module.findExportByName(null, ${JSON.stringify(name)});
+  if (addr) {
+    ${interceptorBlock(name)}
+  }
 }
 `;
 }
@@ -75,21 +95,22 @@ if (${addrVar}) {
 export function objc(target: ObjCHookTarget): string {
   const { cls, sel } = target;
   const methodLabel = formatObjCMethod(cls, sel);
-  const varName = `${sanitizeName(cls)}_${sanitizeSelector(sel)}`;
 
   return `// Hook ${methodLabel}
-const ${varName} = ObjC.classes[${JSON.stringify(cls)}][${JSON.stringify(sel)}];
-if (${varName}) {
-  Interceptor.attach(${varName}.implementation, {
-    onEnter(args) {
-      // args[0] = self, args[1] = _cmd, args[2+] = method arguments
-      const self = new ObjC.Object(args[0]);
-      console.log("${methodLabel} called");
-    },
-    onLeave(retval) {
-      console.log("${methodLabel} returned:", retval);
-    }
-  });
+{
+  const method = ObjC.classes[${JSON.stringify(cls)}][${JSON.stringify(sel)}];
+  if (method) {
+    Interceptor.attach(method.implementation, {
+      onEnter(args) {
+        // args[0] = self, args[1] = _cmd, args[2+] = method arguments
+        const self = new ObjC.Object(args[0]);
+        console.log("${methodLabel} called");
+      },
+      onLeave(retval) {
+        console.log("${methodLabel} returned:", retval);
+      }
+    });
+  }
 }
 `;
 }
@@ -97,33 +118,16 @@ if (${varName}) {
 /**
  * Generate hook code for multiple targets
  */
-export function batch(targets: HookTarget[]): string {
+export function batch(targets: HookTarget[], fridaMajor: number = 17): string {
   const parts: string[] = [];
 
   for (const target of targets) {
     if (target.type === "native") {
-      parts.push(native(target));
+      parts.push(native(target, fridaMajor));
     } else if (target.type === "objc") {
       parts.push(objc(target));
     }
   }
 
   return parts.join("\n");
-}
-
-/**
- * Sanitize a name for use as a JavaScript variable
- */
-function sanitizeName(name: string): string {
-  return name.replace(/[^a-zA-Z0-9_]/g, "_").replace(/^(\d)/, "_$1");
-}
-
-/**
- * Sanitize an Objective-C selector for use as part of a variable name
- */
-function sanitizeSelector(sel: string): string {
-  return sel
-    .replace(/^[+-]\s*/, "")
-    .replace(/:/g, "_")
-    .replace(/[^a-zA-Z0-9_]/g, "_");
 }

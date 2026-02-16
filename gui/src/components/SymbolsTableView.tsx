@@ -47,7 +47,7 @@ export function SymbolsTableView({
 }: SymbolsTableViewProps) {
   const { t } = useTranslation();
   const { openFilePanel } = useDock();
-  const { fruity, status, platform, mode, device, bundle, pid } = useSession();
+  const { fruity, status, platform, mode, device, bundle, pid, fridaMajor } = useSession();
   const { appendCode } = useRepl();
   const navigate = useNavigate();
 
@@ -153,10 +153,10 @@ export function SymbolsTableView({
         module: modulePath ?? null,
         name: item.name,
       };
-      const code = native(target);
+      const code = native(target, fridaMajor);
       appendCode(code);
     },
-    [modulePath, appendCode],
+    [modulePath, appendCode, fridaMajor],
   );
 
   const handleBatchHook = useCallback(async () => {
@@ -211,13 +211,13 @@ export function SymbolsTableView({
         module: modulePath ?? null,
         name: item.name,
       };
-      return native(target);
+      return native(target, fridaMajor);
     });
 
     if (codes.length > 0) {
       appendCode(codes.join("\n"));
     }
-  }, [rowSelection, data, modulePath, appendCode, isFunction]);
+  }, [rowSelection, data, modulePath, appendCode, isFunction, fridaMajor]);
 
   const columns = useMemo<ColumnDef<SymbolItem>[]>(() => {
     const cols: ColumnDef<SymbolItem>[] = [];

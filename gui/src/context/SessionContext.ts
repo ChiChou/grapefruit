@@ -46,6 +46,8 @@ interface SessionContextType {
   droid: AsyncDroidRPC | null;
   status: StatusType;
   socket: Socket<SessionClientEvents, SessionServerEvents> | null;
+  /** Frida major version (16 or 17). Defaults to 17. */
+  fridaMajor: number;
 }
 
 const defaultContext: SessionContextType = {
@@ -59,6 +61,7 @@ const defaultContext: SessionContextType = {
   droid: null,
   status: Status.Disconnected,
   socket: null,
+  fridaMajor: 17,
 };
 
 export const SessionContext = React.createContext(defaultContext);
