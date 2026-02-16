@@ -25,7 +25,11 @@ import Editor, { loader } from "@monaco-editor/react";
 import { useTheme } from "@/components/theme-provider";
 import { header, type ClassDumpInfo } from "../../lib/classdump-header.ts";
 import { useRpcQuery } from "@/lib/queries";
-import { generateObjCHook, formatObjCMethod, type ObjCHookTarget } from "@/lib/hook-codegen";
+import {
+  objc,
+  formatObjCMethod,
+  type ObjCHookTarget,
+} from "@/lib/hook-template.ts";
 
 import type { ClassDetail } from "@agent/fruity/modules/classdump";
 
@@ -53,11 +57,13 @@ export function ClassDetailTab({
   const [activeTab, setActiveTab] = useState("methods");
   const [protocolSearch, setProtocolSearch] = useState("");
   const [batchMode, setBatchMode] = useState(false);
-  const [selectedMethods, setSelectedMethods] = useState<Set<string>>(new Set());
+  const [selectedMethods, setSelectedMethods] = useState<Set<string>>(
+    new Set(),
+  );
 
   const { data: classInfo, isLoading } = useRpcQuery<ClassDetail>(
     ["classDetail", params.className],
-    (api) => api.classdump.inspect(params.className)
+    (api) => api.classdump.inspect(params.className),
   );
 
   const openModuleTab = (path: string) => {
@@ -117,17 +123,20 @@ export function ClassDetailTab({
     return classInfo.protocols.filter((p) => p.toLowerCase().includes(query));
   }, [classInfo, protocolSearch]);
 
-  const handleSelectMethod = useCallback((methodName: string, checked: boolean) => {
-    setSelectedMethods((prev) => {
-      const next = new Set(prev);
-      if (checked) {
-        next.add(methodName);
-      } else {
-        next.delete(methodName);
-      }
-      return next;
-    });
-  }, []);
+  const handleSelectMethod = useCallback(
+    (methodName: string, checked: boolean) => {
+      setSelectedMethods((prev) => {
+        const next = new Set(prev);
+        if (checked) {
+          next.add(methodName);
+        } else {
+          next.delete(methodName);
+        }
+        return next;
+      });
+    },
+    [],
+  );
 
   const handleHookMethod = useCallback(
     async (methodName: string) => {
@@ -145,7 +154,7 @@ export function ClassDetailTab({
         toast.error(t("hook_failed"));
       }
     },
-    [fruity, status, classInfo, navigate, hooksPath, t]
+    [fruity, status, classInfo, navigate, hooksPath, t],
   );
 
   const handleGenerateCode = useCallback(
@@ -156,10 +165,10 @@ export function ClassDetailTab({
         cls: classInfo.name,
         sel: methodName,
       };
-      const code = generateObjCHook(target);
+      const code = objc(target);
       appendCode(code);
     },
-    [classInfo, appendCode]
+    [classInfo, appendCode],
   );
 
   const handleBatchHook = useCallback(async () => {
@@ -194,7 +203,7 @@ export function ClassDetailTab({
         cls: classInfo.name,
         sel: methodName,
       };
-      codes.push(generateObjCHook(target));
+      codes.push(objc(target));
     }
 
     if (codes.length > 0) {
@@ -371,10 +380,16 @@ export function ClassDetailTab({
                             </div>
                           )}
                           <div className="min-w-0 flex-1">
-                            <div className="font-mono text-xs truncate" title={method}>
+                            <div
+                              className="font-mono text-xs truncate"
+                              title={method}
+                            >
                               {method}
                             </div>
-                            <div className="font-mono text-muted-foreground truncate text-[10px]" title={types}>
+                            <div
+                              className="font-mono text-muted-foreground truncate text-[10px]"
+                              title={types}
+                            >
                               {types}
                             </div>
                           </div>

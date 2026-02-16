@@ -19,12 +19,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useDock } from "@/context/DockContext";
 import { useSession, Status, Mode } from "@/context/SessionContext";
 import { useRepl } from "@/context/useRepl";
-import { generateNativeHook, type NativeHookTarget } from "@/lib/hook-codegen";
+import { native, type NativeHookTarget } from "@/lib/hook-template";
 
-import type {
-  Symbol,
-  Exported,
-} from "@agent/common/symbol";
+import type { Symbol, Exported } from "@agent/common/symbol";
 
 type SymbolItem = Symbol | Exported;
 
@@ -43,7 +40,11 @@ const DEFAULT_WIDTHS = {
   demangled: 400,
 };
 
-export function SymbolsTableView({ symbols, loading, modulePath }: SymbolsTableViewProps) {
+export function SymbolsTableView({
+  symbols,
+  loading,
+  modulePath,
+}: SymbolsTableViewProps) {
   const { t } = useTranslation();
   const { openFilePanel } = useDock();
   const { fruity, status, platform, mode, device, bundle, pid } = useSession();
@@ -73,7 +74,7 @@ export function SymbolsTableView({ symbols, loading, modulePath }: SymbolsTableV
         params: { address, name },
       });
     },
-    [openFilePanel]
+    [openFilePanel],
   );
 
   const openClassTab = useCallback(
@@ -85,7 +86,7 @@ export function SymbolsTableView({ symbols, loading, modulePath }: SymbolsTableV
         params: { className },
       });
     },
-    [openFilePanel]
+    [openFilePanel],
   );
 
   const handleAddressClick = useCallback(
@@ -101,7 +102,7 @@ export function SymbolsTableView({ symbols, loading, modulePath }: SymbolsTableV
         openDisassemblyTab(item.addr, item.name);
       }
     },
-    [openClassTab, openDisassemblyTab]
+    [openClassTab, openDisassemblyTab],
   );
 
   const isClickable = useCallback((item: SymbolItem): boolean => {
@@ -142,7 +143,7 @@ export function SymbolsTableView({ symbols, loading, modulePath }: SymbolsTableV
         toast.error(t("hook_failed"));
       }
     },
-    [fruity, status, modulePath, navigate, hooksPath, t]
+    [fruity, status, modulePath, navigate, hooksPath, t],
   );
 
   const handleGenerateCode = useCallback(
@@ -152,16 +153,16 @@ export function SymbolsTableView({ symbols, loading, modulePath }: SymbolsTableV
         module: modulePath ?? null,
         name: item.name,
       };
-      const code = generateNativeHook(target);
+      const code = native(target);
       appendCode(code);
     },
-    [modulePath, appendCode]
+    [modulePath, appendCode],
   );
 
   const handleBatchHook = useCallback(async () => {
     if (!fruity || status !== Status.Ready) return;
     const selectedIndices = Object.keys(rowSelection).filter(
-      (key) => rowSelection[key]
+      (key) => rowSelection[key],
     );
     const selectedItems = selectedIndices
       .map((idx) => data[parseInt(idx)])
@@ -184,11 +185,21 @@ export function SymbolsTableView({ symbols, loading, modulePath }: SymbolsTableV
       window.dispatchEvent(new CustomEvent("hooks:refresh"));
       setRowSelection({});
     }
-  }, [fruity, status, rowSelection, data, modulePath, isFunction, navigate, hooksPath, t]);
+  }, [
+    fruity,
+    status,
+    rowSelection,
+    data,
+    modulePath,
+    isFunction,
+    navigate,
+    hooksPath,
+    t,
+  ]);
 
   const handleBatchGenerateCode = useCallback(() => {
     const selectedIndices = Object.keys(rowSelection).filter(
-      (key) => rowSelection[key]
+      (key) => rowSelection[key],
     );
     const selectedItems = selectedIndices
       .map((idx) => data[parseInt(idx)])
@@ -200,7 +211,7 @@ export function SymbolsTableView({ symbols, loading, modulePath }: SymbolsTableV
         module: modulePath ?? null,
         name: item.name,
       };
-      return generateNativeHook(target);
+      return native(target);
     });
 
     if (codes.length > 0) {
@@ -331,7 +342,7 @@ export function SymbolsTableView({ symbols, loading, modulePath }: SymbolsTableV
         size: DEFAULT_WIDTHS.demangled,
         minSize: 100,
         cell: ({ getValue }) => getValue() || "-",
-      }
+      },
     );
 
     return cols;
@@ -377,7 +388,7 @@ export function SymbolsTableView({ symbols, loading, modulePath }: SymbolsTableV
   const totalSize = rowVirtualizer.getTotalSize();
 
   const selectedCount = Object.keys(rowSelection).filter(
-    (key) => rowSelection[key]
+    (key) => rowSelection[key],
   ).length;
 
   const toggleBatchMode = useCallback(() => {
@@ -475,7 +486,7 @@ export function SymbolsTableView({ symbols, loading, modulePath }: SymbolsTableV
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                     {header.column.getCanResize() && (
                       <div
@@ -520,7 +531,7 @@ export function SymbolsTableView({ symbols, loading, modulePath }: SymbolsTableV
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </td>
                   ))}

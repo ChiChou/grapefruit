@@ -29,7 +29,7 @@ export type HookTarget = NativeHookTarget | ObjCHookTarget;
 /**
  * Generate Frida hook code for a native function
  */
-export function generateNativeHook(target: NativeHookTarget): string {
+export function native(target: NativeHookTarget): string {
   const { module, name } = target;
   const varName = sanitizeName(name);
   const addrVar = `${varName}Addr`;
@@ -72,7 +72,7 @@ if (${addrVar}) {
 /**
  * Generate Frida hook code for an Objective-C method
  */
-export function generateObjCHook(target: ObjCHookTarget): string {
+export function objc(target: ObjCHookTarget): string {
   const { cls, sel } = target;
   const methodLabel = formatObjCMethod(cls, sel);
   const varName = `${sanitizeName(cls)}_${sanitizeSelector(sel)}`;
@@ -97,14 +97,14 @@ if (${varName}) {
 /**
  * Generate hook code for multiple targets
  */
-export function generateHooks(targets: HookTarget[]): string {
+export function batch(targets: HookTarget[]): string {
   const parts: string[] = [];
 
   for (const target of targets) {
     if (target.type === "native") {
-      parts.push(generateNativeHook(target));
+      parts.push(native(target));
     } else if (target.type === "objc") {
-      parts.push(generateObjCHook(target));
+      parts.push(objc(target));
     }
   }
 
