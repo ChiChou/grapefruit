@@ -99,9 +99,9 @@ export interface NSURLSessionTask extends NSObject {
   state(): number;
 }
 
-export interface NSURLSessionDataTask extends NSURLSessionTask {}
-export interface NSURLSessionDownloadTask extends NSURLSessionTask {}
-export interface NSURLSessionWebSocketTask extends NSURLSessionTask {}
+export type NSURLSessionDataTask = NSURLSessionTask;
+export type NSURLSessionDownloadTask = NSURLSessionTask;
+export type NSURLSessionWebSocketTask = NSURLSessionTask;
 
 export interface NSURLSessionWebSocketMessage extends NSObject {
   type(): number; // 0 = data, 1 = string

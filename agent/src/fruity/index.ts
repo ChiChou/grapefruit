@@ -1,6 +1,6 @@
 import ObjC from "frida-objc-bridge";
 import { init as enableLifeCycleHook } from "./observers/lifecycle.js";
-import { start as enableHTTPLog } from "./observers/http.js";
+import { start as enableHTTPLog } from "./observers/url/index.js";
 import { interfaces, invoke } from "./registry.js";
 
 setImmediate(enableLifeCycleHook);
