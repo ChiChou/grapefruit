@@ -8,6 +8,13 @@
       "when": 1771181233982,
       "tag": "0000_rare_terror",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1771245664714,
+      "tag": "0001_cooing_timeslip",
+      "breakpoints": true
     }
   ]
 }

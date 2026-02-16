@@ -226,26 +226,22 @@ const routes = new Hono()
     try {
       const httpStore = new HttpStore(deviceId, identifier);
 
-      const attachmentPath = httpStore.getAttachmentPath(requestId);
+      const attachment = httpStore.getAttachment(requestId);
 
-      if (!attachmentPath) {
+      if (!attachment) {
         return c.text("No attachment found", 404);
       }
 
-      const stat = await fs.stat(attachmentPath).catch(() => null);
+      const stat = await fs.stat(attachment.path).catch(() => null);
       if (!stat) {
         return c.text("Attachment file not found", 404);
       }
 
-      c.header(
-        "Content-Disposition",
-        `attachment; filename="${requestId}"`,
-      );
-      c.header("Content-Type", "application/octet-stream");
+      c.header("Content-Type", attachment.mimeType || "application/octet-stream");
       c.header("Content-Length", stat.size.toString());
       return c.body(
         Readable.toWeb(
-          createReadStream(attachmentPath),
+          createReadStream(attachment.path),
         ) as unknown as ReadableStream,
       );
     } catch (e) {

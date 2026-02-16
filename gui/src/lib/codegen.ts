@@ -7,7 +7,7 @@ export interface RequestInfo {
 
 export const formats = [
   { id: "curl", label: "cURL" },
-  { id: "fetch-browser", label: "fetch (Browser)" },
+  { id: "fetch-browser", label: "fetch (Web)" },
   { id: "fetch-node", label: "fetch (Node.js)" },
   { id: "powershell", label: "PowerShell" },
   { id: "url", label: "URL" },

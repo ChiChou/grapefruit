@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Trash2, ArrowUp, ArrowDown, Download } from "lucide-react";
+import { Trash2, ArrowUp, ArrowDown, Download, Copy, Check } from "lucide-react";
+
+import { formats, generate, type FormatId, type RequestInfo } from "@/lib/codegen";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +21,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 
+import { ResponseBodyView } from "@/components/ResponseBodyView";
 import { useSession, Status } from "@/context/SessionContext";
 import type { HttpNetworkEvent } from "@/lib/rpc";
 
@@ -44,7 +47,6 @@ interface CapturedRequest {
   requestHeaders: Record<string, string>;
   responseHeaders?: Record<string, string>;
   requestBody?: string;
-  responseBody?: string;
   error?: string;
   mechanism?: string;
   isWebSocket?: boolean;
@@ -170,11 +172,11 @@ function handleEventPure(
     }
     case "loadingFinished": {
       const entry = getOrCreate(requestId);
-      entry.responseBody = event["responseBody"] as string | undefined;
       entry.endTime = event.timestamp;
       entry.duration = event.timestamp - entry.startTime;
-      entry.attachment =
-        (event["attachment"] as string | undefined) ?? entry.attachment;
+      if (event["hasBody"] || event["attachment"]) {
+        entry.attachment = entry.attachment ?? requestId;
+      }
       break;
     }
     case "loadingFailed": {
@@ -252,6 +254,39 @@ function HeadersView({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function CopyAsButtons({ request }: { request: RequestInfo }) {
+  const [copied, setCopied] = useState<FormatId | null>(null);
+
+  const handleCopy = useCallback(
+    (id: FormatId) => {
+      navigator.clipboard.writeText(generate(id, request));
+      setCopied(id);
+      setTimeout(() => setCopied(null), 1500);
+    },
+    [request],
+  );
+
+  return (
+    <div className="flex items-center gap-2 mt-2">
+      <span className="text-xs text-muted-foreground">Copy as</span>
+      {formats.map((f) => (
+        <button
+          key={f.id}
+          onClick={() => handleCopy(f.id)}
+          className="inline-flex items-center gap-1.5 h-7 px-2.5 text-xs border rounded-md border-input text-foreground hover:bg-accent transition cursor-pointer"
+        >
+          {copied === f.id ? (
+            <Check className="w-3.5 h-3.5 text-green-500" />
+          ) : (
+            <Copy className="w-3.5 h-3.5" />
+          )}
+          {f.label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -345,7 +380,10 @@ export function HttpLogTab() {
 
       <ResizablePanelGroup orientation="vertical" className="flex-1">
         {/* Request List */}
-        <ResizablePanel defaultSize={selectedRequest ? "50%" : "100%"} minSize="20%">
+        <ResizablePanel
+          defaultSize={selectedRequest ? "50%" : "100%"}
+          minSize="20%"
+        >
           <ScrollArea className="h-full">
             <Table>
               <TableHeader>
@@ -423,7 +461,7 @@ export function HttpLogTab() {
                     {(() => {
                       const parsed = parseUrl(selectedRequest.url);
                       return (
-                        <div className="p-3 space-y-3">
+                        <div className="p-3">
                           <div>
                             <div className="text-xs font-semibold text-muted-foreground mb-1">
                               General
@@ -434,35 +472,45 @@ export function HttpLogTab() {
                               {selectedRequest.mechanism &&
                                 `\nMechanism: ${selectedRequest.mechanism}`}
                             </pre>
+                            <CopyAsButtons
+                              request={{
+                                method: selectedRequest.method,
+                                url: selectedRequest.url,
+                                headers: selectedRequest.requestHeaders,
+                                body: selectedRequest.requestBody,
+                              }}
+                            />
                           </div>
-                          {parsed.params.length > 0 && (
-                            <div>
-                              <div className="text-xs font-semibold text-muted-foreground mb-1">
-                                Query Parameters
-                              </div>
-                              <div className="space-y-0.5">
-                                {parsed.params.map(([k, v], i) => (
-                                  <div
-                                    key={i}
-                                    className="text-xs font-mono break-all"
-                                  >
-                                    <span className="text-muted-foreground">
-                                      {k}:
-                                    </span>{" "}
-                                    {v}
+                          <div className="grid grid-cols-2 gap-3 mt-3">
+                            <div className="space-y-3">
+                              {parsed.params.length > 0 && (
+                                <div>
+                                  <div className="text-xs font-semibold text-muted-foreground mb-1">
+                                    Query Parameters
                                   </div>
-                                ))}
+                                  <div className="space-y-0.5">
+                                    {parsed.params.map(([k, v], i) => (
+                                      <div
+                                        key={i}
+                                        className="text-xs font-mono break-all"
+                                      >
+                                        <span className="text-muted-foreground">
+                                          {k}:
+                                        </span>{" "}
+                                        {v}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              <div>
+                                <div className="text-xs font-semibold text-muted-foreground mb-1">
+                                  Headers
+                                </div>
+                                <HeadersView
+                                  headers={selectedRequest.requestHeaders}
+                                />
                               </div>
-                            </div>
-                          )}
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <div className="text-xs font-semibold text-muted-foreground mb-1">
-                                Headers
-                              </div>
-                              <HeadersView
-                                headers={selectedRequest.requestHeaders}
-                              />
                             </div>
                             <div>
                               <div className="text-xs font-semibold text-muted-foreground mb-1">
@@ -479,57 +527,60 @@ export function HttpLogTab() {
                   </ScrollArea>
                 </TabsContent>
 
-                <TabsContent value="response" className="overflow-auto">
-                  <ScrollArea className="h-full">
-                    <div className="p-3 space-y-3">
-                      <div>
-                        <div className="text-xs font-semibold text-muted-foreground mb-1">
-                          Status
-                        </div>
-                        <pre className="text-xs font-mono whitespace-pre-wrap break-all">
-                          {selectedRequest.statusCode ?? "Pending"}
-                          {selectedRequest.error &&
-                            ` (Error: ${selectedRequest.error})`}
-                        </pre>
-                      </div>
-                      <div>
-                        <div className="text-xs font-semibold text-muted-foreground mb-1">
-                          Headers
-                        </div>
-                        <HeadersView
-                          headers={selectedRequest.responseHeaders}
-                        />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="text-xs font-semibold text-muted-foreground">
-                            Body
+                <TabsContent value="response" className="overflow-hidden h-full">
+                  <div className="grid grid-cols-2 h-full min-h-0">
+                    <ScrollArea className="h-full border-r overflow-hidden">
+                      <div className="p-3 space-y-3">
+                        <div>
+                          <div className="text-xs font-semibold text-muted-foreground mb-1">
+                            Status
                           </div>
-                          {selectedRequest.attachment && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-5 px-1.5 text-[10px]"
-                              onClick={() => {
-                                const link = document.createElement("a");
-                                link.href = `/api/history/http/${device}/${identifier}/attachment/${encodeURIComponent(selectedRequest.id)}`;
-                                link.download = selectedRequest.id;
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
-                              }}
-                            >
-                              <Download className="w-3 h-3 mr-0.5" />
-                              Download
-                            </Button>
-                          )}
+                          <pre className="text-xs font-mono whitespace-pre-wrap break-all">
+                            {selectedRequest.statusCode ?? "Pending"}
+                            {selectedRequest.error &&
+                              ` (Error: ${selectedRequest.error})`}
+                          </pre>
                         </div>
-                        <pre className="text-xs font-mono whitespace-pre-wrap break-all max-h-96 overflow-auto">
-                          {selectedRequest.responseBody || "(none)"}
-                        </pre>
+                        <div>
+                          <div className="text-xs font-semibold text-muted-foreground mb-1">
+                            Headers
+                          </div>
+                          <HeadersView
+                            headers={selectedRequest.responseHeaders}
+                          />
+                        </div>
+                      </div>
+                    </ScrollArea>
+                    <div className="h-full flex flex-col overflow-hidden">
+                      <div className="flex items-center gap-2 p-3 pb-0">
+                        <div className="text-xs font-semibold text-muted-foreground">
+                          Body
+                        </div>
+                        {selectedRequest.attachment && (
+                          <a
+                            href={`/api/history/http/${device}/${identifier}/attachment/${encodeURIComponent(selectedRequest.id)}`}
+                            download={selectedRequest.id}
+                            className="inline-flex items-center gap-1 h-5 px-1.5 text-[10px] border rounded border-input text-foreground hover:bg-accent transition"
+                          >
+                            <Download className="w-3 h-3" />
+                            Download
+                          </a>
+                        )}
+                      </div>
+                      <div className="flex-1 min-h-0 p-3">
+                        {selectedRequest.attachment ? (
+                          <ResponseBodyView
+                            url={`/api/history/http/${device}/${identifier}/attachment/${encodeURIComponent(selectedRequest.id)}`}
+                            mime={selectedRequest.mimeType}
+                          />
+                        ) : (
+                          <span className="text-xs text-muted-foreground">
+                            (none)
+                          </span>
+                        )}
                       </div>
                     </div>
-                  </ScrollArea>
+                  </div>
                 </TabsContent>
 
                 {selectedRequest.isWebSocket && (

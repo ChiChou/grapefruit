@@ -22,6 +22,7 @@ export const requests = sqliteTable(
     requestId: text("request_id").notNull(),
     data: text("data").notNull(),
     attachment: text("attachment"),
+    mime: text("mime"),
     createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
     updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
   },

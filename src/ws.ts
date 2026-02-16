@@ -114,6 +114,8 @@ function setupScriptHandlers(
   logger: LogWriter,
   stores: SessionStores,
 ) {
+  const requestsWithBody = new Set<string>();
+
   script.destroyed.connect(() => {
     console.error("script is destroyed");
     socket.disconnect(true);
@@ -150,11 +152,26 @@ function setupScriptHandlers(
         }
         break;
 
-      case "http":
+      case "http": {
         console.log(`[http]`, payload);
-        socket.emit("http", payload as HttpNetworkEvent);
+        const event = payload as HttpNetworkEvent;
+
+        if (event.event === "dataReceived" && data) {
+          requestsWithBody.add(event.requestId);
+        }
+
+        if (event.event === "loadingFinished" && requestsWithBody.has(event.requestId)) {
+          event.hasBody = true;
+          requestsWithBody.delete(event.requestId);
+        }
+
+        if (event.event === "loadingFailed") {
+          requestsWithBody.delete(event.requestId);
+        }
+
+        socket.emit("http", event);
         try {
-          const attachment = stores.http.upsert(payload);
+          const attachment = stores.http.upsert(event);
           if (attachment && data) {
             fs.promises
               .mkdir(stores.http.attachmentsDir, { recursive: true })
@@ -165,6 +182,7 @@ function setupScriptHandlers(
           console.error("Failed to persist HTTP event:", e);
         }
         break;
+      }
 
       case "hook":
         socket.emit("hook", payload);

@@ -174,6 +174,7 @@ export class HttpStore {
         requestId,
         data: JSON.stringify(req),
         attachment,
+        mime: req.mimeType ?? null,
       })
       .onConflictDoUpdate({
         target: [
@@ -183,6 +184,7 @@ export class HttpStore {
         ],
         set: {
           data: JSON.stringify(req),
+          mime: req.mimeType ?? null,
           updatedAt: new Date().toISOString(),
         },
       })
@@ -218,9 +220,12 @@ export class HttpStore {
     });
   }
 
-  getAttachmentPath(requestId: string): string | null {
+  getAttachment(requestId: string): {
+    path: string;
+    mimeType?: string;
+  } | null {
     const row = db
-      .select({ attachment: requests.attachment })
+      .select({ attachment: requests.attachment, mime: requests.mime })
       .from(requests)
       .where(
         and(
@@ -231,7 +236,9 @@ export class HttpStore {
       )
       .get();
 
-    return row?.attachment ?? null;
+    if (!row?.attachment) return null;
+
+    return { path: row.attachment, mimeType: row.mime ?? undefined };
   }
 
   count(): number {
