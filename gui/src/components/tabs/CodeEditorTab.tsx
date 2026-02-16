@@ -295,11 +295,7 @@ export function CodeEditorTab() {
                 )}
               </div>
               <div className="flex-1 overflow-y-auto">
-                {entries.length === 0 ? (
-                  <div className="flex items-center justify-center h-full text-xs text-muted-foreground">
-                    {t("repl_no_output")}
-                  </div>
-                ) : (
+                {entries.length === 0 ? null : (
                   <div className="divide-y">
                     {entries.map((entry) => (
                       <div
