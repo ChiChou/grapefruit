@@ -27,12 +27,12 @@ export function ModuleDetailTab({
   };
 
   return (
-    <div className="h-full flex flex-col p-4 overflow-y-auto">
+    <div className="h-full flex flex-col p-4 overflow-hidden">
       <Tabs
         defaultValue="imports"
         value={activeTab}
         onValueChange={handleTabChange}
-        className="flex-1 flex flex-col"
+        className="flex-1 flex flex-col min-h-0"
       >
         <div className="flex items-center justify-between gap-4 mb-2">
           <TabsList>
@@ -44,19 +44,19 @@ export function ModuleDetailTab({
           </TabsList>
           <h2 className="text-sm font-thin truncate">{params.path}</h2>
         </div>
-        <TabsContent value="imports" className="flex-1">
+        <TabsContent value="imports" className="flex-1 min-h-0">
           <ImportsListView path={params.path} />
         </TabsContent>
-        <TabsContent value="sections" className="flex-1">
+        <TabsContent value="sections" className="flex-1 min-h-0">
           <SectionsListView path={params.path} />
         </TabsContent>
-        <TabsContent value="classes" className="flex-1">
+        <TabsContent value="classes" className="flex-1 min-h-0">
           <ClassesListView path={params.path} />
         </TabsContent>
-        <TabsContent value="symbols" className="flex-1">
+        <TabsContent value="symbols" className="flex-1 min-h-0">
           <SymbolsListView path={params.path} />
         </TabsContent>
-        <TabsContent value="exported" className="flex-1">
+        <TabsContent value="exported" className="flex-1 min-h-0">
           <ExportedListView path={params.path} />
         </TabsContent>
       </Tabs>
