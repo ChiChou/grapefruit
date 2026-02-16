@@ -34,7 +34,7 @@ import * as fs from "./modules/fs.js";
 // ---------------------------------------------------------------------------
 
 async function testDevice() {
-  log("\n--- device ---");
+  console.log("\n--- device ---");
 
   await test("device.info returns build fields", async () => {
     const d = await device.info();
@@ -47,7 +47,7 @@ async function testDevice() {
     assert(d.sdk > 0, "sdk should be > 0");
     assertType(d.model, "string", "model");
     assert(d.model.length > 0, "model should be non-empty");
-    log(
+    console.log(
       `    model=${d.model} brand=${d.brand} sdk=${d.sdk} release=${d.release}`,
     );
   });
@@ -57,12 +57,12 @@ async function testDevice() {
     assertType(props, "object", "properties");
     const keys = Object.keys(props);
     assert(keys.length > 0, "properties should be non-empty");
-    log(`    ${keys.length} properties`);
+    console.log(`    ${keys.length} properties`);
   });
 }
 
 async function testActivities() {
-  log("\n--- activities ---");
+  console.log("\n--- activities ---");
 
   await test("activities.list returns current app activities", async () => {
     const all = await activities.list();
@@ -78,20 +78,20 @@ async function testActivities() {
       assertType(a.exported, "boolean", "exported");
     }
     const exported = all.filter((a) => a.exported).length;
-    log(`    ${all.length} activities (${exported} exported)`);
-    log(`    first: ${all[0].name}`);
+    console.log(`    ${all.length} activities (${exported} exported)`);
+    console.log(`    first: ${all[0].name}`);
   });
 
   await test("activities.start opens Android Settings", async () => {
     await activities.start({
       action: "android.settings.SETTINGS",
     });
-    log("    started Settings activity");
+    console.log("    started Settings activity");
   });
 }
 
 async function testServices() {
-  log("\n--- services ---");
+  console.log("\n--- services ---");
 
   await test("services.list returns current app services", async () => {
     const all = await services.list();
@@ -105,8 +105,8 @@ async function testServices() {
       );
     }
     const exported = all.filter((s) => s.exported).length;
-    log(`    ${all.length} services (${exported} exported)`);
-    log(`    first: ${all[0].name}`);
+    console.log(`    ${all.length} services (${exported} exported)`);
+    console.log(`    first: ${all[0].name}`);
   });
 
   skip(
@@ -117,7 +117,7 @@ async function testServices() {
 }
 
 async function testReceivers() {
-  log("\n--- receivers ---");
+  console.log("\n--- receivers ---");
 
   await test("receivers.list returns current app receivers", async () => {
     const all = await receivers.list();
@@ -131,20 +131,20 @@ async function testReceivers() {
       );
     }
     const exported = all.filter((r) => r.exported).length;
-    log(`    ${all.length} receivers (${exported} exported)`);
-    log(`    first: ${all[0].name}`);
+    console.log(`    ${all.length} receivers (${exported} exported)`);
+    console.log(`    first: ${all[0].name}`);
   });
 
   await test("receivers.send with a no-op custom action", async () => {
     await receivers.send({
       action: "com.igf.test.NOOP_ACTION_" + Date.now(),
     });
-    log("    broadcast sent (no receivers expected)");
+    console.log("    broadcast sent (no receivers expected)");
   });
 }
 
 async function testProvider() {
-  log("\n--- provider ---");
+  console.log("\n--- provider ---");
 
   await test("provider.query settings/secure with selection", async () => {
     const result = await provider.query("content://settings/secure", {
@@ -163,10 +163,10 @@ async function testProvider() {
       result.columns.length === 2,
       `expected 2 columns, got ${result.columns.length}`,
     );
-    log(`    columns: ${result.columns.join(", ")}`);
-    log(`    ${result.rows.length} rows`);
+    console.log(`    columns: ${result.columns.join(", ")}`);
+    console.log(`    ${result.rows.length} rows`);
     if (result.rows.length > 0) {
-      log(`    first row: ${json(result.rows[0])}`);
+      console.log(`    first row: ${json(result.rows[0])}`);
     }
   });
 
@@ -175,8 +175,8 @@ async function testProvider() {
     assertArray(result.columns, "columns");
     assertArray(result.rows, "rows");
     assertNonEmpty(result.rows, "rows");
-    log(`    columns: ${result.columns.join(", ")}`);
-    log(`    ${result.rows.length} rows (limited to 500)`);
+    console.log(`    columns: ${result.columns.join(", ")}`);
+    console.log(`    ${result.rows.length} rows (limited to 500)`);
   });
 
   await test("provider.query with sortOrder passes through param", async () => {
@@ -184,7 +184,7 @@ async function testProvider() {
       sortOrder: "name ASC",
     });
     assertNonEmpty(result.rows, "rows with sortOrder");
-    log(`    ${result.rows.length} rows returned with sortOrder param`);
+    console.log(`    ${result.rows.length} rows returned with sortOrder param`);
   });
 
   await test("provider.query with invalid uri handles gracefully", async () => {
@@ -194,8 +194,8 @@ async function testProvider() {
     } catch (_) {
       threw = true;
     }
-    if (!threw) log("    (returned empty result instead of throwing)");
-    log("    handled gracefully");
+    if (!threw) console.log("    (returned empty result instead of throwing)");
+    console.log("    handled gracefully");
   });
 
   skip("provider.insert", "side-effect: requires a writable content provider");
@@ -204,7 +204,7 @@ async function testProvider() {
 }
 
 async function testFs() {
-  log("\n--- fs ---");
+  console.log("\n--- fs ---");
 
   await test("fs.ls ~ returns app data directory listing", async () => {
     const result = await fs.ls("~");
@@ -216,8 +216,8 @@ async function testFs() {
     assertType(result.cwd, "string", "cwd");
     assertArray(result.list, "list");
     assert(result.cwd.startsWith("/"), "cwd should be absolute path");
-    log(`    cwd=${result.cwd}`);
-    log(`    ${result.list.length} entries`);
+    console.log(`    cwd=${result.cwd}`);
+    console.log(`    ${result.list.length} entries`);
     if (result.list.length > 0) {
       const first = result.list[0];
       assertKeys(
@@ -225,7 +225,9 @@ async function testFs() {
         ["name", "dir", "size", "created", "symlink", "writable"],
         "MetaData",
       );
-      log(`    first: ${first.name} (dir=${first.dir} size=${first.size})`);
+      console.log(
+        `    first: ${first.name} (dir=${first.dir} size=${first.size})`,
+      );
     }
   });
 
@@ -233,7 +235,7 @@ async function testFs() {
     const result = await fs.ls("/proc");
     assertArray(result.list, "list");
     assertNonEmpty(result.list, "list");
-    log(`    /proc has ${result.list.length} entries`);
+    console.log(`    /proc has ${result.list.length} entries`);
   });
 
   await test("fs.ls with invalid path throws", async () => {
@@ -244,7 +246,7 @@ async function testFs() {
       threw = true;
     }
     assert(threw, "should throw for invalid path");
-    log("    correctly threw for invalid path");
+    console.log("    correctly threw for invalid path");
   });
 
   await test("fs.attrs on app data dir returns stat fields", async () => {
@@ -259,7 +261,7 @@ async function testFs() {
     assertType(a.gid, "number", "gid");
     assertType(a.perm, "number", "perm");
     assert(a.type === "directory", `expected directory, got ${a.type}`);
-    log(
+    console.log(
       `    uid=${a.uid} gid=${a.gid} perm=${a.perm.toString(8)} type=${a.type}`,
     );
   });
@@ -276,7 +278,7 @@ async function testFs() {
       content === "text read test content\n",
       `content mismatch: ${json(content)}`,
     );
-    log(`    read ${content.length} chars`);
+    console.log(`    read ${content.length} chars`);
 
     await fs.rm(testPath);
   });
@@ -291,12 +293,12 @@ async function testFs() {
 
     const readBack = await fs.text(testPath);
     assert(readBack === testContent, `round-trip mismatch: ${json(readBack)}`);
-    log(`    wrote and read back ${testContent.length} chars`);
+    console.log(`    wrote and read back ${testContent.length} chars`);
 
     // cleanup
     const deleted = await fs.rm(testPath);
     assert(deleted === true, "rm should return true");
-    log("    cleaned up test file");
+    console.log("    cleaned up test file");
   });
 
   await test("fs.data reads binary data", async () => {
@@ -307,7 +309,7 @@ async function testFs() {
     const buf = await fs.data(testPath);
     assert(buf !== null, "data should not return null");
     assert(buf!.byteLength > 0, "data should be non-empty");
-    log(`    read ${buf!.byteLength} bytes`);
+    console.log(`    read ${buf!.byteLength} bytes`);
 
     await fs.rm(testPath);
   });
@@ -320,7 +322,7 @@ async function testFs() {
     const buf = await fs.preview(testPath);
     assert(buf !== null, "preview should not return null");
     assert(buf!.byteLength > 0, "preview should be non-empty");
-    log(`    preview read ${buf!.byteLength} bytes`);
+    console.log(`    preview read ${buf!.byteLength} bytes`);
 
     await fs.rm(testPath);
   });
@@ -336,7 +338,7 @@ async function testFs() {
 
     const content = await fs.text(dstPath);
     assert(content === "copy test content", `copy mismatch: ${json(content)}`);
-    log("    copied and verified");
+    console.log("    copied and verified");
 
     await fs.rm(srcPath);
     await fs.rm(dstPath);
@@ -362,7 +364,7 @@ async function testFs() {
       srcExists = false;
     }
     assert(!srcExists, "source should not exist after mv");
-    log("    moved and verified");
+    console.log("    moved and verified");
 
     await fs.rm(dstPath);
   });
@@ -373,7 +375,7 @@ async function testFs() {
       result.cwd.includes("/data/"),
       `expected data path, got ${result.cwd}`,
     );
-    log(`    ~ = ${result.cwd}`);
+    console.log(`    ~ = ${result.cwd}`);
   });
 }
 
@@ -382,7 +384,7 @@ async function testFs() {
 // ---------------------------------------------------------------------------
 
 async function run() {
-  log("=== droid module tests ===");
+  console.log("=== droid module tests ===");
 
   await testDevice();
   await testActivities();
@@ -405,7 +407,7 @@ Java.perform(() => {
     methods: {
       run() {
         run().catch((e) => {
-          log(
+          console.log(
             `\nFATAL: ${e instanceof Error ? e.stack || e.message : String(e)}`,
           );
         });
