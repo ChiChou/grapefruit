@@ -603,7 +603,7 @@ export function CryptoResultsView() {
         autoSaveId="crypto-results-split"
       >
         {/* Left: entry list */}
-        <ResizablePanel defaultSize={selectedEntry ? 60 : 100} minSize={30}>
+        <ResizablePanel defaultSize={selectedEntry ? "60%" : "100%"} minSize="30%">
           <div ref={containerRef} className="h-full">
             {entries.length === 0 ? (
               <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
@@ -628,7 +628,7 @@ export function CryptoResultsView() {
         {selectedEntry && (
           <>
             <ResizableHandle />
-            <ResizablePanel defaultSize={40} minSize={20}>
+            <ResizablePanel defaultSize="40%" minSize="20%">
               <DetailPanel key={selectedEntry.id} entry={selectedEntry} />
             </ResizablePanel>
           </>

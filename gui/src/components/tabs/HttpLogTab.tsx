@@ -345,7 +345,7 @@ export function HttpLogTab() {
 
       <ResizablePanelGroup orientation="vertical" className="flex-1">
         {/* Request List */}
-        <ResizablePanel defaultSize={selectedRequest ? 50 : 100} minSize={20}>
+        <ResizablePanel defaultSize={selectedRequest ? "50%" : "100%"} minSize="20%">
           <ScrollArea className="h-full">
             <Table>
               <TableHeader>
@@ -403,7 +403,7 @@ export function HttpLogTab() {
         {selectedRequest && (
           <>
             <ResizableHandle />
-            <ResizablePanel defaultSize={50} minSize={20}>
+            <ResizablePanel defaultSize="50%" minSize="20%">
               <Tabs defaultValue="request" className="h-full flex flex-col">
                 <TabsList variant="line" className="mx-2 mt-2">
                   <TabsTrigger value="request">Request</TabsTrigger>

@@ -246,7 +246,7 @@ export function CodeEditorTab() {
           orientation="horizontal"
           autoSaveId="code-editor-split"
         >
-          <ResizablePanel defaultSize={65} minSize={30}>
+          <ResizablePanel defaultSize="65%" minSize="30%">
             {isPending ? (
               <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
                 <Spinner className="w-5 h-5" />
@@ -277,7 +277,7 @@ export function CodeEditorTab() {
             )}
           </ResizablePanel>
           <ResizableHandle />
-          <ResizablePanel defaultSize={35} minSize={15}>
+          <ResizablePanel defaultSize="35%" minSize="15%">
             <div className="h-full flex flex-col">
               <div className="flex items-center justify-between px-3 py-1.5 border-b bg-muted/30">
                 <span className="text-xs font-medium text-muted-foreground">

@@ -215,7 +215,7 @@ document.title`);
         ) : (
           <ResizablePanelGroup orientation="horizontal">
             {/* Left Panel - WebView List */}
-            <ResizablePanel defaultSize={40} minSize={25}>
+            <ResizablePanel defaultSize="40%" minSize="25%">
               <div className="h-full overflow-auto">
                 <Table>
                   <TableHeader>
@@ -270,7 +270,7 @@ document.title`);
             <ResizableHandle withHandle />
 
             {/* Right Panel - Detail View */}
-            <ResizablePanel defaultSize={60} minSize={30}>
+            <ResizablePanel defaultSize="60%" minSize="30%">
               <div className="h-full overflow-auto">
                 {selectedEntry ? (
                   <div className="flex flex-col h-full p-4 gap-4">

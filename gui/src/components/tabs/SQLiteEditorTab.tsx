@@ -183,7 +183,7 @@ export function SQLiteEditorTab({
       autoSaveId="sqlite-editor"
       className="h-full"
     >
-      <ResizablePanel defaultSize={30} minSize={20}>
+      <ResizablePanel defaultSize="30%" minSize="20%">
         <div className="h-full flex flex-col border-r">
           <div className="p-2 border-b">
             <Input
@@ -207,9 +207,9 @@ export function SQLiteEditorTab({
         </div>
       </ResizablePanel>
       <ResizableHandle withHandle />
-      <ResizablePanel defaultSize={70} minSize={30}>
+      <ResizablePanel defaultSize="70%" minSize="30%">
         <ResizablePanelGroup orientation="vertical" className="h-full">
-          <ResizablePanel defaultSize={50} minSize={20}>
+          <ResizablePanel defaultSize="50%" minSize="20%">
             <div className="h-full flex flex-col">
               <div className="flex items-center gap-2 p-2 border-b">
                 <Button
@@ -242,7 +242,7 @@ export function SQLiteEditorTab({
             </div>
           </ResizablePanel>
           <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={50} minSize={20}>
+          <ResizablePanel defaultSize="50%" minSize="20%">
             <div className="h-full overflow-auto">
               {executeError ? (
                 <div className="flex items-center justify-center h-full text-destructive text-sm p-4">

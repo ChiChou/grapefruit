@@ -67,7 +67,7 @@ export function URLSchemesPanel() {
       </div>
       {selectedScheme ? (
         <ResizablePanelGroup orientation="vertical" className="flex-1 min-h-0">
-          <ResizablePanel defaultSize={60} minSize={30}>
+          <ResizablePanel defaultSize="60%" minSize="30%">
             <div className="flex-1 overflow-auto p-4 pt-2 h-full">
               {error && (
                 <Alert variant="destructive">
@@ -120,7 +120,7 @@ export function URLSchemesPanel() {
             </div>
           </ResizablePanel>
           <ResizableHandle withHandle />
-          <ResizablePanel minSize={20} className="border-t">
+          <ResizablePanel minSize="20%" className="border-t">
             <URLSendView scheme={selectedScheme} />
           </ResizablePanel>
         </ResizablePanelGroup>

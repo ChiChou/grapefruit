@@ -363,7 +363,7 @@ export function JSCTab() {
         ) : (
           <ResizablePanelGroup orientation="horizontal">
             {/* Left Panel - JSContext List */}
-            <ResizablePanel defaultSize={35} minSize={20}>
+            <ResizablePanel defaultSize="35%" minSize="20%">
               <div className="h-full overflow-auto">
                 {isLoading ? (
                   <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
@@ -407,7 +407,7 @@ export function JSCTab() {
             <ResizableHandle withHandle />
 
             {/* Right Panel - Detail View */}
-            <ResizablePanel defaultSize={65} minSize={30}>
+            <ResizablePanel defaultSize="65%" minSize="30%">
               <div className="h-full overflow-hidden">
                 {selectedEntry ? (
                   <Tabs

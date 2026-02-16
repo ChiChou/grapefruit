@@ -263,7 +263,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
   return (
     <>
       <ResizablePanelGroup orientation="horizontal" autoSaveId="finder-split">
-        <ResizablePanel defaultSize={15} minSize={5} maxSize={80}>
+        <ResizablePanel defaultSize="15%" minSize="5%" maxSize="80%">
           <Tabs
             value={activeTab}
             onValueChange={(v) => setActiveTab(v as "bundle" | "home")}
@@ -296,7 +296,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
           </Tabs>
         </ResizablePanel>
         <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={85}>
+        <ResizablePanel defaultSize="85%">
           <div
             className="h-full relative"
             onDragOver={(e) => {
