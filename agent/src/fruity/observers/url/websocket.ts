@@ -1,3 +1,5 @@
+import ObjC from "frida-objc-bridge";
+
 import type {
   NSURLSessionWebSocketTask,
   NSURLSessionWebSocketMessage,
@@ -5,7 +7,7 @@ import type {
 } from "@/fruity/typings.js";
 import { wrapObjC } from "@/fruity/typings.js";
 
-import { ObjC, hooks, recordWebSocketMessage } from "./common.js";
+import { hooks, recordWebSocketMessage } from "./common.js";
 
 export function hookWebSocketMethods() {
   const classes = [

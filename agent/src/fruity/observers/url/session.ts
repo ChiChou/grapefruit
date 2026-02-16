@@ -1,3 +1,5 @@
+import ObjC from "frida-objc-bridge";
+
 import type {
   NSObject,
   NSURLSessionTask,
@@ -16,7 +18,6 @@ import { wrapObjC } from "@/fruity/typings.js";
 import { getGlobalExport } from "@/lib/polyfill.js";
 
 import {
-  ObjC,
   hooks,
   type TaskBoundData,
   getOrAssignTaskId,

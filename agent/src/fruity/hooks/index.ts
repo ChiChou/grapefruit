@@ -1,3 +1,4 @@
+import { createHookGroup } from "@/common/hook-group.js";
 import * as sqlite from "./sqlite.js";
 import * as pasteboard from "./pasteboard.js";
 import * as deviceid from "./deviceid.js";
@@ -5,8 +6,6 @@ import * as biometric from "./biometric.js";
 import * as fileops from "./fileops.js";
 import * as native from "@/common/hooks/native.js";
 import * as objc from "./objc.js";
-
-const active = new Map<string, InvocationListener[]>();
 
 // Available hook groups
 const HOOK_GROUPS = [
@@ -36,39 +35,8 @@ function get(group: string) {
   }
 }
 
-/**
- * Get the list of available hook groups
- */
-export function list(): string[] {
-  return [...HOOK_GROUPS];
-}
-
-/**
- * Get the status of all hook groups
- */
-export function status(): Record<string, boolean> {
-  const result: Record<string, boolean> = {};
-  for (const group of HOOK_GROUPS) {
-    result[group] = active.has(group);
-  }
-  return result;
-}
-
-export function start(group: string) {
-  if (active.has(group)) return;
-  const hooks = get(group);
-  if (!hooks) return;
-  active.set(group, hooks);
-}
-
-export function stop(group: string) {
-  const hooks = active.get(group);
-  if (!hooks) return;
-  for (const hook of hooks) {
-    hook.detach();
-  }
-  active.delete(group);
-}
+const { list, status, start, stop } = createHookGroup(HOOK_GROUPS, get);
+export { list, status, start, stop };
 
 /**
  * User hook type definition

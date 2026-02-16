@@ -1,4 +1,6 @@
-import { ObjC, hooks } from "./common.js";
+import ObjC from "frida-objc-bridge";
+
+import { hooks } from "./common.js";
 import {
   hookResume,
   hookDelegateMethods,

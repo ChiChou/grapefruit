@@ -1,3 +1,5 @@
+import ObjC from "frida-objc-bridge";
+
 import type {
   NSObject,
   NSURLRequest,
@@ -8,7 +10,6 @@ import type {
 import { wrapObjC } from "@/fruity/typings.js";
 
 import {
-  ObjC,
   hooks,
   type TaskBoundData,
   nextRequestId,
@@ -164,15 +165,11 @@ export function hookAsyncMethods() {
                       wrapObjC<NSURLResponse>(response),
                     );
                   }
-                  const nsdata = data.isNull()
-                    ? null
-                    : wrapObjC<NSData>(data);
+                  const nsdata = data.isNull() ? null : wrapObjC<NSData>(data);
                   if (nsdata) {
                     const len = nsdata.length();
                     const chunk =
-                      len > 0
-                        ? nsdata.bytes().readByteArray(len)
-                        : null;
+                      len > 0 ? nsdata.bytes().readByteArray(len) : null;
                     recordDataReceived(rid, len, chunk);
                   }
                   recordLoadingFinished(rid);

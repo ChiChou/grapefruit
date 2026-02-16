@@ -11,8 +11,6 @@ import type {
   NSURLSessionWebSocketMessage,
 } from "@/fruity/typings.js";
 
-export { ObjC };
-
 const subject = "http";
 
 export interface TaskBoundData {
@@ -214,10 +212,7 @@ export function recordLoadingFailed(requestId: string, error: NSError): void {
   });
 }
 
-export function recordMechanism(
-  mechanism: string,
-  requestId: string,
-): void {
+export function recordMechanism(mechanism: string, requestId: string): void {
   emitNetworkEvent({
     event: "mechanism",
     requestId,
