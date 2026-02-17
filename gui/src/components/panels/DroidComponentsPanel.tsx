@@ -1,11 +1,10 @@
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Play, Square, Radio, Search, ShieldCheck } from "lucide-react";
+import { Play, Square, Radio, Search, ShieldCheck, Globe } from "lucide-react";
 import { List, type RowComponentProps } from "react-window";
 import { toast } from "sonner";
 
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
@@ -145,15 +144,15 @@ export function DroidComponentsPanel() {
           />
         </div>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full">
+          <TabsList variant="line" className="w-full">
             <TabsTrigger value="activities" className="flex-1">
-              {t("activities")} ({activities.length})
+              {t("activities")}
             </TabsTrigger>
             <TabsTrigger value="services" className="flex-1">
-              {t("services")} ({services.length})
+              {t("services")}
             </TabsTrigger>
             <TabsTrigger value="receivers" className="flex-1">
-              {t("receivers")} ({receivers.length})
+              {t("receivers")}
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -224,9 +223,18 @@ function ComponentRow({
         </div>
         <div className="flex items-center gap-1 shrink-0 ml-2">
           {item.exported && (
-            <Badge variant="secondary" className="text-[10px] px-1.5">
-              {t("exported")}
-            </Badge>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <span className="text-muted-foreground shrink-0" />
+                  }
+                >
+                  <Globe className="h-3.5 w-3.5" />
+                </TooltipTrigger>
+                <TooltipContent>{t("exported")}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
           {item.permission && (
             <TooltipProvider>
