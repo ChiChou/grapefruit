@@ -3,12 +3,12 @@ import { useTranslation } from "react-i18next";
 import { Copy, Check, Download } from "lucide-react";
 import Editor from "@monaco-editor/react";
 
-import { useTheme } from "@/components/theme-provider";
+import { useTheme } from "@/components/providers/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { XMLTree } from "@/components/XMLTree";
+import { XMLTree } from "@/components/shared/XMLTree";
 import { useDroidRpcQuery } from "@/lib/queries";
 
 export function DroidManifestTab() {

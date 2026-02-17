@@ -19,7 +19,7 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable";
-import { useTheme } from "@/components/theme-provider";
+import { useTheme } from "@/components/providers/ThemeProvider";
 import { useRepl } from "@/context/useRepl";
 import { useSession } from "@/context/SessionContext";
 

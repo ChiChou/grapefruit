@@ -3,7 +3,7 @@ import type { IDockviewPanelProps } from "dockview";
 import { useQuery } from "@tanstack/react-query";
 
 import { useSession } from "@/context/SessionContext";
-import HexView, { type Stride } from "@/components/HexView";
+import HexView, { type Stride } from "@/components/shared/HexView";
 
 export interface HexPreviewTabParams {
   path: string;

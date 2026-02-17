@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import "./index.css";
 import App from "./App.tsx";
-import { ThemeProvider } from "./components/theme-provider";
+import { ThemeProvider } from "./components/providers/ThemeProvider";
 import { ReplProvider } from "./context/ReplContext";
 import "./i18n.ts";
 

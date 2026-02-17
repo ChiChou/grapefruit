@@ -5,7 +5,7 @@ import { Magika } from "magika";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { useTheme } from "@/components/theme-provider";
+import { useTheme } from "@/components/providers/ThemeProvider";
 import { Platform, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 import { Button } from "@/components/ui/button";

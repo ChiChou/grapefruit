@@ -4,24 +4,24 @@ import { useTranslation } from "react-i18next";
 import "dockview/dist/styles/dockview.css";
 
 import "./App.css";
-import { WelcomePage } from "./components/WelcomePage";
-import { DefaultMessage } from "./components/DefaultMessage";
-import { AppsView } from "./components/AppsView";
-import { ProcessesView } from "./components/ProcessesView";
-import { Workspace } from "./components/Workspace";
-import { WorkspaceIndex } from "./components/WorkspaceIndex";
+import { WelcomePage } from "./components/pages/WelcomePage";
+import { DefaultMessage } from "./components/pages/DefaultMessage";
+import { AppsView } from "./components/pages/AppsView";
+import { ProcessesView } from "./components/pages/ProcessesView";
+import { Workspace } from "./components/layout/Workspace";
+import { WorkspaceIndex } from "./components/layout/WorkspaceIndex";
 
-import { GeneralPanel } from "./components/panels/GeneralPanel";
+import { FruityGeneralPanel } from "./components/panels/FruityGeneralPanel";
 import { DroidGeneralPanel } from "./components/panels/DroidGeneralPanel";
 import { DroidComponentsPanel } from "./components/panels/DroidComponentsPanel";
 import { DroidDevicePanel } from "./components/panels/DroidDevicePanel";
 import { ModulesPanel } from "./components/panels/ModulesPanel";
-import { ClassesPanel } from "./components/panels/ClassesPanel";
+import { FruityClassesPanel } from "./components/panels/FruityClassesPanel";
 import { DroidClassesPanel } from "./components/panels/DroidClassesPanel";
-import { URLSchemesPanel } from "./components/panels/URLSchemesPanel";
+import { FruityURLSchemesPanel } from "./components/panels/FruityURLSchemesPanel";
 import { DroidURLSchemesPanel } from "./components/panels/DroidURLSchemesPanel";
-import { GeolocationPanel } from "./components/panels/GeolocationPanel";
-import { HooksPanel } from "./components/panels/HooksPanel";
+import { FruityGeolocationPanel } from "./components/panels/FruityGeolocationPanel";
+import { FruityHooksPanel } from "./components/panels/FruityHooksPanel";
 import { PlaceholderPanel } from "./components/panels/PlaceholderPanel";
 
 import { Platform, useSession } from "./context/SessionContext";
@@ -29,17 +29,17 @@ import { AlertTriangle } from "lucide-react";
 
 function GeneralPanelRoute() {
   const { platform } = useSession();
-  return platform === Platform.Droid ? <DroidGeneralPanel /> : <GeneralPanel />;
+  return platform === Platform.Droid ? <DroidGeneralPanel /> : <FruityGeneralPanel />;
 }
 
 function ClassesPanelRoute() {
   const { platform } = useSession();
-  return platform === Platform.Droid ? <DroidClassesPanel /> : <ClassesPanel />;
+  return platform === Platform.Droid ? <DroidClassesPanel /> : <FruityClassesPanel />;
 }
 
 function URLSchemesPanelRoute() {
   const { platform } = useSession();
-  return platform === Platform.Droid ? <DroidURLSchemesPanel /> : <URLSchemesPanel />;
+  return platform === Platform.Droid ? <DroidURLSchemesPanel /> : <FruityURLSchemesPanel />;
 }
 
 function App() {
@@ -72,8 +72,8 @@ function App() {
           <Route path="modules" element={<ModulesPanel />} />
           <Route path="classes" element={<ClassesPanelRoute />} />
           <Route path="urls" element={<URLSchemesPanelRoute />} />
-          <Route path="geolocation" element={<GeolocationPanel />} />
-          <Route path="hooks" element={<HooksPanel />} />
+          <Route path="geolocation" element={<FruityGeolocationPanel />} />
+          <Route path="hooks" element={<FruityHooksPanel />} />
           {/* Android (droid) panels */}
           <Route path="components" element={<DroidComponentsPanel />} />
           <Route path="device" element={<DroidDevicePanel />} />

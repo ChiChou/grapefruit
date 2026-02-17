@@ -1,4 +1,4 @@
-import { SymbolsTableView } from "../SymbolsTableView";
+import { SymbolsTableView } from "../shared/SymbolsTableView";
 import { usePlatformRpcQuery } from "@/lib/queries";
 
 

@@ -1,6 +1,6 @@
 import type { IDockviewPanelProps } from "dockview";
 
-import HexView from "../HexView";
+import HexView from "../shared/HexView";
 import { useRpcQuery } from "@/lib/queries";
 
 export interface MemoryPreviewTabParams {

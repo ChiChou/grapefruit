@@ -7,7 +7,7 @@ import { Play, Loader2 } from "lucide-react";
 import type { DumpResult } from "@agent/common/sqlite";
 
 import { Platform, useSession } from "@/context/SessionContext";
-import { useTheme } from "@/components/theme-provider";
+import { useTheme } from "@/components/providers/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
