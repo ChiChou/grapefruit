@@ -6,6 +6,8 @@ import * as provider from "./modules/provider.js";
 import * as receivers from "./modules/receivers.js";
 import * as services from "./modules/services.js";
 
+import * as flutter from "./observers/flutter.js";
+
 import * as memory from "@/common/memory.js";
 import * as native from "@/common/hooks/native.js";
 import * as sqlite from "@/common/sqlite.js";
@@ -17,6 +19,7 @@ export default {
   activities,
   app,
   device,
+  flutter,
   fs,
   memory,
   native,
