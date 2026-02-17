@@ -22,8 +22,8 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { useSession, Status } from "@/context/SessionContext";
-import { useRpcQuery } from "@/lib/queries";
+import { useSession, Status, Platform } from "@/context/SessionContext";
+import { useRpcQuery, useDroidRpcQuery } from "@/lib/queries";
 
 import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
 
@@ -73,7 +73,8 @@ function formatHexDump(buffer: ArrayBuffer): string {
   return lines.join("\n");
 }
 
-const CRYPTO_GROUPS = ["cccrypt", "x509", "hash", "hmac"] as const;
+const FRUITY_CRYPTO_GROUPS = ["cccrypt", "x509", "hash", "hmac"] as const;
+const DROID_CRYPTO_GROUPS = ["cipher", "pbkdf", "keygen"] as const;
 
 function formatTime(date: Date): string {
   return date.toLocaleTimeString("en-US", {
@@ -315,7 +316,10 @@ function DetailPanel({ entry }: { entry: CryptoEntry }) {
 
 export function CryptoResultsView() {
   const { t } = useTranslation();
-  const { fruity, socket, status, device, identifier } = useSession();
+  const { fruity, droid, socket, status, device, identifier, platform } =
+    useSession();
+  const isDroid = platform === Platform.Droid;
+  const cryptoGroups = isDroid ? DROID_CRYPTO_GROUPS : FRUITY_CRYPTO_GROUPS;
   const [entries, setEntries] = useState<CryptoEntry[]>([]);
   const listRef = useRef<ListImperativeAPI>(null);
   const idCounterRef = useRef(0);
@@ -335,11 +339,19 @@ export function CryptoResultsView() {
   const [cryptoStatus, setCryptoStatus] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
 
-  // Fetch crypto sub-group status
-  const { data: initialStatus } = useRpcQuery<Record<string, boolean>>(
+  // Fetch crypto sub-group status (platform-aware)
+  const { data: fruityInitStatus } = useRpcQuery<Record<string, boolean>>(
     ["cryptoStatus", device ?? "", identifier ?? ""],
     (api) => api.crypto.status(),
+    { enabled: !isDroid },
   );
+  const { data: droidInitStatus } = useDroidRpcQuery<Record<string, boolean>>(
+    ["cryptoStatus", device ?? "", identifier ?? ""],
+    (api) => api.crypto.status(),
+    { enabled: isDroid },
+  );
+
+  const initialStatus = isDroid ? droidInitStatus : fruityInitStatus;
 
   useEffect(() => {
     if (initialStatus) {
@@ -348,15 +360,16 @@ export function CryptoResultsView() {
   }, [initialStatus]);
 
   const handleToggle = async (groupId: string, enabled: boolean) => {
-    if (!fruity) return;
+    const api = isDroid ? droid : fruity;
+    if (!api) return;
 
     setLoading((prev) => ({ ...prev, [groupId]: true }));
 
     try {
       if (enabled) {
-        await fruity.crypto.start(groupId);
+        await api.crypto.start(groupId);
       } else {
-        await fruity.crypto.stop(groupId);
+        await api.crypto.stop(groupId);
       }
       setCryptoStatus((prev) => ({ ...prev, [groupId]: enabled }));
     } catch (error) {
@@ -553,7 +566,7 @@ export function CryptoResultsView() {
       {/* Header with toggles */}
       <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
         <div className="flex items-center gap-4">
-          {CRYPTO_GROUPS.map((group) => (
+          {cryptoGroups.map((group) => (
             <div key={group} className="flex items-center gap-1.5">
               <Switch
                 id={`crypto-${group}`}

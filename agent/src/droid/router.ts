@@ -1,6 +1,7 @@
 import * as activities from "./modules/activities.js";
 import * as app from "./modules/app.js";
 import * as classes from "./modules/classes.js";
+import * as crypto from "./crypto/index.js";
 import * as device from "./modules/device.js";
 import * as fs from "./modules/fs.js";
 import * as keystore from "./modules/keystore.js";
@@ -21,6 +22,7 @@ export default {
   activities,
   app,
   classes,
+  crypto,
   device,
   flutter,
   fs,
