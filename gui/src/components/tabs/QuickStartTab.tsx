@@ -11,7 +11,7 @@ import {
   Code,
   Settings,
   Network,
-  Construction,
+  Smartphone,
 } from "lucide-react";
 
 import logo from "@/assets/logo.svg";
@@ -54,15 +54,6 @@ function FeatureCard({
   );
 }
 
-function PlaceholderSection({ label }: { label: string }) {
-  return (
-    <div className="flex items-center justify-center rounded-lg border border-dashed border-border p-6 text-muted-foreground">
-      <Construction className="w-4 h-4 mr-2" />
-      <span className="text-sm">{label}</span>
-    </div>
-  );
-}
-
 export function QuickStartTab() {
   const { t } = useTranslation();
   const { platform, mode } = useSession();
@@ -70,7 +61,6 @@ export function QuickStartTab() {
   const isFruityApp = platform === Platform.Fruity && mode === Mode.App;
   const isFruityDaemon = platform === Platform.Fruity && mode === Mode.Daemon;
   const isDroidApp = platform === Platform.Droid && mode === Mode.App;
-  const isDroidDaemon = platform === Platform.Droid && mode === Mode.Daemon;
 
   const fruityAppFeatures: FeatureCardProps[] = [
     {
@@ -151,7 +141,76 @@ export function QuickStartTab() {
       title: "HTTP Log",
       desc: t("quickstart_httplog_desc"),
     },
+    {
+      icon: <Smartphone className="w-5 h-5" />,
+      id: "flutter_channels_tab",
+      component: "flutterChannels",
+      title: t("flutter_channels"),
+      desc: t("flutter_channels_desc"),
+    },
   ];
+
+  const fruityDaemonFeatures: FeatureCardProps[] = [
+    {
+      icon: <FolderSearch className="w-5 h-5" />,
+      id: "finder_tab",
+      component: "finder",
+      title: t("finder"),
+      desc: t("quickstart_finder_desc"),
+      params: { path: "/" },
+    },
+    {
+      icon: <FolderOpen className="w-5 h-5" />,
+      id: "handles_tab",
+      component: "handles",
+      title: "lsof",
+      desc: t("quickstart_lsof_desc"),
+    },
+    {
+      icon: <Network className="w-5 h-5" />,
+      id: "http_log_tab",
+      component: "httpLog",
+      title: "HTTP Log",
+      desc: t("quickstart_httplog_desc"),
+    },
+  ];
+
+  const droidAppFeatures: FeatureCardProps[] = [
+    {
+      icon: <FolderSearch className="w-5 h-5" />,
+      id: "finder_tab",
+      component: "finder",
+      title: t("finder"),
+      desc: t("quickstart_finder_desc"),
+      params: { path: "/" },
+    },
+    {
+      icon: <Smartphone className="w-5 h-5" />,
+      id: "flutter_channels_tab",
+      component: "flutterChannels",
+      title: t("flutter_channels"),
+      desc: t("flutter_channels_desc"),
+    },
+  ];
+
+  const droidDaemonFeatures: FeatureCardProps[] = [
+    {
+      icon: <FolderSearch className="w-5 h-5" />,
+      id: "finder_tab",
+      component: "finder",
+      title: t("finder"),
+      desc: t("quickstart_finder_desc"),
+      params: { path: "/" },
+    },
+  ];
+
+  const features = isFruityApp
+    ? fruityAppFeatures
+    : isFruityDaemon
+      ? fruityDaemonFeatures
+      : isDroidApp
+        ? droidAppFeatures
+        : droidDaemonFeatures;
 
   return (
     <div className="h-full flex flex-col items-center justify-center p-8 overflow-auto">
@@ -159,20 +218,11 @@ export function QuickStartTab() {
         <div className="flex justify-center">
           <img src={logo} alt="logo" className="h-10 w-40" />
         </div>
-        {isFruityApp && (
-          <div className="grid grid-cols-2 gap-2">
-            {fruityAppFeatures.map((feature) => (
-              <FeatureCard key={feature.id} {...feature} />
-            ))}
-          </div>
-        )}
-        {isFruityDaemon && (
-          <PlaceholderSection label="iOS Daemon — Coming soon" />
-        )}
-        {isDroidApp && <PlaceholderSection label="Android App — Coming soon" />}
-        {isDroidDaemon && (
-          <PlaceholderSection label="Android Daemon — Coming soon" />
-        )}
+        <div className="grid grid-cols-2 gap-2">
+          {features.map((feature) => (
+            <FeatureCard key={feature.id} {...feature} />
+          ))}
+        </div>
       </div>
     </div>
   );

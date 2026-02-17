@@ -53,7 +53,7 @@ const themeApp: DockviewTheme = {
 };
 
 function WorkspaceContent() {
-  const { bundle, device, platform, mode, pid } = useSession();
+  const { bundle, device, mode, pid } = useSession();
 
   useEffect(() => {
     const target = bundle || (pid ? `PID ${pid}` : "");

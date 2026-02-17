@@ -9,6 +9,7 @@ import paths from "../lib/paths.ts";
 import { HookStore } from "../lib/store/hooks.ts";
 import { CryptoStore } from "../lib/store/crypto.ts";
 import { HttpStore } from "../lib/store/requests.ts";
+import { FlutterStore } from "../lib/store/flutter.ts";
 
 const LOG_TAIL_BYTES = 1024 * 1024; // 1MB
 
@@ -183,6 +184,49 @@ const routes = new Hono()
     } catch (e) {
       console.error("Failed to clear crypto logs:", e);
       return c.text("Failed to clear crypto logs", 500);
+    }
+  })
+  // Flutter log endpoints
+  .get("/history/flutter/:device/:identifier", (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+
+    const limit = parseInt(c.req.query("limit") || "5000", 10);
+    const offset = parseInt(c.req.query("offset") || "0", 10);
+    const since = c.req.query("since");
+
+    try {
+      const store = new FlutterStore(deviceId, identifier);
+
+      const records = store.query({ limit, offset, since });
+      const total = store.count();
+
+      const logs = records.map((r) => ({
+        id: r.id,
+        timestamp: r.timestamp,
+        type: r.type,
+        direction: r.direction,
+        channel: r.channel,
+        data: r.data ? JSON.parse(r.data) : undefined,
+        createdAt: r.createdAt,
+      }));
+
+      return c.json({ logs, total, limit, offset });
+    } catch (e) {
+      console.error("Failed to query flutter logs:", e);
+      return c.json({ logs: [], total: 0, limit, offset });
+    }
+  })
+  .delete("/history/flutter/:device/:identifier", (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+
+    try {
+      new FlutterStore(deviceId, identifier).rm();
+      return c.body(null, 204);
+    } catch (e) {
+      console.error("Failed to clear flutter logs:", e);
+      return c.text("Failed to clear flutter logs", 500);
     }
   })
   // HTTP log endpoints

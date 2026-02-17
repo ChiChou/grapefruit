@@ -23,6 +23,7 @@ export interface SessionClientEvents {
   syslog: (text: string) => void;
   invalid: () => void;
   hook: (message: BaseHookMessage) => void;
+  flutter: (event: Record<string, unknown>) => void;
   crypto: (message: BaseHookMessage) => void;
   http: (event: HttpNetworkEvent) => void;
 }

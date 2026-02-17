@@ -10,6 +10,7 @@ import { LogWriter } from "./lib/log-writer.ts";
 import { HttpStore, type HttpNetworkEvent } from "./lib/store/requests.ts";
 import { HookStore } from "./lib/store/hooks.ts";
 import { CryptoStore } from "./lib/store/crypto.ts";
+import { FlutterStore } from "./lib/store/flutter.ts";
 
 import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
 
@@ -36,6 +37,7 @@ interface ServerToClientEvents {
     event: "inactive" | "active" | "forerground" | "background",
   ) => void;
   hook: (msg: BaseHookMessage) => void;
+  flutter: (event: Record<string, unknown>) => void;
   crypto: (msg: BaseHookMessage, data?: ArrayBuffer) => void;
   http: (event: HttpNetworkEvent) => void;
 }
@@ -93,6 +95,7 @@ interface SessionStores {
   http: HttpStore;
   hooks: HookStore;
   crypto: CryptoStore;
+  flutter: FlutterStore;
 }
 
 async function loadBridge(name: string) {
@@ -181,6 +184,13 @@ function setupScriptHandlers(
         } catch (e) {
           console.error("Failed to persist HTTP event:", e);
         }
+        break;
+      }
+
+      case "flutter": {
+        const { subject: _, ...event } = payload;
+        socket.emit("flutter", event);
+        stores.flutter.append(event);
         break;
       }
 
@@ -323,6 +333,7 @@ async function onConnection(
     http: new HttpStore(deviceId, identifier),
     hooks: new HookStore(deviceId, identifier),
     crypto: new CryptoStore(deviceId, identifier),
+    flutter: new FlutterStore(deviceId, identifier),
   };
 
   const logHandles = await LogWriter.open(deviceId, identifier);

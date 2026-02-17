@@ -8,6 +8,7 @@ import paths from "../lib/paths.ts";
 import { HookStore } from "../lib/store/hooks.ts";
 import { CryptoStore } from "../lib/store/crypto.ts";
 import { HttpStore } from "../lib/store/requests.ts";
+import { FlutterStore } from "../lib/store/flutter.ts";
 
 const device = "test-device";
 const identifier = "com.test.app";
@@ -17,6 +18,7 @@ function getStores() {
     hooks: new HookStore(device, identifier),
     crypto: new CryptoStore(device, identifier),
     http: new HttpStore(device, identifier),
+    flutter: new FlutterStore(device, identifier),
   };
 }
 
@@ -299,6 +301,36 @@ describe("Hooks API", () => {
     assert.strictEqual(body.hooks[0].category, "crypto");
   });
 
+  it("should store and query flutter.channel hooks", async () => {
+    const { hooks: hookStore } = getStores();
+    hookStore.append({
+      category: "flutter.channel",
+      symbol: "flutter.method",
+      dir: "leave",
+      line: "plugins.flutter.io/share",
+      extra: {
+        type: "method",
+        dir: "native",
+        channel: "plugins.flutter.io/share",
+        method: "share",
+        args: { text: "hello" },
+      },
+    });
+
+    const r = await app.request(
+      `/api/hooks/${device}/${identifier}?category=flutter.channel`,
+    );
+    assert.strictEqual(r.status, 200);
+
+    const body = (await r.json()) as { hooks: any[]; total: number };
+    assert.strictEqual(body.total, 1);
+    assert.strictEqual(body.hooks.length, 1);
+    assert.strictEqual(body.hooks[0].category, "flutter.channel");
+    assert.strictEqual(body.hooks[0].extra.channel, "plugins.flutter.io/share");
+    assert.strictEqual(body.hooks[0].extra.method, "share");
+  });
+
+
   it("should paginate with limit and offset", async () => {
     const { hooks: hookStore } = getStores();
     for (let i = 0; i < 5; i++) {
@@ -546,5 +578,64 @@ describe("HTTP Logs API", () => {
 
     // cleanup other
     otherHttp.rm();
+  });
+});
+
+describe("Flutter Logs API", () => {
+  afterEach(() => {
+    getStores().flutter.rm();
+  });
+
+  it("should return empty flutter logs", async () => {
+    const r = await app.request(`/api/history/flutter/${device}/${identifier}`);
+    assert.strictEqual(r.status, 200);
+    const body = (await r.json()) as { logs: unknown[]; total: number };
+    assert.deepStrictEqual(body.logs, []);
+    assert.strictEqual(body.total, 0);
+  });
+
+  it("should return inserted flutter logs", async () => {
+    const { flutter: store } = getStores();
+    store.append({
+      type: "method",
+      dir: "native",
+      channel: "plugins.flutter.io/share",
+      method: "share",
+      args: { text: "hello" },
+    });
+    store.append({
+      type: "event",
+      dir: "dart",
+      channel: "flutter/lifecycle",
+    });
+
+    const r = await app.request(`/api/history/flutter/${device}/${identifier}`);
+    const body = (await r.json()) as { logs: any[]; total: number };
+    assert.strictEqual(body.total, 2);
+    assert.strictEqual(body.logs.length, 2);
+    // newest first
+    assert.strictEqual(body.logs[0].channel, "flutter/lifecycle");
+    assert.strictEqual(body.logs[0].type, "event");
+    assert.strictEqual(body.logs[1].channel, "plugins.flutter.io/share");
+    assert.strictEqual(body.logs[1].data.method, "share");
+    assert.strictEqual(body.logs[1].data.args.text, "hello");
+  });
+
+  it("should clear flutter logs", async () => {
+    const { flutter: store } = getStores();
+    store.append({
+      type: "method",
+      dir: "native",
+      channel: "test/channel",
+    });
+
+    const r = await app.request(`/api/history/flutter/${device}/${identifier}`, {
+      method: "DELETE",
+    });
+    assert.strictEqual(r.status, 204);
+
+    const r2 = await app.request(`/api/history/flutter/${device}/${identifier}`);
+    const body = (await r2.json()) as { total: number };
+    assert.strictEqual(body.total, 0);
   });
 });

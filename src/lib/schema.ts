@@ -60,6 +60,28 @@ export const hooks = sqliteTable(
   ],
 );
 
+export const flutter = sqliteTable(
+  "flutter",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    deviceId: text("device_id").notNull(),
+    identifier: text("identifier").notNull(),
+    timestamp: text("timestamp").notNull(),
+    type: text("type").notNull(),
+    direction: text("direction").notNull(),
+    channel: text("channel").notNull(),
+    data: text("data"),
+    createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_flutter_device_identifier").on(
+      table.deviceId,
+      table.identifier,
+    ),
+    index("idx_flutter_timestamp").on(table.timestamp),
+  ],
+);
+
 export const crypto = sqliteTable(
   "crypto",
   {

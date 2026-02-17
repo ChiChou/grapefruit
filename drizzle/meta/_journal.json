@@ -15,6 +15,13 @@
       "when": 1771245664714,
       "tag": "0001_cooing_timeslip",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1771297619811,
+      "tag": "0002_light_raider",
+      "breakpoints": true
     }
   ]
 }
