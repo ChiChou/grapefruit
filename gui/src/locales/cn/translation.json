@@ -363,5 +363,8 @@
   "target_sdk": "目标 SDK",
   "min_sdk": "最低 SDK",
   "directories": "目录",
-  "app_details": "应用详情"
+  "app_details": "应用详情",
+  "fields": "字段",
+  "return_type": "返回类型",
+  "parameters": "参数列表"
 }

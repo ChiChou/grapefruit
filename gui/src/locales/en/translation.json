@@ -363,5 +363,8 @@
   "target_sdk": "Target SDK",
   "min_sdk": "Min SDK",
   "directories": "Directories",
-  "app_details": "App Details"
+  "app_details": "App Details",
+  "fields": "Fields",
+  "return_type": "Return Type",
+  "parameters": "Parameters"
 }

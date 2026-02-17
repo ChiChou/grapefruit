@@ -71,11 +71,13 @@ export function LeftPanelView() {
     [`${Platform.Droid}:${Mode.App}`]: [
       { route: "general", icon: <Info className="h-5 w-5" />, label: t("general") },
       { route: "components", icon: <Puzzle className="h-5 w-5" />, label: t("components") },
+      { route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
       { route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
       { route: "device", icon: <Smartphone className="h-5 w-5" />, label: t("device_info") },
     ],
     [`${Platform.Droid}:${Mode.Daemon}`]: [
       { route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
+      { route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
       { route: "device", icon: <Smartphone className="h-5 w-5" />, label: t("device_info") },
     ],
   }[navKey] ?? [];

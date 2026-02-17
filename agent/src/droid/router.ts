@@ -1,5 +1,6 @@
 import * as activities from "./modules/activities.js";
 import * as app from "./modules/app.js";
+import * as classes from "./modules/classes.js";
 import * as device from "./modules/device.js";
 import * as fs from "./modules/fs.js";
 import * as provider from "./modules/provider.js";
@@ -18,6 +19,7 @@ import * as syslog from "@/common/syslog.js";
 export default {
   activities,
   app,
+  classes,
   device,
   flutter,
   fs,

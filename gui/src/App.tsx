@@ -17,6 +17,7 @@ import { DroidComponentsPanel } from "./components/panels/DroidComponentsPanel";
 import { DroidDevicePanel } from "./components/panels/DroidDevicePanel";
 import { ModulesPanel } from "./components/panels/ModulesPanel";
 import { ClassesPanel } from "./components/panels/ClassesPanel";
+import { DroidClassesPanel } from "./components/panels/DroidClassesPanel";
 import { URLSchemesPanel } from "./components/panels/URLSchemesPanel";
 import { GeolocationPanel } from "./components/panels/GeolocationPanel";
 import { HooksPanel } from "./components/panels/HooksPanel";
@@ -28,6 +29,11 @@ import { AlertTriangle } from "lucide-react";
 function GeneralPanelRoute() {
   const { platform } = useSession();
   return platform === Platform.Droid ? <DroidGeneralPanel /> : <GeneralPanel />;
+}
+
+function ClassesPanelRoute() {
+  const { platform } = useSession();
+  return platform === Platform.Droid ? <DroidClassesPanel /> : <ClassesPanel />;
 }
 
 function App() {
@@ -58,7 +64,7 @@ function App() {
           {/* Platform-aware panels */}
           <Route path="general" element={<GeneralPanelRoute />} />
           <Route path="modules" element={<ModulesPanel />} />
-          <Route path="classes" element={<ClassesPanel />} />
+          <Route path="classes" element={<ClassesPanelRoute />} />
           <Route path="urls" element={<URLSchemesPanel />} />
           <Route path="geolocation" element={<GeolocationPanel />} />
           <Route path="hooks" element={<HooksPanel />} />

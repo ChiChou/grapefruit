@@ -24,6 +24,7 @@ import { InfoPlistTab } from "./tabs/InfoPlistTab";
 import { EntitlementsTab } from "./tabs/EntitlementsTab";
 import { ModuleDetailTab } from "./tabs/ModuleDetailTab";
 import { ClassDetailTab } from "./tabs/ClassDetailTab";
+import { JavaClassDetailTab } from "./tabs/JavaClassDetailTab";
 import { FinderTab } from "./tabs/FinderTab";
 import { ImagePreviewTab } from "./tabs/ImagePreviewTab";
 import { HexPreviewTab } from "./tabs/HexPreviewTab";
@@ -95,6 +96,7 @@ function WorkspaceContent() {
     entitlements: EntitlementsTab,
     moduleDetail: ModuleDetailTab,
     classDetail: ClassDetailTab,
+    javaClassDetail: JavaClassDetailTab,
     finder: FinderTab,
     imagePreview: ImagePreviewTab,
     hexPreview: HexPreviewTab,
