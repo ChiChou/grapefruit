@@ -1,5 +1,5 @@
 import { SymbolsTableView } from "../SymbolsTableView";
-import { useRpcQuery } from "@/lib/queries";
+import { usePlatformRpcQuery } from "@/lib/queries";
 
 
 interface ExportedListViewProps {
@@ -7,7 +7,7 @@ interface ExportedListViewProps {
 }
 
 export function ExportedListView({ path }: ExportedListViewProps) {
-  const { data: exported, isLoading: loading } = useRpcQuery(
+  const { data: exported, isLoading: loading } = usePlatformRpcQuery(
     ["exports", path],
     (api) => api.symbol.exports(path)
   );

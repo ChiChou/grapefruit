@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Platform, useSession } from "@/context/SessionContext";
 
 import { ImportsListView } from "../views/ImportsListView";
 import { SectionsListView } from "../views/SectionsListView";
@@ -20,6 +21,8 @@ export function ModuleDetailTab({
   params,
 }: IDockviewPanelProps<ModuleDetailParams>) {
   const { t } = useTranslation();
+  const { platform } = useSession();
+  const isDroid = platform === Platform.Droid;
   const [activeTab, setActiveTab] = useState<TabKey>("imports");
 
   const handleTabChange = (value: string) => {
@@ -38,7 +41,7 @@ export function ModuleDetailTab({
           <TabsList>
             <TabsTrigger value="imports">{t("imports")}</TabsTrigger>
             <TabsTrigger value="sections">{t("sections")}</TabsTrigger>
-            <TabsTrigger value="classes">{t("classes")}</TabsTrigger>
+            {!isDroid && <TabsTrigger value="classes">{t("classes")}</TabsTrigger>}
             <TabsTrigger value="symbols">{t("symbols")}</TabsTrigger>
             <TabsTrigger value="exported">{t("exported")}</TabsTrigger>
           </TabsList>
@@ -50,9 +53,11 @@ export function ModuleDetailTab({
         <TabsContent value="sections" className="flex-1 min-h-0">
           <SectionsListView path={params.path} />
         </TabsContent>
-        <TabsContent value="classes" className="flex-1 min-h-0">
-          <ClassesListView path={params.path} />
-        </TabsContent>
+        {!isDroid && (
+          <TabsContent value="classes" className="flex-1 min-h-0">
+            <ClassesListView path={params.path} />
+          </TabsContent>
+        )}
         <TabsContent value="symbols" className="flex-1 min-h-0">
           <SymbolsListView path={params.path} />
         </TabsContent>

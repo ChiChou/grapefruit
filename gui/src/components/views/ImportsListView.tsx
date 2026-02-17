@@ -12,8 +12,8 @@ import {
   Layers,
 } from "lucide-react";
 import { useDock } from "@/context/DockContext";
-import { useRpcQuery } from "@/lib/queries";
-import { useSession, Status, Mode } from "@/context/SessionContext";
+import { usePlatformRpcQuery } from "@/lib/queries";
+import { useSession, Status, Mode, Platform } from "@/context/SessionContext";
 import { useRepl } from "@/context/useRepl";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,8 @@ const DEFAULT_WIDTHS = {
 export function ImportsListView({ path }: ImportsListViewProps) {
   const { openFilePanel } = useDock();
   const { t } = useTranslation();
-  const { fruity, status, platform, mode, device, bundle, pid, fridaMajor } = useSession();
+  const { fruity, droid, status, platform, mode, device, bundle, pid, fridaMajor } = useSession();
+  const api = platform === Platform.Droid ? droid : fruity;
   const { appendCode } = useRepl();
   const navigate = useNavigate();
 
@@ -57,9 +58,9 @@ export function ImportsListView({ path }: ImportsListViewProps) {
     startWidth: number;
   } | null>(null);
 
-  const { data: importGroups, isLoading: loading } = useRpcQuery(
+  const { data: importGroups, isLoading: loading } = usePlatformRpcQuery(
     ["importsGrouped", path],
-    (api) => api.symbol.importsGrouped(path),
+    (rpc) => rpc.symbol.importsGrouped(path),
   );
 
   const filteredGroups = useMemo(() => {
@@ -219,9 +220,9 @@ export function ImportsListView({ path }: ImportsListViewProps) {
   };
 
   const handleHookFunction = async (module: string, imp: Imported) => {
-    if (!fruity || status !== Status.Ready) return;
+    if (!api || status !== Status.Ready) return;
     try {
-      await fruity.native.hook(module, imp.name);
+      await api.native.hook(module, imp.name);
       // Navigate to hooks panel, show toast, and trigger refresh
       navigate(hooksPath);
       toast.success(t("hook_added"), {
@@ -245,13 +246,13 @@ export function ImportsListView({ path }: ImportsListViewProps) {
   };
 
   const handleBatchHook = async () => {
-    if (!fruity || status !== Status.Ready) return;
+    if (!api || status !== Status.Ready) return;
 
     let successCount = 0;
     for (const key of selectedImports) {
       const [module, name] = key.split(":");
       try {
-        await fruity.native.hook(module, name);
+        await api.native.hook(module, name);
         successCount++;
       } catch (error) {
         console.error(`Failed to hook ${name}:`, error);

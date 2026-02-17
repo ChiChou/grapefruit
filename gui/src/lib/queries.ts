@@ -1,5 +1,5 @@
-import { useSession } from "@/context/SessionContext";
-import type { AsyncFruityRPC, AsyncDroidRPC } from "@/lib/rpc";
+import { Platform, useSession } from "@/context/SessionContext";
+import type { AsyncFruityRPC, AsyncDroidRPC, CommonRPC } from "@/lib/rpc";
 import {
   useQuery,
   useMutation,
@@ -88,6 +88,38 @@ export function useDroidRpcMutation<TData, TVariables>(
     mutationFn: (variables: TVariables) => mutationFn(droid!, variables),
     ...options,
   });
+}
+
+/**
+ * Platform-aware RPC query hook. Automatically dispatches to fruity or droid
+ * based on the current session platform. Use for modules shared across both
+ * platforms (e.g. symbol, memory, native, sqlite).
+ *
+ * @example
+ * usePlatformRpcQuery(['sections', path], (api) => api.symbol.sections(path))
+ */
+export function usePlatformRpcQuery<T>(
+  key: string[],
+  queryFn: (api: CommonRPC) => Promise<T>,
+  options?: Omit<UseQueryOptions<T, Error>, "queryKey" | "queryFn">,
+) {
+  const { platform } = useSession();
+  const isDroid = platform === Platform.Droid;
+  const callerEnabled = options?.enabled ?? true;
+
+  const fruityResult = useRpcQuery<T>(
+    key,
+    queryFn,
+    { ...options, enabled: callerEnabled && !isDroid },
+  );
+
+  const droidResult = useDroidRpcQuery<T>(
+    key,
+    queryFn,
+    { ...options, enabled: callerEnabled && isDroid },
+  );
+
+  return isDroid ? droidResult : fruityResult;
 }
 
 /**

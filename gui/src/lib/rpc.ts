@@ -49,6 +49,17 @@ export interface SessionServerEvents {
 export type AsyncFruityRPC = RemoteRPC<FruityRPCRoute>;
 export type AsyncDroidRPC = RemoteRPC<DroidRPCRoute>;
 
+/**
+ * Shared RPC surface across both platforms.
+ * Only includes namespaces backed by the same @/common/* source,
+ * guaranteeing identical types on both fruity and droid.
+ * (flutter and fs exist on both but have platform-specific implementations)
+ */
+export type CommonRPC = Pick<
+  AsyncFruityRPC,
+  "symbol" | "memory" | "native" | "sqlite" | "script" | "syslog"
+>;
+
 type Platform = "fruity" | "droid";
 
 function createExecutor(

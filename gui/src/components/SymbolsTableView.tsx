@@ -17,13 +17,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDock } from "@/context/DockContext";
-import { useSession, Status, Mode } from "@/context/SessionContext";
+import { useSession, Status, Mode, Platform } from "@/context/SessionContext";
 import { useRepl } from "@/context/useRepl";
 import { native, type NativeHookTarget } from "@/lib/hook-template";
 
 import type { Symbol, Exported } from "@agent/common/symbol";
 
-type SymbolItem = Symbol | Exported;
+export type SymbolItem = Symbol | Exported;
 
 interface SymbolsTableViewProps {
   symbols: SymbolItem[] | null;
@@ -47,7 +47,8 @@ export function SymbolsTableView({
 }: SymbolsTableViewProps) {
   const { t } = useTranslation();
   const { openFilePanel } = useDock();
-  const { fruity, status, platform, mode, device, bundle, pid, fridaMajor } = useSession();
+  const { fruity, droid, status, platform, mode, device, bundle, pid, fridaMajor } = useSession();
+  const api = platform === Platform.Droid ? droid : fruity;
   const { appendCode } = useRepl();
   const navigate = useNavigate();
 
@@ -129,9 +130,9 @@ export function SymbolsTableView({
 
   const handleHookFunction = useCallback(
     async (item: SymbolItem) => {
-      if (!fruity || status !== Status.Ready) return;
+      if (!api || status !== Status.Ready) return;
       try {
-        await fruity.native.hook(modulePath ?? null, item.name);
+        await api.native.hook(modulePath ?? null, item.name);
         // Navigate to hooks panel, show toast, and trigger refresh
         navigate(hooksPath);
         toast.success(t("hook_added"), {
@@ -143,7 +144,7 @@ export function SymbolsTableView({
         toast.error(t("hook_failed"));
       }
     },
-    [fruity, status, modulePath, navigate, hooksPath, t],
+    [api, status, modulePath, navigate, hooksPath, t],
   );
 
   const handleGenerateCode = useCallback(
@@ -160,7 +161,7 @@ export function SymbolsTableView({
   );
 
   const handleBatchHook = useCallback(async () => {
-    if (!fruity || status !== Status.Ready) return;
+    if (!api || status !== Status.Ready) return;
     const selectedIndices = Object.keys(rowSelection).filter(
       (key) => rowSelection[key],
     );
@@ -171,7 +172,7 @@ export function SymbolsTableView({
     let successCount = 0;
     for (const item of selectedItems) {
       try {
-        await fruity.native.hook(modulePath ?? null, item.name);
+        await api.native.hook(modulePath ?? null, item.name);
         successCount++;
       } catch (error) {
         console.error(`Failed to hook ${item.name}:`, error);
@@ -186,7 +187,7 @@ export function SymbolsTableView({
       setRowSelection({});
     }
   }, [
-    fruity,
+    api,
     status,
     rowSelection,
     data,
