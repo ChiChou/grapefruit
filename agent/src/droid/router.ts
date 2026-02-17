@@ -5,6 +5,7 @@ import * as crypto from "./crypto/index.js";
 import * as device from "./modules/device.js";
 import * as fs from "./modules/fs.js";
 import * as keystore from "./modules/keystore.js";
+import * as manifest from "./modules/manifest.js";
 import * as provider from "./modules/provider.js";
 import * as receivers from "./modules/receivers.js";
 import * as services from "./modules/services.js";
@@ -27,6 +28,7 @@ export default {
   flutter,
   fs,
   keystore,
+  manifest,
   memory,
   native,
   provider,

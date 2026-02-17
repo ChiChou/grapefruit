@@ -44,6 +44,7 @@ import { DisassemblyTab } from "./tabs/DisassemblyTab";
 import { HttpLogTab } from "./tabs/HttpLogTab";
 import { FlutterMethodChannelsTab } from "./tabs/FlutterMethodChannelsTab";
 import { KeystoreTab } from "./tabs/KeystoreTab";
+import { DroidManifestTab } from "./tabs/DroidManifestTab";
 import { NoCloseTabHeader } from "./tabs/NoCloseTabHeader";
 
 import { DockContext, useDockActions } from "@/context/DockContext";
@@ -116,6 +117,7 @@ function WorkspaceContent() {
     httpLog: HttpLogTab,
     flutterChannels: FlutterMethodChannelsTab,
     keystore: KeystoreTab,
+    droidManifest: DroidManifestTab,
   };
 
   const tabComponents = {

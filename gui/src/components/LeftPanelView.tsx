@@ -9,6 +9,7 @@ import {
   Anchor,
   Puzzle,
   Smartphone,
+  FileCode,
 } from "lucide-react";
 
 import {
@@ -19,6 +20,7 @@ import {
 import { DarkmodeToggle } from "./DarkmodeToggle";
 import { LanguageSelector } from "./LanguageSelector";
 import { useSession, Platform, Mode } from "@/context/SessionContext";
+import { useDock } from "@/context/DockContext";
 
 import logo from "../assets/grapefruit.svg";
 
@@ -46,39 +48,77 @@ function NavItem({ to, icon, label }: NavItemProps) {
   );
 }
 
+interface ActionNavItemProps {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+}
+
+function ActionNavItem({ icon, label, onClick }: ActionNavItemProps) {
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(); }}
+      className="p-2 flex items-center justify-center hover:bg-sidebar-accent transition-colors cursor-pointer"
+    >
+      <Tooltip>
+        <TooltipTrigger>{icon}</TooltipTrigger>
+        <TooltipContent side="right">{label}</TooltipContent>
+      </Tooltip>
+    </div>
+  );
+}
+
+type NavEntry =
+  | { kind: "route"; route: string; icon: React.ReactNode; label: string }
+  | { kind: "action"; id: string; icon: React.ReactNode; label: string; action: () => void };
+
 export function LeftPanelView() {
   const { device, bundle, platform, mode, pid } = useSession();
+  const { openSingletonPanel } = useDock();
 
   // Determine the target for URL (bundle for app mode, pid for daemon mode)
   const target = mode === Mode.App ? bundle : pid;
   const basePath = `/workspace/${platform}/${device}/${mode}/${target}`;
 
+  const openManifestTab = () => {
+    openSingletonPanel({
+      id: "droid_manifest_tab",
+      component: "droidManifest",
+      title: "AndroidManifest.xml",
+    });
+  };
+
   const navKey = `${platform}:${mode}`;
-  const navItems: { route: string; icon: React.ReactNode; label: string }[] = {
+  const navItems: NavEntry[] = {
     [`${Platform.Fruity}:${Mode.App}`]: [
-      { route: "general", icon: <Info className="h-5 w-5" />, label: t("general") },
-      { route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
-      { route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
-      { route: "urls", icon: <LinkIcon className="h-5 w-5" />, label: "URL Schemes" },
-      { route: "hooks", icon: <Anchor className="h-5 w-5" />, label: t("hooks") },
-      { route: "geolocation", icon: <MapPin className="h-5 w-5" />, label: t("geolocation_simulation") },
+      { kind: "route", route: "general", icon: <Info className="h-5 w-5" />, label: t("general") },
+      { kind: "route", route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
+      { kind: "route", route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
+      { kind: "route", route: "urls", icon: <LinkIcon className="h-5 w-5" />, label: "URL Schemes" },
+      { kind: "route", route: "hooks", icon: <Anchor className="h-5 w-5" />, label: t("hooks") },
+      { kind: "route", route: "geolocation", icon: <MapPin className="h-5 w-5" />, label: t("geolocation_simulation") },
     ],
     [`${Platform.Fruity}:${Mode.Daemon}`]: [
-      { route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
-      { route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
-      { route: "hooks", icon: <Anchor className="h-5 w-5" />, label: t("hooks") },
+      { kind: "route", route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
+      { kind: "route", route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
+      { kind: "route", route: "hooks", icon: <Anchor className="h-5 w-5" />, label: t("hooks") },
     ],
     [`${Platform.Droid}:${Mode.App}`]: [
-      { route: "general", icon: <Info className="h-5 w-5" />, label: t("general") },
-      { route: "components", icon: <Puzzle className="h-5 w-5" />, label: t("components") },
-      { route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
-      { route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
-      { route: "device", icon: <Smartphone className="h-5 w-5" />, label: t("device_info") },
+      { kind: "route", route: "general", icon: <Info className="h-5 w-5" />, label: t("general") },
+      { kind: "route", route: "components", icon: <Puzzle className="h-5 w-5" />, label: t("components") },
+      { kind: "route", route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
+      { kind: "route", route: "urls", icon: <LinkIcon className="h-5 w-5" />, label: "URL Schemes" },
+      { kind: "route", route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
+      { kind: "action", id: "manifest", icon: <FileCode className="h-5 w-5" />, label: "Manifest", action: openManifestTab },
+      { kind: "route", route: "device", icon: <Smartphone className="h-5 w-5" />, label: t("device_info") },
     ],
     [`${Platform.Droid}:${Mode.Daemon}`]: [
-      { route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
-      { route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
-      { route: "device", icon: <Smartphone className="h-5 w-5" />, label: t("device_info") },
+      { kind: "route", route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
+      { kind: "route", route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
+      { kind: "route", route: "device", icon: <Smartphone className="h-5 w-5" />, label: t("device_info") },
     ],
   }[navKey] ?? [];
 
@@ -93,14 +133,23 @@ export function LeftPanelView() {
 
         {navItems.length > 0 ? (
           <div className="flex-1 flex flex-col gap-1 pt-2">
-            {navItems.map((item) => (
-              <NavItem
-                key={item.route}
-                to={`${basePath}/${item.route}`}
-                icon={item.icon}
-                label={item.label}
-              />
-            ))}
+            {navItems.map((item) =>
+              item.kind === "route" ? (
+                <NavItem
+                  key={item.route}
+                  to={`${basePath}/${item.route}`}
+                  icon={item.icon}
+                  label={item.label}
+                />
+              ) : (
+                <ActionNavItem
+                  key={item.id}
+                  icon={item.icon}
+                  label={item.label}
+                  onClick={item.action}
+                />
+              ),
+            )}
           </div>
         ) : (
           <div className="flex-1" />

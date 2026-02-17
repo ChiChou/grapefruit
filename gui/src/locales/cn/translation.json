@@ -395,5 +395,8 @@
   "validity_start": "开始时间",
   "validity_origination_end": "生成截止",
   "validity_consumption_end": "使用截止",
-  "quickstart_keystore_desc": "检查 AndroidKeyStore 密钥及安全属性"
+  "quickstart_keystore_desc": "检查 AndroidKeyStore 密钥及安全属性",
+  "quickstart_manifest_desc": "查看和检查 AndroidManifest.xml",
+  "open_manifest": "打开 AndroidManifest.xml",
+  "no_url_schemes": "此应用未声明 URL Scheme"
 }

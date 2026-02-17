@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import {
   FileText,
+  FileCode,
   FolderOpen,
   FolderSearch,
   FolderKey,
@@ -184,6 +185,13 @@ export function QuickStartTab() {
       title: t("finder"),
       desc: t("quickstart_finder_desc"),
       params: { path: "/" },
+    },
+    {
+      icon: <FileCode className="w-5 h-5" />,
+      id: "droid_manifest_tab",
+      component: "droidManifest",
+      title: "AndroidManifest.xml",
+      desc: t("quickstart_manifest_desc"),
     },
     {
       icon: <KeyRound className="w-5 h-5" />,

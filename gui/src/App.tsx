@@ -19,6 +19,7 @@ import { ModulesPanel } from "./components/panels/ModulesPanel";
 import { ClassesPanel } from "./components/panels/ClassesPanel";
 import { DroidClassesPanel } from "./components/panels/DroidClassesPanel";
 import { URLSchemesPanel } from "./components/panels/URLSchemesPanel";
+import { DroidURLSchemesPanel } from "./components/panels/DroidURLSchemesPanel";
 import { GeolocationPanel } from "./components/panels/GeolocationPanel";
 import { HooksPanel } from "./components/panels/HooksPanel";
 import { PlaceholderPanel } from "./components/panels/PlaceholderPanel";
@@ -34,6 +35,11 @@ function GeneralPanelRoute() {
 function ClassesPanelRoute() {
   const { platform } = useSession();
   return platform === Platform.Droid ? <DroidClassesPanel /> : <ClassesPanel />;
+}
+
+function URLSchemesPanelRoute() {
+  const { platform } = useSession();
+  return platform === Platform.Droid ? <DroidURLSchemesPanel /> : <URLSchemesPanel />;
 }
 
 function App() {
@@ -65,7 +71,7 @@ function App() {
           <Route path="general" element={<GeneralPanelRoute />} />
           <Route path="modules" element={<ModulesPanel />} />
           <Route path="classes" element={<ClassesPanelRoute />} />
-          <Route path="urls" element={<URLSchemesPanel />} />
+          <Route path="urls" element={<URLSchemesPanelRoute />} />
           <Route path="geolocation" element={<GeolocationPanel />} />
           <Route path="hooks" element={<HooksPanel />} />
           {/* Android (droid) panels */}

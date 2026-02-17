@@ -395,5 +395,8 @@
   "validity_start": "Start",
   "validity_origination_end": "Origination End",
   "validity_consumption_end": "Consumption End",
-  "quickstart_keystore_desc": "Inspect AndroidKeyStore keys and security properties"
+  "quickstart_keystore_desc": "Inspect AndroidKeyStore keys and security properties",
+  "quickstart_manifest_desc": "View and inspect AndroidManifest.xml",
+  "open_manifest": "Open AndroidManifest.xml",
+  "no_url_schemes": "No URL schemes found in this App"
 }
