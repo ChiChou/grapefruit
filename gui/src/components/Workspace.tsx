@@ -17,7 +17,7 @@ import {
 
 import { LeftPanelView } from "./LeftPanelView";
 import { BottomPanelView } from "./BottomPanelView";
-import { Platform, Mode, useSession } from "@/context/SessionContext";
+import { useSession } from "@/context/SessionContext";
 import SessionProvider from "./SessionProvider";
 import { HandlesTab } from "./tabs/HandlesTab";
 import { InfoPlistTab } from "./tabs/InfoPlistTab";
@@ -41,6 +41,7 @@ import { UserDefaultsTab } from "./tabs/UserDefaultsTab";
 import { QuickStartTab } from "./tabs/QuickStartTab";
 import { DisassemblyTab } from "./tabs/DisassemblyTab";
 import { HttpLogTab } from "./tabs/HttpLogTab";
+import { FlutterMethodChannelsTab } from "./tabs/FlutterMethodChannelsTab";
 import { NoCloseTabHeader } from "./tabs/NoCloseTabHeader";
 
 import { DockContext, useDockActions } from "@/context/DockContext";
@@ -110,6 +111,7 @@ function WorkspaceContent() {
     userdefaults: UserDefaultsTab,
     disassembly: DisassemblyTab,
     httpLog: HttpLogTab,
+    flutterChannels: FlutterMethodChannelsTab,
   };
 
   const tabComponents = {
@@ -159,43 +161,12 @@ function WorkspaceContent() {
   };
 
   const createDefaultLayout = (dockApi: DockviewApi) => {
-    const defaultPanels: Record<
-      string,
-      {
-        id: string;
-        component: string;
-        tabComponent?: string;
-        title: string;
-        params?: Record<string, string>;
-      }
-    > = {
-      [`${Platform.Fruity}:${Mode.App}`]: {
-        id: "quickstart_tab",
-        component: "quickstart",
-        tabComponent: "noClose",
-        title: t("quickstart"),
-      },
-      [`${Platform.Fruity}:${Mode.Daemon}`]: {
-        id: "finder_tab",
-        component: "finder",
-        title: "Finder",
-        params: { path: "/" },
-      },
-      [`${Platform.Droid}:${Mode.App}`]: {
-        id: "finder_tab",
-        component: "finder",
-        title: "Finder",
-        params: { path: "~" },
-      },
-      [`${Platform.Droid}:${Mode.Daemon}`]: {
-        id: "finder_tab",
-        component: "finder",
-        title: "Finder",
-        params: { path: "/" },
-      },
-    };
-    const panel = defaultPanels[`${platform}:${mode}`];
-    if (panel) dockApi.addPanel(panel);
+    dockApi.addPanel({
+      id: "quickstart_tab",
+      component: "quickstart",
+      tabComponent: "noClose",
+      title: t("quickstart"),
+    });
   };
 
   return (
