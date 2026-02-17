@@ -12,6 +12,7 @@ import {
   Settings,
   Network,
   Smartphone,
+  KeyRound,
 } from "lucide-react";
 
 import logo from "@/assets/logo.svg";
@@ -183,6 +184,13 @@ export function QuickStartTab() {
       title: t("finder"),
       desc: t("quickstart_finder_desc"),
       params: { path: "/" },
+    },
+    {
+      icon: <KeyRound className="w-5 h-5" />,
+      id: "keystore_tab",
+      component: "keystore",
+      title: t("keystore"),
+      desc: t("quickstart_keystore_desc"),
     },
     {
       icon: <Smartphone className="w-5 h-5" />,

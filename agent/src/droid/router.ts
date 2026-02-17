@@ -3,6 +3,7 @@ import * as app from "./modules/app.js";
 import * as classes from "./modules/classes.js";
 import * as device from "./modules/device.js";
 import * as fs from "./modules/fs.js";
+import * as keystore from "./modules/keystore.js";
 import * as provider from "./modules/provider.js";
 import * as receivers from "./modules/receivers.js";
 import * as services from "./modules/services.js";
@@ -23,6 +24,7 @@ export default {
   device,
   flutter,
   fs,
+  keystore,
   memory,
   native,
   provider,

@@ -43,6 +43,7 @@ import { QuickStartTab } from "./tabs/QuickStartTab";
 import { DisassemblyTab } from "./tabs/DisassemblyTab";
 import { HttpLogTab } from "./tabs/HttpLogTab";
 import { FlutterMethodChannelsTab } from "./tabs/FlutterMethodChannelsTab";
+import { KeystoreTab } from "./tabs/KeystoreTab";
 import { NoCloseTabHeader } from "./tabs/NoCloseTabHeader";
 
 import { DockContext, useDockActions } from "@/context/DockContext";
@@ -114,6 +115,7 @@ function WorkspaceContent() {
     disassembly: DisassemblyTab,
     httpLog: HttpLogTab,
     flutterChannels: FlutterMethodChannelsTab,
+    keystore: KeystoreTab,
   };
 
   const tabComponents = {
