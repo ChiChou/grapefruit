@@ -16,6 +16,8 @@ import * as url from "./modules/url.js";
 import * as userdefaults from "./modules/userdefaults.js";
 import * as webview from "./modules/webview.js";
 
+import * as flutter from "./observers/flutter.js";
+
 import * as memory from "@/common/memory.js";
 import * as native from "@/common/hooks/native.js";
 import * as sqlite from "@/common/sqlite.js";
@@ -33,6 +35,7 @@ export default {
   cookies,
   crypto,
   entitlements,
+  flutter,
   fs,
   geolocation,
   hook,

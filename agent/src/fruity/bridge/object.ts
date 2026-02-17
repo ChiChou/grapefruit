@@ -1,6 +1,11 @@
 import ObjC from "frida-objc-bridge";
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { _Nullable, NSArray, NSDictionary, NSObject } from "@/fruity/typings.js";
+import type {
+  _Nullable,
+  NSArray,
+  NSDictionary,
+  NSObject,
+} from "@/fruity/typings.js";
 import { iterateNSArray } from "./nsarray.js";
 
 const NSPropertyListImmutable = 0;
@@ -14,7 +19,7 @@ export function* keys(dict: NSDictionary<NSObject, NSObject>) {
 export function toJS(value: _Nullable<ObjC.Object>): any {
   if (!value) return null;
 
-  const { NSArray, NSDictionary, NSNumber, __NSCFBoolean, NSDate } =
+  const { NSArray, NSData, NSDictionary, NSNumber, __NSCFBoolean, NSDate } =
     ObjC.classes;
   if (value.isKindOfClass_(__NSCFBoolean)) return value.boolValue();
   if (value.isKindOfClass_(NSArray))
@@ -24,6 +29,8 @@ export function toJS(value: _Nullable<ObjC.Object>): any {
   if (value.isKindOfClass_(NSNumber)) return parseFloat(value.toString()); // might lost precision
   if (value.isKindOfClass_(NSDate))
     return new Date(value.timeIntervalSince1970() * 1000);
+  if (value.isKindOfClass_(NSData))
+    return (value.bytes() as NativePointer).readByteArray(value.length());
   return value.toString();
 }
 

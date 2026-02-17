@@ -205,7 +205,6 @@ export function list(withBiometricId = false): KeyChainItem[] {
     service: kSec("AttrService"),
     account: kSec("AttrAccount"),
     label: kSec("AttrLabel"),
-    data: kSec("ValueData"),
   };
 
   for (const [className, clazz] of Object.entries(kSecClasses)) {
@@ -237,10 +236,12 @@ export function list(withBiometricId = false): KeyChainItem[] {
         }
       }
 
+      const valueData = item.objectForKey_(kSec("ValueData"));
+      readable.data = valueData.toString();
       readable.account = readableAccount(
         item.objectForKey_(kSec("AttrAccount")),
       );
-      readable.raw = encodeData(item.objectForKey_(kSec("ValueData")));
+      readable.raw = encodeData(valueData);
       result.push(readable);
     }
   }
