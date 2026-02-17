@@ -46,6 +46,7 @@ import { FlutterMethodChannelsTab } from "../tabs/FlutterMethodChannelsTab";
 import { DroidHandlesTab } from "../tabs/DroidHandlesTab";
 import { DroidKeystoreTab } from "../tabs/DroidKeystoreTab";
 import { DroidManifestTab } from "../tabs/DroidManifestTab";
+import { DroidProvidersTab } from "../tabs/DroidProvidersTab";
 import { NoCloseTabHeader } from "../tabs/NoCloseTabHeader";
 
 import { DockContext, useDockActions } from "@/context/DockContext";
@@ -120,6 +121,7 @@ function WorkspaceContent() {
     droidHandles: DroidHandlesTab,
     keystore: DroidKeystoreTab,
     droidManifest: DroidManifestTab,
+    droidProviders: DroidProvidersTab,
   };
 
   const tabComponents = {

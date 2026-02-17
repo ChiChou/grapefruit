@@ -14,6 +14,7 @@ import {
   Network,
   Smartphone,
   KeyRound,
+  Database,
 } from "lucide-react";
 
 import logo from "@/assets/logo.svg";
@@ -206,6 +207,13 @@ export function QuickStartTab() {
       component: "keystore",
       title: t("keystore"),
       desc: t("quickstart_keystore_desc"),
+    },
+    {
+      icon: <Database className="w-5 h-5" />,
+      id: "droid_providers_tab",
+      component: "droidProviders",
+      title: t("content_providers"),
+      desc: t("quickstart_providers_desc"),
     },
     {
       icon: <Smartphone className="w-5 h-5" />,

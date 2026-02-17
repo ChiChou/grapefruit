@@ -2,6 +2,48 @@ import Java from "frida-java-bridge";
 
 import { getContext } from "../lib/context.js";
 
+export interface ProviderEntry {
+  name: string;
+  authority: string;
+  exported: boolean;
+  readPermission: string | null;
+  writePermission: string | null;
+  grantUriPermissions: boolean;
+}
+
+export function list() {
+  return new Promise<ProviderEntry[]>((resolve) => {
+    Java.perform(() => {
+      const PackageManager = Java.use("android.content.pm.PackageManager");
+
+      const context = getContext();
+      const pm = context.getPackageManager();
+      const pkg = pm.getPackageInfo(
+        context.getPackageName(),
+        PackageManager.GET_PROVIDERS.value,
+      );
+
+      const result: ProviderEntry[] = [];
+      const providers = pkg.providers?.value;
+      if (providers) {
+        for (let i = 0; i < providers.length; i++) {
+          const p = providers[i];
+          result.push({
+            name: p.name?.value || "",
+            authority: p.authority?.value || "",
+            exported: !!p.exported?.value,
+            readPermission: p.readPermission?.value || null,
+            writePermission: p.writePermission?.value || null,
+            grantUriPermissions: !!p.grantUriPermissions?.value,
+          });
+        }
+      }
+
+      resolve(result);
+    });
+  });
+}
+
 export interface QueryResult {
   columns: string[];
   rows: (string | number | null)[][];
@@ -96,7 +138,7 @@ export function query(uri: string, options?: QueryOptions) {
         cursor.close();
         resolve({ columns, rows });
       } catch (e) {
-        reject(e);
+        reject(new Error(String(e)));
       }
     });
   });
@@ -165,7 +207,7 @@ export function insert(uri: string, values: ContentValues) {
         const result = cr.insert(Uri.parse(uri), buildContentValues(values));
         resolve(result ? result.toString() : null);
       } catch (e) {
-        reject(e);
+        reject(new Error(String(e)));
       }
     });
   });
@@ -195,7 +237,7 @@ export function update(
         );
         resolve(count);
       } catch (e) {
-        reject(e);
+        reject(new Error(String(e)));
       }
     });
   });
@@ -219,7 +261,7 @@ export function del(uri: string, selection?: string, selectionArgs?: string[]) {
         );
         resolve(count);
       } catch (e) {
-        reject(e);
+        reject(new Error(String(e)));
       }
     });
   });
