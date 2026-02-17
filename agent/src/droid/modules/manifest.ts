@@ -2,11 +2,19 @@ import Java from "frida-java-bridge";
 
 import { getContext } from "../lib/context.js";
 
+let cached: string | null = null;
+
 export function xml() {
   return new Promise<string>((resolve, reject) => {
     Java.perform(() => {
       try {
-        resolve(readManifestXml());
+        if (cached !== null) {
+          resolve(cached);
+          return;
+        }
+        const manifest = readManifestXml();
+        cached = manifest;
+        resolve(manifest);
       } catch (e) {
         reject(e);
       }
