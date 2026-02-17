@@ -1,5 +1,7 @@
 import Java from "frida-java-bridge";
 
+import { getContext } from "./context.js";
+
 export interface IntentOptions {
   action?: string;
   component?: string;
@@ -23,6 +25,9 @@ export function buildIntent(options: IntentOptions): Java.Wrapper {
     const parts = options.component.split("/");
     if (parts.length === 2) {
       intent.setComponent(ComponentName.$new(parts[0], parts[1]));
+    } else {
+      const pkg = getContext().getPackageName();
+      intent.setComponent(ComponentName.$new(pkg, options.component));
     }
   }
 
