@@ -92,7 +92,7 @@ export function LeftPanelView() {
   };
 
   const navKey = `${platform}:${mode}`;
-  const navItems: NavEntry[] = {
+  const navItems: NavEntry[] = ({
     [`${Platform.Fruity}:${Mode.App}`]: [
       { kind: "route", route: "general", icon: <Info className="h-5 w-5" />, label: t("general") },
       { kind: "route", route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
@@ -120,7 +120,7 @@ export function LeftPanelView() {
       { kind: "route", route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
       { kind: "route", route: "device", icon: <Smartphone className="h-5 w-5" />, label: t("device_info") },
     ],
-  }[navKey] ?? [];
+  } satisfies Record<string, NavEntry[]>)[navKey] ?? [];
 
   return (
     <div className="flex h-full">
