@@ -43,6 +43,7 @@ import { QuickStartTab } from "../tabs/QuickStartTab";
 import { FruityDisassemblyTab } from "../tabs/FruityDisassemblyTab";
 import { FruityURLLoadingTab } from "../tabs/FruityURLLoadingTab";
 import { FlutterMethodChannelsTab } from "../tabs/FlutterMethodChannelsTab";
+import { DroidHandlesTab } from "../tabs/DroidHandlesTab";
 import { DroidKeystoreTab } from "../tabs/DroidKeystoreTab";
 import { DroidManifestTab } from "../tabs/DroidManifestTab";
 import { NoCloseTabHeader } from "../tabs/NoCloseTabHeader";
@@ -116,6 +117,7 @@ function WorkspaceContent() {
     disassembly: FruityDisassemblyTab,
     httpLog: FruityURLLoadingTab,
     flutterChannels: FlutterMethodChannelsTab,
+    droidHandles: DroidHandlesTab,
     keystore: DroidKeystoreTab,
     droidManifest: DroidManifestTab,
   };

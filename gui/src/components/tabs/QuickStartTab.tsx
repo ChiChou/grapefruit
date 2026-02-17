@@ -187,6 +187,13 @@ export function QuickStartTab() {
       params: { path: "/" },
     },
     {
+      icon: <FolderOpen className="w-5 h-5" />,
+      id: "droid_handles_tab",
+      component: "droidHandles",
+      title: "lsof",
+      desc: t("quickstart_lsof_desc"),
+    },
+    {
       icon: <FileCode className="w-5 h-5" />,
       id: "droid_manifest_tab",
       component: "droidManifest",
