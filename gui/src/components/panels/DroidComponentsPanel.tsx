@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Play, Square, Radio, Search, ShieldCheck, Globe } from "lucide-react";
+import { Play, Radio, Search, ShieldCheck, Globe } from "lucide-react";
 import { List, type RowComponentProps } from "react-window";
 import { toast } from "sonner";
 
@@ -196,7 +196,6 @@ function ComponentRow({
   items,
   activeTab,
   onAction,
-  onStopService,
   t,
 }: RowComponentProps<{
   items: ComponentEntry[];
@@ -250,47 +249,29 @@ function ComponentRow({
               </Tooltip>
             </TooltipProvider>
           )}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <button
-                    type="button"
-                    className="p-1 rounded text-amber-700 dark:text-amber-400 opacity-0 group-hover:opacity-100 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-opacity"
-                    onClick={() => onAction(item.name)}
-                  />
-                }
-              >
-                {activeTab === "receivers" ? (
-                  <Radio className="h-3.5 w-3.5" />
-                ) : (
-                  <Play className="h-3.5 w-3.5" />
-                )}
-              </TooltipTrigger>
-              <TooltipContent>
-                {activeTab === "activities"
-                  ? t("start_activity")
-                  : activeTab === "services"
-                    ? t("start_service")
-                    : t("send_broadcast")}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          {activeTab === "services" && (
+          {activeTab !== "services" && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger
                   render={
                     <button
                       type="button"
-                      className="p-1 rounded text-red-700 dark:text-red-400 opacity-0 group-hover:opacity-100 hover:bg-red-100 dark:hover:bg-red-900/50 transition-opacity"
-                      onClick={() => onStopService(item.name)}
+                      className="p-1 rounded text-amber-700 dark:text-amber-400 opacity-0 group-hover:opacity-100 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-opacity"
+                      onClick={() => onAction(item.name)}
                     />
                   }
                 >
-                  <Square className="h-3.5 w-3.5" />
+                  {activeTab === "receivers" ? (
+                    <Radio className="h-3.5 w-3.5" />
+                  ) : (
+                    <Play className="h-3.5 w-3.5" />
+                  )}
                 </TooltipTrigger>
-                <TooltipContent>{t("stop_service")}</TooltipContent>
+                <TooltipContent>
+                  {activeTab === "activities"
+                    ? t("start_activity")
+                    : t("send_broadcast")}
+                </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           )}
