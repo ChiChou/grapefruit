@@ -109,13 +109,13 @@ export function DroidComponentsPanel() {
     try {
       if (activeTab === "activities") {
         await startActivityMutation.mutateAsync({ component: name });
-        toast.success(t("start_activity"));
+        toast.success(t("start_activity"), { description: name });
       } else if (activeTab === "services") {
         await startServiceMutation.mutateAsync({ component: name });
-        toast.success(t("start_service"));
+        toast.success(t("start_service"), { description: name });
       } else {
         await sendBroadcastMutation.mutateAsync({ component: name });
-        toast.success(t("send_broadcast"));
+        toast.success(t("send_broadcast"), { description: name });
       }
     } catch (err) {
       toast.error((err as Error).message);
