@@ -16,7 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { Platform, Status, useSession } from "@/context/SessionContext";
+import { Mode, Platform, Status, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 import { useRpcMutation, useDroidRpcMutation } from "@/lib/queries";
 import { DirectoryTree } from "./DirectoryTree";
@@ -25,21 +25,17 @@ import type { FinderTabParams, UploadFile } from "../../lib/file-explorer.ts";
 
 export type { FinderTabParams };
 
-const PREFIXES = {
-  home: "~",
-  bundle: "!",
-} as const;
-
 export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
-  const { fruity, droid, status, pid, device, platform } = useSession();
+  const { fruity, droid, status, pid, device, platform, mode } = useSession();
   const { t } = useTranslation();
   const { openSingletonPanel } = useDock();
   const isDroid = platform === Platform.Droid;
+  const isDaemon = mode === Mode.Daemon;
 
-  const initialPath = params?.path || PREFIXES.home;
-  const initialTab = initialPath === PREFIXES.bundle ? "bundle" : "home";
+  const initialPath = params?.path || "~";
+  const initialTab = initialPath === "!" ? "bundle" : "home";
 
-  const [activeTab, setActiveTab] = useState<keyof typeof PREFIXES>(initialTab);
+  const [activeTab, setActiveTab] = useState<"home" | "bundle">(initialTab);
   const [items, setItems] = useState<
     import("@agent/fruity/modules/fs").MetaData[]
   >([]);
@@ -247,8 +243,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
 
   useEffect(() => {
     if (!apiReady) return;
-    const path = PREFIXES[activeTab];
-    handleDirectorySelect(path);
+    handleDirectorySelect(activeTab === "bundle" ? "!" : "~");
   }, [apiReady, activeTab, handleDirectorySelect]);
 
   useEffect(() => {
@@ -273,18 +268,22 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
               <TabsTrigger value="home" className="flex-1">
                 {t("home")}
               </TabsTrigger>
-              <TabsTrigger value="bundle" className="flex-1">
-                {isDroid ? t("apk") : t("bundle")}
-              </TabsTrigger>
+              {!isDaemon && (
+                <TabsTrigger value="bundle" className="flex-1">
+                  {isDroid ? t("apk") : t("bundle")}
+                </TabsTrigger>
+              )}
             </TabsList>
-            <TabsContent value="bundle" className="flex-1 overflow-hidden mt-0">
-              <DirectoryTree
-                root="!"
-                apiReady={apiReady}
-                loadDirectory={loadDirectory}
-                onDirectorySelect={handleDirectorySelect}
-              />
-            </TabsContent>
+            {!isDaemon && (
+              <TabsContent value="bundle" className="flex-1 overflow-hidden mt-0">
+                <DirectoryTree
+                  root="!"
+                  apiReady={apiReady}
+                  loadDirectory={loadDirectory}
+                  onDirectorySelect={handleDirectorySelect}
+                />
+              </TabsContent>
+            )}
             <TabsContent value="home" className="flex-1 overflow-hidden mt-0">
               <DirectoryTree
                 root="~"
