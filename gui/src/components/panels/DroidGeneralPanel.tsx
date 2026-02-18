@@ -202,8 +202,8 @@ export function DroidGeneralPanel() {
         )}
 
         <InfoRow label={t("native_library_dir")}>
-          <div className="flex items-center text-sm font-mono break-all">
-            <span className="text-xs">{appInfo.nativeLibraryDir}</span>
+          <div className="flex items-start">
+            <PathDisplay path={appInfo.nativeLibraryDir} onClick={() => openFinderTab(appInfo.nativeLibraryDir)} />
             <CopyButton text={appInfo.nativeLibraryDir} />
           </div>
         </InfoRow>
