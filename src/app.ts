@@ -11,6 +11,7 @@ import { asset } from "./lib/assets.ts";
 import deviceRoutes from "./routes/devices.ts";
 import transferRoutes from "./routes/transfer.ts";
 import dataRoutes from "./routes/data.ts";
+import llmRoutes from "./routes/llm.ts";
 
 const app = new Hono();
 
@@ -45,6 +46,7 @@ api.get("/d.ts/pack", async (c) => {
 api.route("/", deviceRoutes);
 api.route("/", transferRoutes);
 api.route("/", dataRoutes);
+api.route("/", llmRoutes);
 
 app.route("/api", api);
 
