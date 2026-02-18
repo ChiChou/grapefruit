@@ -4,13 +4,18 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
 } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { List, type ListImperativeAPI } from "react-window";
+import {
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+  type ColumnDef,
+} from "@tanstack/react-table";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
-import { ChevronsDown, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,9 +47,9 @@ interface JNIEntry {
   event: JNIDisplayEvent;
 }
 
-const ROW_HEIGHT = 32;
 const MAX_ENTRIES = 8000;
 const THROTTLE_MS = 100;
+const ROW_HEIGHT = 32;
 
 function formatTime(date: Date): string {
   return date.toLocaleTimeString("en-US", {
@@ -70,72 +75,74 @@ function toEntry(
   return { id, timestamp, event };
 }
 
-interface JNIRowProps {
-  entries: JNIEntry[];
-  selectedId: number | null;
-  onSelect: (id: number) => void;
-}
-
-function JNIRow(
-  props: {
-    ariaAttributes: {
-      "aria-posinset": number;
-      "aria-setsize": number;
-      role: "listitem";
-    };
-    index: number;
-    style: CSSProperties;
-  } & JNIRowProps,
-) {
-  const { index, style, entries, selectedId, onSelect } = props;
-  const entry = entries[index];
-  if (!entry) return null;
-
-  const { event } = entry;
-  const isLoad = event.type === "load";
-
-  return (
-    <button
-      type="button"
-      style={style}
-      onClick={() => onSelect(entry.id)}
-      className={`w-full flex items-center gap-2 px-2 border-b text-left text-sm hover:bg-muted/40 ${
-        selectedId === entry.id ? "bg-muted" : ""
-      }`}
-    >
-      <span className="font-mono text-muted-foreground w-24 shrink-0">
-        {formatTime(entry.timestamp)}
+const columns: ColumnDef<JNIEntry>[] = [
+  {
+    id: "timestamp",
+    header: "Time",
+    size: 96,
+    cell: ({ row }) => (
+      <span className="font-mono text-muted-foreground">
+        {formatTime(row.original.timestamp)}
       </span>
-      <span className="font-mono text-muted-foreground w-12 shrink-0 text-center">
-        {event.threadId ?? "-"}
+    ),
+  },
+  {
+    id: "tid",
+    header: "TID",
+    size: 48,
+    cell: ({ row }) => (
+      <span className="font-mono text-muted-foreground text-center">
+        {row.original.event.threadId ?? "-"}
       </span>
-      <Badge
-        variant={
-          isLoad
-            ? "outline"
-            : event.callType === "JavaVM"
-              ? "secondary"
-              : "default"
-        }
-        className="h-5 px-1.5 text-[10px] shrink-0 w-14 justify-center"
-      >
-        {isLoad ? "load" : event.callType}
-      </Badge>
-      <span
-        className="font-mono text-primary truncate w-52 shrink-0"
-        title={event.method}
-      >
-        {event.method}
+    ),
+  },
+  {
+    id: "type",
+    header: "Type",
+    size: 64,
+    cell: ({ row }) => {
+      const { event } = row.original;
+      const isLoad = event.type === "load";
+      return (
+        <Badge
+          variant={
+            isLoad
+              ? "outline"
+              : event.callType === "JavaVM"
+                ? "secondary"
+                : "default"
+          }
+          className="h-5 px-1.5 text-[10px]"
+        >
+          {isLoad ? "load" : event.callType}
+        </Badge>
+      );
+    },
+  },
+  {
+    id: "method",
+    header: "Method",
+    size: 220,
+    cell: ({ row }) => (
+      <span className="font-mono text-primary truncate" title={row.original.event.method}>
+        {row.original.event.method}
       </span>
-      <span
-        className="font-mono text-muted-foreground truncate min-w-0"
-        title={argsPreview(event.args)}
-      >
-        {argsPreview(event.args) || "--"}
-      </span>
-    </button>
-  );
-}
+    ),
+  },
+  {
+    id: "args",
+    header: "Args",
+    size: 200,
+    cell: ({ row }) => {
+      const text = argsPreview(row.original.event.args);
+      return (
+        <span className="font-mono text-muted-foreground truncate" title={text}>
+          {text || "--"}
+        </span>
+      );
+    },
+  },
+];
 
 export function JNITab() {
   const { t } = useTranslation();
@@ -147,12 +154,10 @@ export function JNITab() {
   const [searchFilter, setSearchFilter] = useState("");
 
   const idRef = useRef(1);
-  const listRef = useRef<ListImperativeAPI>(null);
   const pendingRef = useRef<JNIEntry[]>([]);
   const rafRef = useRef<number | null>(null);
   const lastFlushRef = useRef(0);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [listHeight, setListHeight] = useState(320);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
 
   // Toggle start/stop
   const toggleMutation = useMutation({
@@ -198,7 +203,6 @@ export function JNITab() {
     },
     enabled: status === Status.Ready && !!device && !!identifier,
     staleTime: Infinity,
-    gcTime: 0,
   });
 
   // Reset on session change
@@ -255,14 +259,7 @@ export function JNITab() {
       const merged = [...prev, ...incoming];
       return merged.length > MAX_ENTRIES ? merged.slice(-MAX_ENTRIES) : merged;
     });
-
-    requestAnimationFrame(() => {
-      listRef.current?.scrollToRow({
-        index: Math.max(0, entries.length + incoming.length - 1),
-        align: "end",
-      });
-    });
-  }, [entries.length]);
+  }, []);
 
   // Listen for live trace events
   useEffect(() => {
@@ -299,16 +296,6 @@ export function JNITab() {
     };
   }, [status, socket, flushPending]);
 
-  // Observe container size
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const observer = new ResizeObserver((es) => {
-      for (const e of es) setListHeight(e.contentRect.height);
-    });
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
-
   // Filter entries
   const filteredEntries = useMemo(() => {
     const q = searchFilter.trim().toLowerCase();
@@ -326,13 +313,24 @@ export function JNITab() {
     [filteredEntries, selectedId],
   );
 
-  const scrollToLatest = useCallback(() => {
-    if (filteredEntries.length === 0) return;
-    listRef.current?.scrollToRow({
-      index: filteredEntries.length - 1,
-      align: "end",
-    });
-  }, [filteredEntries.length]);
+  const table = useReactTable({
+    data: filteredEntries,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: (row) => String(row.id),
+  });
+
+  const { rows } = table.getRowModel();
+
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => tableContainerRef.current,
+    estimateSize: () => ROW_HEIGHT,
+    overscan: 20,
+  });
+
+  const virtualRows = rowVirtualizer.getVirtualItems();
+  const totalSize = rowVirtualizer.getTotalSize();
 
   if (status !== Status.Ready) {
     return (
@@ -350,81 +348,93 @@ export function JNITab() {
     >
       {/* Left: toolbar + event list */}
       <ResizablePanel defaultSize="65%" minSize="30%">
-        <div className="h-full flex flex-col gap-2 p-3 overflow-hidden">
+        <div className="h-full flex flex-col overflow-hidden">
           {/* Toolbar */}
-          <div className="flex items-center gap-2 shrink-0">
-            <label className="flex items-center gap-2 text-sm shrink-0">
-              <Switch
-                checked={isActive}
-                onCheckedChange={(checked) => toggleMutation.mutate(checked)}
-                disabled={toggleMutation.isPending || !droid}
-              />
-              JNI Trace
-            </label>
+          <div className="flex items-center gap-2 p-2 border-b shrink-0">
+            <Switch
+              checked={isActive}
+              onCheckedChange={(checked) => toggleMutation.mutate(checked)}
+              disabled={toggleMutation.isPending || !droid}
+            />
             <Input
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
               placeholder="Filter..."
               className="max-w-xs"
             />
-            <span className="text-xs text-muted-foreground ml-auto shrink-0">
-              {filteredEntries.length} events
+            <span className="text-xs text-muted-foreground ml-auto">
+              {filteredEntries.length} event{filteredEntries.length !== 1 ? "s" : ""}
             </span>
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 shrink-0"
-              onClick={scrollToLatest}
-              disabled={filteredEntries.length === 0}
-              title="Scroll to latest"
-            >
-              <ChevronsDown className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+              className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-950/30"
               onClick={() => clearMutation.mutate()}
               disabled={clearMutation.isPending || entries.length === 0}
-              title="Clear history"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
 
-          {/* Event table */}
-          <div className="flex-1 min-h-0 border rounded-md overflow-hidden flex flex-col">
-            <div className="grid grid-cols-[96px_48px_56px_208px_minmax(0,1fr)] gap-2 px-2 py-1 border-b bg-muted/40 text-[10px] uppercase tracking-wide text-muted-foreground shrink-0">
-              <span>{t("hook_timestamp")}</span>
-              <span>TID</span>
-              <span>Type</span>
-              <span>{t("method")}</span>
-              <span>{t("args")}</span>
-            </div>
-
-            <div ref={containerRef} className="flex-1 min-h-0">
-              {filteredEntries.length === 0 ? (
-                <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
-                  {isActive
-                    ? "Waiting for JNI calls..."
-                    : "Toggle the switch to start tracing JNI calls"}
-                </div>
-              ) : (
-                <List
-                  listRef={listRef}
-                  style={{ height: listHeight, width: "100%" }}
-                  rowCount={filteredEntries.length}
-                  rowHeight={ROW_HEIGHT}
-                  rowComponent={JNIRow}
-                  rowProps={{
-                    entries: filteredEntries,
-                    selectedId,
-                    onSelect: setSelectedId,
-                  }}
-                  overscanCount={20}
-                />
-              )}
-            </div>
+          {/* Virtualized table */}
+          <div ref={tableContainerRef} className="flex-1 overflow-auto">
+            <table className="w-full text-xs border-collapse">
+              <thead className="sticky top-0 bg-background z-10">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id} className="border-b">
+                    {headerGroup.headers.map((header) => (
+                      <th
+                        key={header.id}
+                        className="text-left font-medium p-2 text-muted-foreground"
+                        style={{ width: header.getSize() }}
+                      >
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody>
+                {virtualRows.length > 0 && virtualRows[0].start > 0 && (
+                  <tr>
+                    <td colSpan={columns.length} style={{ height: virtualRows[0].start }} />
+                  </tr>
+                )}
+                {virtualRows.map((virtualRow) => {
+                  const row = rows[virtualRow.index];
+                  return (
+                    <tr
+                      key={row.id}
+                      className={`border-b cursor-pointer hover:bg-muted/50 ${
+                        selectedId === row.original.id ? "bg-accent" : ""
+                      }`}
+                      style={{ height: virtualRow.size }}
+                      onClick={() =>
+                        setSelectedId(selectedId === row.original.id ? null : row.original.id)
+                      }
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <td
+                          key={cell.id}
+                          className="p-2 truncate"
+                          style={{ width: cell.column.getSize(), maxWidth: cell.column.getSize() }}
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+                {virtualRows.length > 0 && (
+                  <tr>
+                    <td
+                      colSpan={columns.length}
+                      style={{ height: totalSize - (virtualRows[virtualRows.length - 1]?.end ?? 0) }}
+                    />
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </ResizablePanel>

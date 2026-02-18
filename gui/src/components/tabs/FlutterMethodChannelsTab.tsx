@@ -4,15 +4,28 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
 } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { List, type ListImperativeAPI } from "react-window";
+import {
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+  type ColumnDef,
+} from "@tanstack/react-table";
+import { useVirtualizer } from "@tanstack/react-virtual";
+
+import { Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 import { Switch } from "@/components/ui/switch";
 import { Status, Platform, useSession } from "@/context/SessionContext";
 
@@ -35,10 +48,9 @@ interface FlutterEntry {
   event: FlutterEvent;
 }
 
-
-const ROW_HEIGHT = 32;
 const MAX_ENTRIES = 8000;
 const THROTTLE_MS = 100;
+const ROW_HEIGHT = 32;
 
 function formatTime(date: Date): string {
   return date.toLocaleTimeString("en-US", {
@@ -90,66 +102,64 @@ function formatJson(value: unknown): string {
   }
 }
 
-interface FlutterRowProps {
-  entries: FlutterEntry[];
-  selectedId: number | null;
-  onSelect: (id: number) => void;
-}
-
-function FlutterRow(
-  props: {
-    ariaAttributes: {
-      "aria-posinset": number;
-      "aria-setsize": number;
-      role: "listitem";
-    };
-    index: number;
-    style: CSSProperties;
-  } & FlutterRowProps,
-) {
-  const { index, style, entries, selectedId, onSelect } = props;
-  const entry = entries[index];
-  if (!entry) return null;
-
-  return (
-    <button
-      type="button"
-      style={style}
-      onClick={() => onSelect(entry.id)}
-      className={`w-full flex items-center gap-2 px-2 border-b text-left text-xs hover:bg-muted/40 ${
-        selectedId === entry.id ? "bg-muted" : ""
-      }`}
-    >
-      <span className="font-mono text-muted-foreground w-24 shrink-0">
-        {formatTime(entry.timestamp)}
+const columns: ColumnDef<FlutterEntry>[] = [
+  {
+    id: "timestamp",
+    header: "Time",
+    size: 96,
+    cell: ({ row }) => (
+      <span className="font-mono text-muted-foreground">
+        {formatTime(row.original.timestamp)}
       </span>
+    ),
+  },
+  {
+    id: "direction",
+    header: "Dir",
+    size: 80,
+    cell: ({ row }) => (
       <Badge
-        variant={entry.direction === "dart" ? "default" : "secondary"}
-        className="h-5 px-1.5 text-[10px] shrink-0"
+        variant={row.original.direction === "dart" ? "default" : "secondary"}
+        className="h-5 px-1.5 text-[10px]"
       >
-        {entry.direction === "dart" ? "D\u2192N" : "N\u2192D"}
+        {row.original.direction === "dart" ? "\u2192 Native" : "\u2192 Dart"}
       </Badge>
-      <span
-        className="font-mono text-primary truncate w-56 shrink-0"
-        title={entry.channel}
-      >
-        {entry.channel}
+    ),
+  },
+  {
+    accessorKey: "channel",
+    header: "Channel",
+    size: 240,
+    cell: ({ getValue }) => (
+      <span className="font-mono truncate" title={getValue<string>()}>
+        {getValue<string>()}
       </span>
-      <span
-        className="font-mono text-xs truncate w-44 shrink-0"
-        title={entry.method}
-      >
-        {entry.method}
+    ),
+  },
+  {
+    accessorKey: "method",
+    header: "Method",
+    size: 180,
+    cell: ({ getValue }) => (
+      <span className="font-mono truncate" title={getValue<string>()}>
+        {getValue<string>()}
       </span>
-      <span
-        className="text-muted-foreground truncate min-w-0"
-        title={preview(entry.event.args)}
-      >
-        {preview(entry.event.args) || "--"}
-      </span>
-    </button>
-  );
-}
+    ),
+  },
+  {
+    id: "args",
+    header: "Args",
+    size: 200,
+    cell: ({ row }) => {
+      const text = preview(row.original.event.args);
+      return (
+        <span className="text-muted-foreground truncate" title={text}>
+          {text || "--"}
+        </span>
+      );
+    },
+  },
+];
 
 export function FlutterMethodChannelsTab() {
   const { t } = useTranslation();
@@ -166,12 +176,10 @@ export function FlutterMethodChannelsTab() {
   const [showNative, setShowNative] = useState(true);
 
   const idRef = useRef(1);
-  const listRef = useRef<ListImperativeAPI>(null);
   const pendingRef = useRef<FlutterEntry[]>([]);
   const rafRef = useRef<number | null>(null);
   const lastFlushRef = useRef(0);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [listHeight, setListHeight] = useState(320);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
 
   // Check if flutter is available
   const {
@@ -201,6 +209,23 @@ export function FlutterMethodChannelsTab() {
     },
   });
 
+  // Clear history
+  const clearMutation = useMutation({
+    mutationFn: async () => {
+      if (!device || !identifier) return;
+      const res = await fetch(`/api/history/flutter/${device}/${identifier}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to clear history");
+    },
+    onSuccess: () => {
+      setEntries([]);
+      setSelectedId(null);
+      idRef.current = 1;
+      pendingRef.current = [];
+    },
+  });
+
   // Load history
   const { data: history } = useQuery<{
     logs: {
@@ -226,7 +251,6 @@ export function FlutterMethodChannelsTab() {
       !!identifier &&
       !!flutterAvailable,
     staleTime: Infinity,
-    gcTime: 0,
   });
 
   // Reset on session change
@@ -279,14 +303,7 @@ export function FlutterMethodChannelsTab() {
       const merged = [...prev, ...incoming];
       return merged.length > MAX_ENTRIES ? merged.slice(-MAX_ENTRIES) : merged;
     });
-
-    requestAnimationFrame(() => {
-      listRef.current?.scrollToRow({
-        index: Math.max(0, entries.length + incoming.length - 1),
-        align: "end",
-      });
-    });
-  }, [entries.length]);
+  }, []);
 
   // Listen for live hook events
   useEffect(() => {
@@ -314,16 +331,6 @@ export function FlutterMethodChannelsTab() {
     };
   }, [status, socket, flushPending]);
 
-  // Observe container size
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const observer = new ResizeObserver((es) => {
-      for (const e of es) setListHeight(e.contentRect.height);
-    });
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
-
   // Filter entries
   const filteredEntries = useMemo(() => {
     const q = searchFilter.trim().toLowerCase();
@@ -340,6 +347,25 @@ export function FlutterMethodChannelsTab() {
     () => filteredEntries.find((e) => e.id === selectedId) ?? null,
     [filteredEntries, selectedId],
   );
+
+  const table = useReactTable({
+    data: filteredEntries,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: (row) => String(row.id),
+  });
+
+  const { rows } = table.getRowModel();
+
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => tableContainerRef.current,
+    estimateSize: () => ROW_HEIGHT,
+    overscan: 20,
+  });
+
+  const virtualRows = rowVirtualizer.getVirtualItems();
+  const totalSize = rowVirtualizer.getTotalSize();
 
   if (status !== Status.Ready) {
     return (
@@ -366,70 +392,117 @@ export function FlutterMethodChannelsTab() {
   }
 
   return (
-    <div className="h-full p-4 flex flex-col gap-3 overflow-hidden">
-      {/* Toolbar */}
-      <div className="flex items-center gap-3">
-        <label className="flex items-center gap-2 text-sm shrink-0">
-          <Switch
-            checked={isActive}
-            onCheckedChange={(checked) => toggleMutation.mutate(checked)}
-            disabled={toggleMutation.isPending || !api}
-          />
-          {t("flutter_capturing")}
-        </label>
-        <Input
-          value={searchFilter}
-          onChange={(e) => setSearchFilter(e.target.value)}
-          placeholder={t("search")}
-          className="max-w-xs"
-        />
-        <label className="flex items-center gap-1.5 text-sm shrink-0">
-          <Checkbox checked={showDart} onCheckedChange={setShowDart} />
-          {t("flutter_direction_d2n")}
-        </label>
-        <label className="flex items-center gap-1.5 text-sm shrink-0">
-          <Checkbox checked={showNative} onCheckedChange={setShowNative} />
-          {t("flutter_direction_n2d")}
-        </label>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] gap-3">
-        {/* Event list */}
-        <div className="h-full min-h-0 border rounded-md overflow-hidden">
-          <div className="grid grid-cols-[96px_64px_224px_176px_minmax(0,1fr)] gap-2 px-2 py-1 border-b bg-muted/40 text-[10px] uppercase tracking-wide text-muted-foreground">
-            <span>{t("hook_timestamp")}</span>
-            <span>{t("hook_direction")}</span>
-            <span>{t("flutter_channel")}</span>
-            <span>{t("method")}</span>
-            <span>{t("args")}</span>
+    <ResizablePanelGroup
+      orientation="horizontal"
+      className="h-full"
+      autoSaveId="flutter-split"
+    >
+      {/* Left: toolbar + event list */}
+      <ResizablePanel defaultSize="65%" minSize="30%">
+        <div className="h-full flex flex-col overflow-hidden">
+          {/* Toolbar */}
+          <div className="flex items-center gap-2 p-2 border-b shrink-0">
+            <Switch
+              checked={isActive}
+              onCheckedChange={(checked) => toggleMutation.mutate(checked)}
+              disabled={toggleMutation.isPending || !api}
+            />
+            <Input
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              placeholder={t("search")}
+              className="max-w-xs"
+            />
+            <label className="flex items-center gap-1.5 text-sm shrink-0">
+              <Checkbox checked={showDart} onCheckedChange={setShowDart} />
+              {t("flutter_direction_d2n")}
+            </label>
+            <label className="flex items-center gap-1.5 text-sm shrink-0">
+              <Checkbox checked={showNative} onCheckedChange={setShowNative} />
+              {t("flutter_direction_n2d")}
+            </label>
+            <span className="text-xs text-muted-foreground ml-auto">
+              {filteredEntries.length} event{filteredEntries.length !== 1 ? "s" : ""}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-950/30"
+              onClick={() => clearMutation.mutate()}
+              disabled={clearMutation.isPending || entries.length === 0}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
           </div>
 
-          <div ref={containerRef} className="h-[calc(100%-30px)] min-h-0">
-            {filteredEntries.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
-                {t("flutter_no_events")}
-              </div>
-            ) : (
-              <List
-                listRef={listRef}
-                style={{ height: listHeight, width: "100%" }}
-                rowCount={filteredEntries.length}
-                rowHeight={ROW_HEIGHT}
-                rowComponent={FlutterRow}
-                rowProps={{
-                  entries: filteredEntries,
-                  selectedId,
-                  onSelect: setSelectedId,
-                }}
-                overscanCount={20}
-              />
-            )}
+          {/* Virtualized table */}
+          <div ref={tableContainerRef} className="flex-1 overflow-auto">
+            <table className="w-full text-xs border-collapse">
+              <thead className="sticky top-0 bg-background z-10">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id} className="border-b">
+                    {headerGroup.headers.map((header) => (
+                      <th
+                        key={header.id}
+                        className="text-left font-medium p-2 text-muted-foreground"
+                        style={{ width: header.getSize() }}
+                      >
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody>
+                {virtualRows.length > 0 && virtualRows[0].start > 0 && (
+                  <tr>
+                    <td colSpan={columns.length} style={{ height: virtualRows[0].start }} />
+                  </tr>
+                )}
+                {virtualRows.map((virtualRow) => {
+                  const row = rows[virtualRow.index];
+                  return (
+                    <tr
+                      key={row.id}
+                      className={`border-b cursor-pointer hover:bg-muted/50 ${
+                        selectedId === row.original.id ? "bg-accent" : ""
+                      }`}
+                      style={{ height: virtualRow.size }}
+                      onClick={() =>
+                        setSelectedId(selectedId === row.original.id ? null : row.original.id)
+                      }
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <td
+                          key={cell.id}
+                          className="p-2 truncate"
+                          style={{ width: cell.column.getSize(), maxWidth: cell.column.getSize() }}
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+                {virtualRows.length > 0 && (
+                  <tr>
+                    <td
+                      colSpan={columns.length}
+                      style={{ height: totalSize - (virtualRows[virtualRows.length - 1]?.end ?? 0) }}
+                    />
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
+      </ResizablePanel>
 
-        {/* Detail panel */}
-        <div className="min-h-0 border rounded-md overflow-auto p-3 text-xs">
+      <ResizableHandle />
+
+      {/* Right: detail panel */}
+      <ResizablePanel defaultSize="35%" minSize="15%">
+        <div className="h-full overflow-auto p-3 text-xs">
           {!selectedEntry ? (
             <div className="h-full flex items-center justify-center text-muted-foreground">
               {t("flutter_select_event")}
@@ -458,8 +531,8 @@ export function FlutterMethodChannelsTab() {
                     {t("hook_direction")}:{" "}
                   </span>
                   {selectedEntry.direction === "dart"
-                    ? "Dart \u2192 Native"
-                    : "Native \u2192 Dart"}
+                    ? "\u2192 Native"
+                    : "\u2192 Dart"}
                 </div>
               </div>
 
@@ -479,7 +552,7 @@ export function FlutterMethodChannelsTab() {
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </ResizablePanel>
+    </ResizablePanelGroup>
   );
 }
