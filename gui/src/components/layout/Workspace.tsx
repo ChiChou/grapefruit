@@ -46,6 +46,7 @@ import { FruityURLLoadingTab } from "../tabs/FruityURLLoadingTab";
 import { FlutterMethodChannelsTab } from "../tabs/FlutterMethodChannelsTab";
 import { DroidHandlesTab } from "../tabs/DroidHandlesTab";
 import { DroidKeystoreTab } from "../tabs/DroidKeystoreTab";
+import { FruityInfoPlistInsightsTab } from "../tabs/FruityInfoPlistInsightsTab";
 import { DroidManifestTab } from "../tabs/DroidManifestTab";
 import { DroidProvidersTab } from "../tabs/DroidProvidersTab";
 import { NoCloseTabHeader } from "../tabs/NoCloseTabHeader";
@@ -132,6 +133,7 @@ function WorkspaceContent() {
     flutterChannels: FlutterMethodChannelsTab,
     droidHandles: DroidHandlesTab,
     keystore: DroidKeystoreTab,
+    infoPlistInsights: FruityInfoPlistInsightsTab,
     droidManifest: DroidManifestTab,
     droidProviders: DroidProvidersTab,
   };

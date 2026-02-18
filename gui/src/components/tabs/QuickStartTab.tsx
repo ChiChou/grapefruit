@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import {
   FileText,
   FileCode,
+  FileSearch,
   FolderOpen,
   FolderSearch,
   FolderKey,
@@ -87,6 +88,13 @@ export function QuickStartTab() {
       component: "infoPlist",
       title: "Info.plist",
       desc: t("quickstart_infoplist_desc"),
+    },
+    {
+      icon: <FileSearch className="w-5 h-5" />,
+      id: "info_plist_insights_tab",
+      component: "infoPlistInsights",
+      title: t("plist_insights_title"),
+      desc: t("quickstart_plist_insights_desc"),
     },
     {
       icon: <Shield className="w-5 h-5" />,
