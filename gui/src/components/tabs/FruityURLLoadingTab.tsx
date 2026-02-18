@@ -318,16 +318,16 @@ export function FruityURLLoadingTab() {
     };
   }, [socket, status, handleEvent]);
 
-  // Load historical HTTP logs from database
-  const { data: httpLogHistory } = useQuery<{
+  // Load historical URL loading records from database
+  const { data: urlLoadingHistory } = useQuery<{
     requests: (CapturedRequest & { size: string | number })[];
   }>({
-    queryKey: ["httpLogHistory", device, identifier],
+    queryKey: ["urlLoadingHistory", device, identifier],
     queryFn: async () => {
       const res = await fetch(
         `/api/history/http/${device}/${identifier}?limit=5000`,
       );
-      if (!res.ok) throw new Error("Failed to load HTTP log history");
+      if (!res.ok) throw new Error("Failed to load URL loading history");
       return res.json();
     },
     enabled: !!device && !!identifier,
@@ -336,30 +336,30 @@ export function FruityURLLoadingTab() {
   });
 
   useEffect(() => {
-    if (!httpLogHistory?.requests?.length) return;
+    if (!urlLoadingHistory?.requests?.length) return;
     setRequests(() => {
       const map = new Map<string, CapturedRequest>();
-      for (const req of [...httpLogHistory.requests].reverse()) {
+      for (const req of [...urlLoadingHistory.requests].reverse()) {
         map.set(req.id, { ...req, size: BigInt(req.size || 0) });
       }
       return map;
     });
-  }, [httpLogHistory]);
+  }, [urlLoadingHistory]);
 
-  const clearHttpLogsMutation = useMutation({
+  const clearUrlLoadingMutation = useMutation({
     mutationFn: async () => {
       if (!device || !identifier) return;
       const res = await fetch(`/api/history/http/${device}/${identifier}`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("Failed to clear HTTP logs from database");
+      if (!res.ok) throw new Error("Failed to clear URL loading records from database");
     },
   });
 
   const handleClear = () => {
     setRequests(new Map());
     setSelectedId(null);
-    clearHttpLogsMutation.mutate();
+    clearUrlLoadingMutation.mutate();
   };
 
   const requestList = Array.from(requests.values());

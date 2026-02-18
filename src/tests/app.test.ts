@@ -500,12 +500,12 @@ describe("Crypto Logs API", () => {
   });
 });
 
-describe("HTTP Logs API", () => {
+describe("URL Loading API", () => {
   afterEach(() => {
     getStores().http.rm();
   });
 
-  it("should return empty http logs", async () => {
+  it("should return empty url loading records", async () => {
     const r = await app.request(`/api/history/http/${device}/${identifier}`);
     assert.strictEqual(r.status, 200);
     const body = (await r.json()) as { requests: unknown[]; total: number };
@@ -536,7 +536,7 @@ describe("HTTP Logs API", () => {
     assert.strictEqual(body.requests[0].statusCode, 200);
   });
 
-  it("should clear http logs", async () => {
+  it("should clear url loading records", async () => {
     const { http: httpStore } = getStores();
     httpStore.upsert({
       event: "requestWillBeSent",
@@ -555,7 +555,7 @@ describe("HTTP Logs API", () => {
     assert.strictEqual(body.total, 0);
   });
 
-  it("should isolate http logs by device/identifier", async () => {
+  it("should isolate url loading records by device/identifier", async () => {
     const { http: httpStore } = getStores();
     httpStore.upsert({
       event: "requestWillBeSent",

@@ -279,7 +279,7 @@ const routes = new Hono()
       return c.text("Failed to clear flutter logs", 500);
     }
   })
-  // HTTP log endpoints
+  // URL loading endpoints
   .get("/history/http/:device/:identifier", (c) => {
     const deviceId = c.req.param("device");
     const identifier = c.req.param("identifier");
@@ -295,7 +295,7 @@ const routes = new Hono()
 
       return c.json({ requests, total, limit, offset });
     } catch (e) {
-      console.error("Failed to query http logs:", e);
+      console.error("Failed to query url loading records:", e);
       return c.json({ requests: [], total: 0, limit, offset });
     }
   })
@@ -307,8 +307,8 @@ const routes = new Hono()
       new HttpStore(deviceId, identifier).rm();
       return c.body(null, 204);
     } catch (e) {
-      console.error("Failed to clear http logs:", e);
-      return c.text("Failed to clear http logs", 500);
+      console.error("Failed to clear url loading records:", e);
+      return c.text("Failed to clear url loading records", 500);
     }
   })
   // HTTP attachment download

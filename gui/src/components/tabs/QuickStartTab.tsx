@@ -148,10 +148,10 @@ export function QuickStartTab() {
     },
     {
       icon: <Network className="w-5 h-5" />,
-      id: "http_log_tab",
-      component: "httpLog",
-      title: "HTTP Log",
-      desc: t("quickstart_httplog_desc"),
+      id: "url_loading_tab",
+      component: "urlLoading",
+      title: "URL Loading",
+      desc: t("quickstart_urlloading_desc"),
     },
     {
       icon: <Smartphone className="w-5 h-5" />,
@@ -180,10 +180,10 @@ export function QuickStartTab() {
     },
     {
       icon: <Network className="w-5 h-5" />,
-      id: "http_log_tab",
-      component: "httpLog",
-      title: "HTTP Log",
-      desc: t("quickstart_httplog_desc"),
+      id: "url_loading_tab",
+      component: "urlLoading",
+      title: "URL Loading",
+      desc: t("quickstart_urlloading_desc"),
     },
   ];
 

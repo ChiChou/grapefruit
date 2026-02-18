@@ -130,7 +130,7 @@ function WorkspaceContent() {
     jsc: FruityJSCTab,
     userdefaults: FruityUserDefaultsTab,
     disassembly: FruityDisassemblyTab,
-    httpLog: FruityURLLoadingTab,
+    urlLoading: FruityURLLoadingTab,
     flutterChannels: FlutterMethodChannelsTab,
     jni: JNITab,
     droidHandles: DroidHandlesTab,
