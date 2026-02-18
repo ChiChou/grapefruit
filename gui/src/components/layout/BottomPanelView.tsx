@@ -7,16 +7,12 @@ import {
   Anchor,
   Terminal,
   Lock,
-  ArrowDown,
-  Trash2,
-  Download,
 } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { Status, Platform, useSession } from "@/context/SessionContext";
 
-import { LogViewer, type LogViewerHandle } from "../shared/LogViewer";
+import { LogPanel, type LogViewerHandle } from "../shared/LogPanel";
 import { HookResultsView } from "../shared/HookResultsView";
 import { CryptoResultsView } from "../shared/CryptoResultsView";
 import { CodeEditorTab } from "../tabs/CodeEditorTab";
@@ -173,44 +169,11 @@ export function BottomPanelView() {
         keepMounted
         hidden={activeTab !== "logs"}
       >
-        <div className="relative h-full">
-          <LogViewer ref={syslogRef} />
-          <div className="absolute bottom-4 right-4 z-10 flex gap-1">
-            <Button
-              variant="secondary"
-              size="icon"
-              className="h-8 w-8 rounded-full shadow-md"
-              onClick={() => syslogRef.current?.scrollToBottom()}
-            >
-              <ArrowDown className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="secondary"
-              size="icon"
-              className="h-8 w-8 rounded-full shadow-md"
-              nativeButton={false}
-              render={
-                <a
-                  href={`/api/logs/${device}/${identifier}/syslog?download=1`}
-                  download
-                />
-              }
-            >
-              <Download className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="secondary"
-              size="icon"
-              className="h-8 w-8 rounded-full shadow-md"
-              onClick={() => {
-                syslogRef.current?.clear();
-                socket?.emit("clearLog", "syslog", () => {});
-              }}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        <LogPanel
+          ref={syslogRef}
+          downloadUrl={`/api/logs/${device}/${identifier}/syslog?download=1`}
+          onClear={() => socket?.emit("clearLog", "syslog", () => {})}
+        />
       </TabsContent>
       <TabsContent
         value="hooks"
@@ -234,44 +197,11 @@ export function BottomPanelView() {
         keepMounted
         hidden={activeTab !== "agent-logs"}
       >
-        <div className="relative h-full">
-          <LogViewer ref={logRef} />
-          <div className="absolute bottom-4 right-4 z-10 flex gap-1">
-            <Button
-              variant="secondary"
-              size="icon"
-              className="h-8 w-8 rounded-full shadow-md"
-              onClick={() => logRef.current?.scrollToBottom()}
-            >
-              <ArrowDown className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="secondary"
-              size="icon"
-              className="h-8 w-8 rounded-full shadow-md"
-              nativeButton={false}
-              render={
-                <a
-                  href={`/api/logs/${device}/${identifier}/agent?download=1`}
-                  download
-                />
-              }
-            >
-              <Download className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="secondary"
-              size="icon"
-              className="h-8 w-8 rounded-full shadow-md"
-              onClick={() => {
-                logRef.current?.clear();
-                socket?.emit("clearLog", "agent", () => {});
-              }}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        <LogPanel
+          ref={logRef}
+          downloadUrl={`/api/logs/${device}/${identifier}/agent?download=1`}
+          onClear={() => socket?.emit("clearLog", "agent", () => {})}
+        />
       </TabsContent>
       <TabsContent
         value="repl"
