@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { ShieldAlert, ShieldCheck, Info, AlertTriangle, Lock, Unlock, ChevronRight } from "lucide-react";
@@ -275,16 +276,9 @@ function PermissionRow({ perm }: { perm: PermissionEntry }) {
   );
 }
 
-export function ManifestInsights({
-  xml,
-  permsOpen,
-  setPermsOpen,
-}: {
-  xml: string;
-  permsOpen: boolean;
-  setPermsOpen: React.Dispatch<React.SetStateAction<boolean>>;
-}) {
+export function ManifestInsights({ xml }: { xml: string }) {
   const { t } = useTranslation();
+  const [permsOpen, setPermsOpen] = useState(false);
   const { insights, permissions } = parseManifestInsights(xml, t);
 
   const highCount = insights.filter((i) => i.severity === "high").length;
