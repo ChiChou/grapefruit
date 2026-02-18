@@ -59,7 +59,7 @@ function FeatureCard({
   );
 }
 
-export function QuickStartTab() {
+export function HomeTab() {
   const { t } = useTranslation();
   const { platform, mode } = useSession();
 
@@ -73,7 +73,7 @@ export function QuickStartTab() {
       id: "finder_tab",
       component: "finder",
       title: t("finder"),
-      desc: t("quickstart_finder_desc"),
+      desc: t("home_finder_desc"),
       params: { path: "~" },
     },
     {
@@ -81,77 +81,77 @@ export function QuickStartTab() {
       id: "handles_tab",
       component: "handles",
       title: "lsof",
-      desc: t("quickstart_lsof_desc"),
+      desc: t("home_lsof_desc"),
     },
     {
       icon: <FileText className="w-5 h-5" />,
       id: "info_plist_tab",
       component: "infoPlist",
       title: "Info.plist",
-      desc: t("quickstart_infoplist_desc"),
+      desc: t("home_infoplist_desc"),
     },
     {
       icon: <FileSearch className="w-5 h-5" />,
       id: "info_plist_insights_tab",
       component: "infoPlistInsights",
       title: t("plist_insights_title"),
-      desc: t("quickstart_plist_insights_desc"),
+      desc: t("home_plist_insights_desc"),
     },
     {
       icon: <Shield className="w-5 h-5" />,
       id: "entitlements_tab",
       component: "entitlements",
       title: "Entitlements",
-      desc: t("quickstart_entitlements_desc"),
+      desc: t("home_entitlements_desc"),
     },
     {
       icon: <Cookie className="w-5 h-5" />,
       id: "binary_cookie_tab",
       component: "binaryCookie",
       title: "Binary Cookies",
-      desc: t("quickstart_cookies_desc"),
+      desc: t("home_cookies_desc"),
     },
     {
       icon: <FolderKey className="w-5 h-5" />,
       id: "keychain_tab",
       component: "keychain",
       title: "KeyChain",
-      desc: t("quickstart_keychain_desc"),
+      desc: t("home_keychain_desc"),
     },
     {
       icon: <Settings className="w-5 h-5" />,
       id: "userdefaults_tab",
       component: "userdefaults",
       title: "UserDefaults",
-      desc: t("quickstart_userdefaults_desc"),
+      desc: t("home_userdefaults_desc"),
     },
     {
       icon: <Layout className="w-5 h-5" />,
       id: "ui_dump_tab",
       component: "uiDump",
       title: t("inspect_ui"),
-      desc: t("quickstart_ui_desc"),
+      desc: t("home_ui_desc"),
     },
     {
       icon: <Globe className="w-5 h-5" />,
       id: "webview_tab",
       component: "webview",
       title: "WebViews",
-      desc: t("quickstart_webview_desc"),
+      desc: t("home_webview_desc"),
     },
     {
       icon: <Code className="w-5 h-5" />,
       id: "jsc_tab",
       component: "jsc",
       title: "JSContext",
-      desc: t("quickstart_jsc_desc"),
+      desc: t("home_jsc_desc"),
     },
     {
       icon: <Network className="w-5 h-5" />,
       id: "url_loading_tab",
       component: "urlLoading",
       title: "URL Loading",
-      desc: t("quickstart_urlloading_desc"),
+      desc: t("home_urlloading_desc"),
     },
     {
       icon: <Smartphone className="w-5 h-5" />,
@@ -168,7 +168,7 @@ export function QuickStartTab() {
       id: "finder_tab",
       component: "finder",
       title: t("finder"),
-      desc: t("quickstart_finder_desc"),
+      desc: t("home_finder_desc"),
       params: { path: "/" },
     },
     {
@@ -176,14 +176,14 @@ export function QuickStartTab() {
       id: "handles_tab",
       component: "handles",
       title: "lsof",
-      desc: t("quickstart_lsof_desc"),
+      desc: t("home_lsof_desc"),
     },
     {
       icon: <Network className="w-5 h-5" />,
       id: "url_loading_tab",
       component: "urlLoading",
       title: "URL Loading",
-      desc: t("quickstart_urlloading_desc"),
+      desc: t("home_urlloading_desc"),
     },
   ];
 
@@ -193,7 +193,7 @@ export function QuickStartTab() {
       id: "finder_tab",
       component: "finder",
       title: t("finder"),
-      desc: t("quickstart_finder_desc"),
+      desc: t("home_finder_desc"),
       params: { path: "/" },
     },
     {
@@ -201,28 +201,28 @@ export function QuickStartTab() {
       id: "droid_handles_tab",
       component: "droidHandles",
       title: "lsof",
-      desc: t("quickstart_lsof_desc"),
+      desc: t("home_lsof_desc"),
     },
     {
       icon: <FileCode className="w-5 h-5" />,
       id: "droid_manifest_tab",
       component: "droidManifest",
       title: "AndroidManifest.xml",
-      desc: t("quickstart_manifest_desc"),
+      desc: t("home_manifest_desc"),
     },
     {
       icon: <KeyRound className="w-5 h-5" />,
       id: "keystore_tab",
       component: "keystore",
       title: t("keystore"),
-      desc: t("quickstart_keystore_desc"),
+      desc: t("home_keystore_desc"),
     },
     {
       icon: <Database className="w-5 h-5" />,
       id: "droid_providers_tab",
       component: "droidProviders",
       title: t("content_providers"),
-      desc: t("quickstart_providers_desc"),
+      desc: t("home_providers_desc"),
     },
     {
       icon: <Cpu className="w-5 h-5" />,
@@ -246,7 +246,7 @@ export function QuickStartTab() {
       id: "finder_tab",
       component: "finder",
       title: t("finder"),
-      desc: t("quickstart_finder_desc"),
+      desc: t("home_finder_desc"),
       params: { path: "/" },
     },
     {

@@ -40,7 +40,7 @@ import { MemoryPreviewTab } from "../tabs/MemoryPreviewTab";
 import { FruityWebViewTab } from "../tabs/FruityWebViewTab";
 import { FruityJSCTab } from "../tabs/FruityJSCTab";
 import { FruityUserDefaultsTab } from "../tabs/FruityUserDefaultsTab";
-import { QuickStartTab } from "../tabs/QuickStartTab";
+import { HomeTab } from "../tabs/HomeTab";
 import { FruityDisassemblyTab } from "../tabs/FruityDisassemblyTab";
 import { FruityURLLoadingTab } from "../tabs/FruityURLLoadingTab";
 import { FlutterMethodChannelsTab } from "../tabs/FlutterMethodChannelsTab";
@@ -108,7 +108,7 @@ function WorkspaceContent() {
   );
 
   const components = {
-    quickstart: QuickStartTab,
+    home: HomeTab,
     handles: FruityHandlesTab,
     infoPlist: FruityInfoPlistTab,
     entitlements: FruityEntitlementsTab,
@@ -188,10 +188,10 @@ function WorkspaceContent() {
 
   const createDefaultLayout = (dockApi: DockviewApi) => {
     dockApi.addPanel({
-      id: "quickstart_tab",
-      component: "quickstart",
+      id: "home_tab",
+      component: "home",
       tabComponent: "noClose",
-      title: t("quickstart"),
+      title: t("home"),
     });
   };
 
