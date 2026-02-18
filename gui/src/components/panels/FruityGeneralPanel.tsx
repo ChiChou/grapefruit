@@ -127,14 +127,14 @@ export function FruityGeneralPanel() {
               <div className="text-sm text-muted-foreground mb-1">
                 {t("app_name")}
               </div>
-              <div className="text-sm">{basicInfo.label || t("na")}</div>
+              <div className="text-sm">{basicInfo.label || "N/A"}</div>
             </div>
             <div className="mt-2">
               <div className="text-sm text-muted-foreground mb-1">
                 {t("bundle_id")}
               </div>
               <div className="text-sm font-mono break-all">
-                {basicInfo.id || t("na")}
+                {basicInfo.id || "N/A"}
               </div>
             </div>
           </div>
@@ -144,9 +144,9 @@ export function FruityGeneralPanel() {
             {t("version")}
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <span>{basicInfo.version || t("na")}</span>
+            <span>{basicInfo.version || "N/A"}</span>
             <Badge variant="secondary" className="text-xs">
-              {basicInfo.semVer || t("na")}
+              {basicInfo.semVer || "N/A"}
             </Badge>
           </div>
         </div>
@@ -154,7 +154,7 @@ export function FruityGeneralPanel() {
           <div className="text-xs text-muted-foreground mb-1">
             {t("min_os")}
           </div>
-          <Badge variant="outline">{basicInfo.minOS || t("na")}</Badge>
+          <Badge variant="outline">{basicInfo.minOS || "N/A"}</Badge>
         </div>
         <div>
           <div className="text-xs text-muted-foreground mb-1">
@@ -169,7 +169,7 @@ export function FruityGeneralPanel() {
               <CopyButton text={basicInfo.path} />
             </div>
           ) : (
-            <span className="text-sm">{t("na")}</span>
+            <span className="text-sm">{"N/A"}</span>
           )}
         </div>
         <div>
@@ -177,7 +177,7 @@ export function FruityGeneralPanel() {
             {t("executable")}
           </div>
           <div className="flex items-center text-sm font-mono break-all">
-            <span className="text-xs">{basicInfo.main || t("na")}</span>
+            <span className="text-xs">{basicInfo.main || "N/A"}</span>
             {basicInfo.main && <CopyButton text={basicInfo.main} />}
           </div>
         </div>
@@ -186,7 +186,7 @@ export function FruityGeneralPanel() {
             {t("tmp_dir")}
           </div>
           <div className="flex items-center text-sm font-mono break-all">
-            <span className="text-xs">{basicInfo.tmp || t("na")}</span>
+            <span className="text-xs">{basicInfo.tmp || "N/A"}</span>
             {basicInfo.tmp && <CopyButton text={basicInfo.tmp} />}
           </div>
         </div>
@@ -203,7 +203,7 @@ export function FruityGeneralPanel() {
               <CopyButton text={basicInfo.home} />
             </div>
           ) : (
-            <span className="text-sm">{t("na")}</span>
+            <span className="text-sm">{"N/A"}</span>
           )}
         </div>
       </div>

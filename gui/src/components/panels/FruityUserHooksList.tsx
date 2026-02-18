@@ -133,7 +133,7 @@ export function FruityUserHooksList() {
       {objcHooks.length > 0 && (
         <div>
           <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">
-            {t("hook_objc")} ({objcHooks.length})
+            Objective-C ({objcHooks.length})
           </div>
           <div className="space-y-1">{objcHooks.map(renderHookItem)}</div>
         </div>

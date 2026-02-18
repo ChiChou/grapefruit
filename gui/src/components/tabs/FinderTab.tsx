@@ -313,7 +313,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
               </TabsTrigger>
               {!isDaemon && (
                 <TabsTrigger value="bundle" className="flex-1">
-                  {isDroid ? t("apk") : t("bundle")}
+                  {isDroid ? "APK" : t("bundle")}
                 </TabsTrigger>
               )}
             </TabsList>

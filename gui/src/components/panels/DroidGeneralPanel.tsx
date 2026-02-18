@@ -173,7 +173,7 @@ export function DroidGeneralPanel() {
 
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="secondary" className="text-xs">
-            {t("uid")}: {appInfo.uid}
+            UID: {appInfo.uid}
           </Badge>
           <Badge variant="secondary" className="text-xs">
             {t("target_sdk")}: {appInfo.targetSdkVersion}

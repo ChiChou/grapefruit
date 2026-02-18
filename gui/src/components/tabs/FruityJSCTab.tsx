@@ -423,7 +423,7 @@ export function FruityJSCTab() {
                         </TabsTrigger>
                         <TabsTrigger value="repl">
                           <Terminal className="w-4 h-4 mr-1" />
-                          {t("repl")}
+                          REPL
                         </TabsTrigger>
                       </TabsList>
                     </div>

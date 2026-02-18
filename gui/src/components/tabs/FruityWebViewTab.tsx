@@ -222,7 +222,7 @@ document.title`);
                     <TableRow>
                       <TableHead className="w-24">{t("type")}</TableHead>
                       <TableHead>
-                        {t("title")} / {t("url")}
+                        {t("title")} / URL
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -299,7 +299,7 @@ document.title`);
                         <div className="flex flex-wrap gap-2">
                           <BooleanBadge
                             value={selectedEntry.js}
-                            label={t("javascript")}
+                            label="JavaScript"
                             t={t}
                           />
                           <BooleanBadge

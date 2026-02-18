@@ -394,11 +394,11 @@ export function FlutterMethodChannelsTab() {
             />
             <label className="flex items-center gap-1.5 text-sm shrink-0">
               <Checkbox checked={showDart} onCheckedChange={setShowDart} />
-              {t("flutter_direction_d2n")}
+              {"\u2192 Native"}
             </label>
             <label className="flex items-center gap-1.5 text-sm shrink-0">
               <Checkbox checked={showNative} onCheckedChange={setShowNative} />
-              {t("flutter_direction_n2d")}
+              {"\u2192 Dart"}
             </label>
             <span className="text-xs text-muted-foreground ml-auto">
               {filteredEntries.length} event{filteredEntries.length !== 1 ? "s" : ""}

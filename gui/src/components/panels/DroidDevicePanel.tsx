@@ -66,7 +66,7 @@ export function DroidDevicePanel() {
             </div>
             <div>
               <div className="text-xs text-muted-foreground mb-1">
-                {t("abi")}
+                ABI
               </div>
               <div className="text-sm font-mono">{deviceInfo.abi}</div>
             </div>

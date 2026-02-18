@@ -213,9 +213,9 @@ function QueryPane({
     <div className="h-full flex flex-col">
       <div className="p-4 space-y-3 border-b border-border shrink-0">
         <div className="space-y-1.5">
-          <Label className="text-xs">{t("content_uri")}</Label>
+          <Label className="text-xs">Content URI</Label>
           <Input
-            placeholder={t("uri_placeholder")}
+            placeholder="content://authority/path"
             value={uri}
             onChange={(e) => setUri(e.target.value)}
             className="font-mono text-sm"
