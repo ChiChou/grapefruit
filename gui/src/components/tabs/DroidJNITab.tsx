@@ -15,7 +15,7 @@ import {
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
-import { Trash2 } from "lucide-react";
+import { Trash2, Play, Square, Loader2, ChevronsDown } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,6 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { Switch } from "@/components/ui/switch";
 import { Status, useSession } from "@/context/SessionContext";
 import type { JNIEvent, JNILog } from "@agent/droid/observers/jni";
 
@@ -155,8 +154,7 @@ export function JNITab() {
 
   const idRef = useRef(1);
   const pendingRef = useRef<JNIEntry[]>([]);
-  const rafRef = useRef<number | null>(null);
-  const lastFlushRef = useRef(0);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
   // Toggle start/stop
@@ -236,22 +234,11 @@ export function JNITab() {
     setEntries(next);
   }, [history]);
 
-  // Flush pending entries with throttling
+  // Flush pending entries
   const flushPending = useCallback(() => {
+    timerRef.current = null;
     if (pendingRef.current.length === 0) return;
 
-    const now = performance.now();
-    if (now - lastFlushRef.current < THROTTLE_MS) {
-      if (!rafRef.current) {
-        rafRef.current = requestAnimationFrame(() => {
-          rafRef.current = null;
-          flushPending();
-        });
-      }
-      return;
-    }
-
-    lastFlushRef.current = now;
     const incoming = pendingRef.current;
     pendingRef.current = [];
 
@@ -276,22 +263,18 @@ export function JNITab() {
         library: raw.type === "load" ? raw.library : undefined,
       };
       const entry = toEntry(event, new Date(), idRef.current++);
-
       pendingRef.current.push(entry);
-      if (!rafRef.current) {
-        rafRef.current = requestAnimationFrame(() => {
-          rafRef.current = null;
-          flushPending();
-        });
+      if (!timerRef.current) {
+        timerRef.current = setTimeout(flushPending, THROTTLE_MS);
       }
     };
 
     socket.on("jni", onJNI);
     return () => {
       socket.off("jni", onJNI);
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
       }
     };
   }, [status, socket, flushPending]);
@@ -332,13 +315,7 @@ export function JNITab() {
   const virtualRows = rowVirtualizer.getVirtualItems();
   const totalSize = rowVirtualizer.getTotalSize();
 
-  if (status !== Status.Ready) {
-    return (
-      <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
-        {t("flutter_waiting")}
-      </div>
-    );
-  }
+  const notReady = status !== Status.Ready;
 
   return (
     <ResizablePanelGroup
@@ -351,16 +328,34 @@ export function JNITab() {
         <div className="h-full flex flex-col overflow-hidden">
           {/* Toolbar */}
           <div className="flex items-center gap-2 p-2 border-b shrink-0">
-            <Switch
-              checked={isActive}
-              onCheckedChange={(checked) => toggleMutation.mutate(checked)}
-              disabled={toggleMutation.isPending || !droid}
-            />
+            {isActive ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 px-2.5 text-xs text-red-500 hover:text-red-600"
+                onClick={() => toggleMutation.mutate(false)}
+                disabled={notReady || toggleMutation.isPending || !droid}
+              >
+                {toggleMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Square className="w-3.5 h-3.5" />}
+                Stop
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 px-2.5 text-xs text-green-600 hover:text-green-700"
+                onClick={() => toggleMutation.mutate(true)}
+                disabled={notReady || toggleMutation.isPending || !droid}
+              >
+                {toggleMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+                Start
+              </Button>
+            )}
             <Input
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
               placeholder="Filter..."
-              className="max-w-xs"
+              className="h-8 max-w-xs"
             />
             <span className="text-xs text-muted-foreground ml-auto">
               {filteredEntries.length} event{filteredEntries.length !== 1 ? "s" : ""}
@@ -368,7 +363,15 @@ export function JNITab() {
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-950/30"
+              className="h-8 w-8"
+              onClick={() => tableContainerRef.current?.scrollTo({ top: tableContainerRef.current.scrollHeight, behavior: "smooth" })}
+            >
+              <ChevronsDown className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-950/30"
               onClick={() => clearMutation.mutate()}
               disabled={clearMutation.isPending || entries.length === 0}
             >

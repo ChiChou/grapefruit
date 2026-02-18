@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Trash2, ArrowUp, ArrowDown, Download, Copy, Check, Loader2 } from "lucide-react";
+import { Trash2, ArrowUp, ArrowDown, Download, Copy, Check, Loader2, Play, Square, ChevronsDown } from "lucide-react";
 
 import { formats, generate, type FormatId, type RequestInfo } from "@/lib/codegen";
 
@@ -21,7 +21,6 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 
-import { Switch } from "@/components/ui/switch";
 import { HttpResponseBodyView } from "@/components/shared/HttpResponseBodyView";
 import { useSession, Status } from "@/context/SessionContext";
 import { useRpcQuery } from "@/lib/queries";
@@ -301,6 +300,8 @@ export function FruityURLLoadingTab() {
   );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const tableEndRef = useRef<HTMLDivElement>(null);
+  const pendingRef = useRef<HttpNetworkEvent[]>([]);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // URL loading hook toggle
   const [hookEnabled, setHookEnabled] = useState(true);
@@ -334,10 +335,18 @@ export function FruityURLLoadingTab() {
     }
   };
 
-  const handleEvent = useCallback((event: HttpNetworkEvent) => {
+  const flushPending = useCallback(() => {
+    timerRef.current = null;
+    if (pendingRef.current.length === 0) return;
+
+    const incoming = pendingRef.current;
+    pendingRef.current = [];
+
     setRequests((prev) => {
       const next = new Map(prev);
-      handleEventPure(next, event);
+      for (const event of incoming) {
+        handleEventPure(next, event);
+      }
       return next;
     });
   }, []);
@@ -345,12 +354,22 @@ export function FruityURLLoadingTab() {
   useEffect(() => {
     if (status !== Status.Ready || !socket) return;
 
-    socket.on("http", handleEvent);
-
-    return () => {
-      socket.off("http", handleEvent);
+    const onHttp = (event: HttpNetworkEvent) => {
+      pendingRef.current.push(event);
+      if (!timerRef.current) {
+        timerRef.current = setTimeout(flushPending, 100);
+      }
     };
-  }, [socket, status, handleEvent]);
+
+    socket.on("http", onHttp);
+    return () => {
+      socket.off("http", onHttp);
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [socket, status, flushPending]);
 
   // Load historical URL loading records from database
   const { data: urlLoadingHistory } = useQuery<{
@@ -403,19 +422,41 @@ export function FruityURLLoadingTab() {
     <div className="flex flex-col h-full">
       {/* Toolbar */}
       <div className="flex items-center gap-2 p-2 border-b">
-        {hookLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        {hookEnabled ? (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 px-2.5 text-xs text-red-500 hover:text-red-600"
+            onClick={() => handleToggleHook(false)}
+            disabled={hookLoading || status !== Status.Ready}
+          >
+            {hookLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Square className="w-3.5 h-3.5" />}
+            Stop
+          </Button>
         ) : (
-          <Switch
-            checked={hookEnabled}
-            onCheckedChange={handleToggleHook}
-            disabled={status !== Status.Ready}
-          />
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 px-2.5 text-xs text-green-600 hover:text-green-700"
+            onClick={() => handleToggleHook(true)}
+            disabled={hookLoading || status !== Status.Ready}
+          >
+            {hookLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+            Start
+          </Button>
         )}
         <span className="text-xs text-muted-foreground ml-auto">
           {requestList.length} request{requestList.length !== 1 ? "s" : ""}
         </span>
-        <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-950/30" onClick={handleClear}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => tableEndRef.current?.scrollIntoView({ behavior: "smooth" })}
+        >
+          <ChevronsDown className="w-4 h-4" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-950/30" onClick={handleClear}>
           <Trash2 className="w-4 h-4" />
         </Button>
       </div>
