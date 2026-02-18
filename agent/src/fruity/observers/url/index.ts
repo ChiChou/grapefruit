@@ -13,10 +13,13 @@ import {
 } from "./connection.js";
 import { hookWebSocketMethods } from "./websocket.js";
 
+let running = false;
+
 export function start() {
-  if (!ObjC.available) return;
+  if (running || !ObjC.available) return;
 
   console.log("start logging http URL requests");
+  running = true;
 
   const { __NSCFURLSessionTask, NSURLSessionTask } = ObjC.classes;
   if (__NSCFURLSessionTask) {
@@ -36,8 +39,14 @@ export function start() {
 }
 
 export function stop() {
+  if (!running) return;
+  running = false;
   for (const hook of hooks) {
     hook.detach();
   }
   hooks.length = 0;
+}
+
+export function status(): boolean {
+  return running;
 }

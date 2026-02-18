@@ -1,13 +1,11 @@
 import ObjC from "frida-objc-bridge";
 
 import { init as enableLifeCycleHook } from "./observers/lifecycle.js";
-import { start as enableURLLoading } from "./observers/url/index.js";
 import { interfaces, invoke } from "./registry.js";
 
 import "@/common/encode-arraybuffer.js";
 
 setImmediate(enableLifeCycleHook);
-setImmediate(enableURLLoading);
 
 Process.setExceptionHandler((detail) => {
   console.error("Exception report: ");

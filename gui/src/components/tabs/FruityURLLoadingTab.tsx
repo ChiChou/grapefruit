@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Trash2, ArrowUp, ArrowDown, Download, Copy, Check } from "lucide-react";
+import { Trash2, ArrowUp, ArrowDown, Download, Copy, Check, Loader2 } from "lucide-react";
 
 import { formats, generate, type FormatId, type RequestInfo } from "@/lib/codegen";
 
@@ -21,8 +21,10 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 
+import { Switch } from "@/components/ui/switch";
 import { HttpResponseBodyView } from "@/components/shared/HttpResponseBodyView";
 import { useSession, Status } from "@/context/SessionContext";
+import { useRpcQuery } from "@/lib/queries";
 import type { HttpNetworkEvent } from "@/lib/rpc";
 
 interface WebSocketMessage {
@@ -292,13 +294,45 @@ function CopyAsButtons({ request }: { request: RequestInfo }) {
 }
 
 export function FruityURLLoadingTab() {
-  const { socket, status, device, identifier } = useSession();
+  const { socket, status, device, identifier, fruity } = useSession();
 
   const [requests, setRequests] = useState<Map<string, CapturedRequest>>(
     () => new Map(),
   );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const tableEndRef = useRef<HTMLDivElement>(null);
+
+  // URL loading hook toggle
+  const [hookEnabled, setHookEnabled] = useState(true);
+  const [hookLoading, setHookLoading] = useState(false);
+
+  const { data: initialHookStatus } = useRpcQuery<boolean>(
+    ["urlLoadingStatus", device ?? "", identifier ?? ""],
+    (api) => api.urlLoading.status(),
+  );
+
+  useEffect(() => {
+    if (initialHookStatus !== undefined) {
+      setHookEnabled(initialHookStatus);
+    }
+  }, [initialHookStatus]);
+
+  const handleToggleHook = async (enabled: boolean) => {
+    if (!fruity) return;
+    setHookLoading(true);
+    try {
+      if (enabled) {
+        await fruity.urlLoading.start();
+      } else {
+        await fruity.urlLoading.stop();
+      }
+      setHookEnabled(enabled);
+    } catch (error) {
+      console.error(`Failed to ${enabled ? "start" : "stop"} URL loading hook:`, error);
+    } finally {
+      setHookLoading(false);
+    }
+  };
 
   const handleEvent = useCallback((event: HttpNetworkEvent) => {
     setRequests((prev) => {
@@ -369,13 +403,21 @@ export function FruityURLLoadingTab() {
     <div className="flex flex-col h-full">
       {/* Toolbar */}
       <div className="flex items-center gap-2 p-2 border-b">
-        <Button variant="outline" size="sm" onClick={handleClear}>
-          <Trash2 className="w-4 h-4 mr-1" />
-          Clear
-        </Button>
+        {hookLoading ? (
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        ) : (
+          <Switch
+            checked={hookEnabled}
+            onCheckedChange={handleToggleHook}
+            disabled={status !== Status.Ready}
+          />
+        )}
         <span className="text-xs text-muted-foreground ml-auto">
           {requestList.length} request{requestList.length !== 1 ? "s" : ""}
         </span>
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-950/30" onClick={handleClear}>
+          <Trash2 className="w-4 h-4" />
+        </Button>
       </div>
 
       <ResizablePanelGroup orientation="vertical" className="flex-1">
