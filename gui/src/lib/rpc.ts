@@ -9,6 +9,7 @@ import type {
 import type { RPCRoute as DroidRPCRoute } from "@agent/droid/registry";
 
 import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
+import type { JNIEvent } from "@agent/droid/observers/jni";
 
 export interface HttpNetworkEvent {
   event: string;
@@ -26,6 +27,7 @@ export interface SessionClientEvents {
   flutter: (event: Record<string, unknown>) => void;
   crypto: (message: BaseHookMessage) => void;
   http: (event: HttpNetworkEvent) => void;
+  jni: (event: JNIEvent) => void;
 }
 
 export interface SessionServerEvents {

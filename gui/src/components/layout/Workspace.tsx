@@ -44,6 +44,7 @@ import { QuickStartTab } from "../tabs/QuickStartTab";
 import { FruityDisassemblyTab } from "../tabs/FruityDisassemblyTab";
 import { FruityURLLoadingTab } from "../tabs/FruityURLLoadingTab";
 import { FlutterMethodChannelsTab } from "../tabs/FlutterMethodChannelsTab";
+import { JNITab } from "../tabs/JNITab";
 import { DroidHandlesTab } from "../tabs/DroidHandlesTab";
 import { DroidKeystoreTab } from "../tabs/DroidKeystoreTab";
 import { FruityInfoPlistInsightsTab } from "../tabs/FruityInfoPlistInsightsTab";
@@ -131,6 +132,7 @@ function WorkspaceContent() {
     disassembly: FruityDisassemblyTab,
     httpLog: FruityURLLoadingTab,
     flutterChannels: FlutterMethodChannelsTab,
+    jni: JNITab,
     droidHandles: DroidHandlesTab,
     keystore: DroidKeystoreTab,
     infoPlistInsights: FruityInfoPlistInsightsTab,

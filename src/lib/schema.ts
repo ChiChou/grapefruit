@@ -82,6 +82,33 @@ export const flutter = sqliteTable(
   ],
 );
 
+export const jni = sqliteTable(
+  "jni",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    deviceId: text("device_id").notNull(),
+    identifier: text("identifier").notNull(),
+    timestamp: text("timestamp").notNull(),
+    type: text("type").notNull(),
+    method: text("method").notNull(),
+    callType: text("call_type").notNull(),
+    threadId: integer("thread_id"),
+    args: text("args"),
+    ret: text("ret"),
+    backtrace: text("backtrace"),
+    library: text("library"),
+    createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_jni_device_identifier").on(
+      table.deviceId,
+      table.identifier,
+    ),
+    index("idx_jni_method").on(table.method),
+    index("idx_jni_timestamp").on(table.timestamp),
+  ],
+);
+
 export const crypto = sqliteTable(
   "crypto",
   {

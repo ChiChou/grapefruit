@@ -10,6 +10,8 @@ import { HookStore } from "../lib/store/hooks.ts";
 import { CryptoStore } from "../lib/store/crypto.ts";
 import { HttpStore } from "../lib/store/requests.ts";
 import { FlutterStore } from "../lib/store/flutter.ts";
+import { JNIStore } from "../lib/store/jni.ts";
+import type { JNILog } from "@agent/droid/observers/jni";
 
 const LOG_TAIL_BYTES = 1024 * 1024; // 1MB
 
@@ -184,6 +186,54 @@ const routes = new Hono()
     } catch (e) {
       console.error("Failed to clear crypto logs:", e);
       return c.text("Failed to clear crypto logs", 500);
+    }
+  })
+  // JNI Trace endpoints
+  .get("/history/jni/:device/:identifier", (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+
+    const limit = parseInt(c.req.query("limit") || "5000", 10);
+    const offset = parseInt(c.req.query("offset") || "0", 10);
+    const since = c.req.query("since");
+    const method = c.req.query("method");
+
+    try {
+      const store = new JNIStore(deviceId, identifier);
+
+      const records = store.query({ limit, offset, since, method });
+      const total = store.count(method);
+
+      const logs: JNILog[] = records.map((r) => ({
+        id: r.id,
+        timestamp: r.timestamp,
+        type: r.type,
+        method: r.method,
+        callType: r.callType,
+        threadId: r.threadId,
+        args: r.args ? JSON.parse(r.args) : undefined,
+        ret: r.ret,
+        backtrace: r.backtrace ? JSON.parse(r.backtrace) : undefined,
+        library: r.library,
+        createdAt: r.createdAt,
+      }));
+
+      return c.json({ logs, total, limit, offset });
+    } catch (e) {
+      console.error("Failed to query jni logs:", e);
+      return c.json({ logs: [], total: 0, limit, offset });
+    }
+  })
+  .delete("/history/jni/:device/:identifier", (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+
+    try {
+      new JNIStore(deviceId, identifier).rm();
+      return c.body(null, 204);
+    } catch (e) {
+      console.error("Failed to clear jni logs:", e);
+      return c.text("Failed to clear jni logs", 500);
     }
   })
   // Flutter log endpoints

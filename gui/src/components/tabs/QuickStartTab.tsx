@@ -16,6 +16,7 @@ import {
   Smartphone,
   KeyRound,
   Database,
+  Cpu,
 } from "lucide-react";
 
 import logo from "@/assets/logo.svg";
@@ -224,6 +225,13 @@ export function QuickStartTab() {
       desc: t("quickstart_providers_desc"),
     },
     {
+      icon: <Cpu className="w-5 h-5" />,
+      id: "jni_trace_tab",
+      component: "jni",
+      title: "JNI Trace",
+      desc: "Trace JNI function calls from native libraries",
+    },
+    {
       icon: <Smartphone className="w-5 h-5" />,
       id: "flutter_channels_tab",
       component: "flutterChannels",
@@ -240,6 +248,13 @@ export function QuickStartTab() {
       title: t("finder"),
       desc: t("quickstart_finder_desc"),
       params: { path: "/" },
+    },
+    {
+      icon: <Cpu className="w-5 h-5" />,
+      id: "jni_trace_tab",
+      component: "jni",
+      title: "JNI Trace",
+      desc: "Trace JNI function calls from native libraries",
     },
   ];
 

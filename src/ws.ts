@@ -11,8 +11,10 @@ import { HttpStore, type HttpNetworkEvent } from "./lib/store/requests.ts";
 import { HookStore } from "./lib/store/hooks.ts";
 import { CryptoStore } from "./lib/store/crypto.ts";
 import { FlutterStore } from "./lib/store/flutter.ts";
+import { JNIStore } from "./lib/store/jni.ts";
 
 import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
+import type { JNIEvent } from "@agent/droid/observers/jni";
 
 type Platform = "fruity" | "droid";
 type Mode = "app" | "daemon";
@@ -40,6 +42,7 @@ interface ServerToClientEvents {
   flutter: (event: Record<string, unknown>) => void;
   crypto: (msg: BaseHookMessage, data?: ArrayBuffer) => void;
   http: (event: HttpNetworkEvent) => void;
+  jni: (event: JNIEvent) => void;
 }
 
 type ClientCallback = (err: Error | null, result: any) => void;
@@ -96,6 +99,7 @@ interface SessionStores {
   hooks: HookStore;
   crypto: CryptoStore;
   flutter: FlutterStore;
+  jni: JNIStore;
 }
 
 async function loadBridge(name: string) {
@@ -163,7 +167,10 @@ function setupScriptHandlers(
           requestsWithBody.add(event.requestId);
         }
 
-        if (event.event === "loadingFinished" && requestsWithBody.has(event.requestId)) {
+        if (
+          event.event === "loadingFinished" &&
+          requestsWithBody.has(event.requestId)
+        ) {
           event.hasBody = true;
           requestsWithBody.delete(event.requestId);
         }
@@ -191,6 +198,13 @@ function setupScriptHandlers(
         const { subject: _, ...event } = payload;
         socket.emit("flutter", event);
         stores.flutter.append(event);
+        break;
+      }
+
+      case "jni": {
+        const { subject: _, ...event } = payload;
+        socket.emit("jni", event);
+        stores.jni.append(payload);
         break;
       }
 
@@ -334,6 +348,7 @@ async function onConnection(
     hooks: new HookStore(deviceId, identifier),
     crypto: new CryptoStore(deviceId, identifier),
     flutter: new FlutterStore(deviceId, identifier),
+    jni: new JNIStore(deviceId, identifier),
   };
 
   const logHandles = await LogWriter.open(deviceId, identifier);
