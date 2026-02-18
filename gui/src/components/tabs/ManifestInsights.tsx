@@ -70,6 +70,15 @@ function getAndroidAttr(el: Element | null | undefined, name: string): string | 
   );
 }
 
+/** Normalise compiled-manifest hex booleans (0x00000000 / 0xffffffff) to "true"/"false" */
+function normaliseBool(value: string | null): string | null {
+  if (value === null) return null;
+  const v = value.toLowerCase();
+  if (v === "true" || v === "0xffffffff") return "true";
+  if (v === "false" || v === "0x00000000" || v === "0x0") return "false";
+  return value;
+}
+
 function parseManifestInsights(
   xml: string,
   t: TFunction
@@ -83,7 +92,7 @@ function parseManifestInsights(
   const application = doc.querySelector("application");
 
   // android:debuggable
-  const debuggable = getAndroidAttr(application, "debuggable");
+  const debuggable = normaliseBool(getAndroidAttr(application, "debuggable"));
   if (debuggable === "true") {
     insights.push({
       id: "debuggable",
@@ -101,7 +110,7 @@ function parseManifestInsights(
   }
 
   // android:allowBackup
-  const allowBackup = getAndroidAttr(application, "allowBackup");
+  const allowBackup = normaliseBool(getAndroidAttr(application, "allowBackup"));
   if (allowBackup !== "false") {
     insights.push({
       id: "allowBackup",
@@ -122,7 +131,7 @@ function parseManifestInsights(
   }
 
   // android:usesCleartextTraffic
-  const cleartext = getAndroidAttr(application, "usesCleartextTraffic");
+  const cleartext = normaliseBool(getAndroidAttr(application, "usesCleartextTraffic"));
   if (cleartext === "true") {
     insights.push({
       id: "cleartext",
