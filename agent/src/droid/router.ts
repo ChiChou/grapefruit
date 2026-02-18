@@ -12,6 +12,7 @@ import * as receivers from "./modules/receivers.js";
 import * as services from "./modules/services.js";
 
 import * as flutter from "./observers/flutter.js";
+import * as jni from "./observers/jni.js";
 
 import * as memory from "@/common/memory.js";
 import * as native from "@/common/hooks/native.js";
@@ -28,6 +29,7 @@ export default {
   device,
   flutter,
   fs,
+  jni,
   keystore,
   lsof,
   manifest,

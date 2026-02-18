@@ -2,7 +2,11 @@ This folder is the frida agent source code.
 
 ## Test a single RPC:
 
-frida -U -F -l src/droid/index.ts -e 'rpc.exports.invoke("manifest", "xml", [])' -q
+`frida -U -F -l src/droid/index.ts -e 'rpc.exports.invoke("info", "processInfo", [])' -q`
+
+If the RPC returns a Promise, use
+
+`frida -U -F -l src/droid/index.ts -e 'rpc.exports.invoke("manifest", "xml", []).then(result => console.log(result)).catch(err => console.error(err))' -q`
 
 ## Build
 
