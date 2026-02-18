@@ -12,6 +12,7 @@ import { Workspace } from "./components/layout/Workspace";
 import { WorkspaceIndex } from "./components/layout/WorkspaceIndex";
 
 import { FruityGeneralPanel } from "./components/panels/FruityGeneralPanel";
+import { FruityDevicePanel } from "./components/panels/FruityDevicePanel";
 import { DroidGeneralPanel } from "./components/panels/DroidGeneralPanel";
 import { DroidComponentsPanel } from "./components/panels/DroidComponentsPanel";
 import { DroidDevicePanel } from "./components/panels/DroidDevicePanel";
@@ -40,6 +41,11 @@ function ClassesPanelRoute() {
 function URLSchemesPanelRoute() {
   const { platform } = useSession();
   return platform === Platform.Droid ? <DroidURLSchemesPanel /> : <FruityURLSchemesPanel />;
+}
+
+function DevicePanelRoute() {
+  const { platform } = useSession();
+  return platform === Platform.Droid ? <DroidDevicePanel /> : <FruityDevicePanel />;
 }
 
 function App() {
@@ -76,7 +82,7 @@ function App() {
           <Route path="hooks" element={<FruityHooksPanel />} />
           {/* Android (droid) panels */}
           <Route path="components" element={<DroidComponentsPanel />} />
-          <Route path="device" element={<DroidDevicePanel />} />
+          <Route path="device" element={<DevicePanelRoute />} />
           {/* Placeholder for unsupported modes */}
           <Route path="placeholder" element={<PlaceholderPanel />} />
         </Route>

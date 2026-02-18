@@ -87,12 +87,14 @@ export function LeftPanelView() {
       { kind: "route", route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
       { kind: "route", route: "urls", icon: <LinkIcon className="h-5 w-5" />, label: "URL Schemes" },
       { kind: "route", route: "hooks", icon: <Anchor className="h-5 w-5" />, label: t("hooks") },
+      { kind: "route", route: "device", icon: <Smartphone className="h-5 w-5" />, label: t("device_info") },
       { kind: "route", route: "geolocation", icon: <MapPin className="h-5 w-5" />, label: t("geolocation_simulation") },
     ],
     [`${Platform.Fruity}:${Mode.Daemon}`]: [
       { kind: "route", route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
       { kind: "route", route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
       { kind: "route", route: "hooks", icon: <Anchor className="h-5 w-5" />, label: t("hooks") },
+      { kind: "route", route: "device", icon: <Smartphone className="h-5 w-5" />, label: t("device_info") },
     ],
     [`${Platform.Droid}:${Mode.App}`]: [
       { kind: "route", route: "general", icon: <Info className="h-5 w-5" />, label: t("general") },

@@ -457,6 +457,15 @@
   "manifest_perms_none_title": "未声明危险权限",
   "manifest_perms_none_desc": "已声明 {{count}} 个普通权限，均无需运行时授权。",
 
+  "uidevice_name": "设备名称",
+  "uidevice_localized_model": "本地化型号",
+  "uidevice_system": "系统",
+  "uidevice_idiom": "界面类型",
+  "uidevice_battery": "电池",
+  "uidevice_idfv": "供应商标识符",
+  "uidevice_multitasking": "多任务",
+
+
   "perm_desc_CAMERA": "使用摄像头拍摄照片和视频",
   "perm_desc_RECORD_AUDIO": "通过麦克风录制音频",
   "perm_desc_READ_CONTACTS": "读取用户的联系人列表",

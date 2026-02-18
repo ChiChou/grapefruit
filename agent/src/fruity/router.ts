@@ -12,6 +12,7 @@ import * as keychain from "./modules/keychain.js";
 import * as lsof from "./modules/lsof.js";
 import * as objc from "./hooks/objc.js";
 import * as ui from "./modules/ui.js";
+import * as uidevice from "./modules/uidevice.js";
 import * as url from "./modules/url.js";
 import * as userdefaults from "./modules/userdefaults.js";
 import * as webview from "./modules/webview.js";
@@ -51,6 +52,7 @@ export default {
   symbol,
   syslog,
   ui,
+  uidevice,
   url,
   userdefaults,
   webview,

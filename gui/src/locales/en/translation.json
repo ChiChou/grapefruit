@@ -457,6 +457,15 @@
   "manifest_perms_none_title": "No dangerous permissions declared",
   "manifest_perms_none_desc": "{{count}} normal permission(s) declared, none of which require runtime grants.",
 
+  "uidevice_name": "Device Name",
+  "uidevice_localized_model": "Localized Model",
+  "uidevice_system": "System",
+  "uidevice_idiom": "Interface Idiom",
+  "uidevice_battery": "Battery",
+  "uidevice_idfv": "Identifier For Vendor",
+  "uidevice_multitasking": "Multitasking",
+
+
   "perm_desc_CAMERA": "Capture photos and video from the camera",
   "perm_desc_RECORD_AUDIO": "Record audio from the microphone",
   "perm_desc_READ_CONTACTS": "Read the user's contact list",
