@@ -87,43 +87,6 @@ class Database {
   }
 }
 
-function* gen() {
-  let i = 0;
-  while (true) {
-    yield ++i;
-  }
-}
-
-const counter = gen();
-const handles = new Map<number, Database>();
-
-export function open(path: string) {
-  const id = counter.next().value as number;
-  const db = new Database(path);
-  handles.set(id, db);
-  return id;
-}
-
-export function query(id: number, sql: string) {
-  const db = handles.get(id);
-  if (!db) throw new Error(`invalid handle ${id}`);
-  return [...all(db.prepare(sql))];
-}
-
-export function close(id: number) {
-  const db = handles.get(id);
-  if (!db) throw new Error(`invalid handle ${id}`);
-  db.close();
-  handles.delete(id);
-}
-
-Script.bindWeak(globalThis, function dispose() {
-  for (const [id, db] of handles.entries()) {
-    db.close();
-    handles.delete(id);
-  }
-});
-
 export interface DumpResult {
   header: ColumnInfo[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
