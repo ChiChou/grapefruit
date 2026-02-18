@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ChevronRight, ChevronDown, Folder, FolderOpen } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import type {
   TreeNode,
   RootType,
@@ -194,7 +195,7 @@ export function DirectoryTree({
         >
           <span className="w-4 h-4 mr-1 flex items-center justify-center">
             {node.isLoading ? (
-              <span className="animate-spin text-xs">⏳</span>
+              <Spinner className="size-3" />
             ) : node.isExpanded ? (
               <ChevronDown className="w-3 h-3" />
             ) : (
