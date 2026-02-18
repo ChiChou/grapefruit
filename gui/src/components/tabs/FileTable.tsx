@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Folder,
@@ -61,6 +61,44 @@ export function FileTable({
   const [isRenaming, setIsRenaming] = useState(false);
   const [deletingFile, setDeletingFile] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Preserve scroll position across dockview tab switches.
+  // Dockview hides inactive panels with display:none which resets scrollTop.
+  const scrollTopRef = useRef(0);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  useEffect(() => {
+    scrollTopRef.current = 0;
+  }, [cwd]);
+
+  const scrollContainerRef = useCallback((el: HTMLDivElement | null) => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
+    if (!el) return;
+
+    el.addEventListener(
+      "scroll",
+      () => {
+        scrollTopRef.current = el.scrollTop;
+      },
+      { passive: true },
+    );
+
+    observerRef.current = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting && scrollTopRef.current > 0) {
+        el.scrollTop = scrollTopRef.current;
+      }
+    });
+    observerRef.current.observe(el);
+
+    if (scrollTopRef.current > 0) {
+      requestAnimationFrame(() => {
+        el.scrollTop = scrollTopRef.current;
+      });
+    }
+  }, []);
 
   // Focus input when editing starts
   useEffect(() => {
@@ -153,7 +191,7 @@ export function FileTable({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-auto">
+      <div ref={scrollContainerRef} className="flex-1 overflow-auto">
         <Table>
           <TableHeader>
             <TableRow>

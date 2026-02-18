@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { t } from "i18next";
 import { StatusBar } from "./StatusBar";
 
@@ -9,6 +9,7 @@ import {
   type DockviewReadyEvent,
 } from "dockview";
 
+import type { PanelImperativeHandle } from "react-resizable-panels";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -79,7 +80,18 @@ function WorkspaceContent() {
       "workspace-bottom-panel-visible",
       JSON.stringify(bottomPanelVisible),
     );
+    const panel = bottomPanelRef.current;
+    if (!panel) return;
+    if (bottomPanelVisible) {
+      panel.expand();
+    } else {
+      panel.collapse();
+    }
+    mountedRef.current = true;
   }, [bottomPanelVisible]);
+
+  const bottomPanelRef = useRef<PanelImperativeHandle>(null);
+  const mountedRef = useRef(false);
 
   const [dockApi, setDockApi] = useState<DockviewApi | null>(null);
   const { openSingletonPanel, openFilePanel } = useDockActions(dockApi);
@@ -196,33 +208,35 @@ function WorkspaceContent() {
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel>
-            {bottomPanelVisible ? (
-              <ResizablePanelGroup
-                orientation="vertical"
-                className="h-full"
-                autoSaveId="workspace-bottom-split"
+            <ResizablePanelGroup
+              orientation="vertical"
+              className="h-full"
+              autoSaveId="workspace-bottom-split"
+            >
+              <ResizablePanel id="dock">
+                <DockviewReact
+                  theme={themeApp}
+                  onReady={onReady}
+                  components={components}
+                  tabComponents={tabComponents}
+                />
+              </ResizablePanel>
+              <ResizableHandle />
+              <ResizablePanel
+                id="bottom"
+                panelRef={bottomPanelRef}
+                defaultSize="30%"
+                minSize="10%"
+                collapsible
+                collapsedSize={0}
+                onResize={(size) => {
+                  if (!mountedRef.current) return;
+                  setBottomPanelVisible(size.asPercentage > 0);
+                }}
               >
-                <ResizablePanel>
-                  <DockviewReact
-                    theme={themeApp}
-                    onReady={onReady}
-                    components={components}
-                    tabComponents={tabComponents}
-                  />
-                </ResizablePanel>
-                <ResizableHandle />
-                <ResizablePanel defaultSize="30%">
-                  <BottomPanelView />
-                </ResizablePanel>
-              </ResizablePanelGroup>
-            ) : (
-              <DockviewReact
-                theme={themeApp}
-                onReady={onReady}
-                components={components}
-                tabComponents={tabComponents}
-              />
-            )}
+                <BottomPanelView />
+              </ResizablePanel>
+            </ResizablePanelGroup>
           </ResizablePanel>
         </ResizablePanelGroup>
         <StatusBar

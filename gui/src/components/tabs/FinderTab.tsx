@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
 import { toast } from "sonner";
@@ -26,16 +26,39 @@ import type { FinderTabParams, UploadFile } from "../../lib/file-explorer.ts";
 export type { FinderTabParams };
 
 export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
-  const { fruity, droid, status, pid, device, platform, mode } = useSession();
+  const { fruity, droid, status, pid, device, platform, mode, identifier } =
+    useSession();
   const { t } = useTranslation();
   const { openSingletonPanel } = useDock();
   const isDroid = platform === Platform.Droid;
   const isDaemon = mode === Mode.Daemon;
 
-  const initialPath = params?.path || "~";
-  const initialTab = initialPath === "!" ? "bundle" : "home";
+  const storageKey =
+    device && identifier ? `finder-state:${device}:${identifier}` : null;
 
-  const [activeTab, setActiveTab] = useState<"home" | "bundle">(initialTab);
+  const initialPath = params?.path || "~";
+  const defaultTab = initialPath === "!" ? "bundle" : "home";
+
+  // Restore saved state from localStorage (scoped to device + app)
+  const [activeTab, setActiveTab] = useState<"home" | "bundle">(() => {
+    if (!storageKey) return defaultTab;
+    try {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
+      if (saved.activeTab === "home" || saved.activeTab === "bundle")
+        return saved.activeTab;
+    } catch {}
+    return defaultTab;
+  });
+  const [initialSavedCwd] = useState<string | null>(() => {
+    if (!storageKey) return null;
+    try {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
+      return saved.fullCwd || null;
+    } catch {}
+    return null;
+  });
+  const restoredRef = useRef(false);
+
   const [items, setItems] = useState<
     import("@agent/fruity/modules/fs").MetaData[]
   >([]);
@@ -243,8 +266,17 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
 
   useEffect(() => {
     if (!apiReady) return;
+
+    // On first load, restore saved directory from localStorage
+    if (!restoredRef.current && initialSavedCwd) {
+      restoredRef.current = true;
+      handleDirectorySelect(initialSavedCwd);
+      return;
+    }
+    restoredRef.current = true;
+
     handleDirectorySelect(activeTab === "bundle" ? "!" : "~");
-  }, [apiReady, activeTab, handleDirectorySelect]);
+  }, [apiReady, activeTab, handleDirectorySelect, initialSavedCwd]);
 
   useEffect(() => {
     if (!apiReady || !params?.path) return;
@@ -254,6 +286,17 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
       setActiveTab("home");
     }
   }, [apiReady, params?.path]);
+
+  // Persist finder state to localStorage
+  useEffect(() => {
+    if (!storageKey || !fullCwd) return;
+    try {
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify({ activeTab, fullCwd }),
+      );
+    } catch {}
+  }, [storageKey, activeTab, fullCwd]);
 
   return (
     <>
