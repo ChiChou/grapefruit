@@ -1,5 +1,5 @@
 import { forwardRef, useRef, useImperativeHandle } from "react";
-import { MoveDown, Save, Trash2 } from "lucide-react";
+import { ChevronDown, Save, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { LogViewer, type LogViewerHandle } from "./LogViewer";
@@ -31,7 +31,7 @@ export const LogPanel = forwardRef<LogViewerHandle, LogPanelProps>(
             className="h-8 w-8 rounded-full shadow-md"
             onClick={() => logRef.current?.scrollToBottom()}
           >
-            <MoveDown className="h-4 w-4" />
+            <ChevronDown className="h-4 w-4" />
           </Button>
           <Button
             variant="secondary"
