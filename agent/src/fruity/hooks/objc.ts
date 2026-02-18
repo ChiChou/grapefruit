@@ -1,60 +1,77 @@
 import ObjC from "frida-objc-bridge";
 
 import { BaseMessage, bt } from "@/common/hooks/context.js";
-import { parse } from "./typecoding.js";
 
 const hooked = new Map<string, Map<string, InvocationListener>>();
 
-export function swizzle(cls: string, sel: string) {
+interface NSMethodSignature {
+  numberOfArguments(): number;
+  frameLength(): number;
+  // const char *, frida automatically bridges it to string
+  getArgumentTypeAtIndex_(index: number): string;
+  methodReturnType(): string;
+}
+
+export function swizzle(klassName: string, sel: string) {
   if (!ObjC.available) throw new Error("Objective-C runtime is not available");
 
   {
-    const methods = hooked.get(cls);
+    const methods = hooked.get(klassName);
     if (!methods) {
-      hooked.set(cls, new Map());
+      hooked.set(klassName, new Map());
     } else if (methods.has(sel)) {
       return;
     }
   }
 
-  const method = ObjC.classes[cls][sel] as ObjC.ObjectMethod | undefined;
-  if (!method) throw new Error(`Method ${cls} ${sel} not found`);
+  const klass = ObjC.classes[klassName];
+  const method = klass[sel] as ObjC.ObjectMethod | undefined;
 
-  const { types } = method;
-  const parsed = parse(types);
-  const format = (t: string, v: NativePointer) =>
-    t === "id" ? new ObjC.Object(v).toString() : `${v}`;
+  const sig = klass.instanceMethodSignatureForSelector_(
+    ObjC.selector(sel),
+  ) as NSMethodSignature | null;
+  if (!method || !sig) throw new Error(`Method ${klassName} ${sel} not found`);
+
+  const argCount = sig.numberOfArguments();
+  const argIsObj: boolean[] = [];
+  for (let i = 2; i < argCount; i++) {
+    argIsObj.push(sig.getArgumentTypeAtIndex_(i)[0] === "@");
+  }
+  const retIsObj = sig.methodReturnType()[0] === "@";
+
+  const format = (isObj: boolean, v: NativePointer) =>
+    isObj ? new ObjC.Object(v).toString() : `${v}`;
 
   const listener = Interceptor.attach(method.implementation, {
     onEnter(args) {
-      const formatted = parsed.args.map((t, i) => format(t, args[i + 2]));
+      const formatted = argIsObj.map((obj, i) => format(obj, args[i + 2]));
       const argsStr = formatted.length > 0 ? formatted.join(", ") : "";
 
       send({
         subject: "hook",
         category: "objc",
-        symbol: `${cls} ${sel}`,
+        symbol: `${klassName} ${sel}`,
         dir: "enter",
-        line: `[${cls} ${sel}](${argsStr})`,
+        line: `[${klassName} ${sel}](${argsStr})`,
         backtrace: bt(this.context),
-        extra: { cls, sel, args: formatted },
+        extra: { cls: klassName, sel, args: formatted },
       } satisfies BaseMessage);
     },
     onLeave(retval) {
-      const retStr = format(parsed.ret, retval);
+      const retStr = format(retIsObj, retval);
       send({
         subject: "hook",
         category: "objc",
-        symbol: `${cls} ${sel}`,
+        symbol: `${klassName} ${sel}`,
         dir: "leave",
-        line: `[${cls} ${sel}] → ${retStr}`,
+        line: `[${klassName} ${sel}] → ${retStr}`,
         backtrace: bt(this.context),
-        extra: { cls, sel, ret: retStr },
+        extra: { cls: klassName, sel, ret: retStr },
       } satisfies BaseMessage);
     },
   });
 
-  hooked.get(cls)!.set(sel, listener);
+  hooked.get(klassName)!.set(sel, listener);
 }
 
 export function unswizzle(cls: string, sel: string) {
