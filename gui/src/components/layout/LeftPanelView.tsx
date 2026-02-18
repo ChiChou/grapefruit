@@ -9,7 +9,6 @@ import {
   Anchor,
   Puzzle,
   Smartphone,
-  FileCode,
 } from "lucide-react";
 
 import {
@@ -20,7 +19,6 @@ import {
 import { DarkmodeToggle } from "../shared/DarkmodeToggle";
 import { LanguageSelector } from "../shared/LanguageSelector";
 import { useSession, Platform, Mode } from "@/context/SessionContext";
-import { useDock } from "@/context/DockContext";
 
 import logo from "../../assets/grapefruit.svg";
 
@@ -77,19 +75,9 @@ type NavEntry =
 
 export function LeftPanelView() {
   const { device, bundle, platform, mode, pid } = useSession();
-  const { openSingletonPanel } = useDock();
-
   // Determine the target for URL (bundle for app mode, pid for daemon mode)
   const target = mode === Mode.App ? bundle : pid;
   const basePath = `/workspace/${platform}/${device}/${mode}/${target}`;
-
-  const openManifestTab = () => {
-    openSingletonPanel({
-      id: "droid_manifest_tab",
-      component: "droidManifest",
-      title: "AndroidManifest.xml",
-    });
-  };
 
   const navKey = `${platform}:${mode}`;
   const navItems: NavEntry[] = ({
@@ -112,7 +100,6 @@ export function LeftPanelView() {
       { kind: "route", route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
       { kind: "route", route: "urls", icon: <LinkIcon className="h-5 w-5" />, label: "URL Schemes" },
       { kind: "route", route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
-      { kind: "action", id: "manifest", icon: <FileCode className="h-5 w-5" />, label: "Manifest", action: openManifestTab },
       { kind: "route", route: "device", icon: <Smartphone className="h-5 w-5" />, label: t("device_info") },
     ],
     [`${Platform.Droid}:${Mode.Daemon}`]: [
