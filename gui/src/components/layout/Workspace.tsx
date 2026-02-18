@@ -44,7 +44,7 @@ import { QuickStartTab } from "../tabs/QuickStartTab";
 import { FruityDisassemblyTab } from "../tabs/FruityDisassemblyTab";
 import { FruityURLLoadingTab } from "../tabs/FruityURLLoadingTab";
 import { FlutterMethodChannelsTab } from "../tabs/FlutterMethodChannelsTab";
-import { JNITab } from "../tabs/JNITab";
+import { JNITab } from "../tabs/DroidJNITab";
 import { DroidHandlesTab } from "../tabs/DroidHandlesTab";
 import { DroidKeystoreTab } from "../tabs/DroidKeystoreTab";
 import { FruityInfoPlistInsightsTab } from "../tabs/FruityInfoPlistInsightsTab";
