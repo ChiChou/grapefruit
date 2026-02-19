@@ -184,8 +184,13 @@ export function hookDelegateMethods() {
       const clazz = classFromSymbol(match.name);
       if (!clazz) continue;
 
-      const method = clazz["- " + sel] as ObjC.ObjectMethod;
-      hooks.push(Interceptor.attach(method.implementation, handler));
+      try {
+        const method = clazz["- " + sel] as ObjC.ObjectMethod;
+        hooks.push(Interceptor.attach(method.implementation, handler));
+      } catch (e) {
+        console.warn(`Failed to hook ${sel} on ${clazz.$className}:`);
+        console.warn(e);
+      }
     }
   }
 }
