@@ -77,11 +77,12 @@ export function injectRespondsToSelector(
   );
 
   return Interceptor.attach(rtsMethod.implementation, {
+    onEnter(args) {
+      const sel = args[2] as NativePointer;
+      this._replace = sel.equals(targetSel);
+    },
     onLeave(retval) {
-      const sel = this.context as unknown as { x1: NativePointer };
-      if (sel.x1.equals(targetSel)) {
-        retval.replace(ptr(1));
-      }
+      if (this._replace) retval.replace(ptr(1));
     },
   });
 }
