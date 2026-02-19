@@ -1219,6 +1219,6 @@ export function stop(): void {
   active = false;
 }
 
-export function status(): { active: boolean } {
-  return { active };
+export function status(): boolean {
+  return active;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Database,
@@ -16,7 +16,11 @@ import { useSession, Status } from "@/context/SessionContext";
 import { useRpcQuery } from "@/lib/queries";
 import { FruityUserHooksList } from "./FruityUserHooksList";
 
-const HOOKS_STORAGE_PREFIX = "igf:hooks:";
+interface TapInfo {
+  id: string;
+  active: boolean;
+  available: boolean;
+}
 
 interface HookGroup {
   id: string;
@@ -60,83 +64,26 @@ const HOOK_GROUPS: HookGroup[] = [
 
 export function FruityHookControlPanel() {
   const { t } = useTranslation();
-  const { fruity, status, device, identifier } = useSession();
+  const { fruity, status } = useSession();
   const [hookStatus, setHookStatus] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
-  const restoredRef = useRef(false);
 
-  // Generate storage key based on device and identifier
-  const getStorageKey = useCallback(() => {
-    if (!device || !identifier) return null;
-    return `${HOOKS_STORAGE_PREFIX}${device}|${identifier}`;
-  }, [device, identifier]);
-
-  // Load saved hooks from localStorage
-  const loadSavedHooks = useCallback((): string[] => {
-    const key = getStorageKey();
-    if (!key) return [];
-    try {
-      const saved = localStorage.getItem(key);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  }, [getStorageKey]);
-
-  // Save hooks to localStorage
-  const saveHooks = useCallback((enabledHooks: string[]) => {
-    const key = getStorageKey();
-    if (!key) return;
-    try {
-      localStorage.setItem(key, JSON.stringify(enabledHooks));
-    } catch {
-      // ignore storage errors
-    }
-  }, [getStorageKey]);
-
-  // Fetch initial hook status using TanStack Query
-  const { data: initialStatus, isLoading: isLoadingStatus } = useRpcQuery<Record<string, boolean>>(
-    ["hookStatus", device ?? "", identifier ?? ""],
-    (api) => api.hook.status()
+  // Fetch tap status from agent via taps.list() RPC
+  const { data: tapList, isLoading: isLoadingStatus } = useRpcQuery<TapInfo[]>(
+    ["tapsList"],
+    (api) => api.taps.list(),
   );
 
-  // Update local state when initial status is fetched
+  // Update local state when tap list is fetched
   useEffect(() => {
-    if (initialStatus) {
-      setHookStatus(initialStatus);
-    }
-  }, [initialStatus]);
-
-  // Restore saved hooks after initial status is loaded
-  useEffect(() => {
-    if (!initialStatus || !fruity || restoredRef.current) return;
-
-    const restoreSavedHooks = async () => {
-      restoredRef.current = true;
-
-      const savedHooks = loadSavedHooks();
-      for (const groupId of savedHooks) {
-        if (!initialStatus[groupId]) {
-          setLoading((prev) => ({ ...prev, [groupId]: true }));
-          try {
-            await fruity.hook.start(groupId);
-            setHookStatus((prev) => ({ ...prev, [groupId]: true }));
-          } catch (error) {
-            console.error(`Failed to restore hook group ${groupId}:`, error);
-          } finally {
-            setLoading((prev) => ({ ...prev, [groupId]: false }));
-          }
-        }
+    if (tapList) {
+      const statusMap: Record<string, boolean> = {};
+      for (const tap of tapList) {
+        statusMap[tap.id] = tap.active;
       }
-    };
-
-    restoreSavedHooks();
-  }, [initialStatus, fruity, loadSavedHooks]);
-
-  // Reset restored flag when session changes
-  useEffect(() => {
-    restoredRef.current = false;
-  }, [device, identifier]);
+      setHookStatus(statusMap);
+    }
+  }, [tapList]);
 
   const handleToggle = async (groupId: string, enabled: boolean) => {
     if (!fruity) return;
@@ -145,19 +92,11 @@ export function FruityHookControlPanel() {
 
     try {
       if (enabled) {
-        await fruity.hook.start(groupId);
+        await fruity.taps.start(groupId);
       } else {
-        await fruity.hook.stop(groupId);
+        await fruity.taps.stop(groupId);
       }
-      setHookStatus((prev) => {
-        const newStatus = { ...prev, [groupId]: enabled };
-        // Save enabled hooks to localStorage
-        const enabledHooks = Object.entries(newStatus)
-          .filter(([, v]) => v)
-          .map(([k]) => k);
-        saveHooks(enabledHooks);
-        return newStatus;
-      });
+      setHookStatus((prev) => ({ ...prev, [groupId]: enabled }));
     } catch (error) {
       console.error(
         `Failed to ${enabled ? "start" : "stop"} hook group ${groupId}:`,

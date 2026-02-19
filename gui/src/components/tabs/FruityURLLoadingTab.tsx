@@ -1,8 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Trash2, ArrowUp, ArrowDown, Download, Copy, Check, Loader2, Play, Square, ChevronsDown } from "lucide-react";
+import {
+  Trash2,
+  ArrowUp,
+  ArrowDown,
+  Download,
+  Copy,
+  Check,
+  Loader2,
+  Play,
+  Square,
+  ChevronsDown,
+} from "lucide-react";
 
-import { formats, generate, type FormatId, type RequestInfo } from "@/lib/codegen";
+import {
+  formats,
+  generate,
+  type FormatId,
+  type RequestInfo,
+} from "@/lib/codegen";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -309,7 +325,7 @@ export function FruityURLLoadingTab() {
 
   const { data: initialHookStatus } = useRpcQuery<boolean>(
     ["urlLoadingStatus", device ?? "", identifier ?? ""],
-    (api) => api.urlLoading.status(),
+    (api) => api.nsurl.status(),
   );
 
   useEffect(() => {
@@ -323,13 +339,16 @@ export function FruityURLLoadingTab() {
     setHookLoading(true);
     try {
       if (enabled) {
-        await fruity.urlLoading.start();
+        await fruity.nsurl.start();
       } else {
-        await fruity.urlLoading.stop();
+        await fruity.nsurl.stop();
       }
       setHookEnabled(enabled);
     } catch (error) {
-      console.error(`Failed to ${enabled ? "start" : "stop"} URL loading hook:`, error);
+      console.error(
+        `Failed to ${enabled ? "start" : "stop"} URL loading hook:`,
+        error,
+      );
     } finally {
       setHookLoading(false);
     }
@@ -405,7 +424,8 @@ export function FruityURLLoadingTab() {
       const res = await fetch(`/api/history/http/${device}/${identifier}`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("Failed to clear URL loading records from database");
+      if (!res.ok)
+        throw new Error("Failed to clear URL loading records from database");
     },
   });
 
@@ -430,7 +450,11 @@ export function FruityURLLoadingTab() {
             onClick={() => handleToggleHook(false)}
             disabled={hookLoading || status !== Status.Ready}
           >
-            {hookLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Square className="w-3.5 h-3.5" />}
+            {hookLoading ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Square className="w-3.5 h-3.5" />
+            )}
             Stop
           </Button>
         ) : (
@@ -441,7 +465,11 @@ export function FruityURLLoadingTab() {
             onClick={() => handleToggleHook(true)}
             disabled={hookLoading || status !== Status.Ready}
           >
-            {hookLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+            {hookLoading ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Play className="w-3.5 h-3.5" />
+            )}
             Start
           </Button>
         )}
@@ -452,11 +480,18 @@ export function FruityURLLoadingTab() {
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={() => tableEndRef.current?.scrollIntoView({ behavior: "smooth" })}
+          onClick={() =>
+            tableEndRef.current?.scrollIntoView({ behavior: "smooth" })
+          }
         >
           <ChevronsDown className="w-4 h-4" />
         </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-950/30" onClick={handleClear}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-950/30"
+          onClick={handleClear}
+        >
           <Trash2 className="w-4 h-4" />
         </Button>
       </div>
@@ -610,7 +645,10 @@ export function FruityURLLoadingTab() {
                   </ScrollArea>
                 </TabsContent>
 
-                <TabsContent value="response" className="overflow-hidden h-full">
+                <TabsContent
+                  value="response"
+                  className="overflow-hidden h-full"
+                >
                   <div className="grid grid-cols-2 h-full min-h-0">
                     <ScrollArea className="h-full border-r overflow-hidden">
                       <div className="p-3 space-y-3">

@@ -14,11 +14,12 @@ import * as objc from "./hooks/objc.js";
 import * as ui from "./modules/ui.js";
 import * as uidevice from "./modules/uidevice.js";
 import * as url from "./modules/url.js";
-import * as urlLoading from "./observers/url/index.js";
+import * as nsurl from "./observers/url/index.js";
 import * as userdefaults from "./modules/userdefaults.js";
 import * as webview from "./modules/webview.js";
 
 import * as flutter from "./observers/flutter.js";
+import * as taps from "./taps.js";
 
 import * as memory from "@/common/memory.js";
 import * as native from "@/common/hooks/native.js";
@@ -52,10 +53,11 @@ export default {
   sqlite,
   symbol,
   syslog,
+  taps,
   ui,
   uidevice,
   url,
-  urlLoading,
+  nsurl,
   userdefaults,
   webview,
 };

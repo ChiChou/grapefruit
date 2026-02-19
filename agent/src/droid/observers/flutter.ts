@@ -7,6 +7,7 @@ type ChannelType = "method" | "event" | "message";
 
 const subject = "flutter";
 const restores: Array<() => void> = [];
+let running = false;
 
 function safelyConvert(obj: Java.Wrapper | null): unknown {
   try {
@@ -64,7 +65,8 @@ function wrapHandler(
 }
 
 export function start() {
-  if (!available()) return;
+  if (running || !available()) return;
+  running = true;
 
   Java.perform(() => {
     const hooks = [
@@ -422,6 +424,11 @@ export function stop() {
     }
   });
   restores.length = 0;
+  running = false;
+}
+
+export function status(): boolean {
+  return running;
 }
 
 export function available() {

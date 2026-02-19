@@ -11,6 +11,7 @@ import { CryptoStore } from "../lib/store/crypto.ts";
 import { HttpStore } from "../lib/store/requests.ts";
 import { FlutterStore } from "../lib/store/flutter.ts";
 import { JNIStore } from "../lib/store/jni.ts";
+import { createTapStore } from "../lib/store/taps.ts";
 import type { JNILog } from "@agent/droid/observers/jni";
 
 const LOG_TAIL_BYTES = 1024 * 1024; // 1MB
@@ -342,6 +343,25 @@ const routes = new Hono()
       console.error("Failed to serve attachment:", e);
       return c.text("Failed to serve attachment", 500);
     }
+  })
+  // Taps snapshot endpoints
+  .get("/taps/:device/:identifier", (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+
+    const store = createTapStore(deviceId, identifier);
+    const snapshot = store.load();
+    if (!snapshot) {
+      return c.json(null);
+    }
+    return c.json(snapshot);
+  })
+  .delete("/taps/:device/:identifier", (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+
+    createTapStore(deviceId, identifier).clear();
+    return c.body(null, 204);
   });
 
 export default routes;

@@ -12,6 +12,7 @@ import { HookStore } from "./lib/store/hooks.ts";
 import { CryptoStore } from "./lib/store/crypto.ts";
 import { FlutterStore } from "./lib/store/flutter.ts";
 import { JNIStore } from "./lib/store/jni.ts";
+import { createTapStore } from "./lib/store/taps.ts";
 
 import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
 import type { JNIEvent } from "@agent/droid/observers/jni";
@@ -245,6 +246,7 @@ function setupSocketHandlers(
   >,
   session: Awaited<ReturnType<typeof import("frida").Device.prototype.attach>>,
   logger: LogWriter,
+  tapStore: ReturnType<typeof createTapStore>,
 ) {
   session.detached.connect((reason, crash) => {
     console.error("session detached:", reason, crash);
@@ -276,11 +278,23 @@ function setupSocketHandlers(
       console.info(`RPC method: ${ns}.${method}`, ...args);
       script.exports
         .invoke(ns, method, args)
+        .then((result) => {
+          ack(null, result);
+
+          // Auto-persist after tap toggles
+          if (ns === "taps" && (method === "start" || method === "stop")) {
+            script.exports
+              .snapshot()
+              .then((snap: any) => tapStore.save(snap))
+              .catch((e: unknown) =>
+                console.warn("Failed to persist tap snapshot:", e),
+              );
+          }
+        })
         .catch((err: Error) => {
           console.error(`RPC method ${method} failed:`, err);
           ack(err, null);
-        })
-        .then((result) => ack(null, result));
+        });
     })
     .on("eval", (source, name, ack) => {
       console.info(`evaluating script: ${name}`);
@@ -352,12 +366,24 @@ async function onConnection(
   };
 
   const logHandles = await LogWriter.open(deviceId, identifier);
+  const tapStore = createTapStore(deviceId, identifier);
   const script = await session.createScript(await agent(platform));
 
   setupScriptHandlers(socket, script, logHandles, stores);
-  setupSocketHandlers(socket, script, session, logHandles);
+  setupSocketHandlers(socket, script, session, logHandles, tapStore);
 
   await script.load();
+
+  // Restore saved taps before emitting ready
+  const saved = tapStore.load();
+  if (saved) {
+    try {
+      await script.exports.restore(saved);
+    } catch (e) {
+      console.warn("Failed to restore taps:", e);
+    }
+  }
+
   socket.emit("ready", session.pid);
 }
 

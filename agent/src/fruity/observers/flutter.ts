@@ -8,13 +8,15 @@ type ChannelType = "method" | "event" | "message";
 const subject = "flutter";
 const hooks: InvocationListener[] = [];
 const hookedBlocks = new Set<string>();
+let running = false;
 
 function getName(channel: ObjC.Object) {
   return channel.$ivars._name.toString();
 }
 
 export function start() {
-  if (!available()) return;
+  if (running || !available()) return;
+  running = true;
 
   const {
     FlutterMethodChannel,
@@ -190,12 +192,17 @@ export function stop() {
   }
   hooks.length = 0;
   hookedBlocks.clear();
+  running = false;
+}
+
+export function status(): boolean {
+  return running;
 }
 
 export function available() {
   if (!ObjC.available) return false;
   const engine = Process.findModuleByName("Flutter");
-  return engine && ObjC.classes.FlutterMethodChannel;
+  return Boolean(engine && ObjC.classes.FlutterMethodChannel);
 }
 
 function hookStreamHandler(handler: ObjC.Object) {

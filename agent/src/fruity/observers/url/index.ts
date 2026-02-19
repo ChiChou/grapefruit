@@ -50,3 +50,7 @@ export function stop() {
 export function status(): boolean {
   return running;
 }
+
+export function available(): boolean {
+  return ObjC.available;
+}
