@@ -39,8 +39,9 @@ function streamFileData(fileURL: NSURL, requestId: string) {
   try {
     while (true) {
       const data = handle.readDataOfLength_(chunkSize) as NSData;
-      if (!data || data.length() === 0) break;
+      if (!data) break;
       const len = data.length();
+      if (len <= 0) break;
       const chunk = data.bytes().readByteArray(len);
       recordDataReceived(requestId, len, chunk);
     }
