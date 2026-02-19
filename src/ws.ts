@@ -161,7 +161,6 @@ function setupScriptHandlers(
         break;
 
       case "http": {
-        console.log(`[http]`, payload);
         const event = payload as HttpNetworkEvent;
 
         if (event.event === "dataReceived" && data) {
