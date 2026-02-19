@@ -356,7 +356,12 @@ export function FruityJSCTab() {
         </span>
       </div>
       <div className="flex-1 overflow-hidden">
-        {!isLoading && entries.length === 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
+            <Spinner className="w-5 h-5" />
+            <span>{t("loading")}</span>
+          </div>
+        ) : entries.length === 0 ? (
           <div className="flex items-center justify-center h-full text-muted-foreground">
             {t("no_jscontext_found")}
           </div>
@@ -365,42 +370,35 @@ export function FruityJSCTab() {
             {/* Left Panel - JSContext List */}
             <ResizablePanel defaultSize="35%" minSize="20%">
               <div className="h-full overflow-auto">
-                {isLoading ? (
-                  <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
-                    <Spinner className="w-5 h-5" />
-                    <span>{t("loading")}...</span>
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t("handle")}</TableHead>
-                        <TableHead>{t("description")}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {entries.map((entry) => (
-                        <TableRow
-                          key={entry.handle}
-                          className={`cursor-pointer ${
-                            selectedHandle === entry.handle ? "bg-accent" : ""
-                          }`}
-                          onClick={() => selectEntry(entry.handle)}
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t("handle")}</TableHead>
+                      <TableHead>{t("description")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {entries.map((entry) => (
+                      <TableRow
+                        key={entry.handle}
+                        className={`cursor-pointer ${
+                          selectedHandle === entry.handle ? "bg-accent" : ""
+                        }`}
+                        onClick={() => selectEntry(entry.handle)}
+                      >
+                        <TableCell className="font-mono text-xs">
+                          {entry.handle}
+                        </TableCell>
+                        <TableCell
+                          className="font-mono text-sm truncate max-w-[200px]"
+                          title={entry.description}
                         >
-                          <TableCell className="font-mono text-xs">
-                            {entry.handle}
-                          </TableCell>
-                          <TableCell
-                            className="font-mono text-sm truncate max-w-[200px]"
-                            title={entry.description}
-                          >
-                            {entry.description}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
+                          {entry.description}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             </ResizablePanel>
 

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Search } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { List, type RowComponentProps } from "react-window";
 
 import { Input } from "@/components/ui/input";
@@ -324,6 +324,7 @@ export function DroidKeystoreTab() {
       <div className="flex-1 min-h-0">
         {isLoading ? (
           <div className="flex items-center justify-center h-full text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
             {t("loading")}...
           </div>
         ) : filtered.length === 0 ? (

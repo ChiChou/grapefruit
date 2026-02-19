@@ -4,6 +4,7 @@ import "./DisassemblyTab.css";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
+import { Loader2 } from "lucide-react";
 
 export interface DisassemblyTabParams {
   address: string;
@@ -58,6 +59,7 @@ export function FruityDisassemblyTab({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin mr-2" />
         {t("loading")}...
       </div>
     );

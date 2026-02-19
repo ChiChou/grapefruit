@@ -167,10 +167,13 @@ export function FileTable({
     return (
       <div className="flex flex-col h-full">
         <div className="flex-1 flex items-center justify-center text-muted-foreground">
-          {t("loading")}...
+          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+          {t("loading")}
         </div>
         {cwd && (
-          <div className="px-2 py-1 text-xs text-muted-foreground border-t">{cwd}</div>
+          <div className="px-2 py-1 text-xs text-muted-foreground border-t">
+            {cwd}
+          </div>
         )}
       </div>
     );
@@ -183,7 +186,9 @@ export function FileTable({
           {t("empty_directory")}
         </div>
         {cwd && (
-          <div className="px-2 py-1 text-xs text-muted-foreground border-t">{cwd}</div>
+          <div className="px-2 py-1 text-xs text-muted-foreground border-t">
+            {cwd}
+          </div>
         )}
       </div>
     );
@@ -285,12 +290,22 @@ export function FileTable({
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <DropdownMenu>
-                          <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title={t("delete")} disabled={isDeleting} />}>
-                              {isDeleting ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Trash2 className="h-4 w-4" />
-                              )}
+                          <DropdownMenuTrigger
+                            render={
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-destructive hover:text-destructive"
+                                title={t("delete")}
+                                disabled={isDeleting}
+                              />
+                            }
+                          >
+                            {isDeleting ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="start">
                             <DropdownMenuItem
@@ -312,8 +327,17 @@ export function FileTable({
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
-                      <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7" title={t("open_with")} />}>
-                          <SquareArrowOutUpRight className="h-4 w-4" />
+                      <DropdownMenuTrigger
+                        render={
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            title={t("open_with")}
+                          />
+                        }
+                      >
+                        <SquareArrowOutUpRight className="h-4 w-4" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start">
                         <DropdownMenuItem

@@ -1,4 +1,6 @@
 import type { IDockviewPanelProps } from "dockview";
+import { Loader2 } from "lucide-react";
+import { t } from "i18next";
 
 import HexView from "../shared/HexView";
 import { useRpcQuery } from "@/lib/queries";
@@ -21,13 +23,14 @@ export function MemoryPreviewTab({
   } = useRpcQuery<ArrayBuffer | null>(
     ["memory", address ?? "", String(size ?? 0)],
     (api) => api.memory.dump(address!, size!),
-    { enabled: !!address && !!size }
+    { enabled: !!address && !!size },
   );
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
-        Loading...
+        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+        {t("loading")}
       </div>
     );
   }

@@ -1,9 +1,11 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 import Editor from "@monaco-editor/react";
 
 import { useTheme } from "@/components/providers/ThemeProvider";
 import HexView from "./HexView";
+import { t } from "i18next";
 
 function mimeToLanguage(mime: string | undefined): string | null {
   if (!mime) return null;
@@ -74,7 +76,10 @@ export function HttpResponseBodyView({
 
   if (isLoading)
     return (
-      <span className="text-xs text-muted-foreground">Loading body...</span>
+      <span className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        {t("loading")}
+      </span>
     );
 
   if (error)

@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import type { IDockviewPanelProps } from "dockview";
-import { Anchor, Code, Layers } from "lucide-react";
+import { Anchor, Code, Layers, Loader2 } from "lucide-react";
 
 import { useDock } from "@/context/DockContext";
 import { useSession, Status, Mode } from "@/context/SessionContext";
@@ -221,7 +221,8 @@ export function FruityClassDetailTab({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
-        {t("loading")}...
+        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+        {t("loading")}
       </div>
     );
   }

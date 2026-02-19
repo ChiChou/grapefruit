@@ -1,6 +1,8 @@
 import { useState } from "react";
 import type { IDockviewPanelProps } from "dockview";
 import { useQuery } from "@tanstack/react-query";
+import { t } from "i18next";
+import { Loader2 } from "lucide-react";
 
 import { useSession } from "@/context/SessionContext";
 import HexView, { type Stride } from "@/components/shared/HexView";
@@ -35,7 +37,8 @@ export function HexPreviewTab({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
-        Loading...
+        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+        {t("loading")}
       </div>
     );
   }

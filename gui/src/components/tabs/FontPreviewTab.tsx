@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, useRef } from "react";
-import { Italic, Bold, Underline } from "lucide-react";
+import { Italic, Bold, Underline, Loader2 } from "lucide-react";
 import type { IDockviewPanelProps } from "dockview";
 import { useTranslation } from "react-i18next";
 
@@ -107,7 +107,8 @@ export function FontPreviewTab({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
-        Loading...
+        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+        {t("loading")}
       </div>
     );
   }

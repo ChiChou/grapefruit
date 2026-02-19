@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
-import { Search } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 
 import { useDock } from "@/context/DockContext";
 import {
@@ -52,9 +52,7 @@ export function DroidClassDetailTab({
     let methods = classInfo.methods;
     if (methodSearch.trim()) {
       const query = methodSearch.toLowerCase();
-      methods = methods.filter((m) =>
-        m.name.toLowerCase().includes(query),
-      );
+      methods = methods.filter((m) => m.name.toLowerCase().includes(query));
     }
     return methods;
   }, [classInfo, methodSearch]);
@@ -64,9 +62,7 @@ export function DroidClassDetailTab({
     let fields = classInfo.fields;
     if (fieldSearch.trim()) {
       const query = fieldSearch.toLowerCase();
-      fields = fields.filter((f) =>
-        f.name.toLowerCase().includes(query),
-      );
+      fields = fields.filter((f) => f.name.toLowerCase().includes(query));
     }
     return fields;
   }, [classInfo, fieldSearch]);
@@ -74,7 +70,8 @@ export function DroidClassDetailTab({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
-        {t("loading")}...
+        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+        {t("loading")}
       </div>
     );
   }
@@ -111,7 +108,11 @@ export function DroidClassDetailTab({
       {classInfo.interfaces.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-4">
           {classInfo.interfaces.map((iface) => (
-            <Badge key={iface} variant="secondary" className="font-mono text-xs">
+            <Badge
+              key={iface}
+              variant="secondary"
+              className="font-mono text-xs"
+            >
               {iface}
             </Badge>
           ))}
@@ -160,7 +161,12 @@ export function DroidClassDetailTab({
                         <TableRow key={`${method.name}-${i}`}>
                           <TableCell className="text-center">
                             {method.isStatic && (
-                              <Badge variant="outline" className="text-[10px] px-1">S</Badge>
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] px-1"
+                              >
+                                S
+                              </Badge>
                             )}
                           </TableCell>
                           <TableCell className="font-mono text-xs">
@@ -211,7 +217,12 @@ export function DroidClassDetailTab({
                         <TableRow key={field.name}>
                           <TableCell className="text-center">
                             {field.isStatic && (
-                              <Badge variant="outline" className="text-[10px] px-1">S</Badge>
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] px-1"
+                              >
+                                S
+                              </Badge>
                             )}
                           </TableCell>
                           <TableCell className="font-mono text-xs">
