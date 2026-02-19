@@ -1,5 +1,6 @@
-import { type ServerType } from "@hono/node-server";
 import fs from "node:fs";
+import { styleText } from "node:util";
+import { type ServerType } from "@hono/node-server";
 import { Server, type Socket } from "socket.io";
 import { SessionDetachReason, type SpawnOptions, type Device } from "frida";
 
@@ -224,6 +225,10 @@ function setupScriptHandlers(
         break;
 
       case "fatal":
+        console.error(
+          styleText("redBright", "fatal error from agent:"),
+          payload.detail,
+        );
         socket.emit("fatal", payload.detail);
         break;
 
