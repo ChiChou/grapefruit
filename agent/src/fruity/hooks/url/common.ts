@@ -83,13 +83,6 @@ export function getOrAssignTaskId(task: NSURLSessionTask): string {
   return id;
 }
 
-export function classFromSymbol(symbol: string): ObjC.Object | null {
-  const index = symbol.indexOf(" ");
-  if (index === -1) return null;
-  const className = symbol.substring(2, index);
-  return ObjC.classes[className] || null;
-}
-
 function serializeRequest(request: NSURLRequest): SerializedRequest {
   const url = request.URL()?.absoluteString().toString();
   const method = request.HTTPMethod()?.toString() || "GET";

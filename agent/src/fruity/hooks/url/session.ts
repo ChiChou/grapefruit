@@ -10,9 +10,6 @@ import type {
   NSData,
   NSError,
   NSURL,
-  NSString,
-  NSFileManager,
-  NSNumber,
 } from "@/fruity/typings.js";
 import { wrapObjC } from "@/fruity/typings.js";
 import { getGlobalExport } from "@/lib/polyfill.js";
@@ -23,7 +20,6 @@ import {
   getOrAssignTaskId,
   getRequestState,
   removeRequestState,
-  classFromSymbol,
   recordRequestWillBeSent,
   recordResponseReceived,
   recordDataReceived,
@@ -31,6 +27,125 @@ import {
   recordLoadingFailed,
   recordMechanism,
 } from "./common.js";
+import { hookDelegateClass, injectRespondsToSelector } from "./lazy.js";
+
+function streamFileData(fileURL: NSURL, requestId: string) {
+  const handle = ObjC.classes.NSFileHandle.fileHandleForReadingAtPath_(
+    fileURL.path(),
+  );
+  if (!handle) return;
+
+  const chunkSize = 256 * 1024;
+  try {
+    while (true) {
+      const data = handle.readDataOfLength_(chunkSize) as NSData;
+      if (!data || data.length() === 0) break;
+      const len = data.length();
+      const chunk = data.bytes().readByteArray(len);
+      recordDataReceived(requestId, len, chunk);
+    }
+  } finally {
+    handle.closeFile();
+  }
+}
+
+const delegateMethodHandlers: Record<string, InvocationListenerCallbacks> = {
+  "URLSession:task:willPerformHTTPRedirection:newRequest:completionHandler:": {
+    onEnter(args) {
+      if (args[4].isNull() || args[5].isNull()) return;
+      const requestId = getOrAssignTaskId(wrapObjC<NSURLSessionTask>(args[3]));
+      recordRequestWillBeSent(
+        requestId,
+        wrapObjC<NSURLRequest>(args[5]),
+        wrapObjC<NSURLResponse>(args[4]),
+      );
+    },
+  },
+  "URLSession:dataTask:didReceiveResponse:completionHandler:": {
+    onEnter(args) {
+      if (args[4].isNull() || args[5].isNull()) return;
+      const delegate = wrapObjC<NSObject>(args[2]);
+      const dataTask = wrapObjC<NSURLSessionDataTask>(args[3]);
+      const requestId = getOrAssignTaskId(dataTask);
+      recordMechanism(
+        `NSURLSessionDataTask (delegate: ${delegate.$className})`,
+        requestId,
+      );
+      recordResponseReceived(requestId, wrapObjC<NSURLResponse>(args[4]));
+    },
+  },
+  "URLSession:dataTask:didReceiveData:": {
+    onEnter(args) {
+      const dataTask = wrapObjC<NSURLSessionDataTask>(args[3]);
+      const requestId = getOrAssignTaskId(dataTask);
+      const data = wrapObjC<NSData>(args[4]);
+      const len = data.length();
+      const chunk = len > 0 ? data.bytes().readByteArray(len) : null;
+      recordDataReceived(requestId, len, chunk);
+    },
+  },
+  "URLSession:task:didCompleteWithError:": {
+    onEnter(args) {
+      const task = wrapObjC<NSURLSessionTask>(args[3]);
+      const requestId = getOrAssignTaskId(task);
+
+      // Always emit response from task — covers completion handler tasks
+      // where didReceiveResponse: may not fire
+      const response = task.response();
+      if (response) {
+        recordResponseReceived(requestId, response);
+      }
+
+      if (!args[4].isNull()) {
+        recordLoadingFailed(requestId, wrapObjC<NSError>(args[4]));
+      } else {
+        recordLoadingFinished(requestId);
+      }
+      removeRequestState(requestId);
+    },
+  },
+  "URLSession:dataTask:didBecomeDownloadTask:": {
+    onEnter(args) {
+      const dataTask = wrapObjC<NSURLSessionDataTask>(args[3]);
+      const downloadTask = wrapObjC<NSURLSessionDownloadTask>(args[4]);
+      const dataTaskId = getOrAssignTaskId(dataTask);
+      ObjC.bind(downloadTask, { id: dataTaskId } as TaskBoundData);
+    },
+  },
+  "URLSession:downloadTask:didWriteData:totalBytesWritten:totalBytesExpectedToWrite:":
+    {
+      onEnter(args) {
+        const delegate = wrapObjC<NSObject>(args[2]);
+        const downloadTask = wrapObjC<NSURLSessionDownloadTask>(args[3]);
+        const requestId = getOrAssignTaskId(downloadTask);
+        const state = getRequestState(requestId);
+
+        if (!state.mechanismRecorded) {
+          state.mechanismRecorded = true;
+
+          const response = downloadTask.response();
+          if (response) {
+            recordResponseReceived(requestId, response);
+          }
+
+          recordMechanism(
+            `NSURLSessionDownloadTask (delegate: ${delegate.$className})`,
+            requestId,
+          );
+        }
+        recordDataReceived(requestId, args[4].toString());
+      },
+    },
+  "URLSession:downloadTask:didFinishDownloadingToURL:": {
+    onEnter(args) {
+      if (args[4].isNull()) return;
+
+      const downloadTask = wrapObjC<NSURLSessionDownloadTask>(args[3]);
+      const requestId = getOrAssignTaskId(downloadTask);
+      streamFileData(wrapObjC<NSURL>(args[4]), requestId);
+    },
+  },
+};
 
 export function hookResume(klass: ObjC.Object) {
   return Interceptor.attach(klass["- resume"].implementation, {
@@ -58,141 +173,55 @@ export function hookResume(klass: ObjC.Object) {
   });
 }
 
-export function hookDelegateMethods() {
-  const delegateMethodHandlers: Record<string, InvocationListenerCallbacks> = {
-    "URLSession:task:willPerformHTTPRedirection:newRequest:completionHandler:":
-      {
+export function hookSessionCreation() {
+  const sel = "sessionWithConfiguration:delegate:delegateQueue:";
+  const classes = [
+    ObjC.classes.NSURLSession,
+    ObjC.classes.__NSURLSessionLocal,
+  ].filter(Boolean);
+
+  for (const clazz of classes) {
+    const method = clazz["+ " + sel] as ObjC.ObjectMethod | undefined;
+    if (!method) continue;
+
+    hooks.push(
+      Interceptor.attach(method.implementation, {
         onEnter(args) {
-          if (args[4].isNull() || args[5].isNull()) return;
-          const requestId = getOrAssignTaskId(
-            wrapObjC<NSURLSessionTask>(args[3]),
-          );
-          recordRequestWillBeSent(
-            requestId,
-            wrapObjC<NSURLRequest>(args[5]),
-            wrapObjC<NSURLResponse>(args[4]),
-          );
+          // args: self, _cmd, configuration, delegate, delegateQueue
+          if (args[3].isNull()) return;
+
+          const delegate = new ObjC.Object(args[3]);
+          hooks.push(...hookDelegateClass(delegate, delegateMethodHandlers));
+          const rtsHook = injectRespondsToSelector(delegate);
+          if (rtsHook) hooks.push(rtsHook);
         },
-      },
-    "URLSession:dataTask:didReceiveResponse:completionHandler:": {
-      onEnter(args) {
-        if (args[4].isNull() || args[5].isNull()) return;
-        const delegate = wrapObjC<NSObject>(args[2]);
-        const dataTask = wrapObjC<NSURLSessionDataTask>(args[3]);
-        const requestId = getOrAssignTaskId(dataTask);
-        recordMechanism(
-          `NSURLSessionDataTask (delegate: ${delegate.$className})`,
-          requestId,
-        );
-        recordResponseReceived(requestId, wrapObjC<NSURLResponse>(args[4]));
-      },
-    },
-    "URLSession:dataTask:didReceiveData:": {
-      onEnter(args) {
-        const dataTask = wrapObjC<NSURLSessionDataTask>(args[3]);
-        const requestId = getOrAssignTaskId(dataTask);
-        const data = wrapObjC<NSData>(args[4]);
-        const len = data.length();
-        const chunk = len > 0 ? data.bytes().readByteArray(len) : null;
-        recordDataReceived(requestId, len, chunk);
-      },
-    },
-    "URLSession:task:didCompleteWithError:": {
-      onEnter(args) {
-        const task = wrapObjC<NSURLSessionTask>(args[3]);
-        const requestId = getOrAssignTaskId(task);
-
-        // Always emit response from task — covers completion handler tasks
-        // where didReceiveResponse: may not fire
-        const response = task.response();
-        if (response) {
-          recordResponseReceived(requestId, response);
-        }
-
-        if (!args[4].isNull()) {
-          recordLoadingFailed(requestId, wrapObjC<NSError>(args[4]));
-        } else {
-          recordLoadingFinished(requestId);
-        }
-        removeRequestState(requestId);
-      },
-    },
-    "URLSession:dataTask:didBecomeDownloadTask:": {
-      onEnter(args) {
-        const dataTask = wrapObjC<NSURLSessionDataTask>(args[3]);
-        const downloadTask = wrapObjC<NSURLSessionDownloadTask>(args[4]);
-        const dataTaskId = getOrAssignTaskId(dataTask);
-        ObjC.bind(downloadTask, { id: dataTaskId } as TaskBoundData);
-      },
-    },
-    "URLSession:downloadTask:didWriteData:totalBytesWritten:totalBytesExpectedToWrite:":
-      {
-        onEnter(args) {
-          const delegate = wrapObjC<NSObject>(args[2]);
-          const downloadTask = wrapObjC<NSURLSessionDownloadTask>(args[3]);
-          const requestId = getOrAssignTaskId(downloadTask);
-          const state = getRequestState(requestId);
-
-          if (!state.mechanismRecorded) {
-            state.mechanismRecorded = true;
-
-            const response = downloadTask.response();
-            if (response) {
-              recordResponseReceived(requestId, response);
-            }
-
-            recordMechanism(
-              `NSURLSessionDownloadTask (delegate: ${delegate.$className})`,
-              requestId,
-            );
-          }
-          recordDataReceived(requestId, args[4].toString());
-        },
-      },
-    "URLSession:downloadTask:didFinishDownloadingToURL:": {
-      onEnter(args) {
-        if (args[4].isNull()) return;
-
-        const downloadTask = wrapObjC<NSURLSessionDownloadTask>(args[3]);
-        const requestId = getOrAssignTaskId(downloadTask);
-        const fileURL = wrapObjC<NSURL>(args[4]);
-
-        const filemgr =
-          ObjC.classes.NSFileManager.defaultManager() as NSFileManager;
-        const size = filemgr
-          .attributesOfItemAtPath_error_(fileURL.path() as NSString, NULL)!
-          .objectForKey_("NSFileSize" as unknown as NSString) as NSNumber;
-        if (size.intValue() >= 1024 * 1024) return;
-
-        const fileData = ObjC.classes.NSData.dataWithContentsOfURL_(
-          fileURL,
-        ) as NSData;
-        if (!fileData) return;
-
-        const len = fileData.length();
-        const chunk = len > 0 ? fileData.bytes().readByteArray(len) : null;
-        recordDataReceived(requestId, len, chunk);
-      },
-    },
-  };
-
-  const resolver = new ApiResolver("objc");
-  const fmt = (sel: string) => `-[* ${sel}]`;
-
-  for (const [sel, handler] of Object.entries(delegateMethodHandlers)) {
-    for (const match of resolver.enumerateMatches(fmt(sel))) {
-      const clazz = classFromSymbol(match.name);
-      if (!clazz) continue;
-
-      try {
-        const method = clazz["- " + sel] as ObjC.ObjectMethod;
-        hooks.push(Interceptor.attach(method.implementation, handler));
-      } catch (e) {
-        console.warn(`Failed to hook ${sel} on ${clazz.$className}:`);
-        console.warn(e);
-      }
-    }
+      }),
+    );
   }
+}
+
+export function scanExistingSessions() {
+  const NSURLSession = ObjC.classes.NSURLSession;
+  if (!NSURLSession) return;
+
+  // use setImmediate to not block current thread
+  setImmediate(() => {
+    ObjC.choose(NSURLSession, {
+      onMatch(session) {
+        try {
+          const delegate = session.delegate();
+          if (!delegate || delegate.handle.isNull()) return;
+
+          hooks.push(...hookDelegateClass(delegate, delegateMethodHandlers));
+          const rtsHook = injectRespondsToSelector(delegate);
+          if (rtsHook) hooks.push(rtsHook);
+        } catch (_e) {
+          // Session may not support delegate accessor
+        }
+      },
+      onComplete() {},
+    });
+  });
 }
 
 interface CompletionBoundData {
@@ -272,15 +301,7 @@ export function hookAsyncMethods() {
 
           if (isDownload) {
             if (!first.isNull()) {
-              const fileData = ObjC.classes.NSData.dataWithContentsOfURL_(
-                wrapObjC<NSURL>(first),
-              ) as NSData | null;
-              if (fileData) {
-                const len = fileData.length();
-                const chunk =
-                  len > 0 ? fileData.bytes().readByteArray(len) : null;
-                recordDataReceived(rid, len, chunk);
-              }
+              streamFileData(wrapObjC<NSURL>(first), rid);
             }
           } else {
             const nsdata = first.isNull() ? null : wrapObjC<NSData>(first);
@@ -355,55 +376,4 @@ export function hookAsyncMethods() {
   const { NSURLSession, __NSURLSessionLocal } = ObjC.classes;
   if (NSURLSession) intercept(NSURLSession);
   if (__NSURLSessionLocal) intercept(__NSURLSessionLocal);
-}
-
-export function hookRespondsToSelector() {
-  // Inject respondsToSelector: on delegate classes so they report YES for
-  // URLSession:dataTask:didReceiveResponse:completionHandler: even when
-  // they don't implement it. This forces the URL loading system to call
-  // the delegate method, allowing our hooks to capture the response.
-  const targetSel = ObjC.selector(
-    "URLSession:dataTask:didReceiveResponse:completionHandler:",
-  );
-
-  const resolver = new ApiResolver("objc");
-  const delegateSelectors = [
-    "URLSession:dataTask:didReceiveData:",
-    "URLSession:task:didCompleteWithError:",
-  ];
-
-  const injectedClasses = new Set<string>();
-
-  for (const sel of delegateSelectors) {
-    for (const match of resolver.enumerateMatches(`-[* ${sel}]`)) {
-      const clazz = classFromSymbol(match.name);
-      if (!clazz) continue;
-
-      const className = clazz.$className;
-      if (injectedClasses.has(className)) continue;
-
-      // Skip if the class already implements didReceiveResponse:
-      const existing = clazz[
-        "- URLSession:dataTask:didReceiveResponse:completionHandler:"
-      ] as ObjC.ObjectMethod | undefined;
-      if (existing) continue;
-
-      const rtsMethod = clazz["- respondsToSelector:"] as
-        | ObjC.ObjectMethod
-        | undefined;
-      if (!rtsMethod) continue;
-
-      injectedClasses.add(className);
-      hooks.push(
-        Interceptor.attach(rtsMethod.implementation, {
-          onLeave(retval) {
-            const sel = this.context as unknown as { x1: NativePointer };
-            if (sel.x1.equals(targetSel)) {
-              retval.replace(ptr(1));
-            }
-          },
-        }),
-      );
-    }
-  }
 }

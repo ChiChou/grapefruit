@@ -3,15 +3,16 @@ import ObjC from "frida-objc-bridge";
 import { hooks } from "./common.js";
 import {
   hookResume,
-  hookDelegateMethods,
+  hookSessionCreation,
+  scanExistingSessions,
   hookAsyncMethods as hookSessionAsyncMethods,
-  hookRespondsToSelector,
 } from "./session.js";
 import {
-  hookDelegateMethods as hookConnectionDelegateMethods,
+  hookConnectionCreation,
   hookAsyncMethods as hookConnectionAsyncMethods,
 } from "./connection.js";
 import { hookWebSocketMethods } from "./websocket.js";
+import { reset as resetLazyState } from "./lazy.js";
 
 let running = false;
 
@@ -31,11 +32,11 @@ export function start() {
   }
 
   hookSessionAsyncMethods();
-  hookDelegateMethods();
-  hookConnectionDelegateMethods();
   hookConnectionAsyncMethods();
   hookWebSocketMethods();
-  hookRespondsToSelector();
+  hookSessionCreation();
+  hookConnectionCreation();
+  scanExistingSessions();
 }
 
 export function stop() {
@@ -45,6 +46,7 @@ export function stop() {
     hook.detach();
   }
   hooks.length = 0;
+  resetLazyState();
 }
 
 export function status(): boolean {

@@ -15,7 +15,6 @@ import {
   nextRequestId,
   getRequestState,
   removeRequestState,
-  classFromSymbol,
   recordRequestWillBeSent,
   recordResponseReceived,
   recordDataReceived,
@@ -23,6 +22,67 @@ import {
   recordLoadingFailed,
   recordMechanism,
 } from "./common.js";
+import { hookDelegateClass } from "./lazy.js";
+
+const delegateMethodHandlers: Record<string, InvocationListenerCallbacks> = {
+  "connection:willSendRequest:redirectResponse:": {
+    onEnter(args) {
+      const delegate = wrapObjC<NSObject>(args[0]);
+      const connection = new ObjC.Object(args[2]);
+      const request = wrapObjC<NSURLRequest>(args[3]);
+      const response = args[4].isNull()
+        ? null
+        : wrapObjC<NSURLResponse>(args[4]);
+
+      const requestId = getOrAssignConnectionId(connection);
+      const state = getRequestState(requestId);
+      state.request = request;
+
+      recordRequestWillBeSent(requestId, request, response);
+      recordMechanism(
+        `NSURLConnection (delegate: ${delegate.$className})`,
+        requestId,
+      );
+    },
+  },
+  "connection:didReceiveResponse:": {
+    onEnter(args) {
+      const connection = new ObjC.Object(args[2]);
+      const response = wrapObjC<NSURLResponse>(args[3]);
+      const requestId = getOrAssignConnectionId(connection);
+      recordResponseReceived(requestId, response);
+    },
+  },
+  "connection:didReceiveData:": {
+    onEnter(args) {
+      const connection = new ObjC.Object(args[2]);
+      const data = wrapObjC<NSData>(args[3]);
+      const requestId = getOrAssignConnectionId(connection);
+      const len = data.length();
+      const chunk = len > 0 ? data.bytes().readByteArray(len) : null;
+      recordDataReceived(requestId, len, chunk);
+    },
+  },
+  "connectionDidFinishLoading:": {
+    onEnter(args) {
+      const connection = new ObjC.Object(args[2]);
+      const requestId = getOrAssignConnectionId(connection);
+      recordLoadingFinished(requestId);
+      removeRequestState(requestId);
+    },
+  },
+  "connection:didFailWithError:": {
+    onEnter(args) {
+      const connection = new ObjC.Object(args[2]);
+      const requestId = getOrAssignConnectionId(connection);
+      const state = getRequestState(requestId);
+      if (state.request) {
+        recordLoadingFailed(requestId, wrapObjC<NSError>(args[3]));
+      }
+      removeRequestState(requestId);
+    },
+  },
+};
 
 function getOrAssignConnectionId(connection: ObjC.Object): string {
   const metadata = ObjC.getBoundData(connection) as TaskBoundData;
@@ -34,83 +94,32 @@ function getOrAssignConnectionId(connection: ObjC.Object): string {
   return id;
 }
 
-export function hookDelegateMethods() {
-  const delegateMethodHandlers: Record<string, InvocationListenerCallbacks> = {
-    "connection:willSendRequest:redirectResponse:": {
-      onEnter(args) {
-        const delegate = wrapObjC<NSObject>(args[0]);
-        const connection = new ObjC.Object(args[2]);
-        const request = wrapObjC<NSURLRequest>(args[3]);
-        const response = args[4].isNull()
-          ? null
-          : wrapObjC<NSURLResponse>(args[4]);
+export function hookConnectionCreation() {
+  const { NSURLConnection } = ObjC.classes;
+  if (!NSURLConnection) return;
 
-        const requestId = getOrAssignConnectionId(connection);
-        const state = getRequestState(requestId);
-        state.request = request;
+  const initSelectors = [
+    "initWithRequest:delegate:",
+    "initWithRequest:delegate:startImmediately:",
+  ];
 
-        recordRequestWillBeSent(requestId, request, response);
-        recordMechanism(
-          `NSURLConnection (delegate: ${delegate.$className})`,
-          requestId,
-        );
-      },
-    },
-    "connection:didReceiveResponse:": {
-      onEnter(args) {
-        const connection = new ObjC.Object(args[2]);
-        const response = wrapObjC<NSURLResponse>(args[3]);
-        const requestId = getOrAssignConnectionId(connection);
-        recordResponseReceived(requestId, response);
-      },
-    },
-    "connection:didReceiveData:": {
-      onEnter(args) {
-        const connection = new ObjC.Object(args[2]);
-        const data = wrapObjC<NSData>(args[3]);
-        const requestId = getOrAssignConnectionId(connection);
-        const len = data.length();
-        const chunk = len > 0 ? data.bytes().readByteArray(len) : null;
-        recordDataReceived(requestId, len, chunk);
-      },
-    },
-    "connectionDidFinishLoading:": {
-      onEnter(args) {
-        const connection = new ObjC.Object(args[2]);
-        const requestId = getOrAssignConnectionId(connection);
-        recordLoadingFinished(requestId);
-        removeRequestState(requestId);
-      },
-    },
-    "connection:didFailWithError:": {
-      onEnter(args) {
-        const connection = new ObjC.Object(args[2]);
-        const requestId = getOrAssignConnectionId(connection);
-        const state = getRequestState(requestId);
-        if (state.request) {
-          recordLoadingFailed(requestId, wrapObjC<NSError>(args[3]));
-        }
-        removeRequestState(requestId);
-      },
-    },
-  };
+  for (const sel of initSelectors) {
+    const method = NSURLConnection["- " + sel] as
+      | ObjC.ObjectMethod
+      | undefined;
+    if (!method) continue;
 
-  const resolver = new ApiResolver("objc");
-  const fmt = (sel: string) => `-[* ${sel}]`;
+    hooks.push(
+      Interceptor.attach(method.implementation, {
+        onEnter(args) {
+          // args: self, _cmd, request, delegate[, startImmediately]
+          if (args[3].isNull()) return;
 
-  for (const [sel, handler] of Object.entries(delegateMethodHandlers)) {
-    for (const match of resolver.enumerateMatches(fmt(sel))) {
-      const clazz = classFromSymbol(match.name);
-      if (!clazz) continue;
-
-      const method = clazz["- " + sel] as ObjC.ObjectMethod;
-      if (!method) continue;
-      try {
-        hooks.push(Interceptor.attach(method.implementation, handler));
-      } catch (e) {
-        console.warn(`Failed to hook ${sel} on ${clazz.$className}:`, e);
-      }
-    }
+          const delegate = new ObjC.Object(args[3]);
+          hooks.push(...hookDelegateClass(delegate, delegateMethodHandlers));
+        },
+      }),
+    );
   }
 }
 
