@@ -12,7 +12,7 @@ import { NSURLStore } from "../lib/store/nsurl.ts";
 import { FlutterStore } from "../lib/store/flutter.ts";
 import { JNIStore } from "../lib/store/jni.ts";
 import { createTapStore } from "../lib/store/taps.ts";
-import type { JNILog } from "@agent/droid/observers/jni";
+import type { JNILog } from "@agent/droid/hooks/jni";
 
 const LOG_TAIL_BYTES = 1024 * 1024; // 1MB
 

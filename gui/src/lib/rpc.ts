@@ -9,7 +9,7 @@ import type {
 import type { RPCRoute as DroidRPCRoute } from "@agent/droid/registry";
 
 import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
-import type { JNIEvent } from "@agent/droid/observers/jni";
+import type { JNIEvent } from "@agent/droid/hooks/jni";
 
 export interface NSURLEvent {
   event: string;

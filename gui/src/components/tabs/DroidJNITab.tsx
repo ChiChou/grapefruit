@@ -22,7 +22,7 @@ import {
 import { Status, useSession } from "@/context/SessionContext";
 
 const TAP_ID = "jni";
-import type { JNIEvent, JNILog } from "@agent/droid/observers/jni";
+import type { JNIEvent, JNILog } from "@agent/droid/hooks/jni";
 
 /** Flattened event shape for display (union of live + historical fields). */
 interface JNIDisplayEvent {

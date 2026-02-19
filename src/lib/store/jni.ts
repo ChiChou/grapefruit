@@ -1,7 +1,7 @@
 import { eq, and, gt, desc, count as countFn } from "drizzle-orm";
 import { jni } from "../schema.ts";
 import { db } from "./db.ts";
-import type { JNIEvent } from "@agent/droid/observers/jni";
+import type { JNIEvent } from "@agent/droid/hooks/jni";
 
 export interface JNIRecord {
   id: number;

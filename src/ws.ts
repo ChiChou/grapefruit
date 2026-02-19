@@ -15,7 +15,7 @@ import { JNIStore } from "./lib/store/jni.ts";
 import { createTapStore } from "./lib/store/taps.ts";
 
 import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
-import type { JNIEvent } from "@agent/droid/observers/jni";
+import type { JNIEvent } from "@agent/droid/hooks/jni";
 
 type Platform = "fruity" | "droid";
 type Mode = "app" | "daemon";
