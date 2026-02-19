@@ -20,7 +20,7 @@ import {
   type RequestInfo,
 } from "@/lib/codegen";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -476,6 +476,14 @@ export function FruityNSURLTab() {
             Start
           </Button>
         )}
+        <a
+          href={`/api/history/nsurl/${device}/${identifier}/har`}
+          download={`${identifier}.har`}
+          className={buttonVariants({ variant: "outline", size: "sm" }) + " h-8 px-2.5 text-xs no-underline"}
+        >
+          <Download className="w-3.5 h-3.5" />
+          Export HAR
+        </a>
         <span className="text-xs text-muted-foreground ml-auto">
           {requestList.length} request{requestList.length !== 1 ? "s" : ""}
         </span>

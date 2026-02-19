@@ -12,6 +12,7 @@ import { NSURLStore } from "../lib/store/nsurl.ts";
 import { FlutterStore } from "../lib/store/flutter.ts";
 import { JNIStore } from "../lib/store/jni.ts";
 import { createTapStore } from "../lib/store/taps.ts";
+import { toHAR } from "../lib/har.ts";
 import type { JNILog } from "@agent/droid/hooks/jni";
 
 const LOG_TAIL_BYTES = 1024 * 1024; // 1MB
@@ -281,6 +282,25 @@ const routes = new Hono()
     }
   })
   // NSURL endpoints
+  .get("/history/nsurl/:device/:identifier/har", (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+
+    try {
+      const nsurlStore = new NSURLStore(deviceId, identifier);
+      const requests = nsurlStore.query({ limit: 10000, offset: 0 });
+      const har = toHAR(requests);
+
+      c.header(
+        "Content-Disposition",
+        `attachment; filename="${identifier}.har"`,
+      );
+      return c.json(har);
+    } catch (e) {
+      console.error("Failed to export HAR:", e);
+      return c.text("Failed to export HAR", 500);
+    }
+  })
   .get("/history/nsurl/:device/:identifier", (c) => {
     const deviceId = c.req.param("device");
     const identifier = c.req.param("identifier");
