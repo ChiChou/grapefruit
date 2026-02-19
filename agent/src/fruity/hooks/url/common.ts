@@ -13,6 +13,23 @@ import type {
 
 const subject = "nsurl";
 
+/**
+ * Get the IMP for a method without going through frida-objc-bridge's
+ * property accessor (which can trigger a JS error).
+ * Returns null if the method doesn't exist on the class.
+ */
+export function getMethodImp(
+  clazz: ObjC.Object,
+  sel: string,
+  isClassMethod: boolean,
+): NativePointer | null {
+  const methodPtr = isClassMethod
+    ? ObjC.api.class_getClassMethod(clazz.handle, ObjC.selector(sel))
+    : ObjC.api.class_getInstanceMethod(clazz.handle, ObjC.selector(sel));
+  if ((methodPtr as NativePointer).isNull()) return null;
+  return ObjC.api.method_getImplementation(methodPtr) as NativePointer;
+}
+
 export interface TaskBoundData {
   id?: string;
 }
@@ -50,7 +67,7 @@ export function nextRequestId(): string {
   return ObjC.classes.NSUUID.UUID().UUIDString().toString();
 }
 
-function emitNetworkEvent(
+export function emitNetworkEvent(
   event: NetworkEvent,
   data?: ArrayBuffer | null,
 ): void {
