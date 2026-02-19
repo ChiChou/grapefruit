@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
@@ -125,7 +119,10 @@ const columns: ColumnDef<JNIEntry>[] = [
     header: "Method",
     size: 220,
     cell: ({ row }) => (
-      <span className="font-mono text-primary truncate" title={row.original.event.method}>
+      <span
+        className="font-mono text-primary truncate"
+        title={row.original.event.method}
+      >
         {row.original.event.method}
       </span>
     ),
@@ -149,7 +146,7 @@ export function JNITab() {
   const { t } = useTranslation();
   const { status, socket, device, identifier, droid } = useSession();
 
-  const [isActive, setIsActive] = useState(false);
+  const [isActive, setIsActive] = useState<boolean | null>(null);
   const [entries, setEntries] = useState<JNIEntry[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [searchFilter, setSearchFilter] = useState("");
@@ -167,8 +164,9 @@ export function JNITab() {
   });
 
   useEffect(() => {
-    if (initialActive !== undefined) setIsActive(initialActive);
-  }, [initialActive]);
+    if (initialActive !== undefined && isActive === null)
+      setIsActive(initialActive);
+  }, [initialActive, isActive]);
 
   // Toggle start/stop
   const toggleMutation = useMutation({
@@ -349,7 +347,11 @@ export function JNITab() {
                 onClick={() => toggleMutation.mutate(false)}
                 disabled={notReady || toggleMutation.isPending || !droid}
               >
-                {toggleMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Square className="w-3.5 h-3.5" />}
+                {toggleMutation.isPending ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Square className="w-3.5 h-3.5" />
+                )}
                 Stop
               </Button>
             ) : (
@@ -360,7 +362,11 @@ export function JNITab() {
                 onClick={() => toggleMutation.mutate(true)}
                 disabled={notReady || toggleMutation.isPending || !droid}
               >
-                {toggleMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+                {toggleMutation.isPending ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Play className="w-3.5 h-3.5" />
+                )}
                 Start
               </Button>
             )}
@@ -371,13 +377,19 @@ export function JNITab() {
               className="h-8 max-w-xs"
             />
             <span className="text-xs text-muted-foreground ml-auto">
-              {filteredEntries.length} event{filteredEntries.length !== 1 ? "s" : ""}
+              {filteredEntries.length} event
+              {filteredEntries.length !== 1 ? "s" : ""}
             </span>
             <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              onClick={() => tableContainerRef.current?.scrollTo({ top: tableContainerRef.current.scrollHeight, behavior: "smooth" })}
+              onClick={() =>
+                tableContainerRef.current?.scrollTo({
+                  top: tableContainerRef.current.scrollHeight,
+                  behavior: "smooth",
+                })
+              }
             >
               <ChevronsDown className="w-4 h-4" />
             </Button>
@@ -404,7 +416,10 @@ export function JNITab() {
                         className="text-left font-medium p-2 text-muted-foreground"
                         style={{ width: header.getSize() }}
                       >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                       </th>
                     ))}
                   </tr>
@@ -413,7 +428,10 @@ export function JNITab() {
               <tbody>
                 {virtualRows.length > 0 && virtualRows[0].start > 0 && (
                   <tr>
-                    <td colSpan={columns.length} style={{ height: virtualRows[0].start }} />
+                    <td
+                      colSpan={columns.length}
+                      style={{ height: virtualRows[0].start }}
+                    />
                   </tr>
                 )}
                 {virtualRows.map((virtualRow) => {
@@ -426,16 +444,26 @@ export function JNITab() {
                       }`}
                       style={{ height: virtualRow.size }}
                       onClick={() =>
-                        setSelectedId(selectedId === row.original.id ? null : row.original.id)
+                        setSelectedId(
+                          selectedId === row.original.id
+                            ? null
+                            : row.original.id,
+                        )
                       }
                     >
                       {row.getVisibleCells().map((cell) => (
                         <td
                           key={cell.id}
                           className="p-2 truncate"
-                          style={{ width: cell.column.getSize(), maxWidth: cell.column.getSize() }}
+                          style={{
+                            width: cell.column.getSize(),
+                            maxWidth: cell.column.getSize(),
+                          }}
                         >
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
                         </td>
                       ))}
                     </tr>
@@ -445,7 +473,11 @@ export function JNITab() {
                   <tr>
                     <td
                       colSpan={columns.length}
-                      style={{ height: totalSize - (virtualRows[virtualRows.length - 1]?.end ?? 0) }}
+                      style={{
+                        height:
+                          totalSize -
+                          (virtualRows[virtualRows.length - 1]?.end ?? 0),
+                      }}
                     />
                   </tr>
                 )}

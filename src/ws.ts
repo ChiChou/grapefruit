@@ -277,10 +277,16 @@ function setupSocketHandlers(
       console.info(`RPC method: ${ns}.${method}`, ...args);
       script.exports
         .invoke(ns, method, args)
-        .then((result) => {
-          ack(null, result);
-
-          // Auto-persist after tap toggles
+        .then(
+          (result) => ack(null, result),
+          (err: Error) => {
+            console.error(`RPC method ${method} failed:`, err);
+            ack(err, null);
+          },
+        )
+        .then(() => {
+          // Auto-persist after tap toggles (runs on success OR failure,
+          // because start() may partially succeed before throwing)
           if (ns === "taps" && (method === "start" || method === "stop")) {
             script.exports
               .snapshot()

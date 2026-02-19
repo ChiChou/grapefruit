@@ -322,7 +322,7 @@ export function FruityURLLoadingTab() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // URL loading hook toggle
-  const [hookEnabled, setHookEnabled] = useState(false);
+  const [hookEnabled, setHookEnabled] = useState<boolean | null>(null);
   const [hookLoading, setHookLoading] = useState(false);
 
   const { data: initialActive } = useRpcQuery<boolean>(
@@ -330,11 +330,12 @@ export function FruityURLLoadingTab() {
     (api) => api.taps.active(TAP_ID),
   );
 
+  // Seed local state from the first successful query; never override manual toggles
   useEffect(() => {
-    if (initialActive !== undefined) {
+    if (initialActive !== undefined && hookEnabled === null) {
       setHookEnabled(initialActive);
     }
-  }, [initialActive]);
+  }, [initialActive, hookEnabled]);
 
   const handleToggleHook = async (enabled: boolean) => {
     if (!fruity) return;

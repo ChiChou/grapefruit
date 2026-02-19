@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
@@ -67,7 +61,8 @@ function preview(value: unknown): string {
   if (value === null || value === undefined) return "";
   if (typeof value === "string")
     return value.length > 96 ? `${value.slice(0, 96)}...` : value;
-  if (typeof value === "number" || typeof value === "boolean") return `${value}`;
+  if (typeof value === "number" || typeof value === "boolean")
+    return `${value}`;
   if (Array.isArray(value)) return `[${value.length} items]`;
   if (typeof value === "object") {
     const keys = Object.keys(value);
@@ -169,7 +164,7 @@ export function FlutterMethodChannelsTab() {
 
   const api = platform === Platform.Fruity ? fruity : droid;
 
-  const [isActive, setIsActive] = useState(false);
+  const [isActive, setIsActive] = useState<boolean | null>(null);
   const [entries, setEntries] = useState<FlutterEntry[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [searchFilter, setSearchFilter] = useState("");
@@ -182,10 +177,7 @@ export function FlutterMethodChannelsTab() {
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
   // Check if flutter is available
-  const {
-    data: flutterAvailable,
-    isLoading: flutterLoading,
-  } = useQuery({
+  const { data: flutterAvailable, isLoading: flutterLoading } = useQuery({
     queryKey: ["flutterAvailable", platform, device],
     queryFn: () => api!.taps.available(TAP_ID),
     enabled: status === Status.Ready && !!api,
@@ -202,8 +194,9 @@ export function FlutterMethodChannelsTab() {
   });
 
   useEffect(() => {
-    if (initialActive !== undefined) setIsActive(initialActive);
-  }, [initialActive]);
+    if (initialActive !== undefined && isActive === null)
+      setIsActive(initialActive);
+  }, [initialActive, isActive]);
 
   // Toggle start/stop
   const toggleMutation = useMutation({
@@ -257,10 +250,7 @@ export function FlutterMethodChannelsTab() {
       return res.json();
     },
     enabled:
-      status === Status.Ready &&
-      !!device &&
-      !!identifier &&
-      !!flutterAvailable,
+      status === Status.Ready && !!device && !!identifier && !!flutterAvailable,
     staleTime: Infinity,
   });
 
@@ -310,7 +300,11 @@ export function FlutterMethodChannelsTab() {
     if (status !== Status.Ready || !socket) return;
 
     const onFlutter = (message: Record<string, unknown>) => {
-      const entry = toEntry(message as unknown as FlutterEvent, new Date(), idRef.current++);
+      const entry = toEntry(
+        message as unknown as FlutterEvent,
+        new Date(),
+        idRef.current++,
+      );
       pendingRef.current.push(entry);
       if (!timerRef.current) {
         timerRef.current = setTimeout(flushPending, THROTTLE_MS);
@@ -333,7 +327,11 @@ export function FlutterMethodChannelsTab() {
     return entries.filter((e) => {
       if (e.direction === "dart" && !showDart) return false;
       if (e.direction === "native" && !showNative) return false;
-      if (q && !e.channel.toLowerCase().includes(q) && !e.method.toLowerCase().includes(q))
+      if (
+        q &&
+        !e.channel.toLowerCase().includes(q) &&
+        !e.method.toLowerCase().includes(q)
+      )
         return false;
       return true;
     });
@@ -363,7 +361,8 @@ export function FlutterMethodChannelsTab() {
   const virtualRows = rowVirtualizer.getVirtualItems();
   const totalSize = rowVirtualizer.getTotalSize();
 
-  const notReady = status !== Status.Ready || flutterLoading || !flutterAvailable;
+  const notReady =
+    status !== Status.Ready || flutterLoading || !flutterAvailable;
 
   return (
     <ResizablePanelGroup
@@ -384,7 +383,11 @@ export function FlutterMethodChannelsTab() {
                 onClick={() => toggleMutation.mutate(false)}
                 disabled={notReady || toggleMutation.isPending || !api}
               >
-                {toggleMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Square className="w-3.5 h-3.5" />}
+                {toggleMutation.isPending ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Square className="w-3.5 h-3.5" />
+                )}
                 Stop
               </Button>
             ) : (
@@ -395,7 +398,11 @@ export function FlutterMethodChannelsTab() {
                 onClick={() => toggleMutation.mutate(true)}
                 disabled={notReady || toggleMutation.isPending || !api}
               >
-                {toggleMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+                {toggleMutation.isPending ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Play className="w-3.5 h-3.5" />
+                )}
                 Start
               </Button>
             )}
@@ -414,13 +421,19 @@ export function FlutterMethodChannelsTab() {
               {"\u2192 Dart"}
             </label>
             <span className="text-xs text-muted-foreground ml-auto">
-              {filteredEntries.length} event{filteredEntries.length !== 1 ? "s" : ""}
+              {filteredEntries.length} event
+              {filteredEntries.length !== 1 ? "s" : ""}
             </span>
             <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              onClick={() => tableContainerRef.current?.scrollTo({ top: tableContainerRef.current.scrollHeight, behavior: "smooth" })}
+              onClick={() =>
+                tableContainerRef.current?.scrollTo({
+                  top: tableContainerRef.current.scrollHeight,
+                  behavior: "smooth",
+                })
+              }
             >
               <ChevronsDown className="w-4 h-4" />
             </Button>
@@ -447,7 +460,10 @@ export function FlutterMethodChannelsTab() {
                         className="text-left font-medium p-2 text-muted-foreground"
                         style={{ width: header.getSize() }}
                       >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                       </th>
                     ))}
                   </tr>
@@ -456,7 +472,10 @@ export function FlutterMethodChannelsTab() {
               <tbody>
                 {virtualRows.length > 0 && virtualRows[0].start > 0 && (
                   <tr>
-                    <td colSpan={columns.length} style={{ height: virtualRows[0].start }} />
+                    <td
+                      colSpan={columns.length}
+                      style={{ height: virtualRows[0].start }}
+                    />
                   </tr>
                 )}
                 {virtualRows.map((virtualRow) => {
@@ -469,16 +488,26 @@ export function FlutterMethodChannelsTab() {
                       }`}
                       style={{ height: virtualRow.size }}
                       onClick={() =>
-                        setSelectedId(selectedId === row.original.id ? null : row.original.id)
+                        setSelectedId(
+                          selectedId === row.original.id
+                            ? null
+                            : row.original.id,
+                        )
                       }
                     >
                       {row.getVisibleCells().map((cell) => (
                         <td
                           key={cell.id}
                           className="p-2 truncate"
-                          style={{ width: cell.column.getSize(), maxWidth: cell.column.getSize() }}
+                          style={{
+                            width: cell.column.getSize(),
+                            maxWidth: cell.column.getSize(),
+                          }}
                         >
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
                         </td>
                       ))}
                     </tr>
@@ -488,7 +517,11 @@ export function FlutterMethodChannelsTab() {
                   <tr>
                     <td
                       colSpan={columns.length}
-                      style={{ height: totalSize - (virtualRows[virtualRows.length - 1]?.end ?? 0) }}
+                      style={{
+                        height:
+                          totalSize -
+                          (virtualRows[virtualRows.length - 1]?.end ?? 0),
+                      }}
                     />
                   </tr>
                 )}
@@ -521,9 +554,7 @@ export function FlutterMethodChannelsTab() {
                   {selectedEntry.channel}
                 </div>
                 <div>
-                  <span className="text-muted-foreground">
-                    {t("method")}:{" "}
-                  </span>
+                  <span className="text-muted-foreground">{t("method")}: </span>
                   {selectedEntry.method}
                 </div>
                 <div>
