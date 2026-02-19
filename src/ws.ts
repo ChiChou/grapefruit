@@ -44,6 +44,7 @@ interface ServerToClientEvents {
   crypto: (msg: BaseHookMessage, data?: ArrayBuffer) => void;
   http: (event: HttpNetworkEvent) => void;
   jni: (event: JNIEvent) => void;
+  fatal: (detail: unknown) => void;
 }
 
 type ClientCallback = (err: Error | null, result: any) => void;
@@ -220,6 +221,10 @@ function setupScriptHandlers(
           data ? new Uint8Array(data).buffer : undefined,
         );
         stores.crypto.append(payload, data ?? null);
+        break;
+
+      case "fatal":
+        socket.emit("fatal", payload.detail);
         break;
 
       case "lifecycle":

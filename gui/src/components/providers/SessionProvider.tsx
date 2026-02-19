@@ -17,6 +17,8 @@ import {
   type SessionServerEvents,
 } from "@/lib/rpc";
 
+import { CrashDialog, type CrashDetail } from "@/components/shared/CrashDialog";
+
 function fnv1a(input: string): string {
   let hash = 0x811c9dc5;
   for (let i = 0; i < input.length; i++) {
@@ -43,6 +45,7 @@ function SessionProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<StatusType>(Status.Disconnected);
   const [pid, setPid] = useState<number | undefined>(targetPid);
   const [fridaMajor, setFridaMajor] = useState(17);
+  const [crashDetail, setCrashDetail] = useState<CrashDetail | null>(null);
 
   useEffect(() => {
     fetch("/api/version")
@@ -106,6 +109,9 @@ function SessionProvider({ children }: { children: ReactNode }) {
         console.debug("socket.io connect");
         setStatus(Status.Connecting);
       })
+      .on("fatal", (detail) => {
+        setCrashDetail(detail as CrashDetail);
+      })
       .on("disconnect", () => {
         console.debug("socket.io disconnect");
         setStatus(Status.Disconnected);
@@ -164,6 +170,7 @@ function SessionProvider({ children }: { children: ReactNode }) {
   return (
     <SessionContext.Provider value={contextValue}>
       {children}
+      <CrashDialog detail={crashDetail} showRelaunch={mode === Mode.App} />
     </SessionContext.Provider>
   );
 }

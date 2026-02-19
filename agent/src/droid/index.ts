@@ -1,8 +1,11 @@
+import { init as setupExceptionHandler } from "@/common/exception.js";
 import { interfaces, invoke } from "./registry.js";
 import * as taps from "./taps.js";
 import type { TapRule } from "@/common/taps.js";
 
 import "@/common/encode-arraybuffer.js";
+
+setupExceptionHandler();
 
 rpc.exports = {
   invoke,

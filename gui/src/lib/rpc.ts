@@ -28,6 +28,7 @@ export interface SessionClientEvents {
   crypto: (message: BaseHookMessage) => void;
   http: (event: HttpNetworkEvent) => void;
   jni: (event: JNIEvent) => void;
+  fatal: (detail: unknown) => void;
 }
 
 export interface SessionServerEvents {

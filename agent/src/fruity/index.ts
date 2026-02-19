@@ -1,5 +1,6 @@
 import ObjC from "frida-objc-bridge";
 
+import { init as setupExceptionHandler } from "@/common/exception.js";
 import { init as enableLifeCycleHook } from "./observers/lifecycle.js";
 import { interfaces, invoke } from "./registry.js";
 import * as taps from "./taps.js";
@@ -7,29 +8,8 @@ import type { TapRule } from "@/common/taps.js";
 
 import "@/common/encode-arraybuffer.js";
 
+setupExceptionHandler();
 setImmediate(enableLifeCycleHook);
-
-Process.setExceptionHandler((detail) => {
-  console.error("Exception report: ");
-  console.error(JSON.stringify(detail, null, 4));
-  send({
-    subject: "fatal",
-    detail,
-  });
-  const { context } = detail;
-  const pc = Instruction.parse(context.pc);
-  console.warn(DebugSymbol.fromAddress(context.pc));
-  console.error(pc.toString());
-  console.error(Instruction.parse(pc.next).toString());
-  console.error("Backtrace");
-  console.error(
-    Thread.backtrace(context, Backtracer.ACCURATE)
-      .map((addr) => DebugSymbol.fromAddress(addr).toString())
-      .join("\n"),
-  );
-
-  return false;
-});
 
 if (ObjC.available && ObjC.classes.UIApplication) {
   // disable autolock
