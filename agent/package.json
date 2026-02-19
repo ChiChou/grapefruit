@@ -40,5 +40,8 @@
   },
   "trustedDependencies": [
     "frida"
-  ]
+  ],
+  "patchedDependencies": {
+    "frida-compile@19.0.4": "patches/frida-compile@19.0.4.patch"
+  }
 }

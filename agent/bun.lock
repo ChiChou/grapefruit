@@ -24,6 +24,9 @@
   "trustedDependencies": [
     "frida",
   ],
+  "patchedDependencies": {
+    "frida-compile@19.0.4": "patches/frida-compile@19.0.4.patch",
+  },
   "packages": {
     "@eslint-community/eslint-utils": ["@eslint-community/eslint-utils@4.9.0", "", { "dependencies": { "eslint-visitor-keys": "^3.4.3" }, "peerDependencies": { "eslint": "^6.0.0 || ^7.0.0 || >=8.0.0" } }, "sha512-ayVFHdtZ+hsq1t2Dy24wCmGXGe4q9Gu3smhLYALJrr473ZH27MsnSL+LKUlimp4BWJqMDMLmPpx/Q9R3OAlL4g=="],
 
