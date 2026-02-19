@@ -54,7 +54,7 @@ rpc.exports = {
         pool.release();
       }
     } else {
-      action();
+      return action();
     }
   },
   interfaces,
