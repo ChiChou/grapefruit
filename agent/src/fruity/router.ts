@@ -14,11 +14,9 @@ import * as objc from "./hooks/objc.js";
 import * as ui from "./modules/ui.js";
 import * as uidevice from "./modules/uidevice.js";
 import * as url from "./modules/url.js";
-import * as nsurl from "./observers/url/index.js";
 import * as userdefaults from "./modules/userdefaults.js";
 import * as webview from "./modules/webview.js";
 
-import * as flutter from "./observers/flutter.js";
 import * as taps from "./taps.js";
 
 import * as memory from "@/common/memory.js";
@@ -38,7 +36,6 @@ export default {
   cookies,
   crypto,
   entitlements,
-  flutter,
   fs,
   geolocation,
   hook,
@@ -57,7 +54,6 @@ export default {
   ui,
   uidevice,
   url,
-  nsurl,
   userdefaults,
   webview,
 };

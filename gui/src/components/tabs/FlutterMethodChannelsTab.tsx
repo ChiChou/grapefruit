@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/resizable";
 import { Status, Platform, useSession } from "@/context/SessionContext";
 
+const TAP_ID = "flutter";
+
 interface FlutterEvent {
   type: "method" | "event" | "message";
   dir: "native" | "dart";
@@ -185,21 +187,32 @@ export function FlutterMethodChannelsTab() {
     isLoading: flutterLoading,
   } = useQuery({
     queryKey: ["flutterAvailable", platform, device],
-    queryFn: async () => !!(await api!.flutter.available()),
+    queryFn: () => api!.taps.available(TAP_ID),
     enabled: status === Status.Ready && !!api,
     staleTime: Infinity,
     gcTime: 0,
     retry: false,
   });
 
+  // Sync initial active state from agent
+  const { data: initialActive } = useQuery({
+    queryKey: ["flutterActive", platform, device],
+    queryFn: () => api!.taps.active(TAP_ID),
+    enabled: status === Status.Ready && !!api,
+  });
+
+  useEffect(() => {
+    if (initialActive !== undefined) setIsActive(initialActive);
+  }, [initialActive]);
+
   // Toggle start/stop
   const toggleMutation = useMutation({
     mutationFn: async (enable: boolean) => {
       if (!api) return;
       if (enable) {
-        api.flutter.start();
+        await api.taps.start(TAP_ID);
       } else {
-        api.flutter.stop();
+        await api.taps.stop(TAP_ID);
       }
     },
     onSuccess: (_, enable) => {

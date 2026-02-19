@@ -11,8 +11,6 @@ import * as provider from "./modules/provider.js";
 import * as receivers from "./modules/receivers.js";
 import * as services from "./modules/services.js";
 
-import * as flutter from "./observers/flutter.js";
-import * as jni from "./observers/jni.js";
 import * as taps from "./taps.js";
 
 import * as memory from "@/common/memory.js";
@@ -28,9 +26,7 @@ export default {
   classes,
   crypto,
   device,
-  flutter,
   fs,
-  jni,
   keystore,
   lsof,
   manifest,

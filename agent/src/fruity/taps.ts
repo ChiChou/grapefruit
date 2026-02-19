@@ -48,16 +48,26 @@ export function list(): TapInfo[] {
   return result;
 }
 
-export function start(id: string): void {
+function resolve(id: string): TapEntry {
   const entry = registry.get(id);
   if (!entry) throw new Error(`Unknown tap: ${id}`);
-  entry.start();
+  return entry;
+}
+
+export function active(id: string): boolean {
+  return resolve(id).status();
+}
+
+export function available(id: string): boolean {
+  return resolve(id).available();
+}
+
+export function start(id: string): void {
+  resolve(id).start();
 }
 
 export function stop(id: string): void {
-  const entry = registry.get(id);
-  if (!entry) throw new Error(`Unknown tap: ${id}`);
-  entry.stop();
+  resolve(id).stop();
 }
 
 export function snapshot(): TapRule[] {

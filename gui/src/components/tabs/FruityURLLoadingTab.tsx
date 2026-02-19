@@ -39,6 +39,8 @@ import {
 
 import { HttpResponseBodyView } from "@/components/shared/HttpResponseBodyView";
 import { useSession, Status } from "@/context/SessionContext";
+
+const TAP_ID = "nsurl";
 import { useRpcQuery } from "@/lib/queries";
 import type { HttpNetworkEvent } from "@/lib/rpc";
 
@@ -320,28 +322,28 @@ export function FruityURLLoadingTab() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // URL loading hook toggle
-  const [hookEnabled, setHookEnabled] = useState(true);
+  const [hookEnabled, setHookEnabled] = useState(false);
   const [hookLoading, setHookLoading] = useState(false);
 
-  const { data: initialHookStatus } = useRpcQuery<boolean>(
-    ["urlLoadingStatus", device ?? "", identifier ?? ""],
-    (api) => api.nsurl.status(),
+  const { data: initialActive } = useRpcQuery<boolean>(
+    ["nsurlActive", device ?? "", identifier ?? ""],
+    (api) => api.taps.active(TAP_ID),
   );
 
   useEffect(() => {
-    if (initialHookStatus !== undefined) {
-      setHookEnabled(initialHookStatus);
+    if (initialActive !== undefined) {
+      setHookEnabled(initialActive);
     }
-  }, [initialHookStatus]);
+  }, [initialActive]);
 
   const handleToggleHook = async (enabled: boolean) => {
     if (!fruity) return;
     setHookLoading(true);
     try {
       if (enabled) {
-        await fruity.nsurl.start();
+        await fruity.taps.start(TAP_ID);
       } else {
-        await fruity.nsurl.stop();
+        await fruity.taps.stop(TAP_ID);
       }
       setHookEnabled(enabled);
     } catch (error) {

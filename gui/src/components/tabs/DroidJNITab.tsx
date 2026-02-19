@@ -26,6 +26,8 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Status, useSession } from "@/context/SessionContext";
+
+const TAP_ID = "jni";
 import type { JNIEvent, JNILog } from "@agent/droid/observers/jni";
 
 /** Flattened event shape for display (union of live + historical fields). */
@@ -157,14 +159,25 @@ export function JNITab() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
+  // Sync initial active state from agent
+  const { data: initialActive } = useQuery({
+    queryKey: ["jniActive", device],
+    queryFn: () => droid!.taps.active(TAP_ID),
+    enabled: status === Status.Ready && !!droid,
+  });
+
+  useEffect(() => {
+    if (initialActive !== undefined) setIsActive(initialActive);
+  }, [initialActive]);
+
   // Toggle start/stop
   const toggleMutation = useMutation({
     mutationFn: async (enable: boolean) => {
       if (!droid) return;
       if (enable) {
-        await droid.jni.start();
+        await droid.taps.start(TAP_ID);
       } else {
-        await droid.jni.stop();
+        await droid.taps.stop(TAP_ID);
       }
     },
     onSuccess: (_, enable) => {
