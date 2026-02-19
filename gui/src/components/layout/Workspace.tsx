@@ -42,7 +42,7 @@ import { FruityJSCTab } from "../tabs/FruityJSCTab";
 import { FruityUserDefaultsTab } from "../tabs/FruityUserDefaultsTab";
 import { HomeTab } from "../tabs/HomeTab";
 import { FruityDisassemblyTab } from "../tabs/FruityDisassemblyTab";
-import { FruityURLLoadingTab } from "../tabs/FruityURLLoadingTab";
+import { FruityNSURLTab } from "../tabs/FruityNSURLTab";
 import { FlutterMethodChannelsTab } from "../tabs/FlutterMethodChannelsTab";
 import { JNITab } from "../tabs/DroidJNITab";
 import { DroidHandlesTab } from "../tabs/DroidHandlesTab";
@@ -130,7 +130,7 @@ function WorkspaceContent() {
     jsc: FruityJSCTab,
     userdefaults: FruityUserDefaultsTab,
     disassembly: FruityDisassemblyTab,
-    urlLoading: FruityURLLoadingTab,
+    nsurl: FruityNSURLTab,
     flutterChannels: FlutterMethodChannelsTab,
     jni: JNITab,
     droidHandles: DroidHandlesTab,

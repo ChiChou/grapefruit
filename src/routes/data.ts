@@ -8,7 +8,7 @@ import nodePath from "node:path";
 import paths from "../lib/paths.ts";
 import { HookStore } from "../lib/store/hooks.ts";
 import { CryptoStore } from "../lib/store/crypto.ts";
-import { HttpStore } from "../lib/store/requests.ts";
+import { NSURLStore } from "../lib/store/nsurl.ts";
 import { FlutterStore } from "../lib/store/flutter.ts";
 import { JNIStore } from "../lib/store/jni.ts";
 import { createTapStore } from "../lib/store/taps.ts";
@@ -280,8 +280,8 @@ const routes = new Hono()
       return c.text("Failed to clear flutter logs", 500);
     }
   })
-  // URL loading endpoints
-  .get("/history/http/:device/:identifier", (c) => {
+  // NSURL endpoints
+  .get("/history/nsurl/:device/:identifier", (c) => {
     const deviceId = c.req.param("device");
     const identifier = c.req.param("identifier");
 
@@ -289,39 +289,39 @@ const routes = new Hono()
     const offset = parseInt(c.req.query("offset") || "0", 10);
 
     try {
-      const httpStore = new HttpStore(deviceId, identifier);
+      const nsurlStore = new NSURLStore(deviceId, identifier);
 
-      const requests = httpStore.query({ limit, offset });
-      const total = httpStore.count();
+      const requests = nsurlStore.query({ limit, offset });
+      const total = nsurlStore.count();
 
       return c.json({ requests, total, limit, offset });
     } catch (e) {
-      console.error("Failed to query url loading records:", e);
+      console.error("Failed to query NSURL records:", e);
       return c.json({ requests: [], total: 0, limit, offset });
     }
   })
-  .delete("/history/http/:device/:identifier", (c) => {
+  .delete("/history/nsurl/:device/:identifier", (c) => {
     const deviceId = c.req.param("device");
     const identifier = c.req.param("identifier");
 
     try {
-      new HttpStore(deviceId, identifier).rm();
+      new NSURLStore(deviceId, identifier).rm();
       return c.body(null, 204);
     } catch (e) {
-      console.error("Failed to clear url loading records:", e);
-      return c.text("Failed to clear url loading records", 500);
+      console.error("Failed to clear NSURL records:", e);
+      return c.text("Failed to clear NSURL records", 500);
     }
   })
-  // HTTP attachment download
-  .get("/history/http/:device/:identifier/attachment/:requestId", async (c) => {
+  // NSURL attachment download
+  .get("/history/nsurl/:device/:identifier/attachment/:requestId", async (c) => {
     const deviceId = c.req.param("device");
     const identifier = c.req.param("identifier");
     const requestId = c.req.param("requestId");
 
     try {
-      const httpStore = new HttpStore(deviceId, identifier);
+      const nsurlStore = new NSURLStore(deviceId, identifier);
 
-      const attachment = httpStore.getAttachment(requestId);
+      const attachment = nsurlStore.getAttachment(requestId);
 
       if (!attachment) {
         return c.text("No attachment found", 404);

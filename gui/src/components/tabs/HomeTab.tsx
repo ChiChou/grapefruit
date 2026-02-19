@@ -148,10 +148,10 @@ export function HomeTab() {
     },
     {
       icon: <Network className="w-5 h-5" />,
-      id: "url_loading_tab",
-      component: "urlLoading",
-      title: "URL Loading",
-      desc: t("home_urlloading_desc"),
+      id: "nsurl_tab",
+      component: "nsurl",
+      title: "NSURL",
+      desc: t("home_nsurl_desc"),
     },
     {
       icon: <Smartphone className="w-5 h-5" />,
@@ -180,10 +180,10 @@ export function HomeTab() {
     },
     {
       icon: <Network className="w-5 h-5" />,
-      id: "url_loading_tab",
-      component: "urlLoading",
-      title: "URL Loading",
-      desc: t("home_urlloading_desc"),
+      id: "nsurl_tab",
+      component: "nsurl",
+      title: "NSURL",
+      desc: t("home_nsurl_desc"),
     },
   ];
 

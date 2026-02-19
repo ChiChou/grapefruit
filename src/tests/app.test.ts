@@ -7,7 +7,7 @@ import app from "../app.ts";
 import paths from "../lib/paths.ts";
 import { HookStore } from "../lib/store/hooks.ts";
 import { CryptoStore } from "../lib/store/crypto.ts";
-import { HttpStore } from "../lib/store/requests.ts";
+import { NSURLStore } from "../lib/store/nsurl.ts";
 import { FlutterStore } from "../lib/store/flutter.ts";
 
 const device = "test-device";
@@ -17,7 +17,7 @@ function getStores() {
   return {
     hooks: new HookStore(device, identifier),
     crypto: new CryptoStore(device, identifier),
-    http: new HttpStore(device, identifier),
+    nsurl: new NSURLStore(device, identifier),
     flutter: new FlutterStore(device, identifier),
   };
 }
@@ -500,35 +500,35 @@ describe("Crypto Logs API", () => {
   });
 });
 
-describe("URL Loading API", () => {
+describe("NSURL API", () => {
   afterEach(() => {
-    getStores().http.rm();
+    getStores().nsurl.rm();
   });
 
-  it("should return empty url loading records", async () => {
-    const r = await app.request(`/api/history/http/${device}/${identifier}`);
+  it("should return empty NSURL records", async () => {
+    const r = await app.request(`/api/history/nsurl/${device}/${identifier}`);
     assert.strictEqual(r.status, 200);
     const body = (await r.json()) as { requests: unknown[]; total: number };
     assert.deepStrictEqual(body.requests, []);
     assert.strictEqual(body.total, 0);
   });
 
-  it("should return upserted http requests", async () => {
-    const { http: httpStore } = getStores();
-    httpStore.upsert({
+  it("should return upserted NSURL requests", async () => {
+    const { nsurl: nsurlStore } = getStores();
+    nsurlStore.upsert({
       event: "requestWillBeSent",
       requestId: "req-1",
       timestamp: 1000,
       request: { method: "GET", url: "https://example.com/api", headers: {} },
     });
-    httpStore.upsert({
+    nsurlStore.upsert({
       event: "responseReceived",
       requestId: "req-1",
       timestamp: 1100,
       response: { statusCode: 200, mimeType: "application/json", headers: {} },
     });
 
-    const r = await app.request(`/api/history/http/${device}/${identifier}`);
+    const r = await app.request(`/api/history/nsurl/${device}/${identifier}`);
     const body = (await r.json()) as { requests: any[]; total: number };
     assert.strictEqual(body.total, 1);
     assert.strictEqual(body.requests[0].method, "GET");
@@ -536,48 +536,48 @@ describe("URL Loading API", () => {
     assert.strictEqual(body.requests[0].statusCode, 200);
   });
 
-  it("should clear url loading records", async () => {
-    const { http: httpStore } = getStores();
-    httpStore.upsert({
+  it("should clear NSURL records", async () => {
+    const { nsurl: nsurlStore } = getStores();
+    nsurlStore.upsert({
       event: "requestWillBeSent",
       requestId: "req-1",
       timestamp: 1000,
       request: { method: "POST", url: "https://example.com", headers: {} },
     });
 
-    const r = await app.request(`/api/history/http/${device}/${identifier}`, {
+    const r = await app.request(`/api/history/nsurl/${device}/${identifier}`, {
       method: "DELETE",
     });
     assert.strictEqual(r.status, 204);
 
-    const r2 = await app.request(`/api/history/http/${device}/${identifier}`);
+    const r2 = await app.request(`/api/history/nsurl/${device}/${identifier}`);
     const body = (await r2.json()) as { total: number };
     assert.strictEqual(body.total, 0);
   });
 
-  it("should isolate url loading records by device/identifier", async () => {
-    const { http: httpStore } = getStores();
-    httpStore.upsert({
+  it("should isolate NSURL records by device/identifier", async () => {
+    const { nsurl: nsurlStore } = getStores();
+    nsurlStore.upsert({
       event: "requestWillBeSent",
       requestId: "req-1",
       timestamp: 1000,
       request: { method: "GET", url: "https://a.com", headers: {} },
     });
 
-    const otherHttp = new HttpStore(device, "com.other.app");
-    otherHttp.upsert({
+    const otherNsurl = new NSURLStore(device, "com.other.app");
+    otherNsurl.upsert({
       event: "requestWillBeSent",
       requestId: "req-2",
       timestamp: 1000,
       request: { method: "GET", url: "https://b.com", headers: {} },
     });
 
-    const r = await app.request(`/api/history/http/${device}/${identifier}`);
+    const r = await app.request(`/api/history/nsurl/${device}/${identifier}`);
     const body = (await r.json()) as { total: number };
     assert.strictEqual(body.total, 1);
 
     // cleanup other
-    otherHttp.rm();
+    otherNsurl.rm();
   });
 });
 

@@ -212,7 +212,7 @@
   "home_ui_desc": "Inspect view hierarchy and elements",
   "home_webview_desc": "Debug embedded web content",
   "home_jsc_desc": "Explore JavaScriptCore contexts",
-  "home_urlloading_desc": "Capture NSURLSession network traffic",
+  "home_nsurl_desc": "Capture NSURLSession network traffic",
   "session_menu": "Session Menu",
   "reload_page": "Reload Page",
   "kill_process": "Kill Process",

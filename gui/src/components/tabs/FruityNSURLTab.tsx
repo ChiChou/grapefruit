@@ -42,7 +42,7 @@ import { useSession, Status } from "@/context/SessionContext";
 
 const TAP_ID = "nsurl";
 import { useRpcQuery } from "@/lib/queries";
-import type { HttpNetworkEvent } from "@/lib/rpc";
+import type { NSURLEvent } from "@/lib/rpc";
 
 interface WebSocketMessage {
   direction: "send" | "receive";
@@ -125,7 +125,7 @@ function parseCookieValue(value: string): { key: string; value: string }[] {
 
 function handleEventPure(
   map: Map<string, CapturedRequest>,
-  event: HttpNetworkEvent,
+  event: NSURLEvent,
 ) {
   const { event: eventType, requestId } = event;
 
@@ -310,7 +310,7 @@ function CopyAsButtons({ request }: { request: RequestInfo }) {
   );
 }
 
-export function FruityURLLoadingTab() {
+export function FruityNSURLTab() {
   const { socket, status, device, identifier, fruity } = useSession();
 
   const [requests, setRequests] = useState<Map<string, CapturedRequest>>(
@@ -318,10 +318,10 @@ export function FruityURLLoadingTab() {
   );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const tableEndRef = useRef<HTMLDivElement>(null);
-  const pendingRef = useRef<HttpNetworkEvent[]>([]);
+  const pendingRef = useRef<NSURLEvent[]>([]);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // URL loading hook toggle
+  // NSURL hook toggle
   const [hookEnabled, setHookEnabled] = useState<boolean | null>(null);
   const [hookLoading, setHookLoading] = useState(false);
 
@@ -349,7 +349,7 @@ export function FruityURLLoadingTab() {
       setHookEnabled(enabled);
     } catch (error) {
       console.error(
-        `Failed to ${enabled ? "start" : "stop"} URL loading hook:`,
+        `Failed to ${enabled ? "start" : "stop"} NSURL hook:`,
         error,
       );
     } finally {
@@ -376,16 +376,16 @@ export function FruityURLLoadingTab() {
   useEffect(() => {
     if (status !== Status.Ready || !socket) return;
 
-    const onHttp = (event: HttpNetworkEvent) => {
+    const onNsurl = (event: NSURLEvent) => {
       pendingRef.current.push(event);
       if (!timerRef.current) {
         timerRef.current = setTimeout(flushPending, 100);
       }
     };
 
-    socket.on("http", onHttp);
+    socket.on("nsurl", onNsurl);
     return () => {
-      socket.off("http", onHttp);
+      socket.off("nsurl", onNsurl);
       if (timerRef.current) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
@@ -393,16 +393,16 @@ export function FruityURLLoadingTab() {
     };
   }, [socket, status, flushPending]);
 
-  // Load historical URL loading records from database
-  const { data: urlLoadingHistory } = useQuery<{
+  // Load historical NSURL records from database
+  const { data: nsurlHistory } = useQuery<{
     requests: (CapturedRequest & { size: string | number })[];
   }>({
-    queryKey: ["urlLoadingHistory", device, identifier],
+    queryKey: ["nsurlHistory", device, identifier],
     queryFn: async () => {
       const res = await fetch(
-        `/api/history/http/${device}/${identifier}?limit=5000`,
+        `/api/history/nsurl/${device}/${identifier}?limit=5000`,
       );
-      if (!res.ok) throw new Error("Failed to load URL loading history");
+      if (!res.ok) throw new Error("Failed to load NSURL history");
       return res.json();
     },
     enabled: !!device && !!identifier,
@@ -411,31 +411,31 @@ export function FruityURLLoadingTab() {
   });
 
   useEffect(() => {
-    if (!urlLoadingHistory?.requests?.length) return;
+    if (!nsurlHistory?.requests?.length) return;
     setRequests(() => {
       const map = new Map<string, CapturedRequest>();
-      for (const req of [...urlLoadingHistory.requests].reverse()) {
+      for (const req of [...nsurlHistory.requests].reverse()) {
         map.set(req.id, { ...req, size: BigInt(req.size || 0) });
       }
       return map;
     });
-  }, [urlLoadingHistory]);
+  }, [nsurlHistory]);
 
-  const clearUrlLoadingMutation = useMutation({
+  const clearNsurlMutation = useMutation({
     mutationFn: async () => {
       if (!device || !identifier) return;
-      const res = await fetch(`/api/history/http/${device}/${identifier}`, {
+      const res = await fetch(`/api/history/nsurl/${device}/${identifier}`, {
         method: "DELETE",
       });
       if (!res.ok)
-        throw new Error("Failed to clear URL loading records from database");
+        throw new Error("Failed to clear NSURL records from database");
     },
   });
 
   const handleClear = () => {
     setRequests(new Map());
     setSelectedId(null);
-    clearUrlLoadingMutation.mutate();
+    clearNsurlMutation.mutate();
   };
 
   const requestList = Array.from(requests.values());
@@ -682,7 +682,7 @@ export function FruityURLLoadingTab() {
                         </div>
                         {selectedRequest.attachment && (
                           <a
-                            href={`/api/history/http/${device}/${identifier}/attachment/${encodeURIComponent(selectedRequest.id)}`}
+                            href={`/api/history/nsurl/${device}/${identifier}/attachment/${encodeURIComponent(selectedRequest.id)}`}
                             download={selectedRequest.id}
                             className="inline-flex items-center gap-1 h-5 px-1.5 text-[10px] border rounded border-input text-foreground hover:bg-accent transition"
                           >
@@ -694,7 +694,7 @@ export function FruityURLLoadingTab() {
                       <div className="flex-1 min-h-0 p-3">
                         {selectedRequest.attachment ? (
                           <HttpResponseBodyView
-                            url={`/api/history/http/${device}/${identifier}/attachment/${encodeURIComponent(selectedRequest.id)}`}
+                            url={`/api/history/nsurl/${device}/${identifier}/attachment/${encodeURIComponent(selectedRequest.id)}`}
                             mime={selectedRequest.mimeType}
                           />
                         ) : (

@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "670a2d5e-a9ac-44f2-863a-94e8e211a232",
+  "id": "b1d6fc40-4ed0-4219-a5ea-662dfebc1328",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "crypto": {
@@ -97,6 +97,96 @@
         },
         "idx_crypto_timestamp": {
           "name": "idx_crypto_timestamp",
+          "columns": [
+            "timestamp"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "flutter": {
+      "name": "flutter",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "device_id": {
+          "name": "device_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "identifier": {
+          "name": "identifier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "timestamp": {
+          "name": "timestamp",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "direction": {
+          "name": "direction",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "channel": {
+          "name": "channel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "data": {
+          "name": "data",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "idx_flutter_device_identifier": {
+          "name": "idx_flutter_device_identifier",
+          "columns": [
+            "device_id",
+            "identifier"
+          ],
+          "isUnique": false
+        },
+        "idx_flutter_timestamp": {
+          "name": "idx_flutter_timestamp",
           "columns": [
             "timestamp"
           ],
@@ -212,32 +302,133 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "preferences": {
-      "name": "preferences",
+    "jni": {
+      "name": "jni",
       "columns": {
-        "key": {
-          "name": "key",
-          "type": "text",
+        "id": {
+          "name": "id",
+          "type": "integer",
           "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "device_id": {
+          "name": "device_id",
+          "type": "text",
+          "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "value": {
-          "name": "value",
+        "identifier": {
+          "name": "identifier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "timestamp": {
+          "name": "timestamp",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "method": {
+          "name": "method",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "call_type": {
+          "name": "call_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "thread_id": {
+          "name": "thread_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "args": {
+          "name": "args",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "ret": {
+          "name": "ret",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "backtrace": {
+          "name": "backtrace",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "library": {
+          "name": "library",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_jni_device_identifier": {
+          "name": "idx_jni_device_identifier",
+          "columns": [
+            "device_id",
+            "identifier"
+          ],
+          "isUnique": false
+        },
+        "idx_jni_method": {
+          "name": "idx_jni_method",
+          "columns": [
+            "method"
+          ],
+          "isUnique": false
+        },
+        "idx_jni_timestamp": {
+          "name": "idx_jni_timestamp",
+          "columns": [
+            "timestamp"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "requests": {
-      "name": "requests",
+    "nsurl_requests": {
+      "name": "nsurl_requests",
       "columns": {
         "id": {
           "name": "id",
@@ -281,6 +472,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "mime": {
+          "name": "mime",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "text",
@@ -299,16 +497,16 @@
         }
       },
       "indexes": {
-        "idx_requests_device_identifier": {
-          "name": "idx_requests_device_identifier",
+        "idx_nsurl_requests_device_identifier": {
+          "name": "idx_nsurl_requests_device_identifier",
           "columns": [
             "device_id",
             "identifier"
           ],
           "isUnique": false
         },
-        "idx_requests_request_id": {
-          "name": "idx_requests_request_id",
+        "idx_nsurl_requests_request_id": {
+          "name": "idx_nsurl_requests_request_id",
           "columns": [
             "device_id",
             "identifier",
@@ -317,6 +515,30 @@
           "isUnique": true
         }
       },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "preferences": {
+      "name": "preferences",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},

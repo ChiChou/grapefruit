@@ -13,8 +13,8 @@ export const preferences = sqliteTable("preferences", {
   value: text("value"),
 });
 
-export const requests = sqliteTable(
-  "requests",
+export const nsurlRequests = sqliteTable(
+  "nsurl_requests",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     deviceId: text("device_id").notNull(),
@@ -27,11 +27,11 @@ export const requests = sqliteTable(
     updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [
-    index("idx_requests_device_identifier").on(
+    index("idx_nsurl_requests_device_identifier").on(
       table.deviceId,
       table.identifier,
     ),
-    uniqueIndex("idx_requests_request_id").on(
+    uniqueIndex("idx_nsurl_requests_request_id").on(
       table.deviceId,
       table.identifier,
       table.requestId,

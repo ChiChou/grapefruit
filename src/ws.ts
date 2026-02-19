@@ -7,7 +7,7 @@ import frida from "./lib/xvii.ts";
 import env from "./lib/env.ts";
 import { agent, asset } from "./lib/assets.ts";
 import { LogWriter } from "./lib/log-writer.ts";
-import { HttpStore, type HttpNetworkEvent } from "./lib/store/requests.ts";
+import { NSURLStore, type NSURLEvent } from "./lib/store/nsurl.ts";
 import { HookStore } from "./lib/store/hooks.ts";
 import { CryptoStore } from "./lib/store/crypto.ts";
 import { FlutterStore } from "./lib/store/flutter.ts";
@@ -42,7 +42,7 @@ interface ServerToClientEvents {
   hook: (msg: BaseHookMessage) => void;
   flutter: (event: Record<string, unknown>) => void;
   crypto: (msg: BaseHookMessage, data?: ArrayBuffer) => void;
-  http: (event: HttpNetworkEvent) => void;
+  nsurl: (event: NSURLEvent) => void;
   jni: (event: JNIEvent) => void;
   fatal: (detail: unknown) => void;
 }
@@ -97,7 +97,7 @@ async function resolveAppPid(
 }
 
 interface SessionStores {
-  http: HttpStore;
+  nsurl: NSURLStore;
   hooks: HookStore;
   crypto: CryptoStore;
   flutter: FlutterStore;
@@ -161,8 +161,8 @@ function setupScriptHandlers(
         }
         break;
 
-      case "http": {
-        const event = payload as HttpNetworkEvent;
+      case "nsurl": {
+        const event = payload as NSURLEvent;
 
         if (event.event === "dataReceived" && data) {
           requestsWithBody.add(event.requestId);
@@ -180,17 +180,17 @@ function setupScriptHandlers(
           requestsWithBody.delete(event.requestId);
         }
 
-        socket.emit("http", event);
+        socket.emit("nsurl", event);
         try {
-          const attachment = stores.http.upsert(event);
+          const attachment = stores.nsurl.upsert(event);
           if (attachment && data) {
             fs.promises
-              .mkdir(stores.http.attachmentsDir, { recursive: true })
+              .mkdir(stores.nsurl.attachmentsDir, { recursive: true })
               .then(() => fs.promises.appendFile(attachment, Buffer.from(data)))
               .catch((e) => console.error("Failed to write attachment:", e));
           }
         } catch (e) {
-          console.error("Failed to persist HTTP event:", e);
+          console.error("Failed to persist NSURL event:", e);
         }
         break;
       }
@@ -368,7 +368,7 @@ async function onConnection(
 
   // Create store instances
   const stores: SessionStores = {
-    http: new HttpStore(deviceId, identifier),
+    nsurl: new NSURLStore(deviceId, identifier),
     hooks: new HookStore(deviceId, identifier),
     crypto: new CryptoStore(deviceId, identifier),
     flutter: new FlutterStore(deviceId, identifier),

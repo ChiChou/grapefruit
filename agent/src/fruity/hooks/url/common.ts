@@ -11,7 +11,7 @@ import type {
   NSURLSessionWebSocketMessage,
 } from "@/fruity/typings.js";
 
-const subject = "http";
+const subject = "nsurl";
 
 export interface TaskBoundData {
   id?: string;

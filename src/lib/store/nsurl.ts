@@ -3,7 +3,7 @@ import fs from "node:fs";
 import nodePath from "node:path";
 import { eq, and, desc, count as countFn } from "drizzle-orm";
 
-import { requests } from "../schema.ts";
+import { nsurlRequests } from "../schema.ts";
 import { db } from "./db.ts";
 import paths from "../paths.ts";
 
@@ -36,14 +36,14 @@ export interface CapturedRequest {
   attachment?: string | null;
 }
 
-export interface HttpNetworkEvent {
+export interface NSURLEvent {
   event: string;
   requestId: string;
   timestamp: number;
   [key: string]: unknown;
 }
 
-function merge(req: CapturedRequest, event: HttpNetworkEvent): void {
+function merge(req: CapturedRequest, event: NSURLEvent): void {
   switch (event.event) {
     case "requestWillBeSent": {
       const r = event.request as
@@ -118,7 +118,7 @@ function merge(req: CapturedRequest, event: HttpNetworkEvent): void {
   }
 }
 
-export class HttpStore {
+export class NSURLStore {
   constructor(
     private deviceId: string,
     private identifier: string,
@@ -128,20 +128,20 @@ export class HttpStore {
     return nodePath.join(paths.cache, this.deviceId, this.identifier);
   }
 
-  upsert(event: HttpNetworkEvent): string | null {
+  upsert(event: NSURLEvent): string | null {
     const requestId = event.requestId || "unknown";
 
     const existing = db
       .select({
-        data: requests.data,
-        attachment: requests.attachment,
+        data: nsurlRequests.data,
+        attachment: nsurlRequests.attachment,
       })
-      .from(requests)
+      .from(nsurlRequests)
       .where(
         and(
-          eq(requests.deviceId, this.deviceId),
-          eq(requests.identifier, this.identifier),
-          eq(requests.requestId, requestId),
+          eq(nsurlRequests.deviceId, this.deviceId),
+          eq(nsurlRequests.identifier, this.identifier),
+          eq(nsurlRequests.requestId, requestId),
         ),
       )
       .get();
@@ -167,7 +167,7 @@ export class HttpStore {
     merge(req, event);
     req.attachment = attachment;
 
-    db.insert(requests)
+    db.insert(nsurlRequests)
       .values({
         deviceId: this.deviceId,
         identifier: this.identifier,
@@ -178,9 +178,9 @@ export class HttpStore {
       })
       .onConflictDoUpdate({
         target: [
-          requests.deviceId,
-          requests.identifier,
-          requests.requestId,
+          nsurlRequests.deviceId,
+          nsurlRequests.identifier,
+          nsurlRequests.requestId,
         ],
         set: {
           data: JSON.stringify(req),
@@ -198,17 +198,17 @@ export class HttpStore {
 
     const rows = db
       .select({
-        data: requests.data,
-        attachment: requests.attachment,
+        data: nsurlRequests.data,
+        attachment: nsurlRequests.attachment,
       })
-      .from(requests)
+      .from(nsurlRequests)
       .where(
         and(
-          eq(requests.deviceId, this.deviceId),
-          eq(requests.identifier, this.identifier),
+          eq(nsurlRequests.deviceId, this.deviceId),
+          eq(nsurlRequests.identifier, this.identifier),
         ),
       )
-      .orderBy(desc(requests.id))
+      .orderBy(desc(nsurlRequests.id))
       .limit(limit)
       .offset(offset)
       .all();
@@ -225,13 +225,13 @@ export class HttpStore {
     mimeType?: string;
   } | null {
     const row = db
-      .select({ attachment: requests.attachment, mime: requests.mime })
-      .from(requests)
+      .select({ attachment: nsurlRequests.attachment, mime: nsurlRequests.mime })
+      .from(nsurlRequests)
       .where(
         and(
-          eq(requests.deviceId, this.deviceId),
-          eq(requests.identifier, this.identifier),
-          eq(requests.requestId, requestId),
+          eq(nsurlRequests.deviceId, this.deviceId),
+          eq(nsurlRequests.identifier, this.identifier),
+          eq(nsurlRequests.requestId, requestId),
         ),
       )
       .get();
@@ -244,11 +244,11 @@ export class HttpStore {
   count(): number {
     const result = db
       .select({ count: countFn() })
-      .from(requests)
+      .from(nsurlRequests)
       .where(
         and(
-          eq(requests.deviceId, this.deviceId),
-          eq(requests.identifier, this.identifier),
+          eq(nsurlRequests.deviceId, this.deviceId),
+          eq(nsurlRequests.identifier, this.identifier),
         ),
       )
       .get();
@@ -258,12 +258,12 @@ export class HttpStore {
 
   rm(): void {
     const rows = db
-      .select({ attachment: requests.attachment })
-      .from(requests)
+      .select({ attachment: nsurlRequests.attachment })
+      .from(nsurlRequests)
       .where(
         and(
-          eq(requests.deviceId, this.deviceId),
-          eq(requests.identifier, this.identifier),
+          eq(nsurlRequests.deviceId, this.deviceId),
+          eq(nsurlRequests.identifier, this.identifier),
         ),
       )
       .all();
@@ -273,11 +273,11 @@ export class HttpStore {
       fs.promises.unlink(row.attachment).catch(() => {});
     });
 
-    db.delete(requests)
+    db.delete(nsurlRequests)
       .where(
         and(
-          eq(requests.deviceId, this.deviceId),
-          eq(requests.identifier, this.identifier),
+          eq(nsurlRequests.deviceId, this.deviceId),
+          eq(nsurlRequests.identifier, this.identifier),
         ),
       )
       .run();
