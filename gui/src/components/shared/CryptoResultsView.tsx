@@ -579,7 +579,7 @@ export function CryptoResultsView() {
                 htmlFor={`crypto-${group}`}
                 className={`text-xs cursor-pointer ${loading[group] ? "animate-pulse" : ""}`}
               >
-                {t(`crypto_${group}`)}
+                {group}
               </Label>
             </div>
           ))}
@@ -616,7 +616,10 @@ export function CryptoResultsView() {
         autoSaveId="crypto-results-split"
       >
         {/* Left: entry list */}
-        <ResizablePanel defaultSize={selectedEntry ? "60%" : "100%"} minSize="30%">
+        <ResizablePanel
+          defaultSize={selectedEntry ? "60%" : "100%"}
+          minSize="30%"
+        >
           <div ref={containerRef} className="h-full">
             {entries.length === 0 ? (
               <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
