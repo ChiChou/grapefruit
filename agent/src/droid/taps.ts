@@ -1,7 +1,7 @@
 import type { TapInfo, TapRule } from "@/common/taps.js";
 
-import * as flutter from "./observers/flutter.js";
-import * as jni from "./observers/jni.js";
+import * as flutter from "./hooks/flutter.js";
+import * as jni from "./hooks/jni.js";
 
 interface TapEntry {
   start(): void;
