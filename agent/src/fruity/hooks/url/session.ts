@@ -243,30 +243,6 @@ export function hookSessionCreation() {
   }
 }
 
-export function scanExistingSessions() {
-  const NSURLSession = ObjC.classes.NSURLSession;
-  if (!NSURLSession) return;
-
-  // use setImmediate to not block current thread
-  setImmediate(() => {
-    ObjC.choose(NSURLSession, {
-      onMatch(session) {
-        try {
-          const delegate = session.delegate();
-          if (!delegate || delegate.handle.isNull()) return;
-
-          hooks.push(...hookDelegateClass(delegate, delegateMethodHandlers));
-          const rtsHook = injectRespondsToSelector(delegate);
-          if (rtsHook) hooks.push(rtsHook);
-        } catch (_e) {
-          // Session may not support delegate accessor
-        }
-      },
-      onComplete() {},
-    });
-  });
-}
-
 interface CompletionBoundData {
   requestId?: string;
   isDownload?: boolean;

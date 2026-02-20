@@ -27,7 +27,6 @@ import {
   hookResume,
   hookTaskCompletion,
   hookSessionCreation,
-  scanExistingSessions,
   hookAsyncMethods as hookSessionAsyncMethods,
 } from "./session.js";
 import {
@@ -63,7 +62,6 @@ export function start() {
   hookWebSocketMethods();
   hookSessionCreation();
   hookConnectionCreation();
-  scanExistingSessions();
 }
 
 export function stop() {
