@@ -3,6 +3,7 @@ import type { TapInfo, TapRule } from "@/common/taps.js";
 import * as hookGroup from "./hooks/index.js";
 import * as nsurl from "./hooks/url/index.js";
 import * as flutter from "./hooks/flutter.js";
+import * as xpc from "./hooks/xpc/index.js";
 import * as objc from "./hooks/objc.js";
 import * as native from "@/common/hooks/native.js";
 
@@ -35,6 +36,7 @@ for (const id of BUILTIN_GROUPS) {
 
 registry.set("nsurl", nsurl);
 registry.set("flutter", flutter);
+registry.set("xpc", xpc);
 
 export function list(): TapInfo[] {
   const result: TapInfo[] = [];
