@@ -1,5 +1,7 @@
 import Java from "frida-java-bridge";
 
+import { perform } from "@/common/hooks/java.js";
+
 export interface KeystoreAlias {
   alias: string;
   algorithm: string | null;
@@ -39,140 +41,129 @@ function toStringArray(arr: Java.Wrapper | null): string[] {
 }
 
 export function aliases() {
-  return new Promise<KeystoreAlias[]>((resolve) => {
-    Java.perform(() => {
-      const KeyStore = Java.use("java.security.KeyStore");
-      const PrivateKeyEntry = Java.use(
-        "java.security.KeyStore$PrivateKeyEntry",
-      );
-      const SecretKeyEntry = Java.use("java.security.KeyStore$SecretKeyEntry");
-      const TrustedCertificateEntry = Java.use(
-        "java.security.KeyStore$TrustedCertificateEntry",
-      );
+  return perform(() => {
+    const KeyStore = Java.use("java.security.KeyStore");
+    const PrivateKeyEntry = Java.use("java.security.KeyStore$PrivateKeyEntry");
+    const SecretKeyEntry = Java.use("java.security.KeyStore$SecretKeyEntry");
+    const TrustedCertificateEntry = Java.use(
+      "java.security.KeyStore$TrustedCertificateEntry",
+    );
 
-      const ks = KeyStore.getInstance("AndroidKeyStore");
-      ks.load(null);
+    const ks = KeyStore.getInstance("AndroidKeyStore");
+    ks.load(null);
 
-      const result: KeystoreAlias[] = [];
-      const enumeration = ks.aliases();
+    const result: KeystoreAlias[] = [];
+    const enumeration = ks.aliases();
 
-      while (enumeration.hasMoreElements()) {
-        const alias = enumeration.nextElement().toString();
-        let algorithm: string | null = null;
-        let entryType = "Unknown";
+    while (enumeration.hasMoreElements()) {
+      const alias = enumeration.nextElement().toString();
+      let algorithm: string | null = null;
+      let entryType = "Unknown";
 
-        try {
-          if (ks.entryInstanceOf(alias, PrivateKeyEntry.class)) {
-            entryType = "PrivateKey";
-          } else if (ks.entryInstanceOf(alias, SecretKeyEntry.class)) {
-            entryType = "SecretKey";
-          } else if (
-            ks.entryInstanceOf(alias, TrustedCertificateEntry.class)
-          ) {
-            entryType = "TrustedCertificate";
-          }
-        } catch (_) {
-          /* entry type check failed */
+      try {
+        if (ks.entryInstanceOf(alias, PrivateKeyEntry.class)) {
+          entryType = "PrivateKey";
+        } else if (ks.entryInstanceOf(alias, SecretKeyEntry.class)) {
+          entryType = "SecretKey";
+        } else if (ks.entryInstanceOf(alias, TrustedCertificateEntry.class)) {
+          entryType = "TrustedCertificate";
         }
-
-        try {
-          const key = ks.getKey(alias, null);
-          if (key !== null) {
-            algorithm = key.getAlgorithm();
-          }
-        } catch (_) {
-          /* key may not be accessible */
-        }
-
-        result.push({ alias, algorithm, entryType });
+      } catch (_) {
+        /* entry type check failed */
       }
 
-      resolve(result);
-    });
+      try {
+        const key = ks.getKey(alias, null);
+        if (key !== null) {
+          algorithm = key.getAlgorithm();
+        }
+      } catch (_) {
+        /* key may not be accessible */
+      }
+
+      result.push({ alias, algorithm, entryType });
+    }
+
+    return result;
   });
 }
 
 export function info(alias: string) {
-  return new Promise<KeyInfo | null>((resolve) => {
-    Java.perform(() => {
-      const KeyStore = Java.use("java.security.KeyStore");
-      const KeyFactory = Java.use("java.security.KeyFactory");
-      const KeyInfoCls = Java.use("android.security.keystore.KeyInfo");
-      const SecretKeyFactory = Java.use("javax.crypto.SecretKeyFactory");
+  return perform(() => {
+    const KeyStore = Java.use("java.security.KeyStore");
+    const KeyFactory = Java.use("java.security.KeyFactory");
+    const KeyInfoCls = Java.use("android.security.keystore.KeyInfo");
+    const SecretKeyFactory = Java.use("javax.crypto.SecretKeyFactory");
 
-      const ks = KeyStore.getInstance("AndroidKeyStore");
-      ks.load(null);
+    const ks = KeyStore.getInstance("AndroidKeyStore");
+    ks.load(null);
 
-      const key = ks.getKey(alias, null);
-      if (key === null) {
-        resolve(null);
-        return;
-      }
+    const key = ks.getKey(alias, null);
+    if (key === null) {
+      return null;
+    }
 
-      const algorithm = key.getAlgorithm();
+    const algorithm = key.getAlgorithm();
 
-      let factory: Java.Wrapper;
-      try {
-        factory = KeyFactory.getInstance(algorithm, "AndroidKeyStore");
-      } catch (_) {
-        factory = SecretKeyFactory.getInstance(algorithm, "AndroidKeyStore");
-      }
+    let factory: Java.Wrapper;
+    try {
+      factory = KeyFactory.getInstance(algorithm, "AndroidKeyStore");
+    } catch (_) {
+      factory = SecretKeyFactory.getInstance(algorithm, "AndroidKeyStore");
+    }
 
-      const keyInfo = Java.cast(
-        factory.getKeySpec(key, KeyInfoCls.class),
-        KeyInfoCls,
-      );
+    const keyInfo = Java.cast(
+      factory.getKeySpec(key, KeyInfoCls.class),
+      KeyInfoCls,
+    );
 
-      let isTrustedUserPresenceRequired: boolean | null = null;
-      try {
-        isTrustedUserPresenceRequired =
-          keyInfo.isTrustedUserPresenceRequired();
-      } catch (_) {
-        /* API level */
-      }
+    let isTrustedUserPresenceRequired: boolean | null = null;
+    try {
+      isTrustedUserPresenceRequired = keyInfo.isTrustedUserPresenceRequired();
+    } catch (_) {
+      /* API level */
+    }
 
-      let isUserConfirmationRequired: boolean | null = null;
-      try {
-        isUserConfirmationRequired = keyInfo.isUserConfirmationRequired();
-      } catch (_) {
-        /* API level */
-      }
+    let isUserConfirmationRequired: boolean | null = null;
+    try {
+      isUserConfirmationRequired = keyInfo.isUserConfirmationRequired();
+    } catch (_) {
+      /* API level */
+    }
 
-      const validityStart = keyInfo.getKeyValidityStart();
-      const originationEnd = keyInfo.getKeyValidityForOriginationEnd();
-      const consumptionEnd = keyInfo.getKeyValidityForConsumptionEnd();
+    const validityStart = keyInfo.getKeyValidityStart();
+    const originationEnd = keyInfo.getKeyValidityForOriginationEnd();
+    const consumptionEnd = keyInfo.getKeyValidityForConsumptionEnd();
 
-      resolve({
-        alias: keyInfo.getKeystoreAlias(),
-        algorithm,
-        keySize: keyInfo.getKeySize(),
-        blockModes: toStringArray(keyInfo.getBlockModes()),
-        digests: toStringArray(keyInfo.getDigests()),
-        encryptionPaddings: toStringArray(keyInfo.getEncryptionPaddings()),
-        signaturePaddings: toStringArray(keyInfo.getSignaturePaddings()),
-        purposes: keyInfo.getPurposes(),
-        origin: keyInfo.getOrigin(),
-        isInsideSecureHardware: keyInfo.isInsideSecureHardware(),
-        isUserAuthenticationRequired:
-          keyInfo.isUserAuthenticationRequired(),
-        userAuthenticationValidityDurationSeconds:
-          keyInfo.getUserAuthenticationValidityDurationSeconds(),
-        isInvalidatedByBiometricEnrollment:
-          keyInfo.isInvalidatedByBiometricEnrollment(),
-        isTrustedUserPresenceRequired,
-        isUserConfirmationRequired,
-        isUserAuthenticationRequirementEnforcedBySecureHardware:
-          keyInfo.isUserAuthenticationRequirementEnforcedBySecureHardware(),
-        isUserAuthenticationValidWhileOnBody:
-          keyInfo.isUserAuthenticationValidWhileOnBody(),
-        keyValidityStart: validityStart ? validityStart.toString() : null,
-        keyValidityForOriginationEnd: originationEnd
-          ? originationEnd.toString()
-          : null,
-        keyValidityForConsumptionEnd: consumptionEnd
-          ? consumptionEnd.toString()
-          : null,
-      });
-    });
+    return {
+      alias: keyInfo.getKeystoreAlias(),
+      algorithm,
+      keySize: keyInfo.getKeySize(),
+      blockModes: toStringArray(keyInfo.getBlockModes()),
+      digests: toStringArray(keyInfo.getDigests()),
+      encryptionPaddings: toStringArray(keyInfo.getEncryptionPaddings()),
+      signaturePaddings: toStringArray(keyInfo.getSignaturePaddings()),
+      purposes: keyInfo.getPurposes(),
+      origin: keyInfo.getOrigin(),
+      isInsideSecureHardware: keyInfo.isInsideSecureHardware(),
+      isUserAuthenticationRequired: keyInfo.isUserAuthenticationRequired(),
+      userAuthenticationValidityDurationSeconds:
+        keyInfo.getUserAuthenticationValidityDurationSeconds(),
+      isInvalidatedByBiometricEnrollment:
+        keyInfo.isInvalidatedByBiometricEnrollment(),
+      isTrustedUserPresenceRequired,
+      isUserConfirmationRequired,
+      isUserAuthenticationRequirementEnforcedBySecureHardware:
+        keyInfo.isUserAuthenticationRequirementEnforcedBySecureHardware(),
+      isUserAuthenticationValidWhileOnBody:
+        keyInfo.isUserAuthenticationValidWhileOnBody(),
+      keyValidityStart: validityStart ? validityStart.toString() : null,
+      keyValidityForOriginationEnd: originationEnd
+        ? originationEnd.toString()
+        : null,
+      keyValidityForConsumptionEnd: consumptionEnd
+        ? consumptionEnd.toString()
+        : null,
+    } as KeyInfo;
   });
 }

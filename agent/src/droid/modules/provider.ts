@@ -1,6 +1,7 @@
 import Java from "frida-java-bridge";
 
-import { getContext } from "../lib/context.js";
+import { perform } from "@/common/hooks/java.js";
+import { getContext } from "@/droid/lib/context.js";
 
 export interface ProviderEntry {
   name: string;
@@ -12,35 +13,33 @@ export interface ProviderEntry {
 }
 
 export function list() {
-  return new Promise<ProviderEntry[]>((resolve) => {
-    Java.perform(() => {
-      const PackageManager = Java.use("android.content.pm.PackageManager");
+  return perform(() => {
+    const PackageManager = Java.use("android.content.pm.PackageManager");
 
-      const context = getContext();
-      const pm = context.getPackageManager();
-      const pkg = pm.getPackageInfo(
-        context.getPackageName(),
-        PackageManager.GET_PROVIDERS.value,
-      );
+    const context = getContext();
+    const pm = context.getPackageManager();
+    const pkg = pm.getPackageInfo(
+      context.getPackageName(),
+      PackageManager.GET_PROVIDERS.value,
+    );
 
-      const result: ProviderEntry[] = [];
-      const providers = pkg.providers?.value;
-      if (providers) {
-        for (let i = 0; i < providers.length; i++) {
-          const p = providers[i];
-          result.push({
-            name: p.name?.value || "",
-            authority: p.authority?.value || "",
-            exported: !!p.exported?.value,
-            readPermission: p.readPermission?.value || null,
-            writePermission: p.writePermission?.value || null,
-            grantUriPermissions: !!p.grantUriPermissions?.value,
-          });
-        }
+    const result: ProviderEntry[] = [];
+    const providers = pkg.providers?.value;
+    if (providers) {
+      for (let i = 0; i < providers.length; i++) {
+        const p = providers[i];
+        result.push({
+          name: p.name?.value || "",
+          authority: p.authority?.value || "",
+          exported: !!p.exported?.value,
+          readPermission: p.readPermission?.value || null,
+          writePermission: p.writePermission?.value || null,
+          grantUriPermissions: !!p.grantUriPermissions?.value,
+        });
       }
+    }
 
-      resolve(result);
-    });
+    return result;
   });
 }
 
@@ -68,79 +67,72 @@ export interface QueryOptions {
 }
 
 export function query(uri: string, options?: QueryOptions) {
-  return new Promise<QueryResult>((resolve, reject) => {
-    Java.perform(() => {
-      try {
-        const Uri = Java.use("android.net.Uri");
+  return perform(() => {
+    const Uri = Java.use("android.net.Uri");
 
-        const cr = getContext().getContentResolver();
-        const contentUri = Uri.parse(uri);
+    const cr = getContext().getContentResolver();
+    const contentUri = Uri.parse(uri);
 
-        const projection = options?.projection
-          ? Java.array("java.lang.String", options.projection)
-          : null;
+    const projection = options?.projection
+      ? Java.array("java.lang.String", options.projection)
+      : null;
 
-        const selectionArgs = options?.selectionArgs
-          ? Java.array("java.lang.String", options.selectionArgs)
-          : null;
+    const selectionArgs = options?.selectionArgs
+      ? Java.array("java.lang.String", options.selectionArgs)
+      : null;
 
-        const cursor = cr.query(
-          contentUri,
-          projection,
-          options?.selection || null,
-          selectionArgs,
-          options?.sortOrder || null,
-        );
+    const cursor = cr.query(
+      contentUri,
+      projection,
+      options?.selection || null,
+      selectionArgs,
+      options?.sortOrder || null,
+    );
 
-        if (!cursor) {
-          resolve({ columns: [], rows: [] });
-          return;
+    if (!cursor) {
+      return { columns: [], rows: [] } as QueryResult;
+    }
+
+    const columnNames = cursor.getColumnNames();
+    const columns: string[] = [];
+    for (let i = 0; i < columnNames.length; i++) {
+      columns.push(columnNames[i]);
+    }
+
+    const rows: (string | number | null)[][] = [];
+    const LIMIT = 500;
+    let count = 0;
+
+    while (cursor.moveToNext() && count < LIMIT) {
+      const row: (string | number | null)[] = [];
+      for (let col = 0; col < columns.length; col++) {
+        const type = cursor.getType(col);
+        switch (type) {
+          case 0: // NULL
+            row.push(null);
+            break;
+          case 1: // INTEGER
+            row.push(cursor.getLong(col));
+            break;
+          case 2: // FLOAT
+            row.push(cursor.getDouble(col));
+            break;
+          case 3: // STRING
+            row.push(cursor.getString(col));
+            break;
+          case 4: // BLOB
+            row.push("[blob]");
+            break;
+          default:
+            row.push(cursor.getString(col));
         }
-
-        const columnNames = cursor.getColumnNames();
-        const columns: string[] = [];
-        for (let i = 0; i < columnNames.length; i++) {
-          columns.push(columnNames[i]);
-        }
-
-        const rows: (string | number | null)[][] = [];
-        const LIMIT = 500;
-        let count = 0;
-
-        while (cursor.moveToNext() && count < LIMIT) {
-          const row: (string | number | null)[] = [];
-          for (let col = 0; col < columns.length; col++) {
-            const type = cursor.getType(col);
-            switch (type) {
-              case 0: // NULL
-                row.push(null);
-                break;
-              case 1: // INTEGER
-                row.push(cursor.getLong(col));
-                break;
-              case 2: // FLOAT
-                row.push(cursor.getDouble(col));
-                break;
-              case 3: // STRING
-                row.push(cursor.getString(col));
-                break;
-              case 4: // BLOB
-                row.push("[blob]");
-                break;
-              default:
-                row.push(cursor.getString(col));
-            }
-          }
-          rows.push(row);
-          count++;
-        }
-
-        cursor.close();
-        resolve({ columns, rows });
-      } catch (e) {
-        reject(new Error(String(e)));
       }
-    });
+      rows.push(row);
+      count++;
+    }
+
+    cursor.close();
+    return { columns, rows } as QueryResult;
   });
 }
 
@@ -199,17 +191,11 @@ function buildContentValues(values: ContentValues): Java.Wrapper {
 }
 
 export function insert(uri: string, values: ContentValues) {
-  return new Promise<string | null>((resolve, reject) => {
-    Java.perform(() => {
-      try {
-        const Uri = Java.use("android.net.Uri");
-        const cr = getContext().getContentResolver();
-        const result = cr.insert(Uri.parse(uri), buildContentValues(values));
-        resolve(result ? result.toString() : null);
-      } catch (e) {
-        reject(new Error(String(e)));
-      }
-    });
+  return perform(() => {
+    const Uri = Java.use("android.net.Uri");
+    const cr = getContext().getContentResolver();
+    const result = cr.insert(Uri.parse(uri), buildContentValues(values));
+    return result ? (result.toString() as string) : null;
   });
 }
 
@@ -219,50 +205,36 @@ export function update(
   selection?: string,
   selectionArgs?: string[],
 ) {
-  return new Promise<number>((resolve, reject) => {
-    Java.perform(() => {
-      try {
-        const Uri = Java.use("android.net.Uri");
-        const cr = getContext().getContentResolver();
+  return perform(() => {
+    const Uri = Java.use("android.net.Uri");
+    const cr = getContext().getContentResolver();
 
-        const args = selectionArgs
-          ? Java.array("java.lang.String", selectionArgs)
-          : null;
+    const args = selectionArgs
+      ? Java.array("java.lang.String", selectionArgs)
+      : null;
 
-        const count: number = cr.update(
-          Uri.parse(uri),
-          buildContentValues(values),
-          selection || null,
-          args,
-        );
-        resolve(count);
-      } catch (e) {
-        reject(new Error(String(e)));
-      }
-    });
+    return cr.update(
+      Uri.parse(uri),
+      buildContentValues(values),
+      selection || null,
+      args,
+    ) as number;
   });
 }
 
 export function del(uri: string, selection?: string, selectionArgs?: string[]) {
-  return new Promise<number>((resolve, reject) => {
-    Java.perform(() => {
-      try {
-        const Uri = Java.use("android.net.Uri");
-        const cr = getContext().getContentResolver();
+  return perform(() => {
+    const Uri = Java.use("android.net.Uri");
+    const cr = getContext().getContentResolver();
 
-        const args = selectionArgs
-          ? Java.array("java.lang.String", selectionArgs)
-          : null;
+    const args = selectionArgs
+      ? Java.array("java.lang.String", selectionArgs)
+      : null;
 
-        const count: number = cr.delete(
-          Uri.parse(uri),
-          selection || null,
-          args,
-        );
-        resolve(count);
-      } catch (e) {
-        reject(new Error(String(e)));
-      }
-    });
+    return cr.delete(
+      Uri.parse(uri),
+      selection || null,
+      args,
+    ) as number;
   });
 }

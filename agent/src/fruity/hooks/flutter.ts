@@ -1,6 +1,6 @@
 import ObjC from "frida-objc-bridge";
 
-import { toJS } from "../bridge/object.js";
+import { toJS } from "@/fruity/bridge/object.js";
 
 type Direction = "native" | "dart";
 type ChannelType = "method" | "event" | "message";
