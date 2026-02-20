@@ -18,6 +18,7 @@ import {
   hooks,
   getMethodImp,
   type TaskBoundData,
+  nextRequestId,
   getOrAssignTaskId,
   getRequestState,
   hasRequestState,
@@ -170,6 +171,18 @@ export function hookResume(klass: ObjC.Object) {
         return;
       }
 
+      // Lazily hook delegate for pre-existing sessions
+      try {
+        const delegate = task.session().delegate();
+        if (delegate && !delegate.handle.isNull()) {
+          hooks.push(...hookDelegateClass(delegate, delegateMethodHandlers));
+          const rtsHook = injectRespondsToSelector(delegate);
+          if (rtsHook) hooks.push(rtsHook);
+        }
+      } catch (_e) {
+        // session may not expose delegate
+      }
+
       // Pre-parse HTTP body to avoid thread safety issues
       const currentRequest = task.currentRequest();
       if (currentRequest) {
@@ -221,6 +234,48 @@ export function hookTaskCompletion(klass: ObjC.Object) {
         recordLoadingFinished(requestId);
       }
       removeRequestState(requestId);
+    },
+  });
+}
+
+/**
+ * Hook internal data delivery on the task class.
+ * This fires for ALL data tasks regardless of delegate/CH setup,
+ * covering Swift async URLSession.data(for:) and similar paths.
+ *
+ * The internal method receives dispatch_data_t, not NSData.
+ */
+export function hookTaskDataReceive(klass: ObjC.Object) {
+  const sel = "_onqueue_didReceiveDispatchData:completion:";
+  const imp = getMethodImp(klass, sel, false);
+  if (!imp) return null;
+
+  const dispatch_data_create_map = new NativeFunction(
+    getGlobalExport("dispatch_data_create_map"),
+    "pointer",
+    ["pointer", "pointer", "pointer"],
+  );
+
+  return Interceptor.attach(imp, {
+    onEnter(args) {
+      const task = wrapObjC<NSURLSessionTask>(args[0]);
+      const bound = ObjC.getBoundData(task) as TaskBoundData;
+      if (!bound?.id) return;
+
+      const dispatchData = args[2];
+      if (dispatchData.isNull()) return;
+
+      // Map dispatch_data_t to a contiguous buffer
+      const bufPtr = Memory.alloc(Process.pointerSize);
+      const sizePtr = Memory.alloc(Process.pointerSize);
+      dispatch_data_create_map(dispatchData, bufPtr, sizePtr);
+      const buf = bufPtr.readPointer();
+      const len = Number(sizePtr.readULong());
+
+      if (len > 0 && !buf.isNull()) {
+        const chunk = buf.readByteArray(len);
+        recordDataReceived(bound.id, len, chunk);
+      }
     },
   });
 }

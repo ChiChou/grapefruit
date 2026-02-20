@@ -26,6 +26,7 @@ import { hooks } from "./common.js";
 import {
   hookResume,
   hookTaskCompletion,
+  hookTaskDataReceive,
   hookSessionCreation,
   hookAsyncMethods as hookSessionAsyncMethods,
 } from "./session.js";
@@ -44,7 +45,8 @@ export function start() {
   console.log("start logging http URL requests");
   running = true;
 
-  const { __NSCFURLSessionTask, NSURLSessionTask } = ObjC.classes;
+  const { __NSCFURLSessionTask, NSURLSessionTask, __NSCFLocalSessionTask } =
+    ObjC.classes;
   if (__NSCFURLSessionTask) {
     hooks.push(hookResume(__NSCFURLSessionTask));
     const ch = hookTaskCompletion(__NSCFURLSessionTask);
@@ -55,6 +57,11 @@ export function start() {
     hooks.push(hookResume(NSURLSessionTask));
     const ch = hookTaskCompletion(NSURLSessionTask);
     if (ch) hooks.push(ch);
+  }
+
+  if (__NSCFLocalSessionTask) {
+    const dr = hookTaskDataReceive(__NSCFLocalSessionTask);
+    if (dr) hooks.push(dr);
   }
 
   hookSessionAsyncMethods();
