@@ -97,6 +97,8 @@ export interface NSURLSessionTask extends NSObject {
   currentRequest(): NSURLRequest | null;
   response(): NSURLResponse | null;
   state(): number;
+  delegate(): NSObject | null;
+  setDelegate_(delegate: NSObject): void;
 }
 
 export type NSURLSessionDataTask = NSURLSessionTask;

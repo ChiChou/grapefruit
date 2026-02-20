@@ -20,6 +20,7 @@ import {
   type TaskBoundData,
   getOrAssignTaskId,
   getRequestState,
+  hasRequestState,
   removeRequestState,
   recordRequestWillBeSent,
   recordResponseReceived,
@@ -172,6 +173,45 @@ export function hookResume(klass: ObjC.Object) {
         state.request = currentRequest;
         recordRequestWillBeSent(requestId, currentRequest, null);
       }
+    },
+  });
+}
+
+/**
+ * Fallback: hook setState: on the task class to catch completion
+ * for tasks whose session has no delegate and no completion handler.
+ * Only emits if no delegate/CH already recorded the event
+ * (checked via hasRequestState — it's removed by delegate/CH handlers).
+ */
+export function hookTaskCompletion(klass: ObjC.Object) {
+  const imp = getMethodImp(klass, "setState:", false);
+  if (!imp) return null;
+
+  return Interceptor.attach(imp, {
+    onEnter(args) {
+      // NSURLSessionTaskStateCompleted = 3
+      if (args[2].toInt32() !== 3) return;
+
+      const task = wrapObjC<NSURLSessionTask>(args[0]);
+      const bound = ObjC.getBoundData(task) as TaskBoundData;
+      if (!bound?.id) return;
+
+      const requestId = bound.id;
+      // Already handled by delegate or completion handler
+      if (!hasRequestState(requestId)) return;
+
+      const response = task.response();
+      if (response) {
+        recordResponseReceived(requestId, response);
+      }
+
+      const error = task.error();
+      if (error) {
+        recordLoadingFailed(requestId, error as unknown as NSError);
+      } else {
+        recordLoadingFinished(requestId);
+      }
+      removeRequestState(requestId);
     },
   });
 }

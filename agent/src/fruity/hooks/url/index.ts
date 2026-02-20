@@ -25,6 +25,7 @@ import ObjC from "frida-objc-bridge";
 import { hooks } from "./common.js";
 import {
   hookResume,
+  hookTaskCompletion,
   hookSessionCreation,
   scanExistingSessions,
   hookAsyncMethods as hookSessionAsyncMethods,
@@ -47,10 +48,14 @@ export function start() {
   const { __NSCFURLSessionTask, NSURLSessionTask } = ObjC.classes;
   if (__NSCFURLSessionTask) {
     hooks.push(hookResume(__NSCFURLSessionTask));
+    const ch = hookTaskCompletion(__NSCFURLSessionTask);
+    if (ch) hooks.push(ch);
   }
 
   if (NSURLSessionTask) {
     hooks.push(hookResume(NSURLSessionTask));
+    const ch = hookTaskCompletion(NSURLSessionTask);
+    if (ch) hooks.push(ch);
   }
 
   hookSessionAsyncMethods();

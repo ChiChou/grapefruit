@@ -86,6 +86,10 @@ export function getRequestState(requestId: string): RequestState {
   return state;
 }
 
+export function hasRequestState(requestId: string): boolean {
+  return requestStates.has(requestId);
+}
+
 export function removeRequestState(requestId: string): void {
   requestStates.delete(requestId);
 }
