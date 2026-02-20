@@ -1,5 +1,7 @@
 import ObjC from "frida-objc-bridge";
 
+import { getMethodImp } from "./common.js";
+
 const hookedMethods = new Set<string>();
 const injectedRtsClasses = new Set<string>();
 
@@ -21,11 +23,11 @@ export function hookDelegateClass(
     const key = `${className}\t${sel}`;
     if (hookedMethods.has(key)) continue;
 
-    const method = clazz["- " + sel] as ObjC.ObjectMethod | undefined;
-    if (!method) continue;
+    const imp = getMethodImp(clazz, sel, false);
+    if (!imp) continue;
 
     try {
-      const listener = Interceptor.attach(method.implementation, handler);
+      const listener = Interceptor.attach(imp, handler);
       listeners.push(listener);
       hookedMethods.add(key);
     } catch (e) {
@@ -50,25 +52,31 @@ export function injectRespondsToSelector(
   const clazz = ObjC.classes[className];
   if (!clazz) return null;
 
-  const hasData = !!(clazz["- URLSession:dataTask:didReceiveData:"] as
-    | ObjC.ObjectMethod
-    | undefined);
-  const hasComplete = !!(clazz["- URLSession:task:didCompleteWithError:"] as
-    | ObjC.ObjectMethod
-    | undefined);
+  const hasData = !!getMethodImp(
+    clazz,
+    "URLSession:dataTask:didReceiveData:",
+    false,
+  );
+  const hasComplete = !!getMethodImp(
+    clazz,
+    "URLSession:task:didCompleteWithError:",
+    false,
+  );
 
   if (!hasData && !hasComplete) return null;
 
   // Skip if the class already implements didReceiveResponse:completionHandler:
-  const existing = clazz[
-    "- URLSession:dataTask:didReceiveResponse:completionHandler:"
-  ] as ObjC.ObjectMethod | undefined;
-  if (existing) return null;
+  if (
+    getMethodImp(
+      clazz,
+      "URLSession:dataTask:didReceiveResponse:completionHandler:",
+      false,
+    )
+  )
+    return null;
 
-  const rtsMethod = clazz["- respondsToSelector:"] as
-    | ObjC.ObjectMethod
-    | undefined;
-  if (!rtsMethod) return null;
+  const rtsImp = getMethodImp(clazz, "respondsToSelector:", false);
+  if (!rtsImp) return null;
 
   injectedRtsClasses.add(className);
 
@@ -76,7 +84,7 @@ export function injectRespondsToSelector(
     "URLSession:dataTask:didReceiveResponse:completionHandler:",
   );
 
-  return Interceptor.attach(rtsMethod.implementation, {
+  return Interceptor.attach(rtsImp, {
     onEnter(args) {
       const sel = args[2] as NativePointer;
       this._replace = sel.equals(targetSel);

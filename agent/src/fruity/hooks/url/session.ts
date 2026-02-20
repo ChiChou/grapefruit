@@ -16,6 +16,7 @@ import { getGlobalExport } from "@/lib/polyfill.js";
 
 import {
   hooks,
+  getMethodImp,
   type TaskBoundData,
   getOrAssignTaskId,
   getRequestState,
@@ -149,7 +150,8 @@ const delegateMethodHandlers: Record<string, InvocationListenerCallbacks> = {
 };
 
 export function hookResume(klass: ObjC.Object) {
-  return Interceptor.attach(klass["- resume"].implementation, {
+  const imp = getMethodImp(klass, "resume", false)!;
+  return Interceptor.attach(imp, {
     onEnter(args) {
       const task = wrapObjC<NSURLSessionTask>(args[0]);
 
@@ -182,11 +184,11 @@ export function hookSessionCreation() {
   ].filter(Boolean);
 
   for (const clazz of classes) {
-    const method = clazz["+ " + sel] as ObjC.ObjectMethod | undefined;
-    if (!method) continue;
+    const imp = getMethodImp(clazz, sel, true);
+    if (!imp) continue;
 
     hooks.push(
-      Interceptor.attach(method.implementation, {
+      Interceptor.attach(imp, {
         onEnter(args) {
           // args: self, _cmd, configuration, delegate, delegateQueue
           if (args[3].isNull()) return;
@@ -321,15 +323,15 @@ export function hookAsyncMethods() {
   }
 
   function hookSelector(clazz: ObjC.Object, sel: string) {
-    const method = clazz["- " + sel] as ObjC.ObjectMethod | undefined;
-    if (!method) return;
+    const imp = getMethodImp(clazz, sel, false);
+    if (!imp) return;
 
     const handlerIndex = selectorHandlerIndex[sel];
     const isDownload = downloadSelectors.has(sel);
     const mechanism = mechanismForSelector(sel);
 
     hooks.push(
-      Interceptor.attach(method.implementation, {
+      Interceptor.attach(imp, {
         onEnter(args) {
           if (args[handlerIndex].isNull()) return;
 

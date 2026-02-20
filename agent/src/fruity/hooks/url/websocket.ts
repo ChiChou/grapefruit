@@ -7,7 +7,13 @@ import type {
 } from "@/fruity/typings.js";
 import { wrapObjC } from "@/fruity/typings.js";
 
-import { hooks, recordWebSocketMessage } from "./common.js";
+import {
+  hooks,
+  getMethodImp,
+  recordWebSocketMessage,
+  emitNetworkEvent,
+  type NetworkEvent,
+} from "./common.js";
 
 export function hookWebSocketMethods() {
   const classes = [
@@ -20,12 +26,10 @@ export function hookWebSocketMethods() {
 
   for (const clazz of classes) {
     // -sendMessage:completionHandler:
-    const sendMethod = clazz["- sendMessage:completionHandler:"] as
-      | ObjC.ObjectMethod
-      | undefined;
-    if (sendMethod) {
+    const sendImp = getMethodImp(clazz, "sendMessage:completionHandler:", false);
+    if (sendImp) {
       hooks.push(
-        Interceptor.attach(sendMethod.implementation, {
+        Interceptor.attach(sendImp, {
           onEnter(args) {
             const task = wrapObjC<NSURLSessionWebSocketTask>(args[0]);
             const message = wrapObjC<NSURLSessionWebSocketMessage>(args[2]);
@@ -46,36 +50,57 @@ export function hookWebSocketMethods() {
 
                     const block = new ObjC.Object(innerArgs[0]);
                     const meta = ObjC.getBoundData(block) as {
-                      task?: NSURLSessionWebSocketTask;
-                      message?: NSURLSessionWebSocketMessage;
+                      requestId?: string;
+                      messageType?: string;
+                      dataLength?: number;
+                      messageText?: string;
                     };
-                    if (!meta?.task || !meta?.message) return;
+                    if (!meta?.requestId) return;
 
-                    recordWebSocketMessage(
-                      "send",
-                      meta.task,
-                      meta.message,
-                      wrapObjC<NSError>(innerArgs[1]),
-                    );
+                    const event: NetworkEvent = {
+                      event: "webSocketSend",
+                      requestId: meta.requestId,
+                      timestamp: Date.now(),
+                      messageType: meta.messageType,
+                    };
+                    if (meta.dataLength !== undefined)
+                      event.dataLength = meta.dataLength;
+                    if (meta.messageText !== undefined)
+                      event.message = meta.messageText;
+                    event.error = wrapObjC<NSError>(innerArgs[1]).toString();
+                    emitNetworkEvent(event);
                   },
                 }),
               );
             }
 
+            // Snapshot message data now while objects are alive,
+            // the completion handler fires later when they may be freed
+            const requestId = task.taskIdentifier().toString();
+            const msgType = message.type();
+            const msgData = message.data();
+            const msgString = message.string();
+            const snapshot: Record<string, unknown> = {
+              requestId,
+              messageType: msgType === 0 ? "data" : "string",
+            };
+            if (msgType === 0 && msgData)
+              snapshot.dataLength = msgData.length();
+            if (msgType === 1 && msgString)
+              snapshot.messageText = msgString.toString();
+
             const block = new ObjC.Object(blockPtr);
-            ObjC.bind(block, { task, message });
+            ObjC.bind(block, snapshot);
           },
         }),
       );
     }
 
     // -receiveMessageWithCompletionHandler:
-    const recvMethod = clazz["- receiveMessageWithCompletionHandler:"] as
-      | ObjC.ObjectMethod
-      | undefined;
-    if (recvMethod) {
+    const recvImp = getMethodImp(clazz, "receiveMessageWithCompletionHandler:", false);
+    if (recvImp) {
       hooks.push(
-        Interceptor.attach(recvMethod.implementation, {
+        Interceptor.attach(recvImp, {
           onEnter(args) {
             const task = wrapObjC<NSURLSessionWebSocketTask>(args[0]);
             const blockPtr = args[2];

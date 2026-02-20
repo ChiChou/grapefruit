@@ -11,6 +11,7 @@ import { wrapObjC } from "@/fruity/typings.js";
 
 import {
   hooks,
+  getMethodImp,
   type TaskBoundData,
   nextRequestId,
   getRequestState,
@@ -104,13 +105,11 @@ export function hookConnectionCreation() {
   ];
 
   for (const sel of initSelectors) {
-    const method = NSURLConnection["- " + sel] as
-      | ObjC.ObjectMethod
-      | undefined;
-    if (!method) continue;
+    const imp = getMethodImp(NSURLConnection, sel, false);
+    if (!imp) continue;
 
     hooks.push(
-      Interceptor.attach(method.implementation, {
+      Interceptor.attach(imp, {
         onEnter(args) {
           // args: self, _cmd, request, delegate[, startImmediately]
           if (args[3].isNull()) return;
@@ -129,15 +128,13 @@ export function hookAsyncMethods() {
 
   // +sendAsynchronousRequest:queue:completionHandler:
   const asyncSel = "sendAsynchronousRequest:queue:completionHandler:";
-  const asyncMethod = NSURLConnection["+ " + asyncSel] as
-    | ObjC.ObjectMethod
-    | undefined;
+  const asyncImp = getMethodImp(NSURLConnection, asyncSel, true);
 
-  if (asyncMethod) {
+  if (asyncImp) {
     const hookedInvokers = new Set<string>();
 
     hooks.push(
-      Interceptor.attach(asyncMethod.implementation, {
+      Interceptor.attach(asyncImp, {
         onEnter(args) {
           // args: self, _cmd, request, queue, completionHandler
           const request = wrapObjC<NSURLRequest>(args[2]);
