@@ -50,6 +50,7 @@ import { DroidKeystoreTab } from "../tabs/DroidKeystoreTab";
 import { FruityInfoPlistInsightsTab } from "../tabs/FruityInfoPlistInsightsTab";
 import { DroidManifestTab } from "../tabs/DroidManifestTab";
 import { DroidProvidersTab } from "../tabs/DroidProvidersTab";
+import { FruityXPCTab } from "../tabs/FruityXPCTab";
 import { NoCloseTabHeader } from "../tabs/NoCloseTabHeader";
 
 import { DockContext, useDockActions } from "@/context/DockContext";
@@ -138,6 +139,7 @@ function WorkspaceContent() {
     infoPlistInsights: FruityInfoPlistInsightsTab,
     droidManifest: DroidManifestTab,
     droidProviders: DroidProvidersTab,
+    xpc: FruityXPCTab,
   };
 
   const tabComponents = {

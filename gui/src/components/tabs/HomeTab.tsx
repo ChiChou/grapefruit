@@ -17,6 +17,7 @@ import {
   KeyRound,
   Database,
   Cpu,
+  Cable,
 } from "lucide-react";
 
 import logo from "@/assets/logo.svg";
@@ -160,6 +161,13 @@ export function HomeTab() {
       title: t("flutter_channels"),
       desc: t("flutter_channels_desc"),
     },
+    {
+      icon: <Cable className="w-5 h-5" />,
+      id: "xpc_tab",
+      component: "xpc",
+      title: "XPC",
+      desc: "Trace XPC and NSXPC inter-process communication",
+    },
   ];
 
   const fruityDaemonFeatures: FeatureCardProps[] = [
@@ -184,6 +192,13 @@ export function HomeTab() {
       component: "nsurl",
       title: "NSURL",
       desc: t("home_nsurl_desc"),
+    },
+    {
+      icon: <Cable className="w-5 h-5" />,
+      id: "xpc_tab",
+      component: "xpc",
+      title: "XPC",
+      desc: "Trace XPC and NSXPC inter-process communication",
     },
   ];
 

@@ -18,6 +18,31 @@ export interface NSURLEvent {
   [key: string]: unknown;
 }
 
+import type { XPCNode, XPCNodeType } from "@agent/fruity/hooks/xpc";
+export type { XPCNode, XPCNodeType };
+
+export interface NSXPCMessage {
+  type: "nsxpc";
+  sel: string;
+  args: string[];
+  description: string;
+}
+
+export function isNSXPCMessage(
+  msg: XPCNode | NSXPCMessage,
+): msg is NSXPCMessage {
+  return (msg as NSXPCMessage).type === "nsxpc";
+}
+
+export interface XPCSocketEvent {
+  event: "received" | "sent";
+  dir: "<" | ">";
+  name?: string;
+  peer?: number;
+  message: XPCNode | NSXPCMessage;
+  backtrace?: string[];
+}
+
 export interface SessionClientEvents {
   ready: (pid: number) => void;
   log: (level: string, text: string) => void;
@@ -27,6 +52,7 @@ export interface SessionClientEvents {
   flutter: (event: Record<string, unknown>) => void;
   crypto: (message: BaseHookMessage) => void;
   nsurl: (event: NSURLEvent) => void;
+  xpc: (event: XPCSocketEvent) => void;
   jni: (event: JNIEvent) => void;
   fatal: (detail: unknown) => void;
 }
