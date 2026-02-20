@@ -1,3 +1,6 @@
+// this script is based on the article
+// https://kibty.town/blog/arc/
+
 import ObjC from "frida-objc-bridge";
 import { bt } from "@/common/hooks/context.js";
 import { toJS } from "@/fruity/bridge/object.js";
@@ -16,8 +19,12 @@ interface QueryInfo {
 const queryStack: QueryInfo[] = [];
 
 function formatQuery(q: QueryInfo) {
-  return `firebase.${q.type}("${q.path}")` +
-    q.whereClauses.map((c) => `.where("${c.field}", "==", "${c.value}")`).join("");
+  return (
+    `firebase.${q.type}("${q.path}")` +
+    q.whereClauses
+      .map((c) => `.where("${c.field}", "==", "${c.value}")`)
+      .join("")
+  );
 }
 
 function hookCollection(): InvocationListener[] {
