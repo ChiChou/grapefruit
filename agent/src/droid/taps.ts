@@ -1,5 +1,6 @@
 import type { TapInfo, TapRule } from "@/common/taps.js";
 
+import * as hookGroup from "./hooks/index.js";
 import * as flutter from "./hooks/flutter.js";
 import * as jni from "./hooks/jni.js";
 
@@ -10,7 +11,23 @@ interface TapEntry {
   available(): boolean;
 }
 
+const BUILTIN_GROUPS = [
+  "clipboard",
+  "broadcast",
+  "intent",
+  "sharedpref",
+] as const;
+
 const registry = new Map<string, TapEntry>();
+
+for (const id of BUILTIN_GROUPS) {
+  registry.set(id, {
+    start: () => hookGroup.start(id),
+    stop: () => hookGroup.stop(id),
+    status: () => hookGroup.status()[id] ?? false,
+    available: () => true,
+  });
+}
 
 registry.set("flutter", flutter);
 registry.set("jni", jni);

@@ -1,6 +1,7 @@
 import Java from "frida-java-bridge";
 
-import { toJS } from "../bridge/object.js";
+import { patch as createPatch } from "@/common/hooks/java.js";
+import { toJS } from "@/droid/bridge/object.js";
 
 type Direction = "native" | "dart";
 type ChannelType = "method" | "event" | "message";
@@ -29,22 +30,7 @@ function verifyClass(cls: Java.Wrapper, base: string): boolean {
   return cls.$className?.startsWith(prefix);
 }
 
-function patch(
-  method: Java.MethodDispatcher,
-  fn: (
-    original: Java.MethodDispatcher,
-    self: Java.Wrapper,
-    args: unknown[],
-  ) => unknown,
-) {
-  const orig = method.implementation;
-  method.implementation = function (this: Java.Wrapper, ...args: unknown[]) {
-    return fn(method, this, args);
-  };
-  restores.push(() => {
-    method.implementation = orig;
-  });
-}
+const patch = createPatch(restores);
 
 function wrapHandler(
   method: Java.MethodDispatcher,

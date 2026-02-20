@@ -4,6 +4,7 @@ import * as classes from "./modules/classes.js";
 import * as crypto from "./crypto/index.js";
 import * as device from "./modules/device.js";
 import * as fs from "./modules/fs.js";
+import * as hook from "./hooks/index.js";
 import * as keystore from "./modules/keystore.js";
 import * as lsof from "./modules/lsof.js";
 import * as manifest from "./modules/manifest.js";
@@ -27,6 +28,7 @@ export default {
   crypto,
   device,
   fs,
+  hook,
   keystore,
   lsof,
   manifest,
