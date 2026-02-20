@@ -56,12 +56,21 @@ const delegateMethodHandlers: Record<string, InvocationListenerCallbacks> = {
   "URLSession:task:willPerformHTTPRedirection:newRequest:completionHandler:": {
     onEnter(args) {
       if (args[4].isNull() || args[5].isNull()) return;
-      const requestId = getOrAssignTaskId(wrapObjC<NSURLSessionTask>(args[3]));
-      recordRequestWillBeSent(
-        requestId,
-        wrapObjC<NSURLRequest>(args[5]),
-        wrapObjC<NSURLResponse>(args[4]),
-      );
+      const task = wrapObjC<NSURLSessionTask>(args[3]);
+      const redirectResponse = wrapObjC<NSURLResponse>(args[4]);
+      const newRequest = wrapObjC<NSURLRequest>(args[5]);
+
+      // Finish the current request with the redirect (301/302) response
+      const currentId = getOrAssignTaskId(task);
+      recordResponseReceived(currentId, redirectResponse);
+      recordLoadingFinished(currentId);
+      removeRequestState(currentId);
+
+      // New ID for the redirected request, rebind the task
+      const newId = nextRequestId();
+      ObjC.bind(task, { id: newId } as TaskBoundData);
+      getRequestState(newId);
+      recordRequestWillBeSent(newId, newRequest, redirectResponse);
     },
   },
   "URLSession:dataTask:didReceiveResponse:completionHandler:": {
