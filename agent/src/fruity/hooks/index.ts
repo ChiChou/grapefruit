@@ -1,4 +1,4 @@
-import { createHookGroup } from "@/common/hook-group.js";
+import { createNative } from "@/common/hooks/group.js";
 import * as sqlite from "./sqlite.js";
 import * as pasteboard from "./pasteboard.js";
 import * as deviceid from "./deviceid.js";
@@ -39,7 +39,7 @@ function get(group: string) {
   }
 }
 
-const { list, status, start, stop } = createHookGroup(HOOK_GROUPS, get);
+const { list, status, start, stop } = createNative(HOOK_GROUPS, get);
 export { list, status, start, stop };
 
 /**

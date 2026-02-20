@@ -1,4 +1,4 @@
-import { createHookGroup } from "@/common/hook-group.js";
+import { createNative } from "@/common/hooks/group.js";
 import * as crypto from "./crypto.js";
 
 const CRYPTO_GROUPS = ["cccrypt", "x509", "hash", "hmac"] as const;
@@ -15,5 +15,5 @@ function get(group: string) {
   }
 }
 
-const { list, status, start, stop } = createHookGroup(CRYPTO_GROUPS, get);
+const { list, status, start, stop } = createNative(CRYPTO_GROUPS, get);
 export { list, status, start, stop };
