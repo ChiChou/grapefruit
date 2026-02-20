@@ -87,16 +87,6 @@ const delegateMethodHandlers: Record<string, InvocationListenerCallbacks> = {
       recordResponseReceived(requestId, wrapObjC<NSURLResponse>(args[4]));
     },
   },
-  "URLSession:dataTask:didReceiveData:": {
-    onEnter(args) {
-      const dataTask = wrapObjC<NSURLSessionDataTask>(args[3]);
-      const requestId = getOrAssignTaskId(dataTask);
-      const data = wrapObjC<NSData>(args[4]);
-      const len = data.length();
-      const chunk = len > 0 ? data.bytes().readByteArray(len) : null;
-      recordDataReceived(requestId, len, chunk);
-    },
-  },
   "URLSession:task:didCompleteWithError:": {
     onEnter(args) {
       const task = wrapObjC<NSURLSessionTask>(args[3]);
@@ -382,17 +372,8 @@ export function hookAsyncMethods() {
             recordResponseReceived(rid, wrapObjC<NSURLResponse>(response));
           }
 
-          if (isDownload) {
-            if (!first.isNull()) {
-              streamFileData(wrapObjC<NSURL>(first), rid);
-            }
-          } else {
-            const nsdata = first.isNull() ? null : wrapObjC<NSData>(first);
-            if (nsdata) {
-              const len = nsdata.length();
-              const chunk = len > 0 ? nsdata.bytes().readByteArray(len) : null;
-              recordDataReceived(rid, len, chunk);
-            }
+          if (isDownload && !first.isNull()) {
+            streamFileData(wrapObjC<NSURL>(first), rid);
           }
 
           recordLoadingFinished(rid);
