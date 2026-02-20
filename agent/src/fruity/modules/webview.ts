@@ -88,42 +88,17 @@ function choose(clazz: ObjC.Object): Promise<ObjC.Object[]> {
   });
 }
 
-// track alive WebViews
-const handles = new Map<Kind, Set<string>>();
-
-function trackDealloc(clazz: ObjC.Object) {
-  return Interceptor.attach(clazz["- dealloc"].implementation, {
-    onEnter(args) {
-      const handle = args[0].toString();
-      const kind = clazz.$className.startsWith("WK") ? "WK" : "UI";
-      const alive = handles.get(kind);
-      if (alive) alive.delete(handle.toString());
-    },
-  });
-}
-
 export async function listWK(): Promise<WKWebViewInfo[]> {
   const { WKWebView } = ObjC.classes;
   if (!WKWebView) return [];
 
   const kind = "WK";
-
-  if (!handles.has(kind)) {
-    handles.set(kind, new Set());
-    const listener = trackDealloc(WKWebView);
-    Script.bindWeak(globalThis, listener.detach.bind(listener));
-  }
-
-  const alive = handles.get(kind)!;
-
   const instances = await choose(WKWebView);
 
   return Promise.all(
     instances.map((instance) => {
       const webview = instance as WKWebView;
       const handle = instance.handle.toString();
-
-      alive.add(handle);
 
       const conf = webview.configuration() as WKWebViewConfiguration;
       const pref = conf.preferences();
@@ -152,22 +127,12 @@ export async function listUI(): Promise<UIWebViewInfo[]> {
   if (!UIWebView) return [];
 
   const kind = "UI";
-  if (!handles.has(kind)) {
-    handles.set(kind, new Set());
-    const listener = trackDealloc(UIWebView);
-    Script.bindWeak(globalThis, listener.detach.bind(listener));
-  }
-
-  const alive = handles.get(kind)!;
-
   const instances = await choose(UIWebView);
 
   return Promise.all(
     instances.map((instance) => {
       const webview = instance as UIWebView;
       const handle = instance.handle.toString();
-
-      alive.add(handle);
 
       return performOnMainThread(() => {
         const req = webview.request();
@@ -215,16 +180,30 @@ function UIGetTitle(webview: UIWebView) {
   }
 }
 
-function getInstance(kind: Kind, handle: string): WebView {
-  const alive = handles.get(kind);
-  if (!alive || !alive.has(handle))
-    throw new Error(`${kind}WebView ${handle} not found`);
+function getInstance(kind: Kind, handle: string): Promise<WebView> {
+  const clazz = ObjC.classes[`${kind}WebView`];
+  if (!clazz)
+    return Promise.reject(new Error(`${kind}WebView class not found`));
 
-  return new ObjC.Object(ptr(handle)) as WebView;
+  return new Promise((resolve, reject) => {
+    let found = false;
+    ObjC.choose(clazz, {
+      onMatch(instance) {
+        if (instance.handle.toString() === handle) {
+          found = true;
+          resolve(instance as WebView);
+          return "stop";
+        }
+      },
+      onComplete() {
+        if (!found) reject(new Error(`${kind}WebView ${handle} not found`));
+      },
+    });
+  });
 }
 
 export async function evaluate(kind: Kind, handle: string, js: string) {
-  const instance = getInstance(kind, handle);
+  const instance = await getInstance(kind, handle);
 
   if (kind === "UI") {
     return performOnMainThread(() => {
@@ -255,7 +234,7 @@ export async function navigate(
   handle: string,
   url: string,
 ): Promise<void> {
-  const instance = getInstance(kind, handle);
+  const instance = await getInstance(kind, handle);
 
   if (kind === "UI") {
     return performOnMainThread(() => {
