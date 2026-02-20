@@ -23,6 +23,7 @@ import { FruityURLSchemesPanel } from "./components/panels/FruityURLSchemesPanel
 import { DroidURLSchemesPanel } from "./components/panels/DroidURLSchemesPanel";
 import { FruityGeolocationPanel } from "./components/panels/FruityGeolocationPanel";
 import { FruityHooksPanel } from "./components/panels/FruityHooksPanel";
+import { DroidHooksPanel } from "./components/panels/DroidHooksPanel";
 import { PlaceholderPanel } from "./components/panels/PlaceholderPanel";
 
 import { Platform, useSession } from "./context/SessionContext";
@@ -46,6 +47,11 @@ function URLSchemesPanelRoute() {
 function DevicePanelRoute() {
   const { platform } = useSession();
   return platform === Platform.Droid ? <DroidDevicePanel /> : <FruityDevicePanel />;
+}
+
+function HooksPanelRoute() {
+  const { platform } = useSession();
+  return platform === Platform.Droid ? <DroidHooksPanel /> : <FruityHooksPanel />;
 }
 
 function App() {
@@ -79,7 +85,7 @@ function App() {
           <Route path="classes" element={<ClassesPanelRoute />} />
           <Route path="urls" element={<URLSchemesPanelRoute />} />
           <Route path="geolocation" element={<FruityGeolocationPanel />} />
-          <Route path="hooks" element={<FruityHooksPanel />} />
+          <Route path="hooks" element={<HooksPanelRoute />} />
           {/* Android (droid) panels */}
           <Route path="components" element={<DroidComponentsPanel />} />
           <Route path="device" element={<DevicePanelRoute />} />

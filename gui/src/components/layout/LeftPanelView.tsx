@@ -101,12 +101,14 @@ export function LeftPanelView() {
       { kind: "route", route: "components", icon: <Puzzle className="h-5 w-5" />, label: t("components") },
       { kind: "route", route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
       { kind: "route", route: "urls", icon: <LinkIcon className="h-5 w-5" />, label: "URL Schemes" },
+      { kind: "route", route: "hooks", icon: <Anchor className="h-5 w-5" />, label: t("hooks") },
       { kind: "route", route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
       { kind: "route", route: "device", icon: <Smartphone className="h-5 w-5" />, label: t("device_info") },
     ],
     [`${Platform.Droid}:${Mode.Daemon}`]: [
       { kind: "route", route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
       { kind: "route", route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
+      { kind: "route", route: "hooks", icon: <Anchor className="h-5 w-5" />, label: t("hooks") },
       { kind: "route", route: "device", icon: <Smartphone className="h-5 w-5" />, label: t("device_info") },
     ],
   } satisfies Record<string, NavEntry[]>)[navKey] ?? [];
