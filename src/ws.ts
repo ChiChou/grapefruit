@@ -13,6 +13,7 @@ import { HookStore } from "./lib/store/hooks.ts";
 import { CryptoStore } from "./lib/store/crypto.ts";
 import { FlutterStore } from "./lib/store/flutter.ts";
 import { JNIStore } from "./lib/store/jni.ts";
+import { XPCStore } from "./lib/store/xpc.ts";
 import { createTapStore } from "./lib/store/taps.ts";
 
 import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
@@ -44,6 +45,7 @@ interface ServerToClientEvents {
   flutter: (event: Record<string, unknown>) => void;
   crypto: (msg: BaseHookMessage, data?: ArrayBuffer) => void;
   nsurl: (event: NSURLEvent) => void;
+  xpc: (event: Record<string, unknown>) => void;
   jni: (event: JNIEvent) => void;
   fatal: (detail: unknown) => void;
 }
@@ -103,6 +105,7 @@ interface SessionStores {
   crypto: CryptoStore;
   flutter: FlutterStore;
   jni: JNIStore;
+  xpc: XPCStore;
 }
 
 async function loadBridge(name: string) {
@@ -200,6 +203,13 @@ function setupScriptHandlers(
         const { subject: _, ...event } = payload;
         socket.emit("flutter", event);
         stores.flutter.append(event);
+        break;
+      }
+
+      case "xpc": {
+        const { subject: _, ...event } = payload;
+        socket.emit("xpc", event);
+        stores.xpc.append(payload);
         break;
       }
 
@@ -378,6 +388,7 @@ async function onConnection(
     crypto: new CryptoStore(deviceId, identifier),
     flutter: new FlutterStore(deviceId, identifier),
     jni: new JNIStore(deviceId, identifier),
+    xpc: new XPCStore(deviceId, identifier),
   };
 
   const logHandles = await LogWriter.open(deviceId, identifier);

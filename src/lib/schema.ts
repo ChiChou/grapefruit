@@ -109,6 +109,32 @@ export const jni = sqliteTable(
   ],
 );
 
+export const xpcLogs = sqliteTable(
+  "xpc_logs",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    deviceId: text("device_id").notNull(),
+    identifier: text("identifier").notNull(),
+    timestamp: text("timestamp").notNull(),
+    protocol: text("protocol").notNull(), // "xpc" | "nsxpc"
+    event: text("event").notNull(), // "received" | "sent"
+    direction: text("direction").notNull(), // "<" | ">"
+    service: text("service"),
+    peer: integer("peer"),
+    message: text("message").notNull(), // JSON-serialized message
+    backtrace: text("backtrace"),
+    createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_xpc_logs_device_identifier").on(
+      table.deviceId,
+      table.identifier,
+    ),
+    index("idx_xpc_logs_timestamp").on(table.timestamp),
+    index("idx_xpc_logs_protocol").on(table.protocol),
+  ],
+);
+
 export const crypto = sqliteTable(
   "crypto",
   {

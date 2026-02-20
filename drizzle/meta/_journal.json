@@ -8,6 +8,13 @@
       "when": 1771515903054,
       "tag": "0000_opposite_sentry",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1771554924766,
+      "tag": "0001_cheerful_zaran",
+      "breakpoints": true
     }
   ]
 }

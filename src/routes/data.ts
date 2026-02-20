@@ -11,6 +11,7 @@ import { CryptoStore } from "../lib/store/crypto.ts";
 import { NSURLStore } from "../lib/store/nsurl.ts";
 import { FlutterStore } from "../lib/store/flutter.ts";
 import { JNIStore } from "../lib/store/jni.ts";
+import { XPCStore } from "../lib/store/xpc.ts";
 import { createTapStore } from "../lib/store/taps.ts";
 import { toHAR } from "../lib/har.ts";
 import type { JNILog } from "@agent/droid/hooks/jni";
@@ -362,6 +363,52 @@ const routes = new Hono()
     } catch (e) {
       console.error("Failed to serve attachment:", e);
       return c.text("Failed to serve attachment", 500);
+    }
+  })
+  // XPC log endpoints
+  .get("/history/xpc/:device/:identifier", (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+
+    const limit = parseInt(c.req.query("limit") || "5000", 10);
+    const offset = parseInt(c.req.query("offset") || "0", 10);
+    const since = c.req.query("since");
+    const protocol = c.req.query("protocol");
+
+    try {
+      const store = new XPCStore(deviceId, identifier);
+      const records = store.query({ limit, offset, since, protocol });
+      const total = store.count(protocol);
+
+      const logs = records.map((r) => ({
+        id: r.id,
+        timestamp: r.timestamp,
+        protocol: r.protocol,
+        event: r.event,
+        direction: r.direction,
+        service: r.service,
+        peer: r.peer,
+        message: r.message ? JSON.parse(r.message) : undefined,
+        backtrace: r.backtrace ? JSON.parse(r.backtrace) : undefined,
+        createdAt: r.createdAt,
+      }));
+
+      return c.json({ logs, total, limit, offset });
+    } catch (e) {
+      console.error("Failed to query xpc logs:", e);
+      return c.json({ logs: [], total: 0, limit, offset });
+    }
+  })
+  .delete("/history/xpc/:device/:identifier", (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+
+    try {
+      new XPCStore(deviceId, identifier).rm();
+      return c.body(null, 204);
+    } catch (e) {
+      console.error("Failed to clear xpc logs:", e);
+      return c.text("Failed to clear xpc logs", 500);
     }
   })
   // Taps snapshot endpoints
