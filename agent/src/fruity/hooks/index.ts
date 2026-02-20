@@ -4,6 +4,7 @@ import * as pasteboard from "./pasteboard.js";
 import * as deviceid from "./deviceid.js";
 import * as biometric from "./biometric.js";
 import * as fileops from "./fileops.js";
+import * as firebase from "./firebase.js";
 import * as native from "@/common/hooks/native.js";
 import * as objc from "./objc.js";
 
@@ -14,6 +15,7 @@ const HOOK_GROUPS = [
   "deviceid",
   "biometric",
   "sqlite",
+  "firebase",
 ] as const;
 
 function get(group: string) {
@@ -32,6 +34,8 @@ function get(group: string) {
     return [...biometric.bypass()];
   } else if (group === "fileops") {
     return [...fileops.monitor()];
+  } else if (group === "firebase") {
+    return [...firebase.query(), ...firebase.write()];
   }
 }
 
