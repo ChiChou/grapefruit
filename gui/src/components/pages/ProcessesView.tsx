@@ -43,22 +43,6 @@ interface SortState {
   direction: SortDirection;
 }
 
-function DeviceHeader({ deviceInfo: info }: { deviceInfo: DeviceInfo }) {
-  const { t } = useTranslation();
-  return (
-    <>
-      <h1 className="mb-2 text-2xl font-bold dark:text-foreground">
-        {info.name || t("device")}
-      </h1>
-      <p className="mb-6 text-sm text-muted-foreground">
-        {info.arch} {info.os?.name} {info.os?.version}
-        <br />
-        {info.udid}
-      </p>
-    </>
-  );
-}
-
 function getPlatformFromDeviceInfo(info: DeviceInfo | undefined): "fruity" | "droid" {
   if (info?.os?.name?.toLowerCase().includes("android")) {
     return "droid";
@@ -202,26 +186,35 @@ export function ProcessesView() {
 
   return (
     <div className="p-6">
-      {deviceInfo ? <DeviceHeader deviceInfo={deviceInfo} /> : <></>}
-
-      <div className="mb-4 flex gap-2">
-        <Button variant="outline" size="sm" nativeButton={false} render={<Link to={`/list/${udid}/apps`} />}>
-          {t("apps")}
-        </Button>
-        <Button variant="default" size="sm">
-          {t("processes")}
-        </Button>
-      </div>
-
-      <div className="mb-4 relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="text"
-          placeholder={t("search_processes")}
-          value={searchQuery}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
+      <div className="sticky top-0 z-10 bg-background py-4 flex items-center gap-2">
+        {deviceInfo && (
+          <div className="min-w-0 shrink-0">
+            <h1 className="text-sm font-bold dark:text-foreground leading-tight">
+              {deviceInfo.name || t("device")}
+            </h1>
+            <p className="text-xs text-muted-foreground truncate">
+              {deviceInfo.arch} {deviceInfo.os?.name} {deviceInfo.os?.version}
+            </p>
+          </div>
+        )}
+        <div className="flex mx-auto border rounded-md overflow-hidden">
+          <Button variant="ghost" size="sm" className="rounded-none border-0" nativeButton={false} render={<Link to={`/list/${udid}/apps`} />}>
+            {t("apps")}
+          </Button>
+          <Button variant="default" size="sm" className="rounded-none border-0">
+            {t("processes")}
+          </Button>
+        </div>
+        <div className="relative shrink-0 w-56">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder={t("search_processes")}
+            value={searchQuery}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
       </div>
 
       {filteredAndSortedProcesses.length === 0 ? (
