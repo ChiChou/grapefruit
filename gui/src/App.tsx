@@ -23,6 +23,7 @@ import { FruityURLSchemesPanel } from "./components/panels/FruityURLSchemesPanel
 import { DroidURLSchemesPanel } from "./components/panels/DroidURLSchemesPanel";
 import { FruityGeolocationPanel } from "./components/panels/FruityGeolocationPanel";
 import { FruityHooksPanel } from "./components/panels/FruityHooksPanel";
+import { FruityPluginsPanel } from "./components/panels/FruityPluginsPanel";
 import { DroidHooksPanel } from "./components/panels/DroidHooksPanel";
 import { PlaceholderPanel } from "./components/panels/PlaceholderPanel";
 
@@ -84,6 +85,7 @@ function App() {
           <Route path="modules" element={<ModulesPanel />} />
           <Route path="classes" element={<ClassesPanelRoute />} />
           <Route path="urls" element={<URLSchemesPanelRoute />} />
+          <Route path="extensions" element={<FruityPluginsPanel />} />
           <Route path="geolocation" element={<FruityGeolocationPanel />} />
           <Route path="hooks" element={<HooksPanelRoute />} />
           {/* Android (droid) panels */}

@@ -11,6 +11,7 @@ import * as jsc from "./modules/jsc.js";
 import * as keychain from "./modules/keychain.js";
 import * as lsof from "./modules/lsof.js";
 import * as objc from "./hooks/objc.js";
+import * as plugins from "./modules/plugins.js";
 import * as ui from "./modules/ui.js";
 import * as uidevice from "./modules/uidevice.js";
 import * as url from "./modules/url.js";
@@ -46,6 +47,7 @@ export default {
   memory,
   native,
   objc,
+  plugins,
   script,
   sqlite,
   symbol,
