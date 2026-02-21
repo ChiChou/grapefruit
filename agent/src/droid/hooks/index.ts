@@ -1,4 +1,5 @@
 import { createJava, type JavaHookEntry } from "@/common/hooks/group.js";
+import * as native from "@/common/hooks/native.js";
 
 import * as clipboard from "./clipboard.js";
 import * as broadcast from "./broadcast.js";
@@ -14,3 +15,19 @@ registry.set("sharedpref", sharedpref);
 
 const { list, status, start, stop } = createJava(registry);
 export { list, status, start, stop };
+
+export interface UserHook {
+  type: "native";
+  module?: string | null;
+  name: string;
+  sig?: { args: string[]; returns: string };
+}
+
+export function userHooks(): UserHook[] {
+  return native.list().map(({ module, name, sig }) => ({
+    type: "native",
+    module,
+    name,
+    sig,
+  }));
+}

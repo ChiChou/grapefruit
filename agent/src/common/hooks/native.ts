@@ -1,13 +1,61 @@
+import ObjC from "frida-objc-bridge";
+
+import { getGlobalExport } from "@/lib/polyfill.js";
 import { BaseMessage, bt } from "./context.js";
 
+export interface NativeHookSignature {
+  args: string[];
+  returns: string;
+}
+
 const hooked = new Map<string | null, Map<string, InvocationListener>>();
+const signatures = new Map<string | null, Map<string, NativeHookSignature>>();
+
+function formatArg(arg: NativePointer, type: string): string {
+  switch (type) {
+    case "int":
+      return arg.toInt32().toString();
+    case "uint":
+      return arg.toUInt32().toString();
+    case "long":
+      return int64(arg.toString()).toString();
+    case "float":
+    case "double":
+      return arg.toInt32().toString();
+    case "bool":
+      return arg.toInt32() !== 0 ? "true" : "false";
+    case "char *": {
+      if (arg.isNull()) return "NULL";
+      return JSON.stringify(arg.readUtf8String());
+    }
+    case "void *":
+      return arg.toString();
+    case "id": {
+      if (arg.isNull()) return "nil";
+      if (ObjC.available) return new ObjC.Object(arg).toString();
+      return arg.toString();
+    }
+    default:
+      return arg.toString();
+  }
+}
+
+function formatRetval(retval: NativePointer, type: string): string {
+  if (type === "void") return "void";
+  return formatArg(retval, type);
+}
 
 /**
  * Hook a native function by module and name.
  * @param module Module path (null for global/any module lookup)
  * @param name Function name
+ * @param sig Optional type signature for argument/return logging
  */
-export function hook(module: string | null, name: string): void {
+export function hook(
+  module: string | null,
+  name: string,
+  sig?: NativeHookSignature,
+): void {
   // Check if already hooked
   {
     const functions = hooked.get(module);
@@ -19,43 +67,53 @@ export function hook(module: string | null, name: string): void {
   }
 
   // Find the export
-  let addr: NativePointer | null = null;
-  if (module) {
-    const mod = Process.findModuleByName(module);
-    if (mod) {
-      addr = mod.findExportByName(name);
-    }
-  } else {
-    // Search all modules for the export
-    for (const mod of Process.enumerateModules()) {
-      addr = mod.findExportByName(name);
-      if (addr) break;
-    }
-  }
-  if (!addr) {
+  const addr: NativePointer | null = module
+    ? (Process.findModuleByName(module)?.findExportByName(name) ?? null)
+    : getGlobalExport(name);
+
+  if (!addr)
     throw new Error(`Export ${name} not found${module ? ` in ${module}` : ""}`);
+
+  // Store signature for snapshot/restore
+  if (sig) {
+    if (!signatures.has(module)) signatures.set(module, new Map());
+    signatures.get(module)!.set(name, sig);
   }
 
   const symbolName = module ? `${module}!${name}` : name;
   const listener = Interceptor.attach(addr, {
     onEnter(args) {
+      let line = `${name}(`;
+      const argParts: string[] = [];
+      if (sig) {
+        for (let i = 0; i < sig.args.length; i++) {
+          argParts.push(`${sig.args[i]}: ${formatArg(args[i], sig.args[i])}`);
+        }
+      }
+      line += argParts.join(", ") + ")";
+
       send({
         subject: "hook",
         category: "native",
         symbol: symbolName,
         dir: "enter",
-        line: `${name}() // enter`,
+        line,
         backtrace: bt(this.context),
         extra: { module, name },
       } satisfies BaseMessage);
     },
     onLeave(retval) {
+      let line = `${name}()`;
+      if (sig) {
+        line += ` -> ${formatRetval(retval, sig.returns)}`;
+      }
+
       send({
         subject: "hook",
         category: "native",
         symbol: symbolName,
         dir: "leave",
-        line: `${name}() // leave`,
+        line,
         backtrace: bt(this.context),
         extra: { module, name },
       } satisfies BaseMessage);
@@ -83,17 +141,33 @@ export function unhook(module: string | null, name: string): void {
   if (functions.size === 0) {
     hooked.delete(module);
   }
+
+  // Clean up stored signature
+  const sigs = signatures.get(module);
+  if (sigs) {
+    sigs.delete(name);
+    if (sigs.size === 0) signatures.delete(module);
+  }
 }
 
 /**
- * List all active native hooks.
+ * List all active native hooks with optional signatures.
  */
-export function list(): Array<{ module: string | null; name: string }> {
-  const result: Array<{ module: string | null; name: string }> = [];
+export function list(): Array<{
+  module: string | null;
+  name: string;
+  sig?: NativeHookSignature;
+}> {
+  const result: Array<{
+    module: string | null;
+    name: string;
+    sig?: NativeHookSignature;
+  }> = [];
 
   for (const [module, functions] of hooked) {
     for (const name of functions.keys()) {
-      result.push({ module, name });
+      const sig = signatures.get(module)?.get(name);
+      result.push({ module, name, sig });
     }
   }
 

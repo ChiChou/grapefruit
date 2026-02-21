@@ -6,8 +6,10 @@ import {
   Radio,
   Send,
   FileKey,
+  Trash2,
 } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,6 +20,12 @@ interface TapInfo {
   id: string;
   active: boolean;
   available: boolean;
+}
+
+interface UserHook {
+  type: "native";
+  module?: string | null;
+  name: string;
 }
 
 interface HookGroup {
@@ -59,10 +67,19 @@ export function DroidHookControlPanel() {
   const { droid, status } = useSession();
   const [hookStatus, setHookStatus] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
+  const [removingHook, setRemovingHook] = useState<string | null>(null);
 
   const { data: tapList, isLoading: isLoadingStatus } = useDroidRpcQuery<TapInfo[]>(
     ["tapsList"],
     (api) => api.taps.list(),
+  );
+
+  const {
+    data: userHooks = [],
+    refetch: refetchUserHooks,
+  } = useDroidRpcQuery<UserHook[]>(
+    ["userHooks"],
+    (api) => api.hook.userHooks(),
   );
 
   useEffect(() => {
@@ -74,6 +91,12 @@ export function DroidHookControlPanel() {
       setHookStatus(statusMap);
     }
   }, [tapList]);
+
+  useEffect(() => {
+    const handleRefresh = () => { refetchUserHooks(); };
+    window.addEventListener("hooks:refresh", handleRefresh);
+    return () => window.removeEventListener("hooks:refresh", handleRefresh);
+  }, [refetchUserHooks]);
 
   const handleToggle = async (groupId: string, enabled: boolean) => {
     if (!droid) return;
@@ -94,6 +117,20 @@ export function DroidHookControlPanel() {
       );
     } finally {
       setLoading((prev) => ({ ...prev, [groupId]: false }));
+    }
+  };
+
+  const handleRemoveHook = async (hook: UserHook) => {
+    if (!droid) return;
+    const key = `native:${hook.module || "null"}:${hook.name}`;
+    setRemovingHook(key);
+    try {
+      await droid.native.unhook(hook.module ?? null, hook.name);
+      await refetchUserHooks();
+    } catch (error) {
+      console.error("Failed to remove hook:", error);
+    } finally {
+      setRemovingHook(null);
     }
   };
 
@@ -167,6 +204,54 @@ export function DroidHookControlPanel() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* User Defined Hooks Section */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          {t("hook_user_defined")}
+        </h3>
+        {userHooks.length === 0 ? (
+          <p className="text-xs text-muted-foreground italic">
+            {t("hook_user_no_hooks")}
+          </p>
+        ) : (
+          <div className="space-y-1">
+            {userHooks.map((hook) => {
+              const key = `native:${hook.module || "null"}:${hook.name}`;
+              const label = hook.module ? `${hook.module}!${hook.name}` : hook.name;
+              const isRemoving = removingHook === key;
+              return (
+                <div
+                  key={key}
+                  className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-colors group"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="font-mono text-xs truncate" title={label}>
+                      {label}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-destructive hover:text-destructive"
+                      onClick={() => handleRemoveHook(hook)}
+                      disabled={isRemoving || isDisabled}
+                      title={t("hook_remove")}
+                    >
+                      {isRemoving ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

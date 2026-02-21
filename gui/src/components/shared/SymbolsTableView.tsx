@@ -20,6 +20,7 @@ import { useDock } from "@/context/DockContext";
 import { useSession, Status, Mode, Platform } from "@/context/SessionContext";
 import { useRepl } from "@/context/useRepl";
 import { native, type NativeHookTarget } from "@/lib/hook-template";
+import { NativeHookDialog } from "@/components/shared/NativeHookDialog";
 
 import type { Symbol, Exported } from "@agent/common/symbol";
 
@@ -56,6 +57,8 @@ export function SymbolsTableView({
   const [globalFilter, setGlobalFilter] = useState("");
   const [batchMode, setBatchMode] = useState(false);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [hookDialogOpen, setHookDialogOpen] = useState(false);
+  const [hookDialogTarget, setHookDialogTarget] = useState<SymbolItem | null>(null);
   const [columnSizing, setColumnSizing] = useState<Record<string, number>>({
     select: DEFAULT_WIDTHS.select,
     actions: DEFAULT_WIDTHS.actions,
@@ -129,14 +132,24 @@ export function SymbolsTableView({
   const data = useMemo(() => symbols ?? [], [symbols]);
 
   const handleHookFunction = useCallback(
-    async (item: SymbolItem) => {
+    (item: SymbolItem) => {
       if (!api || status !== Status.Ready) return;
+      setHookDialogTarget(item);
+      setHookDialogOpen(true);
+    },
+    [api, status],
+  );
+
+  const handleHookConfirm = useCallback(
+    async (sig: { args: string[]; returns: string }) => {
+      if (!api || !hookDialogTarget) return;
       try {
-        await api.native.hook(modulePath ?? null, item.name);
-        // Navigate to hooks panel, show toast, and trigger refresh
+        await api.native.hook(modulePath ?? null, hookDialogTarget.name, sig);
         navigate(hooksPath);
         toast.success(t("hook_added"), {
-          description: modulePath ? `${modulePath}!${item.name}` : item.name,
+          description: modulePath
+            ? `${modulePath}!${hookDialogTarget.name}`
+            : hookDialogTarget.name,
         });
         window.dispatchEvent(new CustomEvent("hooks:refresh"));
       } catch (error) {
@@ -144,7 +157,7 @@ export function SymbolsTableView({
         toast.error(t("hook_failed"));
       }
     },
-    [api, status, modulePath, navigate, hooksPath, t],
+    [api, hookDialogTarget, modulePath, navigate, hooksPath, t],
   );
 
   const handleGenerateCode = useCallback(
@@ -415,6 +428,13 @@ export function SymbolsTableView({
 
   return (
     <div className="flex flex-col h-full">
+      <NativeHookDialog
+        open={hookDialogOpen}
+        onOpenChange={setHookDialogOpen}
+        functionName={hookDialogTarget?.name ?? ""}
+        modulePath={modulePath ?? null}
+        onConfirm={handleHookConfirm}
+      />
       <div className="flex items-center gap-2 mb-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

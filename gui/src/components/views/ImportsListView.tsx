@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { native, type NativeHookTarget } from "@/lib/hook-template";
+import { NativeHookDialog } from "@/components/shared/NativeHookDialog";
 
 import type { ImportGroup, Imported } from "@agent/common/symbol";
 
@@ -51,6 +52,11 @@ export function ImportsListView({ path }: ImportsListViewProps) {
     new Set(),
   );
   const [columnWidths, setColumnWidths] = useState(DEFAULT_WIDTHS);
+  const [hookDialogOpen, setHookDialogOpen] = useState(false);
+  const [hookDialogTarget, setHookDialogTarget] = useState<{
+    module: string;
+    name: string;
+  } | null>(null);
 
   const resizing = useRef<{
     column: keyof typeof DEFAULT_WIDTHS;
@@ -219,14 +225,26 @@ export function ImportsListView({ path }: ImportsListViewProps) {
     });
   };
 
-  const handleHookFunction = async (module: string, imp: Imported) => {
+  const handleHookFunction = (module: string, imp: Imported) => {
     if (!api || status !== Status.Ready) return;
+    setHookDialogTarget({ module, name: imp.name });
+    setHookDialogOpen(true);
+  };
+
+  const handleHookConfirm = async (sig: {
+    args: string[];
+    returns: string;
+  }) => {
+    if (!api || !hookDialogTarget) return;
     try {
-      await api.native.hook(module, imp.name);
-      // Navigate to hooks panel, show toast, and trigger refresh
+      await api.native.hook(
+        hookDialogTarget.module,
+        hookDialogTarget.name,
+        sig,
+      );
       navigate(hooksPath);
       toast.success(t("hook_added"), {
-        description: `${module}!${imp.name}`,
+        description: `${hookDialogTarget.module}!${hookDialogTarget.name}`,
       });
       window.dispatchEvent(new CustomEvent("hooks:refresh"));
     } catch (error) {
@@ -369,6 +387,13 @@ export function ImportsListView({ path }: ImportsListViewProps) {
 
   return (
     <div className="flex flex-col h-full">
+      <NativeHookDialog
+        open={hookDialogOpen}
+        onOpenChange={setHookDialogOpen}
+        functionName={hookDialogTarget?.name ?? ""}
+        modulePath={hookDialogTarget?.module ?? null}
+        onConfirm={handleHookConfirm}
+      />
       <div className="flex items-center gap-2 mb-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

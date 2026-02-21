@@ -50,6 +50,7 @@ export interface UserHook {
   module?: string | null;
   cls?: string;
   name: string;
+  sig?: { args: string[]; returns: string };
 }
 
 /**
@@ -68,11 +69,12 @@ export function userHooks(): UserHook[] {
   }
 
   // Add native hooks
-  for (const { module, name } of native.list()) {
+  for (const { module, name, sig } of native.list()) {
     result.push({
       type: "native",
       module,
       name,
+      sig,
     });
   }
 

@@ -88,8 +88,8 @@ export function snapshot(): TapRule[] {
   }
 
   // Collect active user-defined native hooks
-  for (const { module, name } of native.list()) {
-    rules.push({ type: "native", module, name });
+  for (const { module, name, sig } of native.list()) {
+    rules.push({ type: "native", module, name, sig });
   }
 
   return rules;
@@ -106,7 +106,7 @@ export function restore(rules: TapRule[]): void {
           objc.swizzle(rule.cls, rule.sel);
           break;
         case "native":
-          native.hook(rule.module, rule.name);
+          native.hook(rule.module, rule.name, rule.sig);
           break;
       }
     } catch (e) {
