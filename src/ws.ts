@@ -49,6 +49,7 @@ interface ServerToClientEvents {
   nsurl: (event: NSURLEvent) => void;
   xpc: (event: Record<string, unknown>) => void;
   jni: (event: JNIEvent) => void;
+  memoryScan: (event: { event: string; [key: string]: unknown }, data?: ArrayBuffer) => void;
   fatal: (detail: unknown) => void;
 }
 
@@ -225,6 +226,10 @@ function setupScriptHandlers(
       case "hook":
         socket.emit("hook", payload);
         stores.hooks.append(payload);
+        break;
+
+      case "memoryScan":
+        socket.emit("memoryScan", payload, data ? new Uint8Array(data).buffer : undefined);
         break;
 
       case "crypto":

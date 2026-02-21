@@ -43,6 +43,7 @@ import { FruityBinaryCookieTab } from "../tabs/FruityBinaryCookieTab";
 import { FruityKeychainTab } from "../tabs/FruityKeychainTab";
 import { FruityUIDumpTab } from "../tabs/FruityUIDumpTab";
 import { MemoryPreviewTab } from "../tabs/MemoryPreviewTab";
+import { MemoryScanTab } from "../tabs/MemoryScanTab";
 import { FruityWebViewTab } from "../tabs/FruityWebViewTab";
 import { FruityJSCTab } from "../tabs/FruityJSCTab";
 import { FruityUserDefaultsTab } from "../tabs/FruityUserDefaultsTab";
@@ -138,6 +139,7 @@ function WorkspaceContent() {
     keychain: FruityKeychainTab,
     uiDump: FruityUIDumpTab,
     memory: MemoryPreviewTab,
+    memoryScan: MemoryScanTab,
     webview: FruityWebViewTab,
     jsc: FruityJSCTab,
     userdefaults: FruityUserDefaultsTab,

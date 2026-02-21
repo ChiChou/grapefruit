@@ -43,6 +43,15 @@ export interface XPCSocketEvent {
   backtrace?: string[];
 }
 
+export interface MemoryScanEvent {
+  event: "match" | "progress" | "done";
+  address?: string;
+  size?: number;
+  current?: number;
+  total?: number;
+  count?: number;
+}
+
 export interface SessionClientEvents {
   ready: (pid: number) => void;
   denied: () => void;
@@ -55,6 +64,7 @@ export interface SessionClientEvents {
   nsurl: (event: NSURLEvent) => void;
   xpc: (event: XPCSocketEvent) => void;
   jni: (event: JNIEvent) => void;
+  memoryScan: (event: MemoryScanEvent, data?: ArrayBuffer) => void;
   fatal: (detail: unknown) => void;
 }
 

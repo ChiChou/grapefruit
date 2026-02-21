@@ -18,6 +18,7 @@ import {
   Database,
   Cpu,
   Cable,
+  Search
 } from "lucide-react";
 
 import logo from "@/assets/logo.svg";
@@ -168,6 +169,18 @@ export function HomeTab() {
       ],
     },
     {
+      label: t("category_runtime"),
+      items: [
+        {
+          icon: <Search className="w-5 h-5" />,
+          id: "memory_scan_tab",
+          component: "memoryScan",
+          title: t("memory_scanner"),
+          desc: t("home_memory_scan_desc"),
+        },
+      ]
+    },
+    {
       label: t("category_network"),
       items: [
         {
@@ -189,7 +202,7 @@ export function HomeTab() {
           id: "xpc_tab",
           component: "xpc",
           title: "XPC",
-          desc: "Trace XPC and NSXPC inter-process communication",
+          desc: t("home_xpc_desc"),
         },
       ],
     },
@@ -273,8 +286,8 @@ export function HomeTab() {
         icon: <Cpu className="w-5 h-5" />,
         id: "jni_trace_tab",
         component: "jni",
-        title: "JNI Trace",
-        desc: "Trace JNI function calls from native libraries",
+        title: t("jni_trace"),
+        desc: t("home_jni_desc"),
       },
       {
         icon: <Smartphone className="w-5 h-5" />,
@@ -301,8 +314,8 @@ export function HomeTab() {
         icon: <Cpu className="w-5 h-5" />,
         id: "jni_trace_tab",
         component: "jni",
-        title: "JNI Trace",
-        desc: "Trace JNI function calls from native libraries",
+        title: t("jni_trace"),
+        desc: t("home_jni_desc"),
       },
     ],
   }];

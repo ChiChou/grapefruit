@@ -359,6 +359,12 @@
   "sort_order_placeholder": "例如 name ASC",
   "no_query_results": "无结果。选择一个提供者或输入 URI 后点击执行。",
   "home_providers_desc": "浏览和查询内容提供者",
+  "home_xpc_desc": "追踪 XPC 和 NSXPC 进程间通信",
+  "home_jni_desc": "追踪原生库的 JNI 函数调用",
+  "home_memory_scan_desc": "扫描进程内存中的模式和值",
+  "category_runtime": "运行时",
+  "memory_scanner": "内存扫描",
+  "jni_trace": "JNI 追踪",
 
   "severity_high": "高危",
   "severity_medium": "中危",

@@ -367,6 +367,12 @@
   "sort_order_placeholder": "e.g. name ASC",
   "no_query_results": "No results. Select a provider or enter a URI and click Execute.",
   "home_providers_desc": "Browse and query content providers",
+  "home_xpc_desc": "Trace XPC and NSXPC inter-process communication",
+  "home_jni_desc": "Trace JNI function calls from native libraries",
+  "home_memory_scan_desc": "Scan process memory for patterns and values",
+  "category_runtime": "Runtime",
+  "memory_scanner": "Memory Scanner",
+  "jni_trace": "JNI Trace",
 
   "severity_high": "High",
   "severity_medium": "Medium",
