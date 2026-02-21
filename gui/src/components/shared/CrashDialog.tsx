@@ -18,6 +18,7 @@ export interface CrashDetail {
   message?: string;
   memory?: { operation: string; address: string };
   context: Record<string, unknown>;
+  backtrace?: string[];
 }
 
 const SIMD_REGISTER = /^[qds]\d+$/;
@@ -108,6 +109,28 @@ export function CrashDialog({
                   )}
                 </div>
               </div>
+              {detail.backtrace && detail.backtrace.length > 0 && (
+                <div>
+                  <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+                    Backtrace
+                  </span>
+                  <div className="mt-1.5 space-y-0.5">
+                    {detail.backtrace.map((frame, i) => (
+                      <div
+                        key={i}
+                        className="flex items-baseline gap-2 py-0.5 border-b border-border/30"
+                      >
+                        <span className="text-muted-foreground font-mono text-xs w-4 shrink-0 text-right">
+                          {i}
+                        </span>
+                        <span className="font-mono text-xs break-all">
+                          {frame}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </ScrollArea>
         )}
