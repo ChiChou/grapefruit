@@ -70,7 +70,7 @@ export function FruityClassDetailTab({
     const name = path.split("/").pop() || path;
     openFilePanel({
       id: `module_${path}`,
-      component: "moduleDetail",
+      component: "moduleImports",
       title: name,
       params: { path },
     });

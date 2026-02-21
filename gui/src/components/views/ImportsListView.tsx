@@ -9,7 +9,6 @@ import {
   Search,
   Anchor,
   Code,
-  Layers,
 } from "lucide-react";
 import { useDock } from "@/context/DockContext";
 import { Spinner } from "@/components/ui/spinner";
@@ -18,7 +17,6 @@ import { useSession, Status, Mode, Platform } from "@/context/SessionContext";
 import { useRepl } from "@/context/useRepl";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { native, type NativeHookTarget } from "@/lib/hook-template";
 import { NativeHookDialog } from "@/components/shared/NativeHookDialog";
 
@@ -48,10 +46,6 @@ export function ImportsListView({ path }: ImportsListViewProps) {
     new Set(),
   );
   const [search, setSearch] = useState("");
-  const [batchMode, setBatchMode] = useState(false);
-  const [selectedImports, setSelectedImports] = useState<Set<string>>(
-    new Set(),
-  );
   const [columnWidths, setColumnWidths] = useState(DEFAULT_WIDTHS);
   const [hookDialogOpen, setHookDialogOpen] = useState(false);
   const [hookDialogTarget, setHookDialogTarget] = useState<{
@@ -122,7 +116,7 @@ export function ImportsListView({ path }: ImportsListViewProps) {
     const name = modulePath.split("/").pop() || modulePath;
     openFilePanel({
       id: `module_${modulePath}`,
-      component: "moduleDetail",
+      component: "moduleImports",
       title: name,
       params: { path: modulePath },
     });
@@ -170,62 +164,6 @@ export function ImportsListView({ path }: ImportsListViewProps) {
     return imp.type === "f";
   };
 
-  const getImportKey = (module: string, name: string): string => {
-    return `${module}:${name}`;
-  };
-
-  const handleSelectImport = (
-    module: string,
-    imp: Imported,
-    checked: boolean,
-  ) => {
-    const key = getImportKey(module, imp.name);
-    setSelectedImports((prev) => {
-      const next = new Set(prev);
-      if (checked) {
-        next.add(key);
-      } else {
-        next.delete(key);
-      }
-      return next;
-    });
-  };
-
-  const getModuleFunctions = (group: ImportGroup): Imported[] => {
-    return group.imports.filter((imp) => imp.type === "f");
-  };
-
-  const getModuleSelectionState = (
-    group: ImportGroup,
-  ): "all" | "some" | "none" => {
-    const functions = getModuleFunctions(group);
-    if (functions.length === 0) return "none";
-
-    const selectedCount = functions.filter((imp) =>
-      selectedImports.has(getImportKey(group.module, imp.name)),
-    ).length;
-
-    if (selectedCount === 0) return "none";
-    if (selectedCount === functions.length) return "all";
-    return "some";
-  };
-
-  const handleSelectModule = (group: ImportGroup, checked: boolean) => {
-    const functions = getModuleFunctions(group);
-    setSelectedImports((prev) => {
-      const next = new Set(prev);
-      for (const imp of functions) {
-        const key = getImportKey(group.module, imp.name);
-        if (checked) {
-          next.add(key);
-        } else {
-          next.delete(key);
-        }
-      }
-      return next;
-    });
-  };
-
   const handleHookFunction = (module: string, imp: Imported) => {
     if (!api || status !== Status.Ready) return;
     setHookDialogTarget({ module, name: imp.name });
@@ -263,52 +201,6 @@ export function ImportsListView({ path }: ImportsListViewProps) {
     const code = native(target, fridaMajor);
     appendCode(code);
   };
-
-  const handleBatchHook = async () => {
-    if (!api || status !== Status.Ready) return;
-
-    let successCount = 0;
-    for (const key of selectedImports) {
-      const [module, name] = key.split(":");
-      try {
-        await api.native.hook(module, name);
-        successCount++;
-      } catch (error) {
-        console.error(`Failed to hook ${name}:`, error);
-      }
-    }
-
-    if (successCount > 0) {
-      // Navigate to hooks panel, show toast, and trigger refresh
-      navigate(hooksPath);
-      toast.success(t("hook_added_count", { count: successCount }));
-      window.dispatchEvent(new CustomEvent("hooks:refresh"));
-      setSelectedImports(new Set());
-    }
-  };
-
-  const handleBatchGenerateCode = () => {
-    const codes: string[] = [];
-
-    for (const key of selectedImports) {
-      const [module, name] = key.split(":");
-      const target: NativeHookTarget = {
-        type: "native",
-        module,
-        name,
-      };
-      codes.push(native(target, fridaMajor));
-    }
-
-    if (codes.length > 0) {
-      appendCode(codes.join("\n"));
-    }
-  };
-
-  const toggleBatchMode = useCallback(() => {
-    setBatchMode((prev) => !prev);
-    setSelectedImports(new Set());
-  }, []);
 
   const handleMouseDown = useCallback(
     (column: keyof typeof DEFAULT_WIDTHS, e: React.MouseEvent) => {
@@ -385,8 +277,6 @@ export function ImportsListView({ path }: ImportsListViewProps) {
     />
   );
 
-  const selectedCount = selectedImports.size;
-
   return (
     <div className="flex flex-col h-full">
       <NativeHookDialog
@@ -406,15 +296,6 @@ export function ImportsListView({ path }: ImportsListViewProps) {
             className="pl-9"
           />
         </div>
-        <Button
-          variant={batchMode ? "secondary" : "outline"}
-          size="sm"
-          onClick={toggleBatchMode}
-          className="gap-1.5"
-        >
-          <Layers className="h-4 w-4" />
-          {t("hook_batch_mode")}
-        </Button>
         <button
           type="button"
           className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-muted border border-border rounded-md hover:bg-accent cursor-pointer transition"
@@ -432,35 +313,6 @@ export function ImportsListView({ path }: ImportsListViewProps) {
           {t("collapse_all")}
         </button>
       </div>
-
-      {batchMode && (
-        <div className="flex items-center gap-2 mb-2 p-2 bg-muted/50 rounded-md">
-          <span className="text-sm text-muted-foreground">
-            {t("hook_selected_count", { count: selectedCount })}
-          </span>
-          <div className="flex-1" />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleBatchHook}
-            disabled={status !== Status.Ready || selectedCount === 0}
-            className="gap-1.5"
-          >
-            <Anchor className="h-4 w-4" />
-            {t("hook_batch_hook")}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleBatchGenerateCode}
-            disabled={selectedCount === 0}
-            className="gap-1.5"
-          >
-            <Code className="h-4 w-4" />
-            {t("hook_batch_generate")}
-          </Button>
-        </div>
-      )}
 
       <div className="overflow-auto flex-1">
         <table className="w-full text-sm border-collapse">
@@ -497,9 +349,6 @@ export function ImportsListView({ path }: ImportsListViewProps) {
             {rows.map((row, idx) => {
               if (row.type === "group") {
                 const { group, isExpanded } = row;
-                const moduleSelectionState = batchMode
-                  ? getModuleSelectionState(group)
-                  : "none";
                 return (
                   <tr
                     key={`group-${group.module}`}
@@ -508,18 +357,6 @@ export function ImportsListView({ path }: ImportsListViewProps) {
                   >
                     <td className="p-2" style={{ width: columnWidths.icon }}>
                       <div className="flex items-center gap-1">
-                        {batchMode && (
-                          <Checkbox
-                            checked={moduleSelectionState === "all"}
-                            indeterminate={moduleSelectionState === "some"}
-                            onCheckedChange={(checked) => {
-                              handleSelectModule(group, !!checked);
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                            aria-label="Select all in module"
-                            className="shrink-0"
-                          />
-                        )}
                         {isExpanded ? (
                           <ChevronDown className="w-4 h-4 shrink-0" />
                         ) : (
@@ -547,48 +384,36 @@ export function ImportsListView({ path }: ImportsListViewProps) {
                 );
               } else {
                 const { import: imp, module } = row;
-                const key = getImportKey(module, imp.name);
-                const isSelected = selectedImports.has(key);
                 return (
                   <tr
                     key={`import-${idx}`}
                     className="border-b hover:bg-muted/50 group"
                   >
                     <td className="p-2" style={{ width: columnWidths.icon }}>
-                      <div className="flex items-center gap-1">
-                        {isFunction(imp) &&
-                          (batchMode ? (
-                            <Checkbox
-                              checked={isSelected}
-                              onCheckedChange={(checked) =>
-                                handleSelectImport(module, imp, !!checked)
-                              }
-                              aria-label="Select row"
-                              className="shrink-0"
-                            />
-                          ) : (
-                            <div className="flex items-center gap-0.5 shrink-0">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => handleHookFunction(module, imp)}
-                                disabled={status !== Status.Ready}
-                                title={t("hook_add")}
-                              >
-                                <Anchor className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => handleGenerateCode(module, imp)}
-                                title={t("hook_generate_code")}
-                              >
-                                <Code className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
-                          ))}
+                      <div className="flex items-center gap-0.5">
+                        {isFunction(imp) ? (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => handleHookFunction(module, imp)}
+                              disabled={status !== Status.Ready}
+                              title={t("hook_add")}
+                            >
+                              <Anchor className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => handleGenerateCode(module, imp)}
+                              title={t("hook_generate_code")}
+                            >
+                              <Code className="h-3.5 w-3.5" />
+                            </Button>
+                          </>
+                        ) : null}
                       </div>
                     </td>
                     <td

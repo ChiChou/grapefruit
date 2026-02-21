@@ -23,7 +23,13 @@ import SessionProvider from "../providers/SessionProvider";
 import { FruityHandlesTab } from "../tabs/FruityHandlesTab";
 import { FruityInfoPlistTab } from "../tabs/FruityInfoPlistTab";
 import { FruityEntitlementsTab } from "../tabs/FruityEntitlementsTab";
-import { ModuleDetailTab } from "../tabs/ModuleDetailTab";
+import {
+  ModuleImportsTab,
+  ModuleSectionsTab,
+  ModuleClassesTab,
+  ModuleSymbolsTab,
+  ModuleExportedTab,
+} from "../tabs/ModuleViewTabs";
 import { FruityClassDetailTab } from "../tabs/FruityClassDetailTab";
 import { DroidClassDetailTab } from "../tabs/DroidClassDetailTab";
 import { FinderTab } from "../tabs/FinderTab";
@@ -113,7 +119,12 @@ function WorkspaceContent() {
     handles: FruityHandlesTab,
     infoPlist: FruityInfoPlistTab,
     entitlements: FruityEntitlementsTab,
-    moduleDetail: ModuleDetailTab,
+    moduleDetail: ModuleImportsTab,
+    moduleImports: ModuleImportsTab,
+    moduleSections: ModuleSectionsTab,
+    moduleClasses: ModuleClassesTab,
+    moduleSymbols: ModuleSymbolsTab,
+    moduleExported: ModuleExportedTab,
     classDetail: FruityClassDetailTab,
     javaClassDetail: DroidClassDetailTab,
     finder: FinderTab,

@@ -2,7 +2,7 @@ import { useMemo, useState, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import { Search, FileCode, Database, Anchor, Code, Layers } from "lucide-react";
+import { Search, FileCode, Database, Anchor, Code } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import {
   useReactTable,
@@ -56,7 +56,6 @@ export function SymbolsTableView({
 
   const hooksPath = `/workspace/${platform}/${device}/${mode}/${mode === Mode.App ? bundle : pid}/hooks`;
   const [globalFilter, setGlobalFilter] = useState("");
-  const [batchMode, setBatchMode] = useState(false);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [hookDialogOpen, setHookDialogOpen] = useState(false);
   const [hookDialogTarget, setHookDialogTarget] = useState<SymbolItem | null>(null);
@@ -174,44 +173,6 @@ export function SymbolsTableView({
     [modulePath, appendCode, fridaMajor],
   );
 
-  const handleBatchHook = useCallback(async () => {
-    if (!api || status !== Status.Ready) return;
-    const selectedIndices = Object.keys(rowSelection).filter(
-      (key) => rowSelection[key],
-    );
-    const selectedItems = selectedIndices
-      .map((idx) => data[parseInt(idx)])
-      .filter((item) => item && isFunction(item));
-
-    let successCount = 0;
-    for (const item of selectedItems) {
-      try {
-        await api.native.hook(modulePath ?? null, item.name);
-        successCount++;
-      } catch (error) {
-        console.error(`Failed to hook ${item.name}:`, error);
-      }
-    }
-
-    if (successCount > 0) {
-      // Navigate to hooks panel, show toast, and trigger refresh
-      navigate(hooksPath);
-      toast.success(t("hook_added_count", { count: successCount }));
-      window.dispatchEvent(new CustomEvent("hooks:refresh"));
-      setRowSelection({});
-    }
-  }, [
-    api,
-    status,
-    rowSelection,
-    data,
-    modulePath,
-    isFunction,
-    navigate,
-    hooksPath,
-    t,
-  ]);
-
   const handleBatchGenerateCode = useCallback(() => {
     const selectedIndices = Object.keys(rowSelection).filter(
       (key) => rowSelection[key],
@@ -237,73 +198,46 @@ export function SymbolsTableView({
   const columns = useMemo<ColumnDef<SymbolItem>[]>(() => {
     const cols: ColumnDef<SymbolItem>[] = [];
 
-    if (batchMode) {
-      cols.push({
-        id: "select",
-        header: ({ table }) => (
-          <Checkbox
-            checked={table.getIsAllPageRowsSelected()}
-            indeterminate={table.getIsSomePageRowsSelected()}
-            onCheckedChange={(value) =>
-              table.toggleAllPageRowsSelected(!!value)
-            }
-            aria-label="Select all"
-          />
-        ),
-        size: DEFAULT_WIDTHS.select,
-        minSize: 32,
-        maxSize: 40,
-        cell: ({ row }) => {
-          const item = row.original;
-          // Only allow selecting functions
-          if (!isFunction(item)) return null;
-          return (
+    cols.push({
+      id: "select",
+      header: "",
+      size: 90,
+      minSize: 90,
+      cell: ({ row }) => {
+        const item = row.original;
+        if (!isFunction(item)) return <span className="h-4 w-4" />;
+        return (
+          <div className="flex items-center gap-1">
             <Checkbox
               checked={row.getIsSelected()}
               onCheckedChange={(value) => row.toggleSelected(!!value)}
               aria-label="Select row"
+              className="shrink-0"
             />
-          );
-        },
-        enableResizing: false,
-      });
-    } else {
-      // Actions column on the left when not in batch mode
-      cols.push({
-        id: "actions",
-        header: "",
-        size: DEFAULT_WIDTHS.actions,
-        minSize: 60,
-        cell: ({ row }) => {
-          const item = row.original;
-          if (!isFunction(item)) return null;
-          return (
-            <div className="flex items-center gap-0.5">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => handleHookFunction(item)}
-                disabled={status !== Status.Ready}
-                title={t("hook_add")}
-              >
-                <Anchor className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => handleGenerateCode(item)}
-                title={t("hook_generate_code")}
-              >
-                <Code className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          );
-        },
-        enableResizing: false,
-      });
-    }
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={() => handleHookFunction(item)}
+              disabled={status !== Status.Ready}
+              title={t("hook_add")}
+            >
+              <Anchor className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={() => handleGenerateCode(item)}
+              title={t("hook_generate_code")}
+            >
+              <Code className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        );
+      },
+      enableResizing: false,
+    });
 
     cols.push(
       {
@@ -363,7 +297,6 @@ export function SymbolsTableView({
     return cols;
   }, [
     t,
-    batchMode,
     handleAddressClick,
     isClickable,
     isFunction,
@@ -406,11 +339,6 @@ export function SymbolsTableView({
     (key) => rowSelection[key],
   ).length;
 
-  const toggleBatchMode = useCallback(() => {
-    setBatchMode((prev) => !prev);
-    setRowSelection({});
-  }, []);
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
@@ -447,45 +375,34 @@ export function SymbolsTableView({
             className="pl-9"
           />
         </div>
-        <Button
-          variant={batchMode ? "secondary" : "outline"}
-          size="sm"
-          onClick={toggleBatchMode}
-          className="gap-1.5"
-        >
-          <Layers className="h-4 w-4" />
-          {t("hook_batch_mode")}
-        </Button>
       </div>
 
-      {batchMode && (
-        <div className="flex items-center gap-2 mb-2 p-2 bg-muted/50 rounded-md">
+      <div className="flex items-center gap-2 mb-2">
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected()}
+          indeterminate={table.getIsSomePageRowsSelected()}
+          onCheckedChange={(value) =>
+            table.toggleAllPageRowsSelected(!!value)
+          }
+          aria-label="Select all"
+          className="shrink-0"
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleBatchGenerateCode}
+          disabled={selectedCount === 0}
+          className="gap-1.5"
+        >
+          <Code className="h-4 w-4" />
+          {t("hook_batch_generate")}
+        </Button>
+        {selectedCount > 0 && (
           <span className="text-sm text-muted-foreground">
             {t("hook_selected_count", { count: selectedCount })}
           </span>
-          <div className="flex-1" />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleBatchHook}
-            disabled={status !== Status.Ready || selectedCount === 0}
-            className="gap-1.5"
-          >
-            <Anchor className="h-4 w-4" />
-            {t("hook_batch_hook")}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleBatchGenerateCode}
-            disabled={selectedCount === 0}
-            className="gap-1.5"
-          >
-            <Code className="h-4 w-4" />
-            {t("hook_batch_generate")}
-          </Button>
-        </div>
-      )}
+        )}
+      </div>
 
       <div className="text-xs text-muted-foreground mb-1">
         {rows.length.toLocaleString()} / {data.length.toLocaleString()}{" "}

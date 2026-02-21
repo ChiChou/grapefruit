@@ -1,11 +1,19 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Search } from "lucide-react";
+import { Search, EllipsisVertical, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import { List, type RowComponentProps } from "react-window";
 
 import { useDock } from "@/context/DockContext";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { Platform, useSession } from "@/context/SessionContext";
 import { usePlatformRpcQuery } from "@/lib/queries";
 import type { ModuleInfo } from "@agent/common/symbol";
 
@@ -14,6 +22,8 @@ const ITEM_HEIGHT = 72;
 export function ModulesPanel() {
   const { t } = useTranslation();
   const { openFilePanel } = useDock();
+  const { platform } = useSession();
+  const isDroid = platform === Platform.Droid;
   const [search, setSearch] = useState("");
 
   const { data: modules = [], isLoading } = usePlatformRpcQuery(
@@ -64,7 +74,7 @@ export function ModulesPanel() {
               rowComponent={ModuleRow}
               rowCount={filteredModules.length}
               rowHeight={ITEM_HEIGHT}
-              rowProps={{ modules: filteredModules, openFilePanel }}
+              rowProps={{ modules: filteredModules, openFilePanel, isDroid }}
             />
           </div>
         )}
@@ -78,8 +88,10 @@ function ModuleRow({
   style,
   modules,
   openFilePanel,
+  isDroid,
 }: RowComponentProps<{
   modules: ModuleInfo[];
+  isDroid: boolean;
   openFilePanel: (panel: {
     id: string;
     component: string;
@@ -87,29 +99,69 @@ function ModuleRow({
     params: { path: string };
   }) => void;
 }>) {
+  const { t } = useTranslation();
   const mod = modules[index];
+
+  const openModuleView = (component: string, suffix: string) => {
+    openFilePanel({
+      id: `module_${mod.base}_${component}`,
+      component,
+      title: `${mod.name} - ${suffix}`,
+      params: { path: mod.path },
+    });
+  };
 
   return (
     <div
-      className="px-4 py-2 border-b border-border hover:bg-accent"
+      className="group px-4 py-2 border-b border-border hover:bg-accent relative"
       style={style}
     >
-      <button
-        type="button"
-        className="text-sm font-medium truncate text-left w-full text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
-        onClick={() =>
-          openFilePanel({
-            id: `module_${mod.base}`,
-            component: "moduleDetail",
-            title: mod.name,
-            params: {
-              path: mod.path,
-            },
-          })
-        }
-      >
-        {mod.name}
-      </button>
+      <div className="flex items-start justify-between">
+        <button
+          type="button"
+          className="text-sm font-medium truncate text-left text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
+          onClick={() => openModuleView("moduleExported", t("exports"))}
+        >
+          {mod.name}
+        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 shrink-0"
+              />
+            }
+          >
+            <EllipsisVertical className="h-4 w-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => openModuleView("moduleSections", t("sections"))}>
+              <span className="h-4 w-4" />
+              {t("sections")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => openModuleView("moduleImports", t("imports"))}>
+              <ArrowDownToLine className="h-4 w-4" />
+              {t("imports")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => openModuleView("moduleExported", t("exports"))}>
+              <ArrowUpFromLine className="h-4 w-4" />
+              {t("exports")}
+            </DropdownMenuItem>
+            {!isDroid && (
+              <DropdownMenuItem onClick={() => openModuleView("moduleClasses", t("classes"))}>
+                <span className="h-4 w-4" />
+                {t("classes")}
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={() => openModuleView("moduleSymbols", t("symbols"))}>
+              <span className="h-4 w-4" />
+              {t("symbols")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
       <div className="text-xs text-muted-foreground font-mono truncate">
         {mod.base.toLowerCase()}-
         {"0x" + (parseInt(mod.base, 16) + mod.size).toString(16).toLowerCase()}

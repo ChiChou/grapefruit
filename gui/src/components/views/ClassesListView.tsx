@@ -102,12 +102,12 @@ export function ClassesListView({ path }: ClassesListViewProps) {
       </div>
       <div className="flex-1 overflow-auto">
         {filtered && filtered.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             {filtered.map((className) => (
               <button
                 key={className}
                 type="button"
-                className="cursor-pointer rounded-md border border-border/50 bg-muted/30 px-2.5 py-1 text-xs font-mono text-foreground/90 transition-colors hover:bg-accent hover:text-accent-foreground hover:border-accent"
+                className="cursor-pointer rounded-md border border-border/50 bg-muted/30 px-3 py-1.5 text-xs font-mono text-foreground/90 transition-colors hover:bg-accent hover:text-accent-foreground hover:border-accent"
                 onClick={() => openClassTab(className)}
               >
                 {highlightMatch(className)}
