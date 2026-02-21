@@ -1,3 +1,29 @@
 #!/usr/bin/env node
 
-import "../dist/index.mjs";
+import { parseArgs } from "node:util";
+import { schema } from "../src/lib/cli.ts";
+import { reset } from "../src/lib/reset.ts";
+
+const args = parseArgs(schema);
+if (args.values.help) {
+  console.log(`
+Usage: igf [command] [options]
+
+Commands:
+  reset              Remove all data, cache, config and log directories
+
+Options:
+  --frida <16 | 17>  Specify Frida version to use (default: 17)
+  --host <host>      Host to bind the server (default: localhost)
+  --port <port>      Port to bind the server (default: 31337)
+  --dry-run          Preview what directories would be removed (with reset)
+  --help, -h         Show this help message
+  `);
+  process.exit(0);
+}
+
+if (args.positionals.includes("reset")) {
+  reset(!!args.values["dry-run"]);
+}
+
+import("../dist/index.mjs");

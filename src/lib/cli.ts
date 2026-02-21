@@ -7,6 +7,8 @@ export const schema: ParseArgsConfig = {
     host: { type: "string" },
     port: { type: "string" },
     help: { type: "boolean", short: "h" },
+    "dry-run": { type: "boolean" },
   },
+  allowPositionals: true,
   strict: false,
 };
