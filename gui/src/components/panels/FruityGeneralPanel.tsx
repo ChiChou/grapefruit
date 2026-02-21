@@ -44,7 +44,7 @@ function PathDisplay({ path, onClick }: { path: string; onClick: () => void }) {
       onClick={onClick}
       className="text-left flex items-start text-sm font-mono break-all hover:text-amber-600 dark:hover:text-amber-400 transition-colors cursor-pointer hover:underline"
     >
-      <span className="text-xs">{path}</span>
+      {path}
     </button>
   );
 }
@@ -151,13 +151,13 @@ export function FruityGeneralPanel() {
           </div>
         </div>
         <div>
-          <div className="text-xs text-muted-foreground mb-1">
+          <div className="text-sm text-muted-foreground mb-1">
             {t("min_os")}
           </div>
           <Badge variant="outline">{basicInfo.minOS || "N/A"}</Badge>
         </div>
         <div>
-          <div className="text-xs text-muted-foreground mb-1">
+          <div className="text-sm text-muted-foreground mb-1">
             {t("bundle_path")}
           </div>
           {basicInfo.path ? (
@@ -173,25 +173,25 @@ export function FruityGeneralPanel() {
           )}
         </div>
         <div>
-          <div className="text-xs text-muted-foreground mb-1">
+          <div className="text-sm text-muted-foreground mb-1">
             {t("executable")}
           </div>
           <div className="flex items-center text-sm font-mono break-all">
-            <span className="text-xs">{basicInfo.main || "N/A"}</span>
+            {basicInfo.main || "N/A"}
             {basicInfo.main && <CopyButton text={basicInfo.main} />}
           </div>
         </div>
         <div>
-          <div className="text-xs text-muted-foreground mb-1">
+          <div className="text-sm text-muted-foreground mb-1">
             {t("tmp_dir")}
           </div>
           <div className="flex items-center text-sm font-mono break-all">
-            <span className="text-xs">{basicInfo.tmp || "N/A"}</span>
+            {basicInfo.tmp || "N/A"}
             {basicInfo.tmp && <CopyButton text={basicInfo.tmp} />}
           </div>
         </div>
         <div>
-          <div className="text-xs text-muted-foreground mb-1">
+          <div className="text-sm text-muted-foreground mb-1">
             {t("home_dir")}
           </div>
           {basicInfo.home ? (

@@ -35,43 +35,43 @@ export function DroidDevicePanel() {
           <div className="text-sm font-medium">{t("device_info")}</div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <div className="text-xs text-muted-foreground mb-1">
+              <div className="text-sm text-muted-foreground mb-1">
                 {t("model")}
               </div>
               <div className="text-sm">{deviceInfo.model}</div>
             </div>
             <div>
-              <div className="text-xs text-muted-foreground mb-1">
+              <div className="text-sm text-muted-foreground mb-1">
                 {t("brand")}
               </div>
               <div className="text-sm">{deviceInfo.brand}</div>
             </div>
             <div>
-              <div className="text-xs text-muted-foreground mb-1">
+              <div className="text-sm text-muted-foreground mb-1">
                 {t("manufacturer")}
               </div>
               <div className="text-sm">{deviceInfo.manufacturer}</div>
             </div>
             <div>
-              <div className="text-xs text-muted-foreground mb-1">
+              <div className="text-sm text-muted-foreground mb-1">
                 {t("android_version")}
               </div>
               <div className="text-sm">{deviceInfo.release}</div>
             </div>
             <div>
-              <div className="text-xs text-muted-foreground mb-1">
+              <div className="text-sm text-muted-foreground mb-1">
                 {t("sdk_version")}
               </div>
               <div className="text-sm">{deviceInfo.sdk}</div>
             </div>
             <div>
-              <div className="text-xs text-muted-foreground mb-1">
+              <div className="text-sm text-muted-foreground mb-1">
                 ABI
               </div>
               <div className="text-sm font-mono">{deviceInfo.abi}</div>
             </div>
             <div className="col-span-2">
-              <div className="text-xs text-muted-foreground mb-1">
+              <div className="text-sm text-muted-foreground mb-1">
                 {t("security_patch")}
               </div>
               <div className="text-sm">{deviceInfo.security}</div>

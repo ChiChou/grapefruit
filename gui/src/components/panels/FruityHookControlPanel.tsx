@@ -138,7 +138,7 @@ export function FruityHookControlPanel() {
 
       {/* Built-in Hooks Section */}
       <div className="space-y-3">
-        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
           {t("hook_builtin")}
         </h3>
         <div className="space-y-3">
@@ -171,7 +171,7 @@ export function FruityHookControlPanel() {
                     />
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
                   {t(group.descKey)}
                 </p>
               </div>
@@ -182,7 +182,7 @@ export function FruityHookControlPanel() {
 
       {/* User Defined Hooks Section */}
       <div className="space-y-3">
-        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
           {t("hook_user_defined")}
         </h3>
         <FruityUserHooksList />

@@ -164,7 +164,7 @@ export function DroidHookControlPanel() {
       <h2 className="text-base font-semibold">{t("hooks")}</h2>
 
       <div className="space-y-3">
-        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
           {t("hook_builtin")}
         </h3>
         <div className="space-y-3">
@@ -197,7 +197,7 @@ export function DroidHookControlPanel() {
                     />
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
                   {t(group.descKey)}
                 </p>
               </div>
@@ -208,11 +208,11 @@ export function DroidHookControlPanel() {
 
       {/* User Defined Hooks Section */}
       <div className="space-y-3">
-        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
           {t("hook_user_defined")}
         </h3>
         {userHooks.length === 0 ? (
-          <p className="text-xs text-muted-foreground italic">
+          <p className="text-sm text-muted-foreground italic">
             {t("hook_user_no_hooks")}
           </p>
         ) : (

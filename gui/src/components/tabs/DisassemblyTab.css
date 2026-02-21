@@ -2,8 +2,8 @@
     font-family:
         ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
         "Liberation Mono", monospace;
-    font-size: 12px;
-    line-height: 1.2;
+    font-size: 13px;
+    line-height: 1.4;
     /*white-space: pre-wrap;*/
     /* Force dark theme for R2 terminal output */
     background-color: #1b1b1f;

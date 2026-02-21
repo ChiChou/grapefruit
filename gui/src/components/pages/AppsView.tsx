@@ -82,7 +82,7 @@ function AppCard({ app, udid, platform }: AppCardProps) {
         />
         {app.pid !== 0 && (
           <Badge
-            className="absolute -right-1 -top-1 bg-green-500 px-1 py-0 text-[10px]"
+            className="absolute -right-1 -top-1 bg-green-500 px-1 py-0 text-xs"
             variant="default"
           >
             {app.pid}

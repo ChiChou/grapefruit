@@ -45,7 +45,7 @@ function PathDisplay({ path, onClick }: { path: string; onClick: () => void }) {
       onClick={onClick}
       className="text-left flex items-start text-sm font-mono break-all hover:text-amber-600 dark:hover:text-amber-400 transition-colors cursor-pointer hover:underline"
     >
-      <span className="text-xs">{path}</span>
+      {path}
     </button>
   );
 }
@@ -57,14 +57,14 @@ function DownloadLink({ path, href }: { path: string; href: string }) {
       download
       className="text-left text-sm font-mono break-all hover:text-amber-600 dark:hover:text-amber-400 transition-colors hover:underline"
     >
-      <span className="text-xs">{path}</span>
+      {path}
     </a>
   );
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-4 mb-2">
+    <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider mt-4 mb-2">
       {children}
     </div>
   );
@@ -73,7 +73,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-xs text-muted-foreground mb-1">{label}</div>
+      <div className="text-sm text-muted-foreground mb-1">{label}</div>
       {children}
     </div>
   );
@@ -195,7 +195,7 @@ export function DroidGeneralPanel() {
         {appInfo.deviceProtectedDataDir && (
           <InfoRow label={t("data_dir") + " (DE)"}>
             <div className="flex items-center text-sm font-mono break-all">
-              <span className="text-xs">{appInfo.deviceProtectedDataDir}</span>
+              {appInfo.deviceProtectedDataDir}
               <CopyButton text={appInfo.deviceProtectedDataDir} />
             </div>
           </InfoRow>
@@ -210,14 +210,14 @@ export function DroidGeneralPanel() {
 
         <InfoRow label={t("public_source_dir")}>
           <div className="flex items-center text-sm font-mono break-all">
-            <span className="text-xs">{appInfo.publicSourceDir}</span>
+            {appInfo.publicSourceDir}
             <CopyButton text={appInfo.publicSourceDir} />
           </div>
         </InfoRow>
 
         <InfoRow label={t("source_dir")}>
           <div className="flex items-center text-sm font-mono break-all">
-            <span className="text-xs">{appInfo.sourceDir}</span>
+            {appInfo.sourceDir}
             <CopyButton text={appInfo.sourceDir} />
           </div>
         </InfoRow>

@@ -85,7 +85,7 @@ export function StatusBar({
 
   return (
     <footer
-      className={`${getStatusColor()} px-4 py-1 text-xs text-white flex items-center justify-between`}
+      className={`${getStatusColor()} px-4 py-1 text-sm text-white flex items-center justify-between`}
     >
       <DropdownMenu>
         <DropdownMenuTrigger
