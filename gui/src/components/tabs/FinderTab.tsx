@@ -40,23 +40,22 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
   const defaultTab = initialPath === "!" ? "bundle" : "home";
 
   // Restore saved state from localStorage (scoped to device + app)
-  const [activeTab, setActiveTab] = useState<"home" | "bundle">(() => {
-    if (!storageKey) return defaultTab;
-    try {
-      const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
-      if (saved.activeTab === "home" || saved.activeTab === "bundle")
-        return saved.activeTab;
-    } catch {}
-    return defaultTab;
-  });
-  const [initialSavedCwd] = useState<string | null>(() => {
+  const [savedState] = useState(() => {
     if (!storageKey) return null;
     try {
-      const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
-      return saved.fullCwd || null;
-    } catch {}
-    return null;
+      return JSON.parse(localStorage.getItem(storageKey) || "{}");
+    } catch {
+      return null;
+    }
   });
+  const [activeTab, setActiveTab] = useState<"home" | "bundle">(() => {
+    if (savedState?.activeTab === "home" || savedState?.activeTab === "bundle")
+      return savedState.activeTab;
+    return defaultTab;
+  });
+  const [initialSavedCwd] = useState<string | null>(
+    () => savedState?.fullCwd || null,
+  );
   const restoredRef = useRef(false);
 
   const [items, setItems] = useState<
@@ -291,11 +290,10 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
   useEffect(() => {
     if (!storageKey || !fullCwd) return;
     try {
-      localStorage.setItem(
-        storageKey,
-        JSON.stringify({ activeTab, fullCwd }),
-      );
-    } catch {}
+      localStorage.setItem(storageKey, JSON.stringify({ activeTab, fullCwd }));
+    } catch {
+      localStorage.removeItem(storageKey);
+    }
   }, [storageKey, activeTab, fullCwd]);
 
   return (
@@ -318,7 +316,10 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
               )}
             </TabsList>
             {!isDaemon && (
-              <TabsContent value="bundle" className="flex-1 overflow-hidden mt-0">
+              <TabsContent
+                value="bundle"
+                className="flex-1 overflow-hidden mt-0"
+              >
                 <DirectoryTree
                   root="!"
                   apiReady={apiReady}
