@@ -87,38 +87,50 @@ export function StatusBar({
     <footer
       className={`${getStatusColor()} px-4 py-1 text-sm text-white flex items-center justify-between`}
     >
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <button
-              type="button"
-              className="hover:bg-white/20 px-1 py-0.5 rounded transition-colors cursor-pointer flex items-center gap-1.5"
-            />
-          }
-        >
-          {getStatusIcon()}
-          {status === Status.Ready && t("connected")}
-          {status === Status.Connecting && t("connecting")}
-          {status === Status.Disconnected && t("disconnected")}
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={handleReloadPage}>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            {t("reload_page")}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={handleKillProcess}
-            disabled={status !== Status.Ready}
+      <div className="flex items-center gap-1">
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <button
+                type="button"
+                className="hover:bg-white/20 px-1 py-0.5 rounded transition-colors cursor-pointer flex items-center gap-1.5"
+              />
+            }
           >
-            <XCircle className="w-4 h-4 mr-2" />
-            {t("kill_process")}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleDetach}>
-            <Unplug className="w-4 h-4 mr-2" />
-            {t("detach")}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+            {getStatusIcon()}
+            {status === Status.Ready && t("connected")}
+            {status === Status.Connecting && t("connecting")}
+            {status === Status.Disconnected && t("disconnected")}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem onClick={handleReloadPage}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              {t("reload_page")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={handleKillProcess}
+              disabled={status !== Status.Ready}
+            >
+              <XCircle className="w-4 h-4 mr-2" />
+              {t("kill_process")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleDetach}>
+              <Unplug className="w-4 h-4 mr-2" />
+              {t("detach")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        {status === Status.Disconnected && (
+          <button
+            type="button"
+            onClick={handleReloadPage}
+            className="hover:bg-white/20 px-1 py-0.5 rounded transition-colors flex items-center gap-1"
+          >
+            <RefreshCw className="w-3 h-3" />
+            {t("reload")}
+          </button>
+        )}
+      </div>
       <button
         type="button"
         onClick={() => setBottomPanelVisible(!bottomPanelVisible)}
