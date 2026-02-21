@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useDock } from "@/context/DockContext";
+import { Spinner } from "@/components/ui/spinner";
 import { usePlatformRpcQuery } from "@/lib/queries";
 import {
   Table,
@@ -36,7 +37,8 @@ export function SectionsListView({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full text-muted-foreground">
+      <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
+        <Spinner />
         {t("loading")}...
       </div>
     );

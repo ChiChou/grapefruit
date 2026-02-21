@@ -12,6 +12,7 @@ import {
   TooltipContent,
   TooltipProvider,
 } from "@/components/ui/tooltip";
+import { Spinner } from "@/components/ui/spinner";
 import { useDroidRpcQuery, useDroidRpcMutation } from "@/lib/queries";
 
 import type { ActivityEntry } from "@agent/droid/modules/activities";
@@ -162,7 +163,8 @@ export function DroidComponentsPanel() {
       </div>
       <div className="flex-1 min-h-0 h-full">
         {isLoading ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
+          <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
+            <Spinner />
             {t("loading")}...
           </div>
         ) : currentItems.length === 0 ? (

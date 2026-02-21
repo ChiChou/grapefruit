@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Table,
   TableBody,
@@ -196,7 +197,8 @@ export function DroidHandlesTab() {
       </div>
       <div className="flex-1 overflow-auto border-t border-border">
         {isLoading && handles.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
+          <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
+            <Spinner />
             {t("loading")}...
           </div>
         ) : (

@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { useDock } from "@/context/DockContext";
 import { useRpcQuery } from "@/lib/queries";
 
@@ -70,7 +71,8 @@ export function ClassesListView({ path }: ClassesListViewProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full text-muted-foreground">
+      <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
+        <Spinner />
         {t("loading")}...
       </div>
     );

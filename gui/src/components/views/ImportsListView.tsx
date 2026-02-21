@@ -12,6 +12,7 @@ import {
   Layers,
 } from "lucide-react";
 import { useDock } from "@/context/DockContext";
+import { Spinner } from "@/components/ui/spinner";
 import { usePlatformRpcQuery } from "@/lib/queries";
 import { useSession, Status, Mode, Platform } from "@/context/SessionContext";
 import { useRepl } from "@/context/useRepl";
@@ -342,7 +343,8 @@ export function ImportsListView({ path }: ImportsListViewProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full text-muted-foreground">
+      <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
+        <Spinner />
         {t("loading")}...
       </div>
     );

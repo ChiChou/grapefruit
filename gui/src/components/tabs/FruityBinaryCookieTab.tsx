@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -203,7 +204,8 @@ export function FruityBinaryCookieTab() {
       </div>
       <div className="flex-1 overflow-auto">
         {isLoading && cookies.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
+          <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
+            <Spinner />
             {t("loading")}...
           </div>
         ) : cookies.length === 0 ? (

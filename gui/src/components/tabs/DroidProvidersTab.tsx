@@ -4,6 +4,7 @@ import { Search, Globe, Play } from "lucide-react";
 import { List, type RowComponentProps } from "react-window";
 
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -271,7 +272,8 @@ function QueryPane({
       </div>
       <div className="flex-1 min-h-0 overflow-auto">
         {queryMutation.isPending ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
+          <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
+            <Spinner />
             {t("loading")}...
           </div>
         ) : queryMutation.isError ? (
@@ -334,7 +336,8 @@ export function DroidProvidersTab() {
       </div>
       <div className="flex-1 min-h-0">
         {isLoading ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
+          <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
+            <Spinner />
             {t("loading")}...
           </div>
         ) : filtered.length === 0 ? (

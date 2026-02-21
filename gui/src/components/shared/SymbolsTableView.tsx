@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Search, FileCode, Database, Anchor, Code, Layers } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import {
   useReactTable,
   getCoreRowModel,
@@ -412,7 +413,8 @@ export function SymbolsTableView({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full text-muted-foreground">
+      <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
+        <Spinner />
         {t("loading")}...
       </div>
     );
