@@ -45,6 +45,7 @@ export interface XPCSocketEvent {
 
 export interface SessionClientEvents {
   ready: (pid: number) => void;
+  denied: () => void;
   log: (level: string, text: string) => void;
   syslog: (text: string) => void;
   invalid: () => void;

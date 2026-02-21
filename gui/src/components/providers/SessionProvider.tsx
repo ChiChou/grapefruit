@@ -18,6 +18,7 @@ import {
 } from "@/lib/rpc";
 
 import { CrashDialog, type CrashDetail } from "@/components/shared/CrashDialog";
+import { DeniedDialog } from "@/components/shared/DeniedDialog";
 
 function fnv1a(input: string): string {
   let hash = 0x811c9dc5;
@@ -46,6 +47,7 @@ function SessionProvider({ children }: { children: ReactNode }) {
   const [pid, setPid] = useState<number | undefined>(targetPid);
   const [fridaMajor, setFridaMajor] = useState(17);
   const [crashDetail, setCrashDetail] = useState<CrashDetail | null>(null);
+  const [denied, setDenied] = useState(false);
 
   useEffect(() => {
     fetch("/api/version")
@@ -89,6 +91,9 @@ function SessionProvider({ children }: { children: ReactNode }) {
     );
 
     socket
+      .on("denied", () => {
+        setDenied(true);
+      })
       .on("invalid", () => {
         // bug workaround: first time connection
         // the server receives empty query
@@ -170,6 +175,7 @@ function SessionProvider({ children }: { children: ReactNode }) {
   return (
     <SessionContext.Provider value={contextValue}>
       {children}
+      <DeniedDialog open={denied} />
       <CrashDialog detail={crashDetail} showRelaunch={mode === Mode.App} />
     </SessionContext.Provider>
   );

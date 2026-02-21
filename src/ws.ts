@@ -8,6 +8,7 @@ import frida from "./lib/xvii.ts";
 import env from "./lib/env.ts";
 import { agent, asset } from "./lib/assets.ts";
 import { LogWriter } from "./lib/log-writer.ts";
+import { check as isRestrictedBundle } from "./lib/regulation.ts";
 import { NSURLStore, type NSURLEvent } from "./lib/store/nsurl.ts";
 import { HookStore } from "./lib/store/hooks.ts";
 import { CryptoStore } from "./lib/store/crypto.ts";
@@ -34,6 +35,7 @@ interface SessionParams {
 interface ServerToClientEvents {
   ready: (pid: number) => void;
   change: () => void;
+  denied: () => void;
   detached: (reason: string) => void;
   log: (level: string, text: string) => void;
   syslog: (text: string) => void;
@@ -360,6 +362,13 @@ async function onConnection(
   let pid: number;
   if (mode === "app") {
     if (!bundle) throw new Error("bundle is required for app mode");
+
+    if (isRestrictedBundle(bundle)) {
+      socket.emit("denied");
+      setTimeout(() => socket.disconnect(true), 100);
+      return;
+    }
+
     pid = await resolveAppPid(device, bundle, platform);
   } else {
     if (!targetPid) throw new Error("pid is required for daemon mode");
