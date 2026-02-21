@@ -69,6 +69,7 @@
   "symbols": "Symbols",
   "imported": "Imported",
   "exported": "Exported",
+  "exports": "Exports",
   "name": "Name",
   "address": "Address",
   "demangled": "Demangled",
@@ -373,6 +374,8 @@
   "category_runtime": "Runtime",
   "memory_scanner": "Memory Scanner",
   "jni_trace": "JNI Trace",
+  "dump_decrypted": "Dump Decrypted",
+  "dump_decrypted_error": "This module cannot be decrypted, it might be part of system built-in library",
 
   "severity_high": "High",
   "severity_medium": "Medium",

@@ -1,5 +1,5 @@
 import RemoteStreamController from "frida-remote-stream";
-import type { Device, ScriptExports } from "./xvii.ts";
+import type { Device, ScriptExports, ScriptMessageHandler } from "./xvii.ts";
 import { agent } from "./assets.ts";
 
 export class Transport {
@@ -7,6 +7,8 @@ export class Transport {
     public readonly script: {
       exports: ScriptExports;
       unload: () => Promise<void>;
+      message: { connect: (handler: ScriptMessageHandler) => void };
+      post: (message: object, data?: Buffer | null) => void;
     },
     public readonly session: { detach: () => Promise<void> },
     public readonly controller: RemoteStreamController,

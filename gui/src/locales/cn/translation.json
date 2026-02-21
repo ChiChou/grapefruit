@@ -69,6 +69,7 @@
   "symbols": "符号",
   "imported": "导入",
   "exported": "导出",
+  "exports": "导出",
   "name": "名称",
   "address": "地址",
   "demangled": "解码名",
@@ -365,6 +366,8 @@
   "category_runtime": "运行时",
   "memory_scanner": "内存扫描",
   "jni_trace": "JNI 追踪",
+  "dump_decrypted": "导出二进制",
+  "dump_decrypted_error": "此模块无法解密，可能属于系统内置库",
 
   "severity_high": "高危",
   "severity_medium": "中危",

@@ -48,6 +48,64 @@ const routes = new Hono()
       ]);
     });
   })
+  .on(["HEAD", "GET"], "/dump/:device/:pid", getDeviceMiddleware, async (c) => {
+    const path = c.req.query("path");
+    if (typeof path !== "string") return c.text("invalid path", 400);
+
+    const device = c.get("device");
+    const pid = parseInt(c.req.param("pid"), 10);
+    const transport = await createTransport(device, pid);
+    const { script } = transport;
+
+    let size: number;
+    try {
+      size = await script.exports.len(path);
+    } catch (e) {
+      console.error(e);
+      await transport.close();
+      return c.text("file not found", 404);
+    }
+
+    c.header("Content-Length", size.toString());
+    c.header(
+      "Content-Disposition",
+      `attachment; filename="${path.split("/").pop()}"`,
+    );
+
+    if (c.req.method === "HEAD") {
+      await transport.close();
+      return c.body(null);
+    }
+
+    return stream(c, (streamer) => {
+      return new Promise<void>((resolve, reject) => {
+        script.message.connect((message, data) => {
+          if (message.type !== "send") return;
+          const event = message.payload as { event: string; message?: string; size?: number };
+
+          switch (event.event) {
+            case "info":
+              script.post({ type: "ack" });
+              break;
+            case "data":
+              if (data) streamer.write(new Uint8Array(data));
+              script.post({ type: "ack" });
+              break;
+            case "end":
+              resolve();
+              break;
+            case "error":
+              reject(new Error(event.message ?? "dump failed"));
+              break;
+          }
+        });
+
+        // no need to await this, the real resolve happens
+        // in the message handler once the process is complete
+        script.exports.dump(path).catch(reject);
+      }).finally(() => transport.close());
+    });
+  })
   .post("/upload/:device/:pid", getDeviceMiddleware, async (c) => {
     const formBody = await c.req.parseBody();
     const path = formBody["path"];
