@@ -232,7 +232,7 @@ export function list(withBiometricId = false): KeyChainItem[] {
         const v = item.objectForKey_(attr);
         if (v) {
           (readable as Partial<Record<keyof KeyChainItem, unknown>>)[key] =
-            toJS(v);
+            v.isKindOfClass_(ObjC.classes.NSData) ? v.toString() : toJS(v);
         }
       }
 
