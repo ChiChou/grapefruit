@@ -125,7 +125,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
     async (
       path: string,
     ): Promise<import("@agent/fruity/modules/fs").DirectoryListing> => {
-      if (!fsApi) return { cwd: "", list: [] };
+      if (!fsApi) return { cwd: "", writable: false, list: [] };
       return fsApi.fs.ls(path);
     },
     [fsApi],
@@ -539,7 +539,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
         if (!open) uploadAbortRef.current = true;
         setUploadOpen(open);
       }}>
-        <DialogContent onInteractOutside={(e) => e.preventDefault()}>
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("uploading")}</DialogTitle>
           </DialogHeader>

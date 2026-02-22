@@ -490,31 +490,56 @@ export function FileTable({
                             <Pencil className="h-4 w-4" />
                           </Button>
                         )}
-                        {!isReadOnly && (
+                        {!isFolder && (
                           <DropdownMenu>
                             <DropdownMenuTrigger
                               render={
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-7 w-7 text-destructive hover:text-destructive"
-                                  title={t("delete")}
-                                  disabled={isDeleting}
+                                  className="h-7 w-7"
+                                  title={t("open_with")}
                                 />
                               }
                             >
-                              {isDeleting ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Trash2 className="h-4 w-4" />
-                              )}
+                              <SquareArrowOutUpRight className="h-4 w-4" />
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start">
+                            <DropdownMenuContent align="start" className="min-w-44">
                               <DropdownMenuItem
-                                onClick={() => handleDelete(item.name)}
-                                className="text-destructive focus:text-destructive"
+                                onClick={() => onPreview(item.name, "text")}
                               >
-                                {t("delete")}
+                                <FileText className="mr-2 h-4 w-4" />
+                                {t("text_editor")}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => onPreview(item.name, "hex")}
+                              >
+                                <Binary className="mr-2 h-4 w-4" />
+                                {t("hex_view")}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => onPreview(item.name, "sqlite")}
+                              >
+                                <Database className="mr-2 h-4 w-4" />
+                                {t("sqlite_editor")}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => onPreview(item.name, "image")}
+                              >
+                                <FileImage className="mr-2 h-4 w-4" />
+                                {t("image_preview")}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => onPreview(item.name, "plist")}
+                              >
+                                <FileJson className="mr-2 h-4 w-4" />
+                                {t("plist_preview")}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => onPreview(item.name, "font")}
+                              >
+                                <Type className="mr-2 h-4 w-4" />
+                                {t("font_preview")}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -529,56 +554,31 @@ export function FileTable({
                     {formatDate(item.created)}
                   </TableCell>
                   <TableCell>
-                    {!isFolder && (
+                    {!isReadOnly && (
                       <DropdownMenu>
                         <DropdownMenuTrigger
                           render={
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7"
-                              title={t("open_with")}
+                              className="h-7 w-7 text-destructive hover:text-destructive"
+                              title={t("delete")}
+                              disabled={isDeleting}
                             />
                           }
                         >
-                          <SquareArrowOutUpRight className="h-4 w-4" />
+                          {isDeleting ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start">
                           <DropdownMenuItem
-                            onClick={() => onPreview(item.name, "text")}
+                            onClick={() => handleDelete(item.name)}
+                            className="text-destructive focus:text-destructive"
                           >
-                            <FileText className="mr-2 h-4 w-4" />
-                            {t("text_editor")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => onPreview(item.name, "hex")}
-                          >
-                            <Binary className="mr-2 h-4 w-4" />
-                            {t("hex_view")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => onPreview(item.name, "sqlite")}
-                          >
-                            <Database className="mr-2 h-4 w-4" />
-                            {t("sqlite_editor")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => onPreview(item.name, "image")}
-                          >
-                            <FileImage className="mr-2 h-4 w-4" />
-                            {t("image_preview")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => onPreview(item.name, "plist")}
-                          >
-                            <FileJson className="mr-2 h-4 w-4" />
-                            {t("plist_preview")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => onPreview(item.name, "font")}
-                          >
-                            <Type className="mr-2 h-4 w-4" />
-                            {t("font_preview")}
+                            {t("delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
