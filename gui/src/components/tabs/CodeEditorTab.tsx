@@ -111,7 +111,7 @@ export function CodeEditorTab() {
         ),
       );
     });
-  }, [socket, content]);
+  }, [socket, content, save]);
 
   const handleClearEntries = useCallback(() => setEntries([]), []);
 

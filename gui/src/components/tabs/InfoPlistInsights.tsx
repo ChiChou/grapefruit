@@ -1,7 +1,16 @@
 import { useState } from "react";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import { ShieldAlert, ShieldCheck, Info, AlertTriangle, Lock, Unlock, ChevronRight, Globe } from "lucide-react";
+import {
+  ShieldAlert,
+  ShieldCheck,
+  Info,
+  AlertTriangle,
+  Lock,
+  Unlock,
+  ChevronRight,
+  Globe,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 type Severity = "high" | "medium" | "info" | "ok";
@@ -96,9 +105,12 @@ const PERMISSION_DESCRIPTIONS: Record<string, string> = {
   NSDownloadsFolderUsageDescription: "Access Downloads folder",
   NSNetworkVolumesUsageDescription: "Access network volumes",
   NSRemovableVolumesUsageDescription: "Access removable volumes",
-  NSFileProviderPresenceUsageDescription: "Know when other apps access managed files",
-  NSFileProviderDomainUsageDescription: "Access files managed by a file provider",
-  NSHealthClinicalHealthRecordsShareUsageDescription: "Read clinical health records",
+  NSFileProviderPresenceUsageDescription:
+    "Know when other apps access managed files",
+  NSFileProviderDomainUsageDescription:
+    "Access files managed by a file provider",
+  NSHealthClinicalHealthRecordsShareUsageDescription:
+    "Read clinical health records",
   NSHealthShareUsageDescription: "Read HealthKit data",
   NSHealthUpdateUsageDescription: "Write HealthKit data",
   NSHomeKitUsageDescription: "Access HomeKit configuration",
@@ -115,7 +127,8 @@ const PERMISSION_DESCRIPTIONS: Record<string, string> = {
   NSAppleEventsUsageDescription: "Send Apple events",
   NSSystemAdministrationUsageDescription: "Manipulate system configuration",
   NSSiriUsageDescription: "Send data to Siri",
-  NSSpeechRecognitionUsageDescription: "Send data to speech recognition servers",
+  NSSpeechRecognitionUsageDescription:
+    "Send data to speech recognition servers",
   NSVideoSubscriberAccountUsageDescription: "Access TV provider account",
   UIRequiresPersistentWiFi: "Requires persistent Wi-Fi connection",
 };
@@ -127,7 +140,9 @@ function parsePlistInsights(value: Record<string, any>, t: TFunction) {
   const insights: Insight[] = [];
 
   // --- ATS analysis ---
-  const ats = value.NSAppTransportSecurity as Record<string, unknown> | undefined;
+  const ats = value.NSAppTransportSecurity as
+    | Record<string, unknown>
+    | undefined;
   if (ats) {
     if (ats.NSAllowsArbitraryLoads === true) {
       insights.push({
@@ -173,7 +188,9 @@ function parsePlistInsights(value: Record<string, any>, t: TFunction) {
     }
 
     if (ats.NSExceptionDomains) {
-      const domains = Object.keys(ats.NSExceptionDomains as Record<string, unknown>);
+      const domains = Object.keys(
+        ats.NSExceptionDomains as Record<string, unknown>,
+      );
       insights.push({
         id: "ats_exceptions",
         severity: "info",
@@ -219,7 +236,8 @@ function parsePlistInsights(value: Record<string, any>, t: TFunction) {
   const permissions: PermissionEntry[] = [];
   for (const key of ALL_PERMISSION_KEYS) {
     if (key in value) {
-      const usageDesc = typeof value[key] === "string" ? value[key] : String(value[key]);
+      const usageDesc =
+        typeof value[key] === "string" ? value[key] : String(value[key]);
       permissions.push({
         key,
         label: PERMISSION_LABELS[key],
@@ -250,12 +268,16 @@ function parsePlistInsights(value: Record<string, any>, t: TFunction) {
       id: "permissions",
       severity: "ok",
       title: t("plist_perms_none_sensitive_title"),
-      description: t("plist_perms_none_sensitive_desc", { count: permissions.length }),
+      description: t("plist_perms_none_sensitive_desc", {
+        count: permissions.length,
+      }),
     });
   }
 
   // --- URL Schemes ---
-  const urlTypes = value.CFBundleURLTypes as Array<Record<string, unknown>> | undefined;
+  const urlTypes = value.CFBundleURLTypes as
+    | Array<Record<string, unknown>>
+    | undefined;
   const urlSchemes: URLSchemeEntry[] = [];
   if (urlTypes && Array.isArray(urlTypes)) {
     for (const entry of urlTypes) {
@@ -285,7 +307,8 @@ const SEVERITY_CONFIG: Record<
   },
   medium: {
     icon: AlertTriangle,
-    badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    badge:
+      "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
     labelKey: "severity_medium",
   },
   info: {
@@ -295,7 +318,8 @@ const SEVERITY_CONFIG: Record<
   },
   ok: {
     icon: ShieldCheck,
-    badge: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+    badge:
+      "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
     labelKey: "severity_ok",
   },
 };
@@ -318,11 +342,16 @@ function InsightCard({ insight }: { insight: Insight }) {
             {t(cfg.labelKey)}
           </span>
         </div>
-        <p className="text-xs text-muted-foreground leading-relaxed">{insight.description}</p>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          {insight.description}
+        </p>
         {insight.list && insight.list.length > 0 && (
           <ul className="mt-2 space-y-1">
             {insight.list.map((item, idx) => (
-              <li key={idx} className="text-xs text-muted-foreground flex items-start gap-1.5">
+              <li
+                key={idx}
+                className="text-xs text-muted-foreground flex items-start gap-1.5"
+              >
                 <span className="text-muted-foreground/50 select-none">•</span>
                 <span className="font-mono">{item}</span>
               </li>
@@ -357,9 +386,13 @@ function PermissionRow({ perm }: { perm: PermissionEntry }) {
             </Badge>
           )}
         </div>
-        <p className="text-xs text-muted-foreground mt-0.5">{perm.label} — {perm.description}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          {perm.label} — {perm.description}
+        </p>
         {perm.usageDescription && (
-          <p className="text-xs text-muted-foreground/70 mt-0.5 italic">"{perm.usageDescription}"</p>
+          <p className="text-xs text-muted-foreground/70 mt-0.5 italic">
+            "{perm.usageDescription}"
+          </p>
         )}
       </div>
     </div>
@@ -367,7 +400,6 @@ function PermissionRow({ perm }: { perm: PermissionEntry }) {
 }
 
 export function InfoPlistInsights({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value,
   permsOpen,
   setPermsOpen,
@@ -393,22 +425,32 @@ export function InfoPlistInsights({
           <div className="flex items-center gap-1.5 text-sm">
             <span className="h-2.5 w-2.5 rounded-full bg-red-500 inline-block" />
             <span className="font-medium">{highCount}</span>
-            <span className="text-muted-foreground">{t("manifest_summary_high")}</span>
+            <span className="text-muted-foreground">
+              {t("manifest_summary_high")}
+            </span>
           </div>
           <div className="flex items-center gap-1.5 text-sm">
             <span className="h-2.5 w-2.5 rounded-full bg-amber-500 inline-block" />
             <span className="font-medium">{mediumCount}</span>
-            <span className="text-muted-foreground">{t("manifest_summary_medium")}</span>
+            <span className="text-muted-foreground">
+              {t("manifest_summary_medium")}
+            </span>
           </div>
           <div className="flex items-center gap-1.5 text-sm">
             <Unlock className="h-3.5 w-3.5 text-amber-500" />
             <span className="font-medium">{sensitivePerms.length}</span>
-            <span className="text-muted-foreground">{t("plist_summary_sensitive_perms")}</span>
+            <span className="text-muted-foreground">
+              {t("plist_summary_sensitive_perms")}
+            </span>
           </div>
           <div className="flex items-center gap-1.5 text-sm">
             <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="font-medium">{permissions.length - sensitivePerms.length}</span>
-            <span className="text-muted-foreground">{t("manifest_summary_normal_perms")}</span>
+            <span className="font-medium">
+              {permissions.length - sensitivePerms.length}
+            </span>
+            <span className="text-muted-foreground">
+              {t("manifest_summary_normal_perms")}
+            </span>
           </div>
         </div>
 
@@ -435,12 +477,14 @@ export function InfoPlistInsights({
             />
             <h2 className="text-sm font-semibold text-foreground group-hover:text-foreground/80">
               {permissions.length > 0
-                ? t("plist_declared_permissions_count", { count: permissions.length })
+                ? t("plist_declared_permissions_count", {
+                    count: permissions.length,
+                  })
                 : t("plist_declared_permissions")}
             </h2>
           </button>
-          {permsOpen && (
-            permissions.length > 0 ? (
+          {permsOpen &&
+            (permissions.length > 0 ? (
               <div className="rounded-lg border px-4 divide-y-0">
                 {[...permissions]
                   .sort((a, b) => (b.sensitive ? 1 : 0) - (a.sensitive ? 1 : 0))
@@ -452,8 +496,7 @@ export function InfoPlistInsights({
               <div className="rounded-lg border p-4 text-sm text-muted-foreground">
                 {t("plist_no_permissions_desc")}
               </div>
-            )
-          )}
+            ))}
         </section>
 
         {/* URL Schemes */}
@@ -467,13 +510,18 @@ export function InfoPlistInsights({
                 className={`h-4 w-4 text-muted-foreground transition-transform duration-150 ${urlsOpen ? "rotate-90" : ""}`}
               />
               <h2 className="text-sm font-semibold text-foreground group-hover:text-foreground/80">
-                {t("plist_url_schemes_count", { count: urlSchemes.reduce((n, u) => n + u.schemes.length, 0) })}
+                {t("plist_url_schemes_count", {
+                  count: urlSchemes.reduce((n, u) => n + u.schemes.length, 0),
+                })}
               </h2>
             </button>
             {urlsOpen && (
               <div className="rounded-lg border px-4 divide-y-0">
                 {urlSchemes.map((entry, idx) => (
-                  <div key={idx} className="flex items-start gap-3 py-2.5 border-b last:border-b-0">
+                  <div
+                    key={idx}
+                    className="flex items-start gap-3 py-2.5 border-b last:border-b-0"
+                  >
                     <div className="mt-0.5 shrink-0">
                       <Globe className="h-4 w-4 text-muted-foreground" />
                     </div>
@@ -483,13 +531,18 @@ export function InfoPlistInsights({
                           {entry.schemes.map((s) => `${s}://`).join(", ")}
                         </span>
                         {entry.role && (
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] px-1.5 py-0"
+                          >
                             {entry.role}
                           </Badge>
                         )}
                       </div>
                       {entry.name && (
-                        <p className="text-xs text-muted-foreground mt-0.5">{entry.name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {entry.name}
+                        </p>
                       )}
                     </div>
                   </div>

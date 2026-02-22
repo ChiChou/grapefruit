@@ -174,8 +174,7 @@ export function FruityUserDefaultsTab() {
     setEditValue("");
   };
 
-  const columns = useMemo<ColumnDef<UserDefaultsItem>[]>(
-    () => [
+  const columns: ColumnDef<UserDefaultsItem>[] = [
       {
         accessorKey: "type",
         header: () => t("type"),
@@ -195,7 +194,10 @@ export function FruityUserDefaultsTab() {
         size: 300,
         minSize: 150,
         cell: ({ row }) => (
-          <span className="font-mono text-sm break-all" title={row.original.key}>
+          <span
+            className="font-mono text-sm break-all"
+            title={row.original.key}
+          >
             {row.original.key}
           </span>
         ),
@@ -275,8 +277,18 @@ export function FruityUserDefaultsTab() {
                     }
                   }}
                 >
-                  <PopoverTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startDateEdit(item)} title={t("edit")} />}>
-                      <CalendarIcon className="h-4 w-4" />
+                  <PopoverTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => startDateEdit(item)}
+                        title={t("edit")}
+                      />
+                    }
+                  >
+                    <CalendarIcon className="h-4 w-4" />
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-3" align="end">
                     <Calendar
@@ -354,8 +366,17 @@ export function FruityUserDefaultsTab() {
                 </Popover>
               )}
               <DropdownMenu>
-                <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title={t("remove")} />}>
-                    <Trash2 className="h-4 w-4" />
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      title={t("remove")}
+                    />
+                  }
+                >
+                  <Trash2 className="h-4 w-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
@@ -370,9 +391,7 @@ export function FruityUserDefaultsTab() {
           );
         },
       },
-    ],
-    [t, editingKey, editValue, datePickerKey, datePickerValue, timeHours, timeMinutes, timeSeconds, updateMutation.isPending],
-  );
+  ];
 
   const table = useReactTable({
     data: filteredItems,
@@ -457,7 +476,10 @@ export function FruityUserDefaultsTab() {
             </thead>
             <tbody>
               {table.getRowModel().rows.map((row) => (
-                <tr key={row.original.key} className="border-b hover:bg-muted/50">
+                <tr
+                  key={row.original.key}
+                  className="border-b hover:bg-muted/50"
+                >
                   {row.getVisibleCells().map((cell) => (
                     <td
                       key={cell.id}

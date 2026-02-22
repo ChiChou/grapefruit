@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   RefreshCw,
@@ -35,10 +35,7 @@ import {
   type ColumnDef,
   type ColumnResizeMode,
 } from "@tanstack/react-table";
-import type {
-  Cookie,
-  CookiePredicate,
-} from "@agent/fruity/modules/cookies";
+import type { Cookie, CookiePredicate } from "@agent/fruity/modules/cookies";
 
 function formatDate(date: Date | null): string {
   if (!date) return "-";
@@ -71,7 +68,7 @@ export function FruityBinaryCookieTab() {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["cookies"] });
       },
-    }
+    },
   );
 
   const removeMutation = useRpcMutation<boolean, CookiePredicate>(
@@ -80,7 +77,7 @@ export function FruityBinaryCookieTab() {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["cookies"] });
       },
-    }
+    },
   );
 
   const handleClear = async () => {
@@ -127,7 +124,11 @@ export function FruityBinaryCookieTab() {
         domain: editingCookie.domain,
         path: editingCookie.path,
       };
-      const success = await fruity.cookies.update(predicate, "value", editValue);
+      const success = await fruity.cookies.update(
+        predicate,
+        "value",
+        editValue,
+      );
       if (success) {
         queryClient.invalidateQueries({ queryKey: ["cookies"] });
         setEditingCookie(null);
@@ -175,8 +176,7 @@ export function FruityBinaryCookieTab() {
     }
   };
 
-  const columns = useMemo<ColumnDef<Cookie>[]>(
-    () => [
+  const columns: ColumnDef<Cookie>[] = [
       {
         accessorKey: "domain",
         header: () => (
@@ -300,8 +300,15 @@ export function FruityBinaryCookieTab() {
                 }
               }}
             >
-              <PopoverTrigger render={<button type="button" className="w-full text-left hover:bg-accent px-1 py-0.5 rounded" />}>
-                  {formatDate(cookie.expiresDate)}
+              <PopoverTrigger
+                render={
+                  <button
+                    type="button"
+                    className="w-full text-left hover:bg-accent px-1 py-0.5 rounded"
+                  />
+                }
+              >
+                {formatDate(cookie.expiresDate)}
               </PopoverTrigger>
               <PopoverContent className="w-auto p-3" align="start">
                 <div className="flex flex-col gap-3">
@@ -373,7 +380,9 @@ export function FruityBinaryCookieTab() {
       },
       {
         accessorKey: "isHTTPOnly",
-        header: () => <span className="flex items-center justify-center">HTTP Only</span>,
+        header: () => (
+          <span className="flex items-center justify-center">HTTP Only</span>
+        ),
         size: 80,
         minSize: 50,
         cell: ({ row }) =>
@@ -385,7 +394,11 @@ export function FruityBinaryCookieTab() {
       },
       {
         accessorKey: "isSessionOnly",
-        header: () => <span className="flex items-center justify-center">Session Cookie</span>,
+        header: () => (
+          <span className="flex items-center justify-center">
+            Session Cookie
+          </span>
+        ),
         size: 80,
         minSize: 50,
         cell: ({ row }) =>
@@ -406,8 +419,17 @@ export function FruityBinaryCookieTab() {
           return (
             <div className="flex justify-end gap-1">
               <DropdownMenu>
-                <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title={t("remove")} />}>
-                    <Trash2 className="h-4 w-4" />
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      title={t("remove")}
+                    />
+                  }
+                >
+                  <Trash2 className="h-4 w-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
@@ -422,9 +444,7 @@ export function FruityBinaryCookieTab() {
           );
         },
       },
-    ],
-    [t, editingCookie, editValue, isSaving, isExpiresPopoverOpen, editingExpiresCookie, expiresDate],
-  );
+  ];
 
   const table = useReactTable({
     data: cookies,
@@ -449,9 +469,17 @@ export function FruityBinaryCookieTab() {
           {t("reload")}
         </Button>
         <DropdownMenu>
-          <DropdownMenuTrigger render={<Button variant="destructive" size="sm" disabled={isLoading || cookies.length === 0} />}>
-              <Trash2 className="w-4 h-4 mr-2" />
-              {t("clear")}
+          <DropdownMenuTrigger
+            render={
+              <Button
+                variant="destructive"
+                size="sm"
+                disabled={isLoading || cookies.length === 0}
+              />
+            }
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            {t("clear")}
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             <DropdownMenuItem

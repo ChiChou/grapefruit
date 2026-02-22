@@ -100,17 +100,17 @@ export function FruityKeychainTab() {
     refetch,
   } = useRpcQuery<KeyChainItem[]>(
     ["keychain", String(withBiometricId)],
-    (api) => api.keychain.list(withBiometricId)
+    (api) => api.keychain.list(withBiometricId),
   );
 
-  const removeMutation = useRpcMutation<void, { service: string; account: string }>(
-    (api, { service, account }) => api.keychain.remove(service, account),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["keychain"] });
-      },
-    }
-  );
+  const removeMutation = useRpcMutation<
+    void,
+    { service: string; account: string }
+  >((api, { service, account }) => api.keychain.remove(service, account), {
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["keychain"] });
+    },
+  });
 
   const handleDelete = async (item: KeyChainItem) => {
     const service = item.service || "";
@@ -209,8 +209,7 @@ export function FruityKeychainTab() {
     setSelectedProts(new Set());
   };
 
-  const columns = useMemo<ColumnDef<KeyChainItem>[]>(
-    () => [
+  const columns: ColumnDef<KeyChainItem>[] = [
       {
         id: "expand",
         header: "",
@@ -235,7 +234,10 @@ export function FruityKeychainTab() {
         size: 160,
         minSize: 80,
         cell: ({ row }) => (
-          <span className="truncate block font-mono" title={row.original.service}>
+          <span
+            className="truncate block font-mono"
+            title={row.original.service}
+          >
             {row.original.service || "-"}
           </span>
         ),
@@ -251,7 +253,10 @@ export function FruityKeychainTab() {
         size: 160,
         minSize: 80,
         cell: ({ row }) => (
-          <span className="truncate block font-mono" title={row.original.account}>
+          <span
+            className="truncate block font-mono"
+            title={row.original.account}
+          >
             {row.original.account || "-"}
           </span>
         ),
@@ -279,7 +284,10 @@ export function FruityKeychainTab() {
         size: 192,
         minSize: 80,
         cell: ({ row }) => (
-          <span className="truncate block" title={row.original.entitlementGroup}>
+          <span
+            className="truncate block"
+            title={row.original.entitlementGroup}
+          >
             {row.original.entitlementGroup || "-"}
           </span>
         ),
@@ -287,25 +295,22 @@ export function FruityKeychainTab() {
       {
         accessorKey: "prot",
         header: () => (
-          <Popover
-            open={protFilterOpen}
-            onOpenChange={setProtFilterOpen}
-          >
-            <PopoverTrigger render={<Button variant="ghost" size="sm" className="h-8 px-1" />}>
-                <Server className="w-4 h-4 inline mr-1" />
-                {t("prot")}
-                {selectedProts.size > 0 && (
-                  <span className="ml-1 text-xs bg-primary text-primary-foreground rounded-full px-1.5">
-                    {selectedProts.size}
-                  </span>
-                )}
+          <Popover open={protFilterOpen} onOpenChange={setProtFilterOpen}>
+            <PopoverTrigger
+              render={<Button variant="ghost" size="sm" className="h-8 px-1" />}
+            >
+              <Server className="w-4 h-4 inline mr-1" />
+              {t("prot")}
+              {selectedProts.size > 0 && (
+                <span className="ml-1 text-xs bg-primary text-primary-foreground rounded-full px-1.5">
+                  {selectedProts.size}
+                </span>
+              )}
             </PopoverTrigger>
             <PopoverContent className="w-100 p-3" align="start">
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-sm">
-                    {t("filter")}
-                  </span>
+                  <span className="font-medium text-sm">{t("filter")}</span>
                   {(selectedProts.size > 0 || allProts.length > 0) && (
                     <Button
                       variant="ghost"
@@ -351,26 +356,22 @@ export function FruityKeychainTab() {
       {
         accessorKey: "clazz",
         header: () => (
-          <Popover
-            open={classFilterOpen}
-            onOpenChange={setClassFilterOpen}
-          >
-            <PopoverTrigger render={<Button variant="ghost" size="sm" className="h-8 px-1" />}>
-                {t("class")}
-                {selectedClasses.size > 0 && (
-                  <span className="ml-1 text-xs bg-primary text-primary-foreground rounded-full px-1.5">
-                    {selectedClasses.size}
-                  </span>
-                )}
+          <Popover open={classFilterOpen} onOpenChange={setClassFilterOpen}>
+            <PopoverTrigger
+              render={<Button variant="ghost" size="sm" className="h-8 px-1" />}
+            >
+              {t("class")}
+              {selectedClasses.size > 0 && (
+                <span className="ml-1 text-xs bg-primary text-primary-foreground rounded-full px-1.5">
+                  {selectedClasses.size}
+                </span>
+              )}
             </PopoverTrigger>
             <PopoverContent className="w-48 p-3" align="start">
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-sm">
-                    {t("filter")}
-                  </span>
-                  {(selectedClasses.size > 0 ||
-                    allClasses.length > 0) && (
+                  <span className="font-medium text-sm">{t("filter")}</span>
+                  {(selectedClasses.size > 0 || allClasses.length > 0) && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -433,8 +434,17 @@ export function FruityKeychainTab() {
               onClick={(e) => e.stopPropagation()}
             >
               <DropdownMenu>
-                <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title={t("remove")} />}>
-                    <Trash2 className="h-4 w-4" />
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      title={t("remove")}
+                    />
+                  }
+                >
+                  <Trash2 className="h-4 w-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
@@ -449,9 +459,7 @@ export function FruityKeychainTab() {
           );
         },
       },
-    ],
-    [t, protFilterOpen, classFilterOpen, selectedProts, selectedClasses, allProts, allClasses],
-  );
+  ];
 
   const table = useReactTable({
     data: filteredItems,
@@ -477,7 +485,8 @@ export function FruityKeychainTab() {
     setExpanded({});
   };
 
-  const hasExpanded = typeof expanded === "object" && Object.keys(expanded).length > 0;
+  const hasExpanded =
+    typeof expanded === "object" && Object.keys(expanded).length > 0;
 
   return (
     <div className="flex flex-col h-full">
@@ -595,49 +604,126 @@ export function FruityKeychainTab() {
                   </tr>
                   {row.getIsExpanded() && (
                     <tr key={`${row.id}-detail`} className="border-b">
-                      <td colSpan={columns.length} className="bg-muted/50 px-4 py-3">
+                      <td
+                        colSpan={columns.length}
+                        className="bg-muted/50 px-4 py-3"
+                      >
                         <div className="space-y-2 text-xs">
                           <div className="grid grid-cols-2 gap-x-6 gap-y-1">
                             <div className="flex gap-2">
-                              <span className="text-muted-foreground shrink-0">{t("creation_time")}:</span>
-                              <span className="font-mono truncate">{row.original.creation ? new Date(row.original.creation).toLocaleString() : "-"}</span>
+                              <span className="text-muted-foreground shrink-0">
+                                {t("creation_time")}:
+                              </span>
+                              <span className="font-mono truncate">
+                                {row.original.creation
+                                  ? new Date(
+                                      row.original.creation,
+                                    ).toLocaleString()
+                                  : "-"}
+                              </span>
                             </div>
                             <div className="flex gap-2">
-                              <span className="text-muted-foreground shrink-0">{t("modification_time")}:</span>
-                              <span className="font-mono truncate">{row.original.modification ? new Date(row.original.modification).toLocaleString() : "-"}</span>
+                              <span className="text-muted-foreground shrink-0">
+                                {t("modification_time")}:
+                              </span>
+                              <span className="font-mono truncate">
+                                {row.original.modification
+                                  ? new Date(
+                                      row.original.modification,
+                                    ).toLocaleString()
+                                  : "-"}
+                              </span>
                             </div>
                             <div className="flex gap-2">
-                              <span className="text-muted-foreground shrink-0">{t("comment")}:</span>
-                              <span className="font-mono truncate" title={row.original.comment}>{row.original.comment || "-"}</span>
+                              <span className="text-muted-foreground shrink-0">
+                                {t("comment")}:
+                              </span>
+                              <span
+                                className="font-mono truncate"
+                                title={row.original.comment}
+                              >
+                                {row.original.comment || "-"}
+                              </span>
                             </div>
                             <div className="flex gap-2">
-                              <span className="text-muted-foreground shrink-0">{t("creator")}:</span>
-                              <span className="font-mono truncate" title={row.original.creator}>{row.original.creator || "-"}</span>
+                              <span className="text-muted-foreground shrink-0">
+                                {t("creator")}:
+                              </span>
+                              <span
+                                className="font-mono truncate"
+                                title={row.original.creator}
+                              >
+                                {row.original.creator || "-"}
+                              </span>
                             </div>
                           </div>
                           <div className="flex gap-4 text-muted-foreground">
-                            <span>{t("alias")}: <span className="text-foreground">{formatBoolean(row.original.alias)}</span></span>
-                            <span>{t("invisible")}: <span className="text-foreground">{formatBoolean(row.original.invisible)}</span></span>
-                            <span>{t("custom_icon")}: <span className="text-foreground">{formatBoolean(row.original.customIcon)}</span></span>
+                            <span>
+                              {t("alias")}:{" "}
+                              <span className="text-foreground">
+                                {formatBoolean(row.original.alias)}
+                              </span>
+                            </span>
+                            <span>
+                              {t("invisible")}:{" "}
+                              <span className="text-foreground">
+                                {formatBoolean(row.original.invisible)}
+                              </span>
+                            </span>
+                            <span>
+                              {t("custom_icon")}:{" "}
+                              <span className="text-foreground">
+                                {formatBoolean(row.original.customIcon)}
+                              </span>
+                            </span>
                           </div>
                           {row.original.data && (
                             <div className="flex gap-2">
-                              <span className="text-muted-foreground shrink-0">{t("data")}:</span>
-                              <span className="font-mono truncate" title={row.original.data}>{row.original.data}</span>
+                              <span className="text-muted-foreground shrink-0">
+                                {t("data")}:
+                              </span>
+                              <span
+                                className="font-mono truncate"
+                                title={row.original.data}
+                              >
+                                {row.original.data}
+                              </span>
                             </div>
                           )}
                           {row.original.raw && (
                             <div>
                               <div className="flex items-center gap-1 mb-1">
-                                <span className="text-muted-foreground">{t("raw")}:</span>
-                                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => downloadRaw(row.original)} title={t("download")}>
+                                <span className="text-muted-foreground">
+                                  {t("raw")}:
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5"
+                                  onClick={() => downloadRaw(row.original)}
+                                  title={t("download")}
+                                >
                                   <Download className="h-3 w-3" />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => copyToClipboardRaw(row.original, row.id)} title={t("copy")}>
-                                  {copySuccessIndex === row.id ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5"
+                                  onClick={() =>
+                                    copyToClipboardRaw(row.original, row.id)
+                                  }
+                                  title={t("copy")}
+                                >
+                                  {copySuccessIndex === row.id ? (
+                                    <Check className="h-3 w-3 text-green-500" />
+                                  ) : (
+                                    <Copy className="h-3 w-3" />
+                                  )}
                                 </Button>
                               </div>
-                              <pre className="font-mono text-xs bg-background/50 p-2 rounded overflow-x-auto max-h-40">{hexDump(row.original.raw)}</pre>
+                              <pre className="font-mono text-xs bg-background/50 p-2 rounded overflow-x-auto max-h-40">
+                                {hexDump(row.original.raw)}
+                              </pre>
                             </div>
                           )}
                         </div>
