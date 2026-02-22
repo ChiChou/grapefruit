@@ -9,7 +9,6 @@
     "skipLibCheck": true,
 
     /* Path aliases */
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@agent/*": ["../agent/types/*"],

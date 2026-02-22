@@ -58,6 +58,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.10.9",
+    "@typescript/native-preview": "^7.0.0-dev.20260222.1",
     "drizzle-kit": "^0.31.9",
     "socket.io-client": "^4.8.3",
     "tsdown": "^0.20.1",

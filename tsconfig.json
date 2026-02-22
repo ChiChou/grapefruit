@@ -10,7 +10,6 @@
     "rootDir": "./src",
     "noEmit": true,
     "allowImportingTsExtensions": true,
-    "baseUrl": ".",
     "outDir": "dist",
     "paths": {
       "@agent/*": ["./agent/types/*"],
