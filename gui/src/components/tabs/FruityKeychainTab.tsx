@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
   RefreshCw,
@@ -18,14 +18,6 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Spinner } from "@/components/ui/spinner";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -37,6 +29,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useRpcQuery, useRpcMutation, useQueryClient } from "@/lib/queries";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getExpandedRowModel,
+  flexRender,
+  type ColumnDef,
+  type ColumnResizeMode,
+  type ExpandedState,
+} from "@tanstack/react-table";
 
 import type { KeyChainItem } from "@agent/fruity/modules/keychain";
 
@@ -83,14 +84,15 @@ export function FruityKeychainTab() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [withBiometricId, setWithBiometricId] = useState(false);
-  const [expandedIndices, setExpandedIndices] = useState<Set<number>>(new Set());
-  const [copySuccessIndex, setCopySuccessIndex] = useState<number | null>(null);
+  const [expanded, setExpanded] = useState<ExpandedState>({});
+  const [copySuccessIndex, setCopySuccessIndex] = useState<string | null>(null);
   const [classFilterOpen, setClassFilterOpen] = useState(false);
   const [protFilterOpen, setProtFilterOpen] = useState(false);
   const [selectedClasses, setSelectedClasses] = useState<Set<string>>(
     new Set(),
   );
   const [selectedProts, setSelectedProts] = useState<Set<string>>(new Set());
+  const [columnSizing, setColumnSizing] = useState<Record<string, number>>({});
 
   const {
     data: items = [],
@@ -116,18 +118,6 @@ export function FruityKeychainTab() {
     await removeMutation.mutateAsync({ service, account });
   };
 
-  const toggleExpand = (index: number) => {
-    setExpandedIndices((prev) => {
-      const next = new Set(prev);
-      if (next.has(index)) {
-        next.delete(index);
-      } else {
-        next.add(index);
-      }
-      return next;
-    });
-  };
-
   const downloadRaw = (item: KeyChainItem) => {
     if (!item.raw) return;
     try {
@@ -151,7 +141,7 @@ export function FruityKeychainTab() {
     }
   };
 
-  const copyToClipboardRaw = async (item: KeyChainItem, index: number) => {
+  const copyToClipboardRaw = async (item: KeyChainItem, rowId: string) => {
     if (!item.raw) return;
     try {
       const binaryString = atob(item.raw);
@@ -162,7 +152,7 @@ export function FruityKeychainTab() {
       const decoder = new TextDecoder("utf-8", { fatal: false });
       const text = decoder.decode(bytes);
       await navigator.clipboard.writeText(text);
-      setCopySuccessIndex(index);
+      setCopySuccessIndex(rowId);
       setTimeout(() => setCopySuccessIndex(null), 2000);
     } catch {
       console.error("Failed to copy raw data to clipboard");
@@ -200,22 +190,294 @@ export function FruityKeychainTab() {
     });
   };
 
-  const filteredItems = items.filter((item) => {
-    const clazz = item.clazz || "";
-    const prot = item.prot || "";
-    if (selectedClasses.size > 0 && !selectedClasses.has(clazz)) {
-      return false;
-    }
-    if (selectedProts.size > 0 && !selectedProts.has(prot)) {
-      return false;
-    }
-    return true;
-  });
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      const clazz = item.clazz || "";
+      const prot = item.prot || "";
+      if (selectedClasses.size > 0 && !selectedClasses.has(clazz)) {
+        return false;
+      }
+      if (selectedProts.size > 0 && !selectedProts.has(prot)) {
+        return false;
+      }
+      return true;
+    });
+  }, [items, selectedClasses, selectedProts]);
 
   const clearFilters = () => {
     setSelectedClasses(new Set());
     setSelectedProts(new Set());
   };
+
+  const columns = useMemo<ColumnDef<KeyChainItem>[]>(
+    () => [
+      {
+        id: "expand",
+        header: "",
+        size: 32,
+        minSize: 32,
+        enableResizing: false,
+        cell: ({ row }) =>
+          row.getIsExpanded() ? (
+            <ChevronDown className="w-4 h-4" />
+          ) : (
+            <ChevronRight className="w-4 h-4" />
+          ),
+      },
+      {
+        accessorKey: "service",
+        header: () => (
+          <>
+            <Server className="w-4 h-4 inline mr-1" />
+            {t("service")}
+          </>
+        ),
+        size: 160,
+        minSize: 80,
+        cell: ({ row }) => (
+          <span className="truncate block font-mono" title={row.original.service}>
+            {row.original.service || "-"}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "account",
+        header: () => (
+          <>
+            <User className="w-4 h-4 inline mr-1" />
+            {t("account")}
+          </>
+        ),
+        size: 160,
+        minSize: 80,
+        cell: ({ row }) => (
+          <span className="truncate block font-mono" title={row.original.account}>
+            {row.original.account || "-"}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "label",
+        header: () => (
+          <>
+            <Key className="w-4 h-4 inline mr-1" />
+            {t("label")}
+          </>
+        ),
+        size: 160,
+        minSize: 80,
+        cell: ({ row }) => row.original.label || "-",
+      },
+      {
+        accessorKey: "entitlementGroup",
+        header: () => (
+          <>
+            <Server className="w-4 h-4 inline mr-1" />
+            {t("entitlement_group")}
+          </>
+        ),
+        size: 192,
+        minSize: 80,
+        cell: ({ row }) => (
+          <span className="truncate block" title={row.original.entitlementGroup}>
+            {row.original.entitlementGroup || "-"}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "prot",
+        header: () => (
+          <Popover
+            open={protFilterOpen}
+            onOpenChange={setProtFilterOpen}
+          >
+            <PopoverTrigger render={<Button variant="ghost" size="sm" className="h-8 px-1" />}>
+                <Server className="w-4 h-4 inline mr-1" />
+                {t("prot")}
+                {selectedProts.size > 0 && (
+                  <span className="ml-1 text-xs bg-primary text-primary-foreground rounded-full px-1.5">
+                    {selectedProts.size}
+                  </span>
+                )}
+            </PopoverTrigger>
+            <PopoverContent className="w-100 p-3" align="start">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-sm">
+                    {t("filter")}
+                  </span>
+                  {(selectedProts.size > 0 || allProts.length > 0) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 text-xs"
+                      onClick={clearFilters}
+                    >
+                      {t("clear")}
+                    </Button>
+                  )}
+                </div>
+                <div className="max-h-48 overflow-y-auto flex flex-col gap-1">
+                  {allProts.map((prot) => (
+                    <label
+                      key={prot}
+                      className="flex items-center gap-2 cursor-pointer hover:bg-accent px-1 rounded"
+                    >
+                      <Checkbox
+                        checked={selectedProts.has(prot)}
+                        onCheckedChange={() => toggleProt(prot)}
+                      />
+                      <span className="text-sm truncate">{prot}</span>
+                    </label>
+                  ))}
+                  {allProts.length === 0 && (
+                    <span className="text-sm text-muted-foreground">
+                      {t("no_values")}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        ),
+        size: 128,
+        minSize: 60,
+        cell: ({ row }) => (
+          <span className="truncate block" title={row.original.prot}>
+            {row.original.prot || "-"}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "clazz",
+        header: () => (
+          <Popover
+            open={classFilterOpen}
+            onOpenChange={setClassFilterOpen}
+          >
+            <PopoverTrigger render={<Button variant="ghost" size="sm" className="h-8 px-1" />}>
+                {t("class")}
+                {selectedClasses.size > 0 && (
+                  <span className="ml-1 text-xs bg-primary text-primary-foreground rounded-full px-1.5">
+                    {selectedClasses.size}
+                  </span>
+                )}
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-3" align="start">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-sm">
+                    {t("filter")}
+                  </span>
+                  {(selectedClasses.size > 0 ||
+                    allClasses.length > 0) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 text-xs"
+                      onClick={clearFilters}
+                    >
+                      {t("clear")}
+                    </Button>
+                  )}
+                </div>
+                <div className="max-h-48 overflow-y-auto flex flex-col gap-1">
+                  {allClasses.map((clazz) => (
+                    <label
+                      key={clazz}
+                      className="flex items-center gap-2 cursor-pointer hover:bg-accent px-1 rounded"
+                    >
+                      <Checkbox
+                        checked={selectedClasses.has(clazz)}
+                        onCheckedChange={() => toggleClass(clazz)}
+                      />
+                      <span className="text-sm">{clazz}</span>
+                    </label>
+                  ))}
+                  {allClasses.length === 0 && (
+                    <span className="text-sm text-muted-foreground">
+                      {t("no_values")}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        ),
+        size: 96,
+        minSize: 60,
+        cell: ({ row }) => row.original.clazz || "-",
+      },
+      {
+        accessorKey: "acl",
+        header: () => t("acl"),
+        size: 192,
+        minSize: 80,
+        cell: ({ row }) => (
+          <span className="truncate block" title={row.original.acl}>
+            {row.original.acl || "-"}
+          </span>
+        ),
+      },
+      {
+        id: "actions",
+        header: () => t("actions"),
+        size: 96,
+        minSize: 60,
+        enableResizing: false,
+        cell: ({ row }) => {
+          const item = row.original;
+          return (
+            <div
+              className="flex justify-end gap-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <DropdownMenu>
+                <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title={t("remove")} />}>
+                    <Trash2 className="h-4 w-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => handleDelete(item)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    {t("remove")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          );
+        },
+      },
+    ],
+    [t, protFilterOpen, classFilterOpen, selectedProts, selectedClasses, allProts, allClasses],
+  );
+
+  const table = useReactTable({
+    data: filteredItems,
+    columns,
+    state: { columnSizing, expanded },
+    onColumnSizingChange: setColumnSizing,
+    onExpandedChange: setExpanded,
+    getCoreRowModel: getCoreRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
+    columnResizeMode: "onChange" as ColumnResizeMode,
+    enableColumnResizing: true,
+  });
+
+  const expandAll = () => {
+    const allExpanded: Record<string, boolean> = {};
+    filteredItems.forEach((_, i) => {
+      allExpanded[String(i)] = true;
+    });
+    setExpanded(allExpanded);
+  };
+
+  const collapseAll = () => {
+    setExpanded({});
+  };
+
+  const hasExpanded = typeof expanded === "object" && Object.keys(expanded).length > 0;
 
   return (
     <div className="flex flex-col h-full">
@@ -234,7 +496,7 @@ export function FruityKeychainTab() {
             variant="outline"
             size="sm"
             className="rounded-r-none border-r-0"
-            onClick={() => setExpandedIndices(new Set(filteredItems.map((_, i) => i)))}
+            onClick={expandAll}
             disabled={isLoading || filteredItems.length === 0}
             title={t("expand_all")}
           >
@@ -244,8 +506,8 @@ export function FruityKeychainTab() {
             variant="outline"
             size="sm"
             className="rounded-l-none"
-            onClick={() => setExpandedIndices(new Set())}
-            disabled={isLoading || expandedIndices.size === 0}
+            onClick={collapseAll}
+            disabled={isLoading || !hasExpanded}
             title={t("collapse_all")}
           >
             <ChevronsDownUp className="w-4 h-4" />
@@ -274,267 +536,118 @@ export function FruityKeychainTab() {
             {t("no_keychain_items")}
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-8"></TableHead>
-                <TableHead className="w-40">
-                  <Server className="w-4 h-4 inline mr-1" />
-                  {t("service")}
-                </TableHead>
-                <TableHead className="w-40">
-                  <User className="w-4 h-4 inline mr-1" />
-                  {t("account")}
-                </TableHead>
-                <TableHead className="w-40">
-                  <Key className="w-4 h-4 inline mr-1" />
-                  {t("label")}
-                </TableHead>
-                <TableHead className="w-48">
-                  <Server className="w-4 h-4 inline mr-1" />
-                  {t("entitlement_group")}
-                </TableHead>
-                <TableHead className="w-32">
-                  <Popover
-                    open={protFilterOpen}
-                    onOpenChange={setProtFilterOpen}
-                  >
-                    <PopoverTrigger render={<Button variant="ghost" size="sm" className="h-8 px-1" />}>
-                        <Server className="w-4 h-4 inline mr-1" />
-                        {t("prot")}
-                        {selectedProts.size > 0 && (
-                          <span className="ml-1 text-xs bg-primary text-primary-foreground rounded-full px-1.5">
-                            {selectedProts.size}
-                          </span>
-                        )}
-                    </PopoverTrigger>
-                    <PopoverContent className="w-100 p-3" align="start">
-                      <div className="flex flex-col gap-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium text-sm">
-                            {t("filter")}
-                          </span>
-                          {(selectedProts.size > 0 || allProts.length > 0) && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 text-xs"
-                              onClick={clearFilters}
-                            >
-                              {t("clear")}
-                            </Button>
+          <table
+            className="w-full text-sm border-collapse"
+            style={{ width: table.getCenterTotalSize() }}
+          >
+            <thead className="sticky top-0 bg-background z-10">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id} className="border-b">
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      className="relative text-left font-medium p-2 select-none"
+                      style={{ width: header.getSize() }}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
                           )}
-                        </div>
-                        <div className="max-h-48 overflow-y-auto flex flex-col gap-1">
-                          {allProts.map((prot) => (
-                            <label
-                              key={prot}
-                              className="flex items-center gap-2 cursor-pointer hover:bg-accent px-1 rounded"
-                            >
-                              <Checkbox
-                                checked={selectedProts.has(prot)}
-                                onCheckedChange={() => toggleProt(prot)}
-                              />
-                              <span className="text-sm truncate">{prot}</span>
-                            </label>
-                          ))}
-                          {allProts.length === 0 && (
-                            <span className="text-sm text-muted-foreground">
-                              {t("no_values")}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </TableHead>
-                <TableHead className="w-24">
-                  <Popover
-                    open={classFilterOpen}
-                    onOpenChange={setClassFilterOpen}
-                  >
-                    <PopoverTrigger render={<Button variant="ghost" size="sm" className="h-8 px-1" />}>
-                        {t("class")}
-                        {selectedClasses.size > 0 && (
-                          <span className="ml-1 text-xs bg-primary text-primary-foreground rounded-full px-1.5">
-                            {selectedClasses.size}
-                          </span>
-                        )}
-                    </PopoverTrigger>
-                    <PopoverContent className="w-48 p-3" align="start">
-                      <div className="flex flex-col gap-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium text-sm">
-                            {t("filter")}
-                          </span>
-                          {(selectedClasses.size > 0 ||
-                            allClasses.length > 0) && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 text-xs"
-                              onClick={clearFilters}
-                            >
-                              {t("clear")}
-                            </Button>
-                          )}
-                        </div>
-                        <div className="max-h-48 overflow-y-auto flex flex-col gap-1">
-                          {allClasses.map((clazz) => (
-                            <label
-                              key={clazz}
-                              className="flex items-center gap-2 cursor-pointer hover:bg-accent px-1 rounded"
-                            >
-                              <Checkbox
-                                checked={selectedClasses.has(clazz)}
-                                onCheckedChange={() => toggleClass(clazz)}
-                              />
-                              <span className="text-sm">{clazz}</span>
-                            </label>
-                          ))}
-                          {allClasses.length === 0 && (
-                            <span className="text-sm text-muted-foreground">
-                              {t("no_values")}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </TableHead>
-                <TableHead className="w-48">{t("acl")}</TableHead>
-                <TableHead className="w-24 text-right">
-                  {t("actions")}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredItems.map((item, index) => (
-                <>
-                  <TableRow
-                    key={`row-${index}`}
-                    className="cursor-pointer"
-                    onClick={() => toggleExpand(index)}
-                  >
-                    <TableCell>
-                      {expandedIndices.has(index) ? (
-                        <ChevronDown className="w-4 h-4" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4" />
+                      {header.column.getCanResize() && (
+                        <div
+                          onMouseDown={header.getResizeHandler()}
+                          onTouchStart={header.getResizeHandler()}
+                          className={`absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none hover:bg-amber-500/50 ${
+                            header.column.getIsResizing() ? "bg-amber-500" : ""
+                          }`}
+                        />
                       )}
-                    </TableCell>
-                    <TableCell
-                      className="font-mono text-sm truncate max-w-[150px]"
-                      title={item.service}
-                    >
-                      {item.service || "-"}
-                    </TableCell>
-                    <TableCell
-                      className="font-mono text-sm truncate max-w-[150px]"
-                      title={item.account}
-                    >
-                      {item.account || "-"}
-                    </TableCell>
-                    <TableCell className="font-mono text-sm truncate max-w-[150px]">
-                      {item.label || "-"}
-                    </TableCell>
-                    <TableCell
-                      className="font-mono text-sm truncate max-w-[180px]"
-                      title={item.entitlementGroup}
-                    >
-                      {item.entitlementGroup || "-"}
-                    </TableCell>
-                    <TableCell
-                      className="font-mono text-sm truncate max-w-[120px]"
-                      title={item.prot}
-                    >
-                      {item.prot || "-"}
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">
-                      {item.clazz || "-"}
-                    </TableCell>
-                    <TableCell
-                      className="font-mono text-sm truncate max-w-[180px]"
-                      title={item.acl}
-                    >
-                      {item.acl || "-"}
-                    </TableCell>
-                    <TableCell
-                      className="text-right"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex justify-end gap-1">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title={t("remove")} />}>
-                              <Trash2 className="h-4 w-4" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => handleDelete(item)}
-                              className="text-destructive focus:text-destructive"
-                            >
-                              {t("remove")}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                  {expandedIndices.has(index) && (
-                    <TableRow key={`detail-${index}`}>
-                      <TableCell colSpan={9} className="bg-muted/50 px-4 py-3">
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map((row) => (
+                <>
+                  <tr
+                    key={row.id}
+                    className="border-b hover:bg-muted/50 cursor-pointer"
+                    onClick={() => row.toggleExpanded()}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <td
+                        key={cell.id}
+                        className="p-2 font-mono text-xs truncate"
+                        style={{
+                          width: cell.column.getSize(),
+                          maxWidth: cell.column.getSize(),
+                        }}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                  {row.getIsExpanded() && (
+                    <tr key={`${row.id}-detail`} className="border-b">
+                      <td colSpan={columns.length} className="bg-muted/50 px-4 py-3">
                         <div className="space-y-2 text-xs">
                           <div className="grid grid-cols-2 gap-x-6 gap-y-1">
                             <div className="flex gap-2">
                               <span className="text-muted-foreground shrink-0">{t("creation_time")}:</span>
-                              <span className="font-mono truncate">{item.creation ? new Date(item.creation).toLocaleString() : "-"}</span>
+                              <span className="font-mono truncate">{row.original.creation ? new Date(row.original.creation).toLocaleString() : "-"}</span>
                             </div>
                             <div className="flex gap-2">
                               <span className="text-muted-foreground shrink-0">{t("modification_time")}:</span>
-                              <span className="font-mono truncate">{item.modification ? new Date(item.modification).toLocaleString() : "-"}</span>
+                              <span className="font-mono truncate">{row.original.modification ? new Date(row.original.modification).toLocaleString() : "-"}</span>
                             </div>
                             <div className="flex gap-2">
                               <span className="text-muted-foreground shrink-0">{t("comment")}:</span>
-                              <span className="font-mono truncate" title={item.comment}>{item.comment || "-"}</span>
+                              <span className="font-mono truncate" title={row.original.comment}>{row.original.comment || "-"}</span>
                             </div>
                             <div className="flex gap-2">
                               <span className="text-muted-foreground shrink-0">{t("creator")}:</span>
-                              <span className="font-mono truncate" title={item.creator}>{item.creator || "-"}</span>
+                              <span className="font-mono truncate" title={row.original.creator}>{row.original.creator || "-"}</span>
                             </div>
                           </div>
                           <div className="flex gap-4 text-muted-foreground">
-                            <span>{t("alias")}: <span className="text-foreground">{formatBoolean(item.alias)}</span></span>
-                            <span>{t("invisible")}: <span className="text-foreground">{formatBoolean(item.invisible)}</span></span>
-                            <span>{t("custom_icon")}: <span className="text-foreground">{formatBoolean(item.customIcon)}</span></span>
+                            <span>{t("alias")}: <span className="text-foreground">{formatBoolean(row.original.alias)}</span></span>
+                            <span>{t("invisible")}: <span className="text-foreground">{formatBoolean(row.original.invisible)}</span></span>
+                            <span>{t("custom_icon")}: <span className="text-foreground">{formatBoolean(row.original.customIcon)}</span></span>
                           </div>
-                          {item.data && (
+                          {row.original.data && (
                             <div className="flex gap-2">
                               <span className="text-muted-foreground shrink-0">{t("data")}:</span>
-                              <span className="font-mono truncate" title={item.data}>{item.data}</span>
+                              <span className="font-mono truncate" title={row.original.data}>{row.original.data}</span>
                             </div>
                           )}
-                          {item.raw && (
+                          {row.original.raw && (
                             <div>
                               <div className="flex items-center gap-1 mb-1">
                                 <span className="text-muted-foreground">{t("raw")}:</span>
-                                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => downloadRaw(item)} title={t("download")}>
+                                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => downloadRaw(row.original)} title={t("download")}>
                                   <Download className="h-3 w-3" />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => copyToClipboardRaw(item, index)} title={t("copy")}>
-                                  {copySuccessIndex === index ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => copyToClipboardRaw(row.original, row.id)} title={t("copy")}>
+                                  {copySuccessIndex === row.id ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
                                 </Button>
                               </div>
-                              <pre className="font-mono text-xs bg-background/50 p-2 rounded overflow-x-auto max-h-40">{hexDump(item.raw)}</pre>
+                              <pre className="font-mono text-xs bg-background/50 p-2 rounded overflow-x-auto max-h-40">{hexDump(row.original.raw)}</pre>
                             </div>
                           )}
                         </div>
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                    </tr>
                   )}
                 </>
               ))}
-            </TableBody>
-          </Table>
+            </tbody>
+          </table>
         )}
       </div>
     </div>

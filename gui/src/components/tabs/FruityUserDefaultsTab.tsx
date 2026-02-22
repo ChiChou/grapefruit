@@ -21,20 +21,19 @@ import {
 } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useRpcQuery, useRpcMutation, useQueryClient } from "@/lib/queries";
+import {
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+  type ColumnDef,
+  type ColumnResizeMode,
+} from "@tanstack/react-table";
 
 import type { UserDefaultsEntry } from "@agent/fruity/modules/userdefaults";
 
@@ -74,6 +73,7 @@ export function FruityUserDefaultsTab() {
   const [timeHours, setTimeHours] = useState<string>("00");
   const [timeMinutes, setTimeMinutes] = useState<string>("00");
   const [timeSeconds, setTimeSeconds] = useState<string>("00");
+  const [columnSizing, setColumnSizing] = useState<Record<string, number>>({});
 
   const {
     data: defaults,
@@ -141,7 +141,6 @@ export function FruityUserDefaultsTab() {
 
   const handleDateSelect = (date: Date | undefined) => {
     if (!date) return;
-    // Keep the current time when selecting a new date
     const newDate = new Date(date);
     newDate.setHours(parseInt(timeHours) || 0);
     newDate.setMinutes(parseInt(timeMinutes) || 0);
@@ -151,12 +150,10 @@ export function FruityUserDefaultsTab() {
 
   const saveDateTimeEdit = async () => {
     if (!datePickerValue || !datePickerKey) return;
-    // Combine date with time
     const finalDate = new Date(datePickerValue);
     finalDate.setHours(parseInt(timeHours) || 0);
     finalDate.setMinutes(parseInt(timeMinutes) || 0);
     finalDate.setSeconds(parseInt(timeSeconds) || 0);
-    // Convert to Unix timestamp (seconds)
     const timestamp = finalDate.getTime() / 1000;
     await updateMutation.mutateAsync({ key: datePickerKey, value: timestamp });
     setDatePickerKey(null);
@@ -176,6 +173,216 @@ export function FruityUserDefaultsTab() {
     setEditingKey(null);
     setEditValue("");
   };
+
+  const columns = useMemo<ColumnDef<UserDefaultsItem>[]>(
+    () => [
+      {
+        accessorKey: "type",
+        header: () => t("type"),
+        size: 80,
+        minSize: 60,
+        cell: ({ row }) => (
+          <span
+            className={`px-2 py-1 text-xs rounded ${getTypeBadgeColor(row.original.type)}`}
+          >
+            {row.original.type}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "key",
+        header: () => t("key"),
+        size: 300,
+        minSize: 150,
+        cell: ({ row }) => (
+          <span className="font-mono text-sm break-all" title={row.original.key}>
+            {row.original.key}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "readable",
+        header: () => t("value"),
+        size: 400,
+        minSize: 200,
+        cell: ({ row }) => {
+          const item = row.original;
+          if (editingKey === item.key) {
+            return (
+              <div className="flex items-center gap-2">
+                <Input
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  className="h-7 text-xs font-mono"
+                />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  onClick={() => saveEdit(item.key)}
+                  disabled={updateMutation.isPending}
+                >
+                  <Check className="w-4 h-4 text-green-500" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  onClick={cancelEdit}
+                >
+                  <X className="w-4 h-4 text-red-500" />
+                </Button>
+              </div>
+            );
+          }
+          return (
+            <pre
+              className="font-mono text-xs whitespace-pre-wrap break-all max-h-32 overflow-auto"
+              title={item.readable}
+            >
+              {item.readable}
+            </pre>
+          );
+        },
+      },
+      {
+        id: "actions",
+        header: () => t("actions"),
+        size: 96,
+        minSize: 60,
+        enableResizing: false,
+        cell: ({ row }) => {
+          const item = row.original;
+          return (
+            <div className="flex justify-end gap-1">
+              {item.type === "string" && editingKey !== item.key && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => startEdit(item)}
+                  title={t("edit")}
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+              )}
+              {item.type === "date" && (
+                <Popover
+                  open={datePickerKey === item.key}
+                  onOpenChange={(open) => {
+                    if (!open) {
+                      closeDatePicker();
+                    }
+                  }}
+                >
+                  <PopoverTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startDateEdit(item)} title={t("edit")} />}>
+                      <CalendarIcon className="h-4 w-4" />
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-3" align="end">
+                    <Calendar
+                      mode="single"
+                      selected={datePickerValue}
+                      onSelect={handleDateSelect}
+                      defaultMonth={datePickerValue}
+                    />
+                    <div className="border-t pt-3 mt-3">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <Label className="text-sm">{t("time")}</Label>
+                      </div>
+                      <div className="flex items-center gap-1 mt-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="23"
+                          value={timeHours}
+                          onChange={(e) =>
+                            setTimeHours(
+                              e.target.value.padStart(2, "0").slice(-2),
+                            )
+                          }
+                          className="w-14 h-8 text-center font-mono"
+                          placeholder="HH"
+                        />
+                        <span className="text-lg">:</span>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="59"
+                          value={timeMinutes}
+                          onChange={(e) =>
+                            setTimeMinutes(
+                              e.target.value.padStart(2, "0").slice(-2),
+                            )
+                          }
+                          className="w-14 h-8 text-center font-mono"
+                          placeholder="MM"
+                        />
+                        <span className="text-lg">:</span>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="59"
+                          value={timeSeconds}
+                          onChange={(e) =>
+                            setTimeSeconds(
+                              e.target.value.padStart(2, "0").slice(-2),
+                            )
+                          }
+                          className="w-14 h-8 text-center font-mono"
+                          placeholder="SS"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2 mt-3 pt-3 border-t">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={closeDatePicker}
+                      >
+                        {t("cancel")}
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={saveDateTimeEdit}
+                        disabled={updateMutation.isPending}
+                      >
+                        {t("save")}
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title={t("remove")} />}>
+                    <Trash2 className="h-4 w-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => handleDelete(item.key)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    {t("remove")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          );
+        },
+      },
+    ],
+    [t, editingKey, editValue, datePickerKey, datePickerValue, timeHours, timeMinutes, timeSeconds, updateMutation.isPending],
+  );
+
+  const table = useReactTable({
+    data: filteredItems,
+    columns,
+    state: { columnSizing },
+    onColumnSizingChange: setColumnSizing,
+    getCoreRowModel: getCoreRowModel(),
+    columnResizeMode: "onChange" as ColumnResizeMode,
+    enableColumnResizing: true,
+  });
 
   return (
     <div className="flex flex-col h-full">
@@ -215,187 +422,61 @@ export function FruityUserDefaultsTab() {
             {searchQuery ? "No matching entries" : "No UserDefaults entries"}
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-20">{t("type")}</TableHead>
-                <TableHead className="min-w-[300px]">{t("key")}</TableHead>
-                <TableHead>{t("value")}</TableHead>
-                <TableHead className="w-24 text-right">
-                  {t("actions")}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredItems.map((item) => (
-                <TableRow key={item.key}>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 text-xs rounded ${getTypeBadgeColor(item.type)}`}
+          <table
+            className="w-full text-sm border-collapse"
+            style={{ width: table.getCenterTotalSize() }}
+          >
+            <thead className="sticky top-0 bg-background z-10">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id} className="border-b">
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      className="relative text-left font-medium p-2 select-none"
+                      style={{ width: header.getSize() }}
                     >
-                      {item.type}
-                    </span>
-                  </TableCell>
-                  <TableCell
-                    className="font-mono text-sm break-all"
-                    title={item.key}
-                  >
-                    {item.key}
-                  </TableCell>
-                  <TableCell className="font-mono text-xs">
-                    {editingKey === item.key ? (
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={editValue}
-                          onChange={(e) => setEditValue(e.target.value)}
-                          className="h-7 text-xs font-mono"
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                      {header.column.getCanResize() && (
+                        <div
+                          onMouseDown={header.getResizeHandler()}
+                          onTouchStart={header.getResizeHandler()}
+                          className={`absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none hover:bg-amber-500/50 ${
+                            header.column.getIsResizing() ? "bg-amber-500" : ""
+                          }`}
                         />
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7"
-                          onClick={() => saveEdit(item.key)}
-                          disabled={updateMutation.isPending}
-                        >
-                          <Check className="w-4 h-4 text-green-500" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7"
-                          onClick={cancelEdit}
-                        >
-                          <X className="w-4 h-4 text-red-500" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <pre
-                        className="font-mono text-xs whitespace-pre-wrap break-all max-h-32 overflow-auto"
-                        title={item.readable}
-                      >
-                        {item.readable}
-                      </pre>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      {item.type === "string" && editingKey !== item.key && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={() => startEdit(item)}
-                          title={t("edit")}
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
                       )}
-                      {item.type === "date" && (
-                        <Popover
-                          open={datePickerKey === item.key}
-                          onOpenChange={(open) => {
-                            if (!open) {
-                              closeDatePicker();
-                            }
-                          }}
-                        >
-                          <PopoverTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startDateEdit(item)} title={t("edit")} />}>
-                              <CalendarIcon className="h-4 w-4" />
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-3" align="end">
-                            <Calendar
-                              mode="single"
-                              selected={datePickerValue}
-                              onSelect={handleDateSelect}
-                              defaultMonth={datePickerValue}
-                            />
-                            <div className="border-t pt-3 mt-3">
-                              <div className="flex items-center gap-2">
-                                <Clock className="h-4 w-4 text-muted-foreground" />
-                                <Label className="text-sm">{t("time")}</Label>
-                              </div>
-                              <div className="flex items-center gap-1 mt-2">
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  max="23"
-                                  value={timeHours}
-                                  onChange={(e) =>
-                                    setTimeHours(
-                                      e.target.value.padStart(2, "0").slice(-2),
-                                    )
-                                  }
-                                  className="w-14 h-8 text-center font-mono"
-                                  placeholder="HH"
-                                />
-                                <span className="text-lg">:</span>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  max="59"
-                                  value={timeMinutes}
-                                  onChange={(e) =>
-                                    setTimeMinutes(
-                                      e.target.value.padStart(2, "0").slice(-2),
-                                    )
-                                  }
-                                  className="w-14 h-8 text-center font-mono"
-                                  placeholder="MM"
-                                />
-                                <span className="text-lg">:</span>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  max="59"
-                                  value={timeSeconds}
-                                  onChange={(e) =>
-                                    setTimeSeconds(
-                                      e.target.value.padStart(2, "0").slice(-2),
-                                    )
-                                  }
-                                  className="w-14 h-8 text-center font-mono"
-                                  placeholder="SS"
-                                />
-                              </div>
-                            </div>
-                            <div className="flex justify-end gap-2 mt-3 pt-3 border-t">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={closeDatePicker}
-                              >
-                                {t("cancel")}
-                              </Button>
-                              <Button
-                                size="sm"
-                                onClick={saveDateTimeEdit}
-                                disabled={updateMutation.isPending}
-                              >
-                                {t("save")}
-                              </Button>
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                      )}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title={t("remove")} />}>
-                            <Trash2 className="h-4 w-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => handleDelete(item.key)}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            {t("remove")}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
-                </TableRow>
+                    </th>
+                  ))}
+                </tr>
               ))}
-            </TableBody>
-          </Table>
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map((row) => (
+                <tr key={row.original.key} className="border-b hover:bg-muted/50">
+                  {row.getVisibleCells().map((cell) => (
+                    <td
+                      key={cell.id}
+                      className="p-2 text-xs"
+                      style={{
+                        width: cell.column.getSize(),
+                        maxWidth: cell.column.getSize(),
+                      }}
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
   RefreshCw,
@@ -14,14 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Input } from "@/components/ui/input";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -36,6 +28,13 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { toast } from "sonner";
 import { useSession } from "@/context/SessionContext";
 import { useRpcQuery, useRpcMutation, useQueryClient } from "@/lib/queries";
+import {
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+  type ColumnDef,
+  type ColumnResizeMode,
+} from "@tanstack/react-table";
 import type {
   Cookie,
   CookiePredicate,
@@ -58,6 +57,7 @@ export function FruityBinaryCookieTab() {
     useState<Cookie | null>(null);
   const [expiresDate, setExpiresDate] = useState<Date>(new Date());
   const [isExpiresPopoverOpen, setIsExpiresPopoverOpen] = useState(false);
+  const [columnSizing, setColumnSizing] = useState<Record<string, number>>({});
 
   const {
     data: cookies = [],
@@ -175,6 +175,267 @@ export function FruityBinaryCookieTab() {
     }
   };
 
+  const columns = useMemo<ColumnDef<Cookie>[]>(
+    () => [
+      {
+        accessorKey: "domain",
+        header: () => (
+          <>
+            <Globe className="w-4 h-4 inline mr-1" />
+            {t("domain")}
+          </>
+        ),
+        size: 192,
+        minSize: 100,
+        cell: ({ row }) => (
+          <span className="truncate block" title={row.original.domain}>
+            {row.original.domain}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "name",
+        header: () => (
+          <>
+            <Shield className="w-4 h-4 inline mr-1" />
+            {t("name")}
+          </>
+        ),
+        size: 160,
+        minSize: 80,
+      },
+      {
+        accessorKey: "value",
+        header: () => t("value"),
+        size: 200,
+        minSize: 120,
+        cell: ({ row }) => {
+          const cookie = row.original;
+          const isEditing =
+            editingCookie?.name === cookie.name &&
+            editingCookie?.domain === cookie.domain &&
+            editingCookie?.path === cookie.path;
+
+          if (isEditing) {
+            return (
+              <div className="flex items-center gap-1">
+                <Input
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      saveValue();
+                    } else if (e.key === "Escape") {
+                      e.preventDefault();
+                      cancelEditing();
+                    }
+                  }}
+                  className="h-7 text-xs"
+                  disabled={isSaving}
+                  autoFocus
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-green-600"
+                  onClick={saveValue}
+                  disabled={isSaving}
+                  title={t("save")}
+                >
+                  <Check className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={cancelEditing}
+                  disabled={isSaving}
+                  title={t("discard")}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            );
+          }
+
+          return (
+            <button
+              type="button"
+              className="w-full text-left hover:bg-accent px-1 py-0.5 rounded truncate"
+              onClick={() => startEditing(cookie)}
+              title={cookie.value}
+            >
+              {cookie.value}
+            </button>
+          );
+        },
+      },
+      {
+        accessorKey: "expiresDate",
+        header: () => (
+          <>
+            <Calendar className="w-4 h-4 inline mr-1" />
+            {t("expires")}
+          </>
+        ),
+        size: 128,
+        minSize: 80,
+        cell: ({ row }) => {
+          const cookie = row.original;
+          const isEditingExpires =
+            isExpiresPopoverOpen &&
+            editingExpiresCookie?.name === cookie.name &&
+            editingExpiresCookie?.domain === cookie.domain &&
+            editingExpiresCookie?.path === cookie.path;
+
+          return (
+            <Popover
+              open={isEditingExpires}
+              onOpenChange={(open) => {
+                if (open) {
+                  startEditingExpires(cookie);
+                } else {
+                  cancelEditingExpires();
+                }
+              }}
+            >
+              <PopoverTrigger render={<button type="button" className="w-full text-left hover:bg-accent px-1 py-0.5 rounded" />}>
+                  {formatDate(cookie.expiresDate)}
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-3" align="start">
+                <div className="flex flex-col gap-3">
+                  <CalendarComponent
+                    mode="single"
+                    selected={expiresDate}
+                    onSelect={(date) => date && setExpiresDate(date)}
+                    className="rounded-md border"
+                  />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="time"
+                      value={expiresDate.toTimeString().slice(0, 5)}
+                      onChange={(e) => {
+                        const [hours, minutes] = e.target.value
+                          .split(":")
+                          .map(Number);
+                        const newDate = new Date(expiresDate);
+                        newDate.setHours(hours, minutes);
+                        setExpiresDate(newDate);
+                      }}
+                      className="w-24"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={cancelEditingExpires}
+                    >
+                      Discard
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={saveExpiresDate}
+                      disabled={isSaving}
+                    >
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          );
+        },
+      },
+      {
+        accessorKey: "path",
+        header: () => t("path"),
+        size: 96,
+        minSize: 60,
+      },
+      {
+        accessorKey: "isSecure",
+        header: () => (
+          <span className="flex items-center justify-center">
+            <Lock className="w-4 h-4 inline mr-1" />
+            {t("secure")}
+          </span>
+        ),
+        size: 80,
+        minSize: 50,
+        cell: ({ row }) =>
+          row.original.isSecure ? (
+            <span className="text-green-600 text-center block">✓</span>
+          ) : (
+            <span className="text-muted-foreground text-center block">-</span>
+          ),
+      },
+      {
+        accessorKey: "isHTTPOnly",
+        header: () => <span className="flex items-center justify-center">HTTP Only</span>,
+        size: 80,
+        minSize: 50,
+        cell: ({ row }) =>
+          row.original.isHTTPOnly ? (
+            <span className="text-green-600 text-center block">✓</span>
+          ) : (
+            <span className="text-muted-foreground text-center block">-</span>
+          ),
+      },
+      {
+        accessorKey: "isSessionOnly",
+        header: () => <span className="flex items-center justify-center">Session Cookie</span>,
+        size: 80,
+        minSize: 50,
+        cell: ({ row }) =>
+          row.original.isSessionOnly ? (
+            <span className="text-amber-600 text-center block">✓</span>
+          ) : (
+            <span className="text-muted-foreground text-center block">-</span>
+          ),
+      },
+      {
+        id: "actions",
+        header: "",
+        size: 96,
+        minSize: 60,
+        enableResizing: false,
+        cell: ({ row }) => {
+          const cookie = row.original;
+          return (
+            <div className="flex justify-end gap-1">
+              <DropdownMenu>
+                <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title={t("remove")} />}>
+                    <Trash2 className="h-4 w-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => handleRemove(cookie)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    {t("remove")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          );
+        },
+      },
+    ],
+    [t, editingCookie, editValue, isSaving, isExpiresPopoverOpen, editingExpiresCookie, expiresDate],
+  );
+
+  const table = useReactTable({
+    data: cookies,
+    columns,
+    state: { columnSizing },
+    onColumnSizingChange: setColumnSizing,
+    getCoreRowModel: getCoreRowModel(),
+    columnResizeMode: "onChange" as ColumnResizeMode,
+    enableColumnResizing: true,
+  });
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 p-2 border-b">
@@ -213,208 +474,64 @@ export function FruityBinaryCookieTab() {
             {t("no_cookies")}
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-48">
-                  <Globe className="w-4 h-4 inline mr-1" />
-                  {t("domain")}
-                </TableHead>
-                <TableHead className="w-40">
-                  <Shield className="w-4 h-4 inline mr-1" />
-                  {t("name")}
-                </TableHead>
-                <TableHead>{t("value")}</TableHead>
-                <TableHead className="w-32">
-                  <Calendar className="w-4 h-4 inline mr-1" />
-                  {t("expires")}
-                </TableHead>
-                <TableHead className="w-24">{t("path")}</TableHead>
-                <TableHead className="w-20 text-center">
-                  <Lock className="w-4 h-4 inline mr-1" />
-                  {t("secure")}
-                </TableHead>
-                <TableHead className="w-20 text-center">
-                  HTTP Only {/* no need to translate*/}
-                </TableHead>
-                <TableHead className="w-20 text-center">
-                  Session Cookie
-                </TableHead>
-                <TableHead className="w-24 text-right"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {cookies.map((cookie) => (
-                <TableRow key={`${cookie.domain}${cookie.path}${cookie.name}`}>
-                  <TableCell
-                    className="font-mono text-sm truncate max-w-[180px]"
-                    title={cookie.domain}
-                  >
-                    {cookie.domain}
-                  </TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {cookie.name}
-                  </TableCell>
-                  <TableCell className="font-mono text-sm max-w-[200px]">
-                    {editingCookie?.name === cookie.name &&
-                    editingCookie?.domain === cookie.domain &&
-                    editingCookie?.path === cookie.path ? (
-                      <div className="flex items-center gap-1">
-                        <Input
-                          value={editValue}
-                          onChange={(e) => setEditValue(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              saveValue();
-                            } else if (e.key === "Escape") {
-                              e.preventDefault();
-                              cancelEditing();
-                            }
-                          }}
-                          className="h-7 text-xs"
-                          disabled={isSaving}
-                          autoFocus
+          <table
+            className="w-full text-sm border-collapse"
+            style={{ width: table.getCenterTotalSize() }}
+          >
+            <thead className="sticky top-0 bg-background z-10">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id} className="border-b">
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      className="relative text-left font-medium p-2 select-none"
+                      style={{ width: header.getSize() }}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                      {header.column.getCanResize() && (
+                        <div
+                          onMouseDown={header.getResizeHandler()}
+                          onTouchStart={header.getResizeHandler()}
+                          className={`absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none hover:bg-amber-500/50 ${
+                            header.column.getIsResizing() ? "bg-amber-500" : ""
+                          }`}
                         />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-green-600"
-                          onClick={saveValue}
-                          disabled={isSaving}
-                          title={t("save")}
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={cancelEditing}
-                          disabled={isSaving}
-                          title={t("discard")}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        className="w-full text-left hover:bg-accent px-1 py-0.5 rounded truncate"
-                        onClick={() => startEditing(cookie)}
-                        title={cookie.value}
-                      >
-                        {cookie.value}
-                      </button>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    <Popover
-                      open={
-                        isExpiresPopoverOpen &&
-                        editingExpiresCookie?.name === cookie.name &&
-                        editingExpiresCookie?.domain === cookie.domain &&
-                        editingExpiresCookie?.path === cookie.path
-                      }
-                      onOpenChange={(open) => {
-                        if (open) {
-                          startEditingExpires(cookie);
-                        } else {
-                          cancelEditingExpires();
-                        }
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map((row) => (
+                <tr
+                  key={`${row.original.domain}${row.original.path}${row.original.name}`}
+                  className="border-b hover:bg-muted/50"
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <td
+                      key={cell.id}
+                      className="p-2 font-mono text-xs"
+                      style={{
+                        width: cell.column.getSize(),
+                        maxWidth: cell.column.getSize(),
                       }}
                     >
-                      <PopoverTrigger render={<button type="button" className="w-full text-left hover:bg-accent px-1 py-0.5 rounded" />}>
-                          {formatDate(cookie.expiresDate)}
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-3" align="start">
-                        <div className="flex flex-col gap-3">
-                          <CalendarComponent
-                            mode="single"
-                            selected={expiresDate}
-                            onSelect={(date) => date && setExpiresDate(date)}
-                            className="rounded-md border"
-                          />
-                          <div className="flex items-center gap-2">
-                            <Input
-                              type="time"
-                              value={expiresDate.toTimeString().slice(0, 5)}
-                              onChange={(e) => {
-                                const [hours, minutes] = e.target.value
-                                  .split(":")
-                                  .map(Number);
-                                const newDate = new Date(expiresDate);
-                                newDate.setHours(hours, minutes);
-                                setExpiresDate(newDate);
-                              }}
-                              className="w-24"
-                            />
-                          </div>
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={cancelEditingExpires}
-                            >
-                              Discard
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={saveExpiresDate}
-                              disabled={isSaving}
-                            >
-                              Save
-                            </Button>
-                          </div>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {cookie.path}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {cookie.isSecure ? (
-                      <span className="text-green-600">✓</span>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {cookie.isHTTPOnly ? (
-                      <span className="text-green-600">✓</span>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {cookie.isSessionOnly ? (
-                      <span className="text-amber-600">✓</span>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title={t("remove")} />}>
-                            <Trash2 className="h-4 w-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => handleRemove(cookie)}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            {t("remove")}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
-                </TableRow>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </td>
+                  ))}
+                </tr>
               ))}
-            </TableBody>
-          </Table>
+            </tbody>
+          </table>
         )}
       </div>
     </div>
