@@ -79,6 +79,13 @@ export interface DirectoryListing {
   list: MetaData[];
 }
 
+// Note: we migrate from ObjC dictionaryWithContentsOfFile_ api to POSIX to
+// mitigate a memory leak problem we do not have enough time to investigate.
+// However, in this way we lost some metadata like NSFileProtectionType
+//
+// Right now we are not using the protection info, but this is useful for
+// pentest purpose. Consider adding it back in the future.
+
 export function ls(path: string): DirectoryListing {
   const names = readdirSync(path);
   const writable = posix.isWritable(path);
