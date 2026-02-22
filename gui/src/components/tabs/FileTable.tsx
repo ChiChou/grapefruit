@@ -16,6 +16,8 @@ import {
   Check,
   X,
   Loader2,
+  Upload,
+  RefreshCw,
 } from "lucide-react";
 import {
   Table,
@@ -27,12 +29,21 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { MetaData } from "@agent/fruity/modules/fs";
 import { formatSize, formatDate, typeFor } from "../../lib/file-explorer.ts";
 
@@ -44,6 +55,10 @@ interface FileTableProps {
   onPreview: (fileName: string, type: string) => void;
   onRename: (oldName: string, newName: string) => Promise<void>;
   onDelete: (fileName: string) => Promise<void>;
+  onBatchDelete?: (fileNames: string[]) => Promise<void>;
+  onUpload?: () => void;
+  onRefresh?: () => void;
+  isReadOnly?: boolean;
 }
 
 export function FileTable({
@@ -54,12 +69,19 @@ export function FileTable({
   onPreview,
   onRename,
   onDelete,
+  onBatchDelete,
+  onUpload,
+  onRefresh,
+  isReadOnly,
 }: FileTableProps) {
   const { t } = useTranslation();
   const [editingFile, setEditingFile] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [isRenaming, setIsRenaming] = useState(false);
   const [deletingFile, setDeletingFile] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  const [isBatchDeleting, setIsBatchDeleting] = useState(false);
+  const [showBatchDeleteDialog, setShowBatchDeleteDialog] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Preserve scroll position across dockview tab switches.
@@ -70,6 +92,11 @@ export function FileTable({
   useEffect(() => {
     scrollTopRef.current = 0;
   }, [cwd]);
+
+  // Clear selection when items change
+  useEffect(() => {
+    setSelectedFiles(new Set());
+  }, [items]);
 
   const scrollContainerRef = useCallback((el: HTMLDivElement | null) => {
     if (observerRef.current) {
@@ -163,6 +190,41 @@ export function FileTable({
     }
   };
 
+  const toggleSelect = (fileName: string) => {
+    setSelectedFiles((prev) => {
+      const next = new Set(prev);
+      if (next.has(fileName)) {
+        next.delete(fileName);
+      } else {
+        next.add(fileName);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedFiles.size === items.length) {
+      setSelectedFiles(new Set());
+    } else {
+      setSelectedFiles(new Set(items.map((item) => item.name)));
+    }
+  };
+
+  const handleBatchDelete = async () => {
+    if (!onBatchDelete || selectedFiles.size === 0) return;
+
+    setShowBatchDeleteDialog(false);
+    setIsBatchDeleting(true);
+    try {
+      await onBatchDelete(Array.from(selectedFiles));
+      setSelectedFiles(new Set());
+    } catch (err) {
+      console.error("Failed to batch delete:", err);
+    } finally {
+      setIsBatchDeleting(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-col h-full">
@@ -182,6 +244,31 @@ export function FileTable({
   if (items.length === 0) {
     return (
       <div className="flex flex-col h-full">
+        {(onRefresh || (!isReadOnly && onUpload)) && (
+          <div className="flex items-center gap-2 px-2 py-1 border-b">
+            {!isReadOnly && onUpload && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={onUpload}
+              >
+                <Upload className="h-3 w-3 mr-1" />
+                {t("upload")}
+              </Button>
+            )}
+            {onRefresh && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={onRefresh}
+              >
+                <RefreshCw className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+        )}
         <div className="flex-1 flex items-center justify-center text-muted-foreground">
           {t("empty_directory")}
         </div>
@@ -196,10 +283,99 @@ export function FileTable({
 
   return (
     <div className="flex flex-col h-full">
+      {!isReadOnly && (
+        <div className="flex items-center gap-2 px-2 py-1 border-b shrink-0">
+          <Checkbox
+            checked={
+              selectedFiles.size === items.length && items.length > 0
+            }
+            onCheckedChange={toggleSelectAll}
+            aria-label={t("select_all")}
+          />
+          {selectedFiles.size > 0 && (
+            <>
+              <span className="text-xs text-muted-foreground">
+                {t("selected_count", { count: selectedFiles.size })}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs text-destructive hover:text-destructive"
+                disabled={isBatchDeleting}
+                onClick={() => setShowBatchDeleteDialog(true)}
+              >
+                {isBatchDeleting ? (
+                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                ) : (
+                  <Trash2 className="h-3 w-3 mr-1" />
+                )}
+                {t("batch_delete")}
+              </Button>
+              <Dialog
+                open={showBatchDeleteDialog}
+                onOpenChange={setShowBatchDeleteDialog}
+              >
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{t("batch_delete")}</DialogTitle>
+                    <DialogDescription>
+                      {t("batch_delete_confirm", {
+                        count: selectedFiles.size,
+                      })}
+                      {" "}
+                      {t("batch_delete_warning")}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowBatchDeleteDialog(false)}
+                    >
+                      {t("cancel")}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={handleBatchDelete}
+                    >
+                      {t("delete")}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </>
+          )}
+          {(onUpload || onRefresh) && (
+            <div className="flex items-center gap-2 ml-auto">
+              {onUpload && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={onUpload}
+                >
+                  <Upload className="h-3 w-3 mr-1" />
+                  {t("upload")}
+                </Button>
+              )}
+              {onRefresh && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={onRefresh}
+                >
+                  <RefreshCw className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
       <div ref={scrollContainerRef} className="flex-1 overflow-auto">
         <Table>
           <TableHeader>
             <TableRow>
+              {!isReadOnly && <TableHead className="w-8"></TableHead>}
               <TableHead className="w-8"></TableHead>
               <TableHead>{t("name")}</TableHead>
               <TableHead className="w-32"></TableHead>
@@ -215,6 +391,14 @@ export function FileTable({
 
               return (
                 <TableRow key={item.name} className="group">
+                  {!isReadOnly && (
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedFiles.has(item.name)}
+                        onCheckedChange={() => toggleSelect(item.name)}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell>
                     {item.dir ? (
                       <Folder className="w-4 h-4 text-yellow-500" />
@@ -280,42 +464,46 @@ export function FileTable({
                         >
                           <Download className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => startEditing(item.name)}
-                          title={t("rename")}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            render={
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-destructive hover:text-destructive"
-                                title={t("delete")}
-                                disabled={isDeleting}
-                              />
-                            }
+                        {!isReadOnly && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => startEditing(item.name)}
+                            title={t("rename")}
                           >
-                            {isDeleting ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
-                            )}
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start">
-                            <DropdownMenuItem
-                              onClick={() => handleDelete(item.name)}
-                              className="text-destructive focus:text-destructive"
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {!isReadOnly && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger
+                              render={
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-destructive hover:text-destructive"
+                                  title={t("delete")}
+                                  disabled={isDeleting}
+                                />
+                              }
                             >
-                              {t("delete")}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                              {isDeleting ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                              <DropdownMenuItem
+                                onClick={() => handleDelete(item.name)}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                {t("delete")}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </div>
                     )}
                   </TableCell>

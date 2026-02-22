@@ -251,8 +251,10 @@ async function testCookies() {
 async function testFs() {
   console.log("\n--- fs ---");
 
-  await test("fs.ls ~ returns app home directory listing", async () => {
-    const result = fs.ls("~");
+  const { home, bundle } = fs.roots();
+
+  await test("fs.ls home returns app home directory listing", async () => {
+    const result = fs.ls(home);
     assertKeys(
       result as unknown as Record<string, unknown>,
       ["cwd", "list"],
@@ -276,8 +278,8 @@ async function testFs() {
     }
   });
 
-  await test("fs.ls ! returns app bundle directory listing", async () => {
-    const result = fs.ls("!");
+  await test("fs.ls bundle returns app bundle directory listing", async () => {
+    const result = fs.ls(bundle);
     assertArray(result.list, "list");
     assertNonEmpty(result.list, "list");
     assert(result.cwd.includes(".app"), "bundle path should contain .app");
@@ -297,7 +299,7 @@ async function testFs() {
   });
 
   await test("fs.attrs on app home dir returns stat fields", async () => {
-    const result = fs.ls("~");
+    const result = fs.ls(home);
     const a = fs.attrs(result.cwd);
     assertKeys(
       a as unknown as Record<string, unknown>,
@@ -313,7 +315,6 @@ async function testFs() {
   });
 
   await test("fs.text reads a text file", async () => {
-    const home = fs.ls("~").cwd;
     const testPath = home + "/igf_text_test_" + Date.now() + ".txt";
     fs.saveText(testPath, "text read test content\n");
 
@@ -330,7 +331,6 @@ async function testFs() {
   });
 
   await test("fs.saveText + fs.text round-trip", async () => {
-    const home = fs.ls("~").cwd;
     const testPath = home + "/igf_test_" + Date.now() + ".txt";
     const testContent = "hello from igf test\n";
 
@@ -347,7 +347,6 @@ async function testFs() {
   });
 
   await test("fs.data reads binary data", async () => {
-    const home = fs.ls("~").cwd;
     const testPath = home + "/igf_bin_test_" + Date.now() + ".bin";
     fs.saveText(testPath, "binary test data");
 
@@ -360,7 +359,6 @@ async function testFs() {
   });
 
   await test("fs.preview reads limited data", async () => {
-    const home = fs.ls("~").cwd;
     const testPath = home + "/igf_preview_test_" + Date.now() + ".txt";
     fs.saveText(testPath, "preview test data content");
 
@@ -373,7 +371,6 @@ async function testFs() {
   });
 
   await test("fs.cp copies a file", async () => {
-    const home = fs.ls("~").cwd;
     const srcPath = home + "/igf_cp_src_" + Date.now() + ".txt";
     const dstPath = home + "/igf_cp_dst_" + Date.now() + ".txt";
 
@@ -390,7 +387,6 @@ async function testFs() {
   });
 
   await test("fs.mv renames a file", async () => {
-    const home = fs.ls("~").cwd;
     const srcPath = home + "/igf_mv_src_" + Date.now() + ".txt";
     const dstPath = home + "/igf_mv_dst_" + Date.now() + ".txt";
 
@@ -416,7 +412,6 @@ async function testFs() {
 
   await test("fs.plist reads a plist file", async () => {
     // read the app's own Info.plist
-    const bundle = fs.ls("!").cwd;
     const plistPath = bundle + "/Info.plist";
     let threw = false;
     try {

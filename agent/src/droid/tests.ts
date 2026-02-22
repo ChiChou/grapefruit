@@ -206,8 +206,10 @@ async function testProvider() {
 async function testFs() {
   console.log("\n--- fs ---");
 
-  await test("fs.ls ~ returns app data directory listing", async () => {
-    const result = await fs.ls("~");
+  const { home } = await fs.roots();
+
+  await test("fs.ls home returns app data directory listing", async () => {
+    const result = await fs.ls(home);
     assertKeys(
       result as unknown as Record<string, unknown>,
       ["cwd", "list"],
@@ -250,7 +252,7 @@ async function testFs() {
   });
 
   await test("fs.attrs on app data dir returns stat fields", async () => {
-    const result = await fs.ls("~");
+    const result = await fs.ls(home);
     const a = await fs.attrs(result.cwd);
     assertKeys(
       a as unknown as Record<string, unknown>,
@@ -267,7 +269,7 @@ async function testFs() {
   });
 
   await test("fs.text reads a text file", async () => {
-    const dir = (await fs.ls("~")).cwd;
+    const dir = home;
     const testPath = dir + "/igf_text_test_" + Date.now() + ".txt";
     await fs.saveText(testPath, "text read test content\n");
 
@@ -284,7 +286,7 @@ async function testFs() {
   });
 
   await test("fs.saveText + fs.text round-trip", async () => {
-    const dir = (await fs.ls("~")).cwd;
+    const dir = home;
     const testPath = dir + "/igf_test_" + Date.now() + ".txt";
     const testContent = "hello from igf test\n";
 
@@ -302,7 +304,7 @@ async function testFs() {
   });
 
   await test("fs.data reads binary data", async () => {
-    const dir = (await fs.ls("~")).cwd;
+    const dir = home;
     const testPath = dir + "/igf_bin_test_" + Date.now() + ".bin";
     await fs.saveText(testPath, "binary test data");
 
@@ -315,7 +317,7 @@ async function testFs() {
   });
 
   await test("fs.preview reads limited data", async () => {
-    const dir = (await fs.ls("~")).cwd;
+    const dir = home;
     const testPath = dir + "/igf_preview_test_" + Date.now() + ".txt";
     await fs.saveText(testPath, "preview test data content");
 
@@ -328,7 +330,7 @@ async function testFs() {
   });
 
   await test("fs.cp copies a file", async () => {
-    const dir = (await fs.ls("~")).cwd;
+    const dir = home;
     const srcPath = dir + "/igf_cp_src_" + Date.now() + ".txt";
     const dstPath = dir + "/igf_cp_dst_" + Date.now() + ".txt";
 
@@ -345,7 +347,7 @@ async function testFs() {
   });
 
   await test("fs.mv renames a file", async () => {
-    const dir = (await fs.ls("~")).cwd;
+    const dir = home;
     const srcPath = dir + "/igf_mv_src_" + Date.now() + ".txt";
     const dstPath = dir + "/igf_mv_dst_" + Date.now() + ".txt";
 
@@ -369,14 +371,6 @@ async function testFs() {
     await fs.rm(dstPath);
   });
 
-  await test("fs.expandPath ~ resolves to app data dir", async () => {
-    const result = await fs.ls("~");
-    assert(
-      result.cwd.includes("/data/"),
-      `expected data path, got ${result.cwd}`,
-    );
-    console.log(`    ~ = ${result.cwd}`);
-  });
 }
 
 // ---------------------------------------------------------------------------

@@ -1,4 +1,11 @@
+import ObjC from "frida-objc-bridge";
+import Java from "frida-java-bridge";
+
+import { mkdirp as objcMkdirp } from "./fruity/modules/fs.js";
+import { mkdirp as javaMkdirp } from "./droid/modules/fs.js";
+
 import fs from "fs";
+import path from "path";
 import RemoteStreamController, { type Packet } from "frida-remote-stream";
 
 rpc.exports.len = function (path: string) {
@@ -64,7 +71,12 @@ function sendChunk(data: ArrayBuffer) {
   waitForAck();
 }
 
-function streamFromDisk(path: string, offset: number, size: number, patch?: { offset: number; data: ArrayBuffer }) {
+function streamFromDisk(
+  path: string,
+  offset: number,
+  size: number,
+  patch?: { offset: number; data: ArrayBuffer },
+) {
   const fd = new File(path, "r");
   try {
     fd.seek(offset);
@@ -190,11 +202,21 @@ rpc.exports.pull = function (path: string) {
   );
 };
 
+function mkdirp(path: string) {
+  if (ObjC.available) return objcMkdirp(path);
+  else if (Java.available) return javaMkdirp(path);
+
+  throw new Error("mkdirp is not supported on this platform");
+}
+
 /**
  * upload a file via stream
  * @param path destination path
  */
-rpc.exports.push = function (path: string) {
+rpc.exports.push = function (dest: string) {
+  const dir = path.dirname(dest);
+  mkdirp(dir);
+
   const streams = new RemoteStreamController();
 
   streams.events.on("send", ({ stanza, data }: Packet) => {
@@ -221,6 +243,6 @@ rpc.exports.push = function (path: string) {
   recv("+stream", onStreamMessage);
 
   streams.events.on("stream", (stream) =>
-    stream.pipe(fs.createWriteStream(path)),
+    stream.pipe(fs.createWriteStream(dest)),
   );
 };

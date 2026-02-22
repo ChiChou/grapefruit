@@ -25,6 +25,49 @@ import type { FinderTabParams, UploadFile } from "../../lib/file-explorer.ts";
 
 export type { FinderTabParams };
 
+// Recursively read all files from a FileSystemDirectoryEntry
+function readAllEntries(
+  dirEntry: FileSystemDirectoryEntry,
+  basePath: string,
+): Promise<{ file: File; relativePath: string }[]> {
+  return new Promise((resolve, reject) => {
+    const reader = dirEntry.createReader();
+    const results: Promise<{ file: File; relativePath: string }[]>[] = [];
+
+    function readBatch() {
+      reader.readEntries((entries) => {
+        if (entries.length === 0) {
+          Promise.all(results)
+            .then((arrays) => resolve(arrays.flat()))
+            .catch(reject);
+          return;
+        }
+        for (const entry of entries) {
+          const entryPath = basePath
+            ? `${basePath}/${entry.name}`
+            : entry.name;
+          if (entry.isDirectory) {
+            results.push(
+              readAllEntries(entry as FileSystemDirectoryEntry, entryPath),
+            );
+          } else if (entry.isFile) {
+            results.push(
+              new Promise((res, rej) => {
+                (entry as FileSystemFileEntry).file(
+                  (file) => res([{ file, relativePath: entryPath }]),
+                  rej,
+                );
+              }),
+            );
+          }
+        }
+        readBatch();
+      }, reject);
+    }
+    readBatch();
+  });
+}
+
 export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
   const { fruity, droid, status, pid, device, platform, mode, identifier } =
     useSession();
@@ -57,6 +100,8 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
     () => savedState?.fullCwd || null,
   );
   const restoredRef = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadAbortRef = useRef(false);
 
   const [items, setItems] = useState<
     import("@agent/fruity/modules/fs").MetaData[]
@@ -64,11 +109,17 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
   const [isLoading, setIsLoading] = useState(false);
 
   const [fullCwd, setFullCwd] = useState<string | null>(null);
+  const [cwdWritable, setCwdWritable] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploadFiles, setUploadFiles] = useState<UploadFile[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const fsApi = isDroid ? droid : fruity;
   const apiReady = status === Status.Ready && !!fsApi;
+
+  const [roots, setRoots] = useState<{
+    home: string;
+    bundle: string;
+  } | null>(null);
 
   const loadDirectory = useCallback(
     async (
@@ -105,10 +156,11 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
     (path: string) => {
       setIsLoading(true);
       loadDirectory(path)
-        .then(({ cwd, list }) => {
+        .then(({ cwd, writable, list }) => {
           const data = list.filter((e) => !e.dir);
           data.sort((a, b) => a.name.localeCompare(b.name));
           setFullCwd(cwd);
+          setCwdWritable(writable);
           setItems(data);
         })
         .catch(() => {
@@ -212,26 +264,21 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
     },
   });
 
-  const handleDrop = useCallback(
-    async (e: React.DragEvent) => {
-      e.preventDefault();
-      setIsDragOver(false);
-      if (activeTab !== "home" || !pid || !device || !fullCwd) return;
+  const uploadFileList = useCallback(
+    async (entries: { file: File; targetPath: string }[]) => {
+      if (entries.length === 0 || !fullCwd) return;
 
-      const files = Array.from(e.dataTransfer.files);
-      if (files.length === 0) return;
-
-      const newFiles: UploadFile[] = files.map((f) => ({
-        name: f.name,
+      const newFiles: UploadFile[] = entries.map((e) => ({
+        name: e.targetPath.replace(`${fullCwd}/`, ""),
         progress: 0,
       }));
       setUploadFiles(newFiles);
       setUploadOpen(true);
+      uploadAbortRef.current = false;
 
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const targetPath = `${fullCwd}/${file.name}`;
-
+      for (let i = 0; i < entries.length; i++) {
+        if (uploadAbortRef.current) break;
+        const { file, targetPath } = entries[i];
         try {
           await uploadFileMutation.mutateAsync({ file, targetPath });
           setUploadFiles((prev) =>
@@ -253,18 +300,106 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
         handleDirectorySelect(fullCwd);
       }, 500);
     },
-    [
-      activeTab,
-      pid,
-      device,
-      fullCwd,
-      handleDirectorySelect,
-      uploadFileMutation,
-    ],
+    [fullCwd, handleDirectorySelect, uploadFileMutation],
+  );
+
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(false);
+      if (!cwdWritable || !pid || !device || !fullCwd) return;
+
+      // Try webkitGetAsEntry for folder support
+      const dataItems = Array.from(e.dataTransfer.items);
+      const allEntries: { file: File; targetPath: string }[] = [];
+      let usedEntryApi = false;
+
+      for (const item of dataItems) {
+        const entry = item.webkitGetAsEntry?.();
+        if (entry) {
+          usedEntryApi = true;
+          if (entry.isDirectory) {
+            const dirFiles = await readAllEntries(
+              entry as FileSystemDirectoryEntry,
+              entry.name,
+            );
+            for (const { file, relativePath } of dirFiles) {
+              allEntries.push({
+                file,
+                targetPath: `${fullCwd}/${relativePath}`,
+              });
+            }
+          } else if (entry.isFile) {
+            const file = await new Promise<File>((resolve, reject) => {
+              (entry as FileSystemFileEntry).file(resolve, reject);
+            });
+            allEntries.push({
+              file,
+              targetPath: `${fullCwd}/${file.name}`,
+            });
+          }
+        }
+      }
+
+      // Fallback to plain files if webkitGetAsEntry not available
+      if (!usedEntryApi) {
+        const files = Array.from(e.dataTransfer.files);
+        for (const file of files) {
+          allEntries.push({
+            file,
+            targetPath: `${fullCwd}/${file.name}`,
+          });
+        }
+      }
+
+      if (allEntries.length === 0) return;
+      await uploadFileList(allEntries);
+    },
+    [activeTab, pid, device, fullCwd, uploadFileList],
+  );
+
+  const handleBatchDelete = useCallback(
+    async (fileNames: string[]) => {
+      if (!fullCwd) return;
+
+      for (const fileName of fileNames) {
+        const path = `${fullCwd}/${fileName}`;
+        await deleteMutation.mutateAsync({ path });
+      }
+      toast.success(t("file_deleted"));
+      handleDirectorySelect(fullCwd);
+    },
+    [fullCwd, deleteMutation, t, handleDirectorySelect],
+  );
+
+  const handleUpload = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileInputChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (!files || files.length === 0 || !fullCwd) return;
+
+      const entries = Array.from(files).map((file) => ({
+        file,
+        targetPath: `${fullCwd}/${file.name}`,
+      }));
+      await uploadFileList(entries);
+
+      // Reset input so the same files can be re-selected
+      e.target.value = "";
+    },
+    [fullCwd, uploadFileList],
   );
 
   useEffect(() => {
     if (!apiReady) return;
+    fsApi.fs.roots().then(setRoots);
+  }, [apiReady, fsApi]);
+
+  useEffect(() => {
+    if (!apiReady || !roots) return;
 
     // On first load, restore saved directory from localStorage
     if (!restoredRef.current && initialSavedCwd) {
@@ -274,8 +409,8 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
     }
     restoredRef.current = true;
 
-    handleDirectorySelect(activeTab === "bundle" ? "!" : "~");
-  }, [apiReady, activeTab, handleDirectorySelect, initialSavedCwd]);
+    handleDirectorySelect(activeTab === "bundle" ? roots.bundle : roots.home);
+  }, [apiReady, roots, activeTab, handleDirectorySelect, initialSavedCwd]);
 
   useEffect(() => {
     if (!apiReady || !params?.path) return;
@@ -296,8 +431,17 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
     }
   }, [storageKey, activeTab, fullCwd]);
 
+  const isReadOnly = !cwdWritable;
+
   return (
     <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={handleFileInputChange}
+      />
       <ResizablePanelGroup orientation="horizontal" autoSaveId="finder-split">
         <ResizablePanel defaultSize="15%" minSize="5%" maxSize="80%">
           <Tabs
@@ -320,21 +464,27 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
                 value="bundle"
                 className="flex-1 overflow-hidden mt-0"
               >
+                {roots && (
                 <DirectoryTree
                   root="!"
+                  rootPath={roots.bundle}
                   apiReady={apiReady}
                   loadDirectory={loadDirectory}
                   onDirectorySelect={handleDirectorySelect}
                 />
+              )}
               </TabsContent>
             )}
             <TabsContent value="home" className="flex-1 overflow-hidden mt-0">
-              <DirectoryTree
-                root="~"
-                apiReady={apiReady}
-                loadDirectory={loadDirectory}
-                onDirectorySelect={handleDirectorySelect}
-              />
+              {roots && (
+                <DirectoryTree
+                  root="~"
+                  rootPath={roots.home}
+                  apiReady={apiReady}
+                  loadDirectory={loadDirectory}
+                  onDirectorySelect={handleDirectorySelect}
+                />
+              )}
             </TabsContent>
           </Tabs>
         </ResizablePanel>
@@ -344,7 +494,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
             className="h-full relative"
             onDragOver={(e) => {
               e.preventDefault();
-              if (activeTab === "home") setIsDragOver(true);
+              if (cwdWritable) setIsDragOver(true);
             }}
             onDragLeave={() => setIsDragOver(false)}
             onDrop={handleDrop}
@@ -364,12 +514,19 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
               onPreview={handlePreview}
               onRename={handleRename}
               onDelete={handleDelete}
+              onBatchDelete={handleBatchDelete}
+              onUpload={!isReadOnly ? handleUpload : undefined}
+              onRefresh={fullCwd ? () => handleDirectorySelect(fullCwd) : undefined}
+              isReadOnly={isReadOnly}
             />
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
-      <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
-        <DialogContent>
+      <Dialog open={uploadOpen} onOpenChange={(open) => {
+        if (!open) uploadAbortRef.current = true;
+        setUploadOpen(open);
+      }}>
+        <DialogContent onInteractOutside={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>{t("uploading")}</DialogTitle>
           </DialogHeader>

@@ -1,8 +1,9 @@
-import { getGlobalExport } from "@/lib/polyfill.js";
 import Java from "frida-java-bridge";
 
 import { perform } from "@/common/hooks/java.js";
 import { getContext } from "@/droid/lib/context.js";
+import * as posix from "@/lib/posix.js";
+import type { Roots } from "@/common/fs.js";
 
 export interface MetaData {
   name: string;
@@ -12,11 +13,11 @@ export interface MetaData {
   alias: boolean;
   created: Date;
   symlink: boolean;
-  writable: boolean;
 }
 
 export interface DirectoryListing {
   cwd: string;
+  writable: boolean;
   list: MetaData[];
 }
 
@@ -32,88 +33,36 @@ export interface FileAttributes {
   type: string;
 }
 
-// ---------------------------------------------------------------------------
-// helpers
-// ---------------------------------------------------------------------------
+let homeDir: string;
+let bundleDir: string;
 
-function expandPath(path: string): string {
-  if (path.startsWith("~/") || path === "~") {
-    const dataDir = getContext()
-      .getFilesDir()
-      .getParentFile()
-      .getAbsolutePath() as string;
-    return path === "~" ? dataDir : dataDir + path.substring(1);
-  }
-
-  if (path.startsWith("!/") || path === "!") {
+function initPaths() {
+  if (homeDir) return;
+  Java.perform(() => {
+    const ctx = getContext();
+    homeDir = ctx.getFilesDir().getParentFile().getAbsolutePath() as string;
     const File = Java.use("java.io.File");
-    const apkDir = File.$new(
-      getContext().getPackageCodePath() as string,
+    bundleDir = File.$new(
+      ctx.getPackageCodePath() as string,
     ).getParent() as string;
-    return path === "!" ? apkDir : apkDir + path.substring(1);
-  }
-
-  if (path.startsWith("/")) return path;
-
-  throw new Error(`Cannot expand path: ${path}`);
+  });
 }
 
-const open = new NativeFunction(getGlobalExport("open"), "int", [
-  "pointer",
-  "int",
-  "int",
-]);
-const read = new NativeFunction(getGlobalExport("read"), "int", [
-  "int",
-  "pointer",
-  "int",
-]);
-const close = new NativeFunction(getGlobalExport("close"), "int", ["int"]);
-const lseek = new NativeFunction(getGlobalExport("lseek"), "int64", [
-  "int",
-  "int64",
-  "int",
-]);
-
-function readBytes(filePath: string, limit?: number): ArrayBuffer | null {
-  const pathBuf = Memory.allocUtf8String(filePath);
-  const fd = open(pathBuf, 0 /* O_RDONLY */, 0) as number;
-  if (fd < 0) return null;
-
-  const size = Number(lseek(fd, 0, 2 /* SEEK_END */));
-  lseek(fd, 0, 0 /* SEEK_SET */);
-
-  const toRead = limit ? Math.min(size, limit) : size;
-  if (toRead <= 0) {
-    close(fd);
-    return new ArrayBuffer(0);
-  }
-
-  const buf = Memory.alloc(toRead);
-  let total = 0;
-  while (total < toRead) {
-    const n = read(fd, buf.add(total), toRead - total) as number;
-    if (n <= 0) break;
-    total += n;
-  }
-
-  close(fd);
-  return buf.readByteArray(total);
+export function roots(): Roots {
+  initPaths();
+  return { home: homeDir, bundle: bundleDir };
 }
-
-// ---------------------------------------------------------------------------
-// exports
-// ---------------------------------------------------------------------------
 
 export function ls(path: string) {
   return perform(() => {
     const File = Java.use("java.io.File");
-    const cwd = expandPath(path);
+    const cwd = path;
     const dir = File.$new(cwd);
 
     if (!dir.exists()) throw new Error(`Path does not exist: ${cwd}`);
     if (!dir.isDirectory()) throw new Error(`Not a directory: ${cwd}`);
 
+    const writable = Boolean(dir.canWrite());
     const files = dir.listFiles();
     const list: MetaData[] = [];
 
@@ -125,25 +74,24 @@ export function ls(path: string) {
 
         list.push({
           name: f.getName() as string,
-          dir: !!f.isDirectory(),
+          dir: Boolean(f.isDirectory()),
           protection: null,
           size: f.isFile() ? Number(f.length()) : null,
           alias: false,
           created: new Date(Number(f.lastModified())),
           symlink: absPath !== canonPath,
-          writable: !!f.canWrite(),
         });
       }
     }
 
-    return { cwd, list } as DirectoryListing;
+    return { cwd, writable, list } as DirectoryListing;
   });
 }
 
 export function rm(path: string) {
   return perform(() => {
     const File = Java.use("java.io.File");
-    const target = File.$new(expandPath(path));
+    const target = File.$new(path);
     if (!target.exists()) throw new Error(`Path does not exist: ${path}`);
 
     function deleteRecursive(f: Java.Wrapper): boolean {
@@ -155,7 +103,7 @@ export function rm(path: string) {
           }
         }
       }
-      return !!f.delete();
+      return Boolean(f.delete());
     }
 
     return deleteRecursive(target);
@@ -167,8 +115,8 @@ export function cp(src: string, dst: string) {
     const File = Java.use("java.io.File");
     const FileInputStream = Java.use("java.io.FileInputStream");
     const FileOutputStream = Java.use("java.io.FileOutputStream");
-    const srcFile = File.$new(expandPath(src));
-    const dstFile = File.$new(expandPath(dst));
+    const srcFile = File.$new(src);
+    const dstFile = File.$new(dst);
 
     function copyRecursive(s: Java.Wrapper, d: Java.Wrapper) {
       if (s.isDirectory()) {
@@ -201,20 +149,21 @@ export function cp(src: string, dst: string) {
 }
 
 export function mv(src: string, dst: string) {
+  return posix.rename(src, dst);
+}
+
+export function mkdirp(path: string) {
   return perform(() => {
     const File = Java.use("java.io.File");
-    const result = File.$new(expandPath(src)).renameTo(
-      File.$new(expandPath(dst)),
-    );
-    return !!result;
+    const dir = File.$new(path);
+    return Boolean(dir.mkdirs());
   });
 }
 
 export function attrs(path: string) {
   return perform(() => {
     const Os = Java.use("android.system.Os");
-    const expandedPath = expandPath(path);
-    const stat = Os.lstat(expandedPath);
+    const stat = Os.lstat(path);
 
     const mode = stat.st_mode.value as number;
     const fmt = mode & 0o170000;
@@ -244,36 +193,37 @@ export function attrs(path: string) {
 
 export function text(path: string) {
   return perform(() => {
-    const expandedPath = expandPath(path);
-    const Paths = Java.use("java.nio.file.Paths");
-    const NioFiles = Java.use("java.nio.file.Files");
-    const JString = Java.use("java.lang.String");
-
-    const nioPath = Paths.get(
-      expandedPath,
-      Java.array("java.lang.String", []),
-    );
-    const bytes = NioFiles.readAllBytes(nioPath);
-    return JString.$new(bytes, "UTF-8").toString() as string;
+    const BufferedReader = Java.use("java.io.BufferedReader");
+    const FileReader = Java.use("java.io.FileReader");
+    const StringBuilder = Java.use("java.lang.StringBuilder");
+    const sb = StringBuilder.$new();
+    const reader = BufferedReader.$new(FileReader.$new(path));
+    let line: string | null;
+    while ((line = reader.readLine() as string | null) !== null) {
+      sb.append(line).append("\n");
+    }
+    reader.close();
+    return sb.toString() as string;
   });
 }
 
 export function data(path: string) {
-  return perform(() => readBytes(expandPath(path)));
+  return posix.readFile(path);
 }
 
 export function preview(path: string) {
-  return perform(() => readBytes(expandPath(path), 1024 * 1024));
+  return posix.readFile(path, 1024 * 1024);
+}
+
+export function access(path: string) {
+  return posix.isWritable(path);
 }
 
 export function saveText(path: string, content: string) {
   return perform(() => {
-    const expandedPath = expandPath(path);
     const FileOutputStream = Java.use("java.io.FileOutputStream");
-    const fos = FileOutputStream.$new(expandedPath);
-    const bytes = Java.use("java.lang.String")
-      .$new(content)
-      .getBytes("UTF-8");
+    const fos = FileOutputStream.$new(path);
+    const bytes = Java.use("java.lang.String").$new(content).getBytes("UTF-8");
     fos.write(bytes);
     fos.close();
     return true;

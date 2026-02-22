@@ -11,6 +11,7 @@ import type { MetaData } from "@agent/fruity/modules/fs";
 
 interface DirectoryTreeProps {
   root: RootType;
+  rootPath: string;
   apiReady: boolean;
   loadDirectory: LoadDirectoryFn;
   onDirectorySelect: DirectorySelectFn;
@@ -26,7 +27,6 @@ function createRootNode(root: RootType): TreeNode {
       alias: false,
       created: new Date(),
       symlink: false,
-      writable: root === "~",
     },
     children: null,
     isLoading: true,
@@ -82,6 +82,7 @@ function getNodeAtPath(
 
 export function DirectoryTree({
   root,
+  rootPath,
   apiReady,
   loadDirectory,
   onDirectorySelect,
@@ -92,7 +93,7 @@ export function DirectoryTree({
   useEffect(() => {
     if (!apiReady) return;
     setNodes([createRootNode(root)]);
-    loadDirectory(root)
+    loadDirectory(rootPath)
       .then(({ list }) => {
         setNodes([
           {
@@ -113,7 +114,7 @@ export function DirectoryTree({
           },
         ]);
       });
-  }, [apiReady, root, loadDirectory]);
+  }, [apiReady, root, rootPath, loadDirectory]);
 
   const handleNodeClick = (path: string[]) => {
     const pathStr = path.join("/");
@@ -122,7 +123,7 @@ export function DirectoryTree({
     if (!targetNode) return;
 
     const isRootNode = path.length === 1 && path[0] === root;
-    const fullPath = isRootNode ? root : `${root}/${path.slice(1).join("/")}`;
+    const fullPath = isRootNode ? rootPath : `${rootPath}/${path.slice(1).join("/")}`;
 
     onDirectorySelect(fullPath);
 
