@@ -39,7 +39,10 @@ function createHistoryRoutes<TRecord>(config: {
     const deviceId = c.req.param("device");
     const identifier = c.req.param("identifier");
 
-    const limit = parseInt(c.req.query("limit") || String(config.defaultLimit), 10);
+    const limit = parseInt(
+      c.req.query("limit") || String(config.defaultLimit),
+      10,
+    );
     const offset = parseInt(c.req.query("offset") || "0", 10);
     const since = c.req.query("since");
 
@@ -51,7 +54,10 @@ function createHistoryRoutes<TRecord>(config: {
     try {
       const store = config.createStore(deviceId, identifier);
 
-      const records = store.query({ limit, offset, since, ...extraParams }, config.defaultLimit);
+      const records = store.query(
+        { limit, offset, since, ...extraParams },
+        config.defaultLimit,
+      );
       const mapped = records.map(config.mapRecord);
 
       // Build count filter from extra params
@@ -241,18 +247,6 @@ const routes = new Hono()
   })
   // DB-backed log stores
   .route("/", hookRoutes)
-  // Legacy alias for hooks delete
-  .delete("/hooks/:device/:identifier/db", (c) => {
-    const deviceId = c.req.param("device");
-    const identifier = c.req.param("identifier");
-    try {
-      new HookStore(deviceId, identifier).rm();
-      return c.body(null, 204);
-    } catch (e) {
-      console.error("Failed to delete hooks:", e);
-      return c.text("Failed to delete hooks", 500);
-    }
-  })
   .route("/", cryptoRoutes)
   .route("/", jniRoutes)
   .route("/", flutterRoutes)
@@ -307,37 +301,43 @@ const routes = new Hono()
       return c.text("Failed to clear NSURL records", 500);
     }
   })
-  .get("/history/nsurl/:device/:identifier/attachment/:requestId", async (c) => {
-    const deviceId = c.req.param("device");
-    const identifier = c.req.param("identifier");
-    const requestId = c.req.param("requestId");
+  .get(
+    "/history/nsurl/:device/:identifier/attachment/:requestId",
+    async (c) => {
+      const deviceId = c.req.param("device");
+      const identifier = c.req.param("identifier");
+      const requestId = c.req.param("requestId");
 
-    try {
-      const nsurlStore = new NSURLStore(deviceId, identifier);
+      try {
+        const nsurlStore = new NSURLStore(deviceId, identifier);
 
-      const attachment = nsurlStore.getAttachment(requestId);
+        const attachment = nsurlStore.getAttachment(requestId);
 
-      if (!attachment) {
-        return c.text("No attachment found", 404);
+        if (!attachment) {
+          return c.text("No attachment found", 404);
+        }
+
+        const stat = await fs.stat(attachment.path).catch(() => null);
+        if (!stat) {
+          return c.text("Attachment file not found", 404);
+        }
+
+        c.header(
+          "Content-Type",
+          attachment.mimeType || "application/octet-stream",
+        );
+        c.header("Content-Length", stat.size.toString());
+        return c.body(
+          Readable.toWeb(
+            createReadStream(attachment.path),
+          ) as unknown as ReadableStream,
+        );
+      } catch (e) {
+        console.error("Failed to serve attachment:", e);
+        return c.text("Failed to serve attachment", 500);
       }
-
-      const stat = await fs.stat(attachment.path).catch(() => null);
-      if (!stat) {
-        return c.text("Attachment file not found", 404);
-      }
-
-      c.header("Content-Type", attachment.mimeType || "application/octet-stream");
-      c.header("Content-Length", stat.size.toString());
-      return c.body(
-        Readable.toWeb(
-          createReadStream(attachment.path),
-        ) as unknown as ReadableStream,
-      );
-    } catch (e) {
-      console.error("Failed to serve attachment:", e);
-      return c.text("Failed to serve attachment", 500);
-    }
-  })
+    },
+  )
   .route("/", xpcRoutes)
   // Taps snapshot endpoints
   .get("/taps/:device/:identifier", (c) => {
