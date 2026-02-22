@@ -1,8 +1,6 @@
-#!/usr/bin/env node
-
 import { parseArgs } from "node:util";
-import { schema } from "../src/lib/cli.ts";
-import { reset } from "../src/lib/reset.ts";
+import { schema } from "./lib/cli.ts";
+import { reset } from "./lib/reset.ts";
 
 const args = parseArgs(schema);
 if (args.values.help) {
@@ -23,7 +21,7 @@ Options:
 }
 
 if (args.positionals.includes("reset")) {
-  reset(!!args.values["dry-run"]);
+  reset(Boolean(args.values["dry-run"]));
 }
 
-import("../dist/index.mjs");
+import("./index.ts");

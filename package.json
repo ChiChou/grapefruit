@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/index.mjs",
   "bin": {
-    "igf": "bin/igf"
+    "igf": "dist/bin.mjs"
   },
   "files": [
     "./dist",
@@ -24,7 +24,7 @@
     "prepack": "npm run build:npm",
     "install:gui": "cd gui && npm i",
     "install:agent": "cd agent && npm i",
-    "build:npm": "node scripts/build-npm.ts && tsdown --env.NODE_ENV=production --env.SQLITE=better-sqlite3",
+    "build:npm": "node scripts/build-npm.ts && tsdown",
     "build:cli": "bun i && bun scripts/build-bun.ts",
     "build:all": "bun i && bun scripts/build-bun.ts cross",
     "build:skills": "bun scripts/skills.ts"
