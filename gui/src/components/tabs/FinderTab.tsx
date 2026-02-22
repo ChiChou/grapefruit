@@ -43,9 +43,7 @@ function readAllEntries(
           return;
         }
         for (const entry of entries) {
-          const entryPath = basePath
-            ? `${basePath}/${entry.name}`
-            : entry.name;
+          const entryPath = basePath ? `${basePath}/${entry.name}` : entry.name;
           if (entry.isDirectory) {
             results.push(
               readAllEntries(entry as FileSystemDirectoryEntry, entryPath),
@@ -357,7 +355,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
       if (allEntries.length === 0) return;
       await uploadFileList(allEntries);
     },
-    [activeTab, pid, device, fullCwd, uploadFileList],
+    [cwdWritable, pid, device, fullCwd, uploadFileList],
   );
 
   const handleBatchDelete = useCallback(
@@ -475,15 +473,15 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
                 className="flex-1 overflow-hidden mt-0"
               >
                 {roots && (
-                <DirectoryTree
-                  root="!"
-                  rootPath={roots.bundle}
-                  apiReady={apiReady}
-                  loadDirectory={loadDirectory}
-                  onDirectorySelect={handleDirectorySelect}
-                  currentPath={activeTab === "bundle" ? fullCwd : null}
-                />
-              )}
+                  <DirectoryTree
+                    root="!"
+                    rootPath={roots.bundle}
+                    apiReady={apiReady}
+                    loadDirectory={loadDirectory}
+                    onDirectorySelect={handleDirectorySelect}
+                    currentPath={activeTab === "bundle" ? fullCwd : null}
+                  />
+                )}
               </TabsContent>
             )}
             <TabsContent value="home" className="flex-1 overflow-hidden mt-0">
@@ -529,16 +527,21 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
               onDelete={handleDelete}
               onBatchDelete={handleBatchDelete}
               onUpload={!isReadOnly ? handleUpload : undefined}
-              onRefresh={fullCwd ? () => handleDirectorySelect(fullCwd) : undefined}
+              onRefresh={
+                fullCwd ? () => handleDirectorySelect(fullCwd) : undefined
+              }
               isReadOnly={isReadOnly}
             />
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
-      <Dialog open={uploadOpen} onOpenChange={(open) => {
-        if (!open) uploadAbortRef.current = true;
-        setUploadOpen(open);
-      }}>
+      <Dialog
+        open={uploadOpen}
+        onOpenChange={(open) => {
+          if (!open) uploadAbortRef.current = true;
+          setUploadOpen(open);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("uploading")}</DialogTitle>
