@@ -1,13 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
-  type ColumnDef,
-} from "@tanstack/react-table";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { type ColumnDef } from "@tanstack/react-table";
 
 import { Trash2, Play, Square, Loader2, ChevronsDown } from "lucide-react";
 
@@ -19,12 +13,14 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import { LogTable } from "@/components/shared/LogTable";
 import { Status, useSession } from "@/context/SessionContext";
+import { useLogStream } from "@/hooks/useLogStream";
+import { toTime } from "@/lib/format";
 
 const TAP_ID = "jni";
-import type { JNIEvent, JNILog } from "@agent/droid/hooks/jni";
+import type { JNIEvent } from "@agent/droid/hooks/jni";
 
-/** Flattened event shape for display (union of live + historical fields). */
 interface JNIDisplayEvent {
   type: string;
   method: string;
@@ -42,33 +38,43 @@ interface JNIEntry {
   event: JNIDisplayEvent;
 }
 
-const MAX_ENTRIES = 8000;
-const THROTTLE_MS = 100;
-const ROW_HEIGHT = 32;
-
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString("en-US", {
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    fractionalSecondDigits: 3,
-  });
-}
-
 function argsPreview(args: string[]): string {
   if (!args || args.length === 0) return "";
   const joined = args.join(", ");
   return joined.length > 80 ? `${joined.slice(0, 80)}...` : joined;
 }
 
-function toEntry(
-  event: JNIDisplayEvent,
-  timestamp: Date,
-  id: number,
-): JNIEntry {
-  return { id, timestamp, event };
-}
+const mapHistory = (record: Record<string, unknown>, id: number): JNIEntry => ({
+  id,
+  timestamp: new Date(record.timestamp as string),
+  event: {
+    type: (record.type as string) ?? "trace",
+    method: record.method as string,
+    callType: (record.callType as string) ?? "JNIEnv",
+    threadId: (record.threadId as number) ?? 0,
+    args: (record.args as string[]) ?? [],
+    ret: (record.ret as string) ?? "",
+    backtrace: record.backtrace as string[] | undefined,
+    library: record.library as string | null | undefined,
+  },
+});
+
+const mapSocket = (id: number, ...args: unknown[]): JNIEntry => {
+  const raw = args[0] as JNIEvent;
+  return {
+    id,
+    timestamp: new Date(),
+    event: {
+      type: raw.type,
+      method: raw.method,
+      callType: raw.callType,
+      threadId: raw.threadId,
+      args: raw.args,
+      ret: raw.ret,
+      library: raw.type === "load" ? raw.library : undefined,
+    },
+  };
+};
 
 const columns: ColumnDef<JNIEntry>[] = [
   {
@@ -77,7 +83,7 @@ const columns: ColumnDef<JNIEntry>[] = [
     size: 96,
     cell: ({ row }) => (
       <span className="font-mono text-muted-foreground">
-        {formatTime(row.original.timestamp)}
+        {toTime(row.original.timestamp)}
       </span>
     ),
   },
@@ -144,17 +150,25 @@ const columns: ColumnDef<JNIEntry>[] = [
 
 export function JNITab() {
   const { t } = useTranslation();
-  const { status, socket, device, identifier, droid } = useSession();
+  const { status, device, identifier, droid } = useSession();
 
   const [isActive, setIsActive] = useState<boolean | null>(null);
-  const [entries, setEntries] = useState<JNIEntry[]>([]);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [searchFilter, setSearchFilter] = useState("");
-
-  const idRef = useRef(1);
-  const pendingRef = useRef<JNIEntry[]>([]);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tableContainerRef = useRef<HTMLDivElement>(null);
+
+  const {
+    entries,
+    selectedId,
+    setSelectedId,
+    clear,
+    clearMutation,
+  } = useLogStream<JNIEntry>({
+    event: "jni",
+    path: "history/jni",
+    key: "logs",
+    fromRecord: mapHistory,
+    fromEvent: mapSocket,
+  });
 
   // Sync initial active state from agent
   const { data: initialActive } = useQuery({
@@ -167,6 +181,11 @@ export function JNITab() {
     if (initialActive !== undefined && isActive === null)
       setIsActive(initialActive);
   }, [initialActive, isActive]);
+
+  // Reset active state on session change
+  useEffect(() => {
+    setIsActive(false);
+  }, [device, identifier]);
 
   // Toggle start/stop
   const toggleMutation = useMutation({
@@ -182,113 +201,6 @@ export function JNITab() {
       setIsActive(enable);
     },
   });
-
-  // Clear history
-  const clearMutation = useMutation({
-    mutationFn: async () => {
-      if (!device || !identifier) return;
-      const res = await fetch(`/api/history/jni/${device}/${identifier}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to clear history");
-    },
-    onSuccess: () => {
-      setEntries([]);
-      setSelectedId(null);
-      idRef.current = 1;
-      pendingRef.current = [];
-    },
-  });
-
-  // Load history
-  const { data: history } = useQuery<{ logs: JNILog[] }>({
-    queryKey: ["jniHistory", device, identifier],
-    queryFn: async () => {
-      const res = await fetch(
-        `/api/history/jni/${device}/${identifier}?limit=5000`,
-      );
-      if (!res.ok) throw new Error("Failed to load JNI trace history");
-      return res.json();
-    },
-    enabled: status === Status.Ready && !!device && !!identifier,
-    staleTime: Infinity,
-  });
-
-  // Reset on session change
-  useEffect(() => {
-    setEntries([]);
-    setSelectedId(null);
-    setIsActive(false);
-    idRef.current = 1;
-    pendingRef.current = [];
-  }, [device, identifier]);
-
-  // Load historical entries
-  useEffect(() => {
-    if (!history?.logs) return;
-
-    const next: JNIEntry[] = [];
-    for (const record of [...history.logs].reverse()) {
-      const event: JNIDisplayEvent = {
-        type: record.type ?? "trace",
-        method: record.method,
-        callType: record.callType ?? "JNIEnv",
-        threadId: record.threadId ?? 0,
-        args: record.args ?? [],
-        ret: record.ret ?? "",
-        backtrace: record.backtrace,
-        library: record.library,
-      };
-      next.push(toEntry(event, new Date(record.timestamp), idRef.current++));
-    }
-
-    setEntries(next);
-  }, [history]);
-
-  // Flush pending entries
-  const flushPending = useCallback(() => {
-    timerRef.current = null;
-    if (pendingRef.current.length === 0) return;
-
-    const incoming = pendingRef.current;
-    pendingRef.current = [];
-
-    setEntries((prev) => {
-      const merged = [...prev, ...incoming];
-      return merged.length > MAX_ENTRIES ? merged.slice(-MAX_ENTRIES) : merged;
-    });
-  }, []);
-
-  // Listen for live trace events
-  useEffect(() => {
-    if (status !== Status.Ready || !socket) return;
-
-    const onJNI = (raw: JNIEvent) => {
-      const event: JNIDisplayEvent = {
-        type: raw.type,
-        method: raw.method,
-        callType: raw.callType,
-        threadId: raw.threadId,
-        args: raw.args,
-        ret: raw.ret,
-        library: raw.type === "load" ? raw.library : undefined,
-      };
-      const entry = toEntry(event, new Date(), idRef.current++);
-      pendingRef.current.push(entry);
-      if (!timerRef.current) {
-        timerRef.current = setTimeout(flushPending, THROTTLE_MS);
-      }
-    };
-
-    socket.on("jni", onJNI);
-    return () => {
-      socket.off("jni", onJNI);
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-  }, [status, socket, flushPending]);
 
   // Filter entries
   const filteredEntries = useMemo(() => {
@@ -306,25 +218,6 @@ export function JNITab() {
     () => filteredEntries.find((e) => e.id === selectedId) ?? null,
     [filteredEntries, selectedId],
   );
-
-  const table = useReactTable({
-    data: filteredEntries,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getRowId: (row) => String(row.id),
-  });
-
-  const { rows } = table.getRowModel();
-
-  const rowVirtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => tableContainerRef.current,
-    estimateSize: () => ROW_HEIGHT,
-    overscan: 20,
-  });
-
-  const virtualRows = rowVirtualizer.getVirtualItems();
-  const totalSize = rowVirtualizer.getTotalSize();
 
   const notReady = status !== Status.Ready;
 
@@ -397,7 +290,7 @@ export function JNITab() {
               variant="ghost"
               size="icon"
               className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-950/30"
-              onClick={() => clearMutation.mutate()}
+              onClick={clear}
               disabled={clearMutation.isPending || entries.length === 0}
             >
               <Trash2 className="h-4 w-4" />
@@ -405,85 +298,13 @@ export function JNITab() {
           </div>
 
           {/* Virtualized table */}
-          <div ref={tableContainerRef} className="flex-1 overflow-auto">
-            <table className="w-full text-xs border-collapse">
-              <thead className="sticky top-0 bg-background z-10">
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id} className="border-b">
-                    {headerGroup.headers.map((header) => (
-                      <th
-                        key={header.id}
-                        className="text-left font-medium p-2 text-muted-foreground"
-                        style={{ width: header.getSize() }}
-                      >
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody>
-                {virtualRows.length > 0 && virtualRows[0].start > 0 && (
-                  <tr>
-                    <td
-                      colSpan={columns.length}
-                      style={{ height: virtualRows[0].start }}
-                    />
-                  </tr>
-                )}
-                {virtualRows.map((virtualRow) => {
-                  const row = rows[virtualRow.index];
-                  return (
-                    <tr
-                      key={row.id}
-                      className={`border-b cursor-pointer hover:bg-muted/50 ${
-                        selectedId === row.original.id ? "bg-accent" : ""
-                      }`}
-                      style={{ height: virtualRow.size }}
-                      onClick={() =>
-                        setSelectedId(
-                          selectedId === row.original.id
-                            ? null
-                            : row.original.id,
-                        )
-                      }
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <td
-                          key={cell.id}
-                          className="p-2 truncate"
-                          style={{
-                            width: cell.column.getSize(),
-                            maxWidth: cell.column.getSize(),
-                          }}
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })}
-                {virtualRows.length > 0 && (
-                  <tr>
-                    <td
-                      colSpan={columns.length}
-                      style={{
-                        height:
-                          totalSize -
-                          (virtualRows[virtualRows.length - 1]?.end ?? 0),
-                      }}
-                    />
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <LogTable
+            data={filteredEntries}
+            columns={columns}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            scrollRef={tableContainerRef}
+          />
         </div>
       </ResizablePanel>
 
@@ -501,7 +322,7 @@ export function JNITab() {
               <div className="space-y-1">
                 <div>
                   <span className="text-muted-foreground">{t("time")}: </span>
-                  {formatTime(selectedEntry.timestamp)}
+                  {toTime(selectedEntry.timestamp)}
                 </div>
                 <div>
                   <span className="text-muted-foreground">Method: </span>

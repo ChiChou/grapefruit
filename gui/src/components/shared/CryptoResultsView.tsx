@@ -6,7 +6,6 @@ import {
   useMemo,
   type CSSProperties,
 } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { List, type ListImperativeAPI } from "react-window";
 import { ChevronRight, Trash2, ChevronsDown } from "lucide-react";
@@ -24,6 +23,8 @@ import {
 } from "@/components/ui/resizable";
 import { useSession, Status, Platform } from "@/context/SessionContext";
 import { useRpcQuery, useDroidRpcQuery } from "@/lib/queries";
+import { useLogStream } from "@/hooks/useLogStream";
+import { toTime } from "@/lib/format";
 
 import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
 
@@ -35,8 +36,6 @@ interface CryptoEntry {
 }
 
 const ROW_HEIGHT = 32;
-const MAX_ENTRIES = 10000;
-const THROTTLE_MS = 100;
 
 function base64ToArrayBuffer(base64: string): ArrayBuffer {
   const bin = atob(base64);
@@ -76,16 +75,6 @@ function formatHexDump(buffer: ArrayBuffer): string {
 const FRUITY_CRYPTO_GROUPS = ["cccrypt", "x509", "hash", "hmac"] as const;
 const DROID_CRYPTO_GROUPS = ["cipher", "pbkdf", "keygen"] as const;
 
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString("en-US", {
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    fractionalSecondDigits: 3,
-  });
-}
-
 interface CryptoRowProps {
   entries: CryptoEntry[];
   selectedId: number | null;
@@ -120,12 +109,9 @@ function CryptoRow(
       className={`flex items-center px-3 py-1 border-b border-border/50 hover:bg-muted/30 text-xs gap-2 cursor-pointer ${isSelected ? "bg-accent" : ""}`}
       onClick={() => onSelect(entry.id)}
     >
-      {/* Timestamp */}
       <span className="text-muted-foreground font-mono w-24 shrink-0">
-        {formatTime(timestamp)}
+        {toTime(timestamp)}
       </span>
-
-      {/* Direction */}
       <Badge
         variant={message.dir === "enter" ? "default" : "secondary"}
         className="h-5 px-1.5 text-[10px] shrink-0"
@@ -134,16 +120,12 @@ function CryptoRow(
           className={`h-3 w-3 ${message.dir === "leave" ? "rotate-180" : ""}`}
         />
       </Badge>
-
-      {/* Symbol */}
       <span
         className="font-mono text-primary truncate w-40 shrink-0"
         title={message.symbol}
       >
         {message.symbol}
       </span>
-
-      {/* Op + Algo badges */}
       {extra?.op && (
         <Badge variant="outline" className="h-5 px-1.5 text-[10px] shrink-0">
           {extra.op}
@@ -154,24 +136,18 @@ function CryptoRow(
           {extra.algo}
         </Badge>
       )}
-
-      {/* Detail type + size */}
       {extra?.detailType && (
         <Badge variant="secondary" className="h-5 px-1.5 text-[10px] shrink-0">
           {extra.detailType}
           {extra.len !== undefined && ` ${extra.len}B`}
         </Badge>
       )}
-
-      {/* Line summary */}
       <span
         className="font-mono text-muted-foreground truncate flex-1 min-w-0"
         title={message.line || ""}
       >
         {message.line || ""}
       </span>
-
-      {/* Data indicator */}
       {data && (
         <Badge variant="secondary" className="h-5 px-1.5 text-[10px] shrink-0">
           {data.byteLength}B
@@ -314,26 +290,57 @@ function DetailPanel({ entry }: { entry: CryptoEntry }) {
   );
 }
 
+const mapHistory = (record: Record<string, unknown>, id: number): CryptoEntry => ({
+  id,
+  timestamp: new Date(record.timestamp as string),
+  message: {
+    subject: "crypto",
+    category: "crypto",
+    symbol: record.symbol as string,
+    dir: record.direction as "enter" | "leave",
+    line: (record.line as string) ?? undefined,
+    extra: record.extra as Record<string, unknown> | undefined,
+    backtrace: record.backtrace as string[] | undefined,
+  },
+  data: record.data ? base64ToArrayBuffer(record.data as string) : undefined,
+});
+
+const mapSocket = (id: number, ...args: unknown[]): CryptoEntry => ({
+  id,
+  timestamp: new Date(),
+  message: args[0] as BaseHookMessage,
+  data: args[1] as ArrayBuffer | undefined,
+});
+
 export function CryptoResultsView() {
   const { t } = useTranslation();
-  const { fruity, droid, socket, status, device, identifier, platform } =
-    useSession();
+  const { fruity, droid, status, device, identifier, platform } = useSession();
   const isDroid = platform === Platform.Droid;
   const cryptoGroups = isDroid ? DROID_CRYPTO_GROUPS : FRUITY_CRYPTO_GROUPS;
-  const [entries, setEntries] = useState<CryptoEntry[]>([]);
+
   const listRef = useRef<ListImperativeAPI>(null);
-  const idCounterRef = useRef(0);
-  const pendingEntriesRef = useRef<CryptoEntry[]>([]);
-  const rafRef = useRef<number | null>(null);
-  const lastUpdateRef = useRef<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const [listHeight, setListHeight] = useState(300);
   const [autoScroll, setAutoScroll] = useState(true);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  const {
+    entries,
+    selectedId,
+    setSelectedId,
+    selectedEntry,
+    clear,
+  } = useLogStream<CryptoEntry>({
+    event: "crypto",
+    path: "history/crypto",
+    key: "logs",
+    fromRecord: mapHistory,
+    fromEvent: mapSocket,
+    max: 10000,
+  });
 
   const handleSelect = useCallback((id: number) => {
-    setSelectedId((prev) => (prev === id ? null : id));
-  }, []);
+    setSelectedId(selectedId === id ? null : id);
+  }, [selectedId, setSelectedId]);
 
   // Crypto sub-group toggle state
   const [cryptoStatus, setCryptoStatus] = useState<Record<string, boolean>>({});
@@ -382,55 +389,6 @@ export function CryptoResultsView() {
     }
   };
 
-  // Load historical crypto logs
-  const { data: cryptoHistory } = useQuery<{
-    logs: {
-      id: number;
-      timestamp: string;
-      symbol: string;
-      direction: string;
-      line: string | null;
-      extra: Record<string, unknown> | undefined;
-      backtrace?: string[];
-      data?: string;
-      createdAt: string;
-    }[];
-  }>({
-    queryKey: ["cryptoHistory", device, identifier],
-    queryFn: async () => {
-      const res = await fetch(
-        `/api/history/crypto/${device}/${identifier}?limit=5000`,
-      );
-      if (!res.ok) throw new Error("Failed to load crypto history");
-      return res.json();
-    },
-    enabled: !!device && !!identifier,
-    staleTime: Infinity,
-    gcTime: 0,
-  });
-
-  useEffect(() => {
-    if (!cryptoHistory?.logs?.length) return;
-    const historicalEntries: CryptoEntry[] = cryptoHistory.logs
-      .slice()
-      .reverse()
-      .map((record) => ({
-        id: idCounterRef.current++,
-        timestamp: new Date(record.timestamp),
-        message: {
-          subject: "crypto",
-          category: "crypto",
-          symbol: record.symbol,
-          dir: record.direction as "enter" | "leave",
-          line: record.line ?? undefined,
-          extra: record.extra,
-          backtrace: record.backtrace,
-        },
-        data: record.data ? base64ToArrayBuffer(record.data) : undefined,
-      }));
-    setEntries(historicalEntries);
-  }, [cryptoHistory]);
-
   // Resize observer
   useEffect(() => {
     if (!containerRef.current) return;
@@ -445,75 +403,17 @@ export function CryptoResultsView() {
     return () => observer.disconnect();
   }, []);
 
-  // Throttled flush
-  const flushPendingEntries = useCallback(() => {
-    if (pendingEntriesRef.current.length === 0) return;
-
-    const now = performance.now();
-    if (now - lastUpdateRef.current < THROTTLE_MS) {
-      if (!rafRef.current) {
-        rafRef.current = requestAnimationFrame(() => {
-          rafRef.current = null;
-          flushPendingEntries();
-        });
-      }
-      return;
-    }
-
-    lastUpdateRef.current = now;
-    const newEntries = pendingEntriesRef.current;
-    pendingEntriesRef.current = [];
-
-    setEntries((prev) => {
-      const combined = [...prev, ...newEntries];
-      if (combined.length > MAX_ENTRIES) {
-        return combined.slice(-MAX_ENTRIES);
-      }
-      return combined;
-    });
-
-    if (autoScroll && listRef.current) {
+  // Auto-scroll when new entries arrive
+  useEffect(() => {
+    if (autoScroll && listRef.current && entries.length > 0) {
       requestAnimationFrame(() => {
         listRef.current?.scrollToRow({
-          index: entries.length + newEntries.length - 1,
+          index: entries.length - 1,
           align: "end",
         });
       });
     }
-  }, [autoScroll, entries.length, listRef]);
-
-  // Handle incoming crypto messages
-  useEffect(() => {
-    if (status !== Status.Ready || !socket) return;
-
-    const handleCrypto = (message: BaseHookMessage, data?: ArrayBuffer) => {
-      const entry: CryptoEntry = {
-        id: idCounterRef.current++,
-        timestamp: new Date(),
-        message,
-        data,
-      };
-
-      pendingEntriesRef.current.push(entry);
-
-      if (!rafRef.current) {
-        rafRef.current = requestAnimationFrame(() => {
-          rafRef.current = null;
-          flushPendingEntries();
-        });
-      }
-    };
-
-    socket.on("crypto", handleCrypto);
-
-    return () => {
-      socket.off("crypto", handleCrypto);
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-      }
-    };
-  }, [socket, status, flushPendingEntries]);
+  }, [entries.length, autoScroll]);
 
   const handleRowsRendered = useCallback(
     (visibleRows: { startIndex: number; stopIndex: number }) => {
@@ -523,36 +423,12 @@ export function CryptoResultsView() {
     [entries.length],
   );
 
-  const clearCryptoMutation = useMutation({
-    mutationFn: async () => {
-      if (!device || !identifier) return;
-      const res = await fetch(`/api/history/crypto/${device}/${identifier}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to clear crypto logs");
-    },
-  });
-
-  const handleClear = useCallback(() => {
-    setEntries([]);
-    setSelectedId(null);
-    pendingEntriesRef.current = [];
-    idCounterRef.current = 0;
-    clearCryptoMutation.mutate();
-  }, [clearCryptoMutation]);
-
   const scrollToLatest = useCallback(() => {
     if (listRef.current && entries.length > 0) {
       listRef.current.scrollToRow({ index: entries.length - 1, align: "end" });
       setAutoScroll(true);
     }
   }, [entries.length]);
-
-  const selectedEntry = useMemo(
-    () =>
-      selectedId !== null ? entries.find((e) => e.id === selectedId) : null,
-    [selectedId, entries],
-  );
 
   const rowProps: CryptoRowProps = useMemo(
     () => ({ entries, selectedId, onSelect: handleSelect }),
@@ -601,7 +477,7 @@ export function CryptoResultsView() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleClear}
+            onClick={clear}
             className="h-7 px-2"
           >
             <Trash2 className="h-3.5 w-3.5" />

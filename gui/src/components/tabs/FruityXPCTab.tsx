@@ -1,11 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
-  type ColumnDef,
-} from "@tanstack/react-table";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { type ColumnDef } from "@tanstack/react-table";
 import { useQuery, useMutation } from "@tanstack/react-query";
 
 import {
@@ -26,6 +20,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import XPCTreeView from "@/components/shared/XPCTreeView";
+import { LogTable } from "@/components/shared/LogTable";
 import { Status, useSession } from "@/context/SessionContext";
 
 import {
@@ -59,17 +54,8 @@ interface NSXPCEntry {
 
 const MAX_ENTRIES = 8000;
 const THROTTLE_MS = 100;
-const ROW_HEIGHT = 32;
 
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString("en-US", {
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    fractionalSecondDigits: 3,
-  });
-}
+import { toTime } from "@/lib/format";
 
 function messagePreview(message: XPCNode): string {
   const desc = message.description;
@@ -100,7 +86,7 @@ const xpcColumns: ColumnDef<XPCEntry>[] = [
     size: 96,
     cell: ({ row }) => (
       <span className="font-mono text-muted-foreground">
-        {formatTime(row.original.timestamp)}
+        {toTime(row.original.timestamp)}
       </span>
     ),
   },
@@ -153,7 +139,7 @@ const nsxpcColumns: ColumnDef<NSXPCEntry>[] = [
     size: 96,
     cell: ({ row }) => (
       <span className="font-mono text-muted-foreground">
-        {formatTime(row.original.timestamp)}
+        {toTime(row.original.timestamp)}
       </span>
     ),
   },
@@ -208,110 +194,6 @@ const nsxpcColumns: ColumnDef<NSXPCEntry>[] = [
   },
 ];
 
-function VirtualTable<T extends { id: number }>({
-  table,
-  columns,
-  selectedId,
-  onSelect,
-}: {
-  table: ReturnType<typeof useReactTable<T>>;
-  columns: ColumnDef<T>[];
-  selectedId: number | null;
-  onSelect: (id: number | null) => void;
-}) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { rows } = table.getRowModel();
-
-  const rowVirtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => containerRef.current,
-    estimateSize: () => ROW_HEIGHT,
-    overscan: 20,
-  });
-
-  const virtualRows = rowVirtualizer.getVirtualItems();
-  const totalSize = rowVirtualizer.getTotalSize();
-
-  return (
-    <div ref={containerRef} className="flex-1 overflow-auto">
-      <table className="w-full text-xs border-collapse">
-        <thead className="sticky top-0 bg-background z-10">
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id} className="border-b">
-              {headerGroup.headers.map((header) => (
-                <th
-                  key={header.id}
-                  className="text-left font-medium p-2 text-muted-foreground"
-                  style={{ width: header.getSize() }}
-                >
-                  {flexRender(
-                    header.column.columnDef.header,
-                    header.getContext(),
-                  )}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {virtualRows.length > 0 && virtualRows[0].start > 0 && (
-            <tr>
-              <td
-                colSpan={columns.length}
-                style={{ height: virtualRows[0].start }}
-              />
-            </tr>
-          )}
-          {virtualRows.map((virtualRow) => {
-            const row = rows[virtualRow.index];
-            return (
-              <tr
-                key={row.id}
-                className={`border-b cursor-pointer hover:bg-muted/50 ${
-                  selectedId === row.original.id ? "bg-accent" : ""
-                }`}
-                style={{ height: virtualRow.size }}
-                onClick={() =>
-                  onSelect(
-                    selectedId === row.original.id ? null : row.original.id,
-                  )
-                }
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <td
-                    key={cell.id}
-                    className="p-2 truncate"
-                    style={{
-                      width: cell.column.getSize(),
-                      maxWidth: cell.column.getSize(),
-                    }}
-                  >
-                    {flexRender(
-                      cell.column.columnDef.cell,
-                      cell.getContext(),
-                    )}
-                  </td>
-                ))}
-              </tr>
-            );
-          })}
-          {virtualRows.length > 0 && (
-            <tr>
-              <td
-                colSpan={columns.length}
-                style={{
-                  height:
-                    totalSize -
-                    (virtualRows[virtualRows.length - 1]?.end ?? 0),
-                }}
-              />
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
-}
 
 function XPCDetailPanel({ entry }: { entry: XPCEntry | null }) {
   if (!entry) {
@@ -634,20 +516,6 @@ export function FruityXPCTab() {
     [filteredNsxpc, selectedNsxpcId],
   );
 
-  const xpcTable = useReactTable({
-    data: filteredXpc,
-    columns: xpcColumns,
-    getCoreRowModel: getCoreRowModel(),
-    getRowId: (row) => String(row.id),
-  });
-
-  const nsxpcTable = useReactTable({
-    data: filteredNsxpc,
-    columns: nsxpcColumns,
-    getCoreRowModel: getCoreRowModel(),
-    getRowId: (row) => String(row.id),
-  });
-
   const notReady = status !== Status.Ready;
 
   return (
@@ -721,8 +589,8 @@ export function FruityXPCTab() {
           >
             <ResizablePanel defaultSize="65%" minSize="30%">
               <div className="h-full flex flex-col overflow-hidden">
-                <VirtualTable
-                  table={xpcTable}
+                <LogTable
+                  data={filteredXpc}
                   columns={xpcColumns}
                   selectedId={selectedXpcId}
                   onSelect={setSelectedXpcId}
@@ -744,8 +612,8 @@ export function FruityXPCTab() {
           >
             <ResizablePanel defaultSize="65%" minSize="30%">
               <div className="h-full flex flex-col overflow-hidden">
-                <VirtualTable
-                  table={nsxpcTable}
+                <LogTable
+                  data={filteredNsxpc}
                   columns={nsxpcColumns}
                   selectedId={selectedNsxpcId}
                   onSelect={setSelectedNsxpcId}

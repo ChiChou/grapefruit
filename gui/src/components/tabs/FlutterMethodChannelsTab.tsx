@@ -1,13 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
-  type ColumnDef,
-} from "@tanstack/react-table";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { type ColumnDef } from "@tanstack/react-table";
 
 import { Trash2, Play, Square, Loader2, ChevronsDown } from "lucide-react";
 
@@ -20,7 +14,10 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import { LogTable } from "@/components/shared/LogTable";
 import { Status, Platform, useSession } from "@/context/SessionContext";
+import { useLogStream } from "@/hooks/useLogStream";
+import { toTime } from "@/lib/format";
 
 const TAP_ID = "flutter";
 
@@ -43,18 +40,16 @@ interface FlutterEntry {
   event: FlutterEvent;
 }
 
-const MAX_ENTRIES = 8000;
-const THROTTLE_MS = 100;
-const ROW_HEIGHT = 32;
-
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString("en-US", {
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    fractionalSecondDigits: 3,
-  });
+function toEntry(event: FlutterEvent, timestamp: Date, id: number): FlutterEntry {
+  return {
+    id,
+    timestamp,
+    channel: event.channel ?? "<unknown>",
+    method: event.method ?? "-",
+    direction: event.dir === "native" ? "native" : "dart",
+    type: event.type ?? "method",
+    event,
+  };
 }
 
 function preview(value: unknown): string {
@@ -72,22 +67,6 @@ function preview(value: unknown): string {
   return `${value}`;
 }
 
-function toEntry(
-  event: FlutterEvent,
-  timestamp: Date,
-  id: number,
-): FlutterEntry {
-  return {
-    id,
-    timestamp,
-    channel: event.channel ?? "<unknown>",
-    method: event.method ?? "-",
-    direction: event.dir === "native" ? "native" : "dart",
-    type: event.type ?? "method",
-    event,
-  };
-}
-
 function formatJson(value: unknown): string {
   if (value === undefined) return "";
   if (typeof value === "string") return value;
@@ -98,6 +77,20 @@ function formatJson(value: unknown): string {
   }
 }
 
+const mapHistory = (record: Record<string, unknown>, id: number): FlutterEntry => {
+  const data = record.data as Record<string, unknown> | undefined;
+  const event: FlutterEvent = {
+    type: (record.type as FlutterEvent["type"]) ?? "method",
+    dir: (record.direction as FlutterEvent["dir"]) ?? "dart",
+    channel: record.channel as string,
+    ...data,
+  };
+  return toEntry(event, new Date(record.timestamp as string), id);
+};
+
+const mapSocket = (id: number, ...args: unknown[]): FlutterEntry =>
+  toEntry(args[0] as FlutterEvent, new Date(), id);
+
 const columns: ColumnDef<FlutterEntry>[] = [
   {
     id: "timestamp",
@@ -105,7 +98,7 @@ const columns: ColumnDef<FlutterEntry>[] = [
     size: 96,
     cell: ({ row }) => (
       <span className="font-mono text-muted-foreground">
-        {formatTime(row.original.timestamp)}
+        {toTime(row.original.timestamp)}
       </span>
     ),
   },
@@ -159,21 +152,14 @@ const columns: ColumnDef<FlutterEntry>[] = [
 
 export function FlutterMethodChannelsTab() {
   const { t } = useTranslation();
-  const { platform, status, socket, device, identifier, fruity, droid } =
-    useSession();
+  const { platform, status, device, identifier, fruity, droid } = useSession();
 
   const api = platform === Platform.Fruity ? fruity : droid;
 
   const [isActive, setIsActive] = useState<boolean | null>(null);
-  const [entries, setEntries] = useState<FlutterEntry[]>([]);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [searchFilter, setSearchFilter] = useState("");
   const [showDart, setShowDart] = useState(true);
   const [showNative, setShowNative] = useState(true);
-
-  const idRef = useRef(1);
-  const pendingRef = useRef<FlutterEntry[]>([]);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
   // Check if flutter is available
@@ -184,6 +170,21 @@ export function FlutterMethodChannelsTab() {
     staleTime: Infinity,
     gcTime: 0,
     retry: false,
+  });
+
+  const {
+    entries,
+    selectedId,
+    setSelectedId,
+    clear,
+    clearMutation,
+  } = useLogStream<FlutterEntry>({
+    event: "flutter",
+    path: "history/flutter",
+    key: "logs",
+    fromRecord: mapHistory,
+    fromEvent: mapSocket,
+    enabled: !!flutterAvailable,
   });
 
   // Sync initial active state from agent
@@ -197,6 +198,11 @@ export function FlutterMethodChannelsTab() {
     if (initialActive !== undefined && isActive === null)
       setIsActive(initialActive);
   }, [initialActive, isActive]);
+
+  // Reset active state on session change
+  useEffect(() => {
+    setIsActive(false);
+  }, [platform, device, identifier]);
 
   // Toggle start/stop
   const toggleMutation = useMutation({
@@ -212,114 +218,6 @@ export function FlutterMethodChannelsTab() {
       setIsActive(enable);
     },
   });
-
-  // Clear history
-  const clearMutation = useMutation({
-    mutationFn: async () => {
-      if (!device || !identifier) return;
-      const res = await fetch(`/api/history/flutter/${device}/${identifier}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to clear history");
-    },
-    onSuccess: () => {
-      setEntries([]);
-      setSelectedId(null);
-      idRef.current = 1;
-      pendingRef.current = [];
-    },
-  });
-
-  // Load history
-  const { data: history } = useQuery<{
-    logs: {
-      id: number;
-      timestamp: string;
-      type: string;
-      direction: string;
-      channel: string;
-      data?: Record<string, unknown>;
-    }[];
-  }>({
-    queryKey: ["flutterHistory", device, identifier],
-    queryFn: async () => {
-      const res = await fetch(
-        `/api/history/flutter/${device}/${identifier}?limit=5000`,
-      );
-      if (!res.ok) throw new Error("Failed to load Flutter channel history");
-      return res.json();
-    },
-    enabled:
-      status === Status.Ready && !!device && !!identifier && !!flutterAvailable,
-    staleTime: Infinity,
-  });
-
-  // Reset on session change
-  useEffect(() => {
-    setEntries([]);
-    setSelectedId(null);
-    setIsActive(false);
-    idRef.current = 1;
-    pendingRef.current = [];
-  }, [platform, device, identifier]);
-
-  // Load historical entries
-  useEffect(() => {
-    if (!history?.logs) return;
-
-    const next: FlutterEntry[] = [];
-    for (const record of [...history.logs].reverse()) {
-      const event: FlutterEvent = {
-        type: (record.type as FlutterEvent["type"]) ?? "method",
-        dir: (record.direction as FlutterEvent["dir"]) ?? "dart",
-        channel: record.channel,
-        ...record.data,
-      };
-      next.push(toEntry(event, new Date(record.timestamp), idRef.current++));
-    }
-
-    setEntries(next);
-  }, [history]);
-
-  // Flush pending entries
-  const flushPending = useCallback(() => {
-    timerRef.current = null;
-    if (pendingRef.current.length === 0) return;
-
-    const incoming = pendingRef.current;
-    pendingRef.current = [];
-
-    setEntries((prev) => {
-      const merged = [...prev, ...incoming];
-      return merged.length > MAX_ENTRIES ? merged.slice(-MAX_ENTRIES) : merged;
-    });
-  }, []);
-
-  // Listen for live hook events
-  useEffect(() => {
-    if (status !== Status.Ready || !socket) return;
-
-    const onFlutter = (message: Record<string, unknown>) => {
-      const entry = toEntry(
-        message as unknown as FlutterEvent,
-        new Date(),
-        idRef.current++,
-      );
-      pendingRef.current.push(entry);
-      if (!timerRef.current) {
-        timerRef.current = setTimeout(flushPending, THROTTLE_MS);
-      }
-    };
-
-    socket.on("flutter", onFlutter);
-    return () => {
-      socket.off("flutter", onFlutter);
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-  }, [status, socket, flushPending]);
 
   // Filter entries
   const filteredEntries = useMemo(() => {
@@ -341,25 +239,6 @@ export function FlutterMethodChannelsTab() {
     () => filteredEntries.find((e) => e.id === selectedId) ?? null,
     [filteredEntries, selectedId],
   );
-
-  const table = useReactTable({
-    data: filteredEntries,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getRowId: (row) => String(row.id),
-  });
-
-  const { rows } = table.getRowModel();
-
-  const rowVirtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => tableContainerRef.current,
-    estimateSize: () => ROW_HEIGHT,
-    overscan: 20,
-  });
-
-  const virtualRows = rowVirtualizer.getVirtualItems();
-  const totalSize = rowVirtualizer.getTotalSize();
 
   const notReady =
     status !== Status.Ready || flutterLoading || !flutterAvailable;
@@ -441,7 +320,7 @@ export function FlutterMethodChannelsTab() {
               variant="ghost"
               size="icon"
               className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-950/30"
-              onClick={() => clearMutation.mutate()}
+              onClick={clear}
               disabled={clearMutation.isPending || entries.length === 0}
             >
               <Trash2 className="w-4 h-4" />
@@ -449,85 +328,13 @@ export function FlutterMethodChannelsTab() {
           </div>
 
           {/* Virtualized table */}
-          <div ref={tableContainerRef} className="flex-1 overflow-auto">
-            <table className="w-full text-xs border-collapse">
-              <thead className="sticky top-0 bg-background z-10">
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id} className="border-b">
-                    {headerGroup.headers.map((header) => (
-                      <th
-                        key={header.id}
-                        className="text-left font-medium p-2 text-muted-foreground"
-                        style={{ width: header.getSize() }}
-                      >
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody>
-                {virtualRows.length > 0 && virtualRows[0].start > 0 && (
-                  <tr>
-                    <td
-                      colSpan={columns.length}
-                      style={{ height: virtualRows[0].start }}
-                    />
-                  </tr>
-                )}
-                {virtualRows.map((virtualRow) => {
-                  const row = rows[virtualRow.index];
-                  return (
-                    <tr
-                      key={row.id}
-                      className={`border-b cursor-pointer hover:bg-muted/50 ${
-                        selectedId === row.original.id ? "bg-accent" : ""
-                      }`}
-                      style={{ height: virtualRow.size }}
-                      onClick={() =>
-                        setSelectedId(
-                          selectedId === row.original.id
-                            ? null
-                            : row.original.id,
-                        )
-                      }
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <td
-                          key={cell.id}
-                          className="p-2 truncate"
-                          style={{
-                            width: cell.column.getSize(),
-                            maxWidth: cell.column.getSize(),
-                          }}
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })}
-                {virtualRows.length > 0 && (
-                  <tr>
-                    <td
-                      colSpan={columns.length}
-                      style={{
-                        height:
-                          totalSize -
-                          (virtualRows[virtualRows.length - 1]?.end ?? 0),
-                      }}
-                    />
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <LogTable
+            data={filteredEntries}
+            columns={columns}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            scrollRef={tableContainerRef}
+          />
         </div>
       </ResizablePanel>
 
@@ -545,7 +352,7 @@ export function FlutterMethodChannelsTab() {
               <div className="space-y-1">
                 <div>
                   <span className="text-muted-foreground">{t("time")}: </span>
-                  {formatTime(selectedEntry.timestamp)}
+                  {toTime(selectedEntry.timestamp)}
                 </div>
                 <div>
                   <span className="text-muted-foreground">

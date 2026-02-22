@@ -6,7 +6,6 @@ import {
   useMemo,
   type CSSProperties,
 } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { List, type ListImperativeAPI } from "react-window";
 import {
@@ -31,11 +30,11 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { useSession, Status } from "@/context/SessionContext";
+import { useLogStream } from "@/hooks/useLogStream";
+import { toTime } from "@/lib/format";
 
 import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
 
-// Internal representation with timestamp
 interface HookEntry {
   id: number;
   timestamp: Date;
@@ -43,10 +42,7 @@ interface HookEntry {
 }
 
 const ROW_HEIGHT = 32;
-const MAX_ENTRIES = 10000;
-const THROTTLE_MS = 100;
 
-// Category icon component
 function CategoryIcon({ category }: { category: string }) {
   switch (category) {
     case "sql":
@@ -64,23 +60,10 @@ function CategoryIcon({ category }: { category: string }) {
   }
 }
 
-// Format timestamp for display
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString("en-US", {
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    fractionalSecondDigits: 3,
-  });
-}
-
-// Format message summary
 function formatSummary(message: BaseHookMessage): string {
   return message.line || "";
 }
 
-// Summary popover component
 function SummaryPopover({ summary }: { summary: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -137,7 +120,6 @@ function SummaryPopover({ summary }: { summary: string }) {
   );
 }
 
-// Stack trace popover component
 function StackTracePopover({
   bt,
   t,
@@ -176,13 +158,11 @@ function StackTracePopover({
   );
 }
 
-// Row props type for react-window v2 (custom props only - ariaAttributes, index, style are added by List)
 interface HookRowProps {
   entries: HookEntry[];
   t: (key: string) => string;
 }
 
-// Row component for virtual list (react-window v2 API)
 function HookRow(
   props: {
     ariaAttributes: {
@@ -206,12 +186,9 @@ function HookRow(
       style={style}
       className="flex items-center px-3 py-1 border-b border-border/50 hover:bg-muted/30 text-xs gap-2"
     >
-      {/* Timestamp */}
       <span className="text-muted-foreground font-mono w-24 shrink-0">
-        {formatTime(timestamp)}
+        {toTime(timestamp)}
       </span>
-
-      {/* Category */}
       <Badge
         variant="outline"
         className="flex items-center gap-1 h-5 px-1.5 shrink-0"
@@ -219,8 +196,6 @@ function HookRow(
         <CategoryIcon category={message.category} />
         <span className="text-[10px]">{message.category}</span>
       </Badge>
-
-      {/* Direction */}
       <Badge
         variant={message.dir === "enter" ? "default" : "secondary"}
         className="h-5 px-1.5 text-[10px] shrink-0"
@@ -229,19 +204,13 @@ function HookRow(
           className={`h-3 w-3 ${message.dir === "leave" ? "rotate-180" : ""}`}
         />
       </Badge>
-
-      {/* Symbol */}
       <span
         className="font-mono text-primary truncate w-48 shrink-0"
         title={message.symbol}
       >
         {message.symbol}
       </span>
-
-      {/* Summary */}
       <SummaryPopover summary={formatSummary(message)} />
-
-      {/* Stack trace button */}
       <div className="shrink-0">
         <StackTracePopover bt={message.backtrace} t={t} />
       </div>
@@ -249,54 +218,52 @@ function HookRow(
   );
 }
 
+const mapHistory = (record: Record<string, unknown>, id: number): HookEntry | null => {
+  if (record.category === "crypto") return null;
+  return {
+    id,
+    timestamp: new Date(record.timestamp as string),
+    message: {
+      subject: "hook",
+      category: record.category as string,
+      symbol: record.symbol as string,
+      dir: record.direction as "enter" | "leave",
+      line: (record.line as string) ?? undefined,
+      extra: record.extra as Record<string, unknown> | undefined,
+    },
+  };
+};
+
+const mapSocket = (id: number, ...args: unknown[]): HookEntry | null => {
+  const message = args[0] as BaseHookMessage;
+  if (message.category === "crypto") return null;
+  return { id, timestamp: new Date(), message };
+};
+
 export function HookResultsView() {
   const { t } = useTranslation();
-  const { socket, status, device, identifier } = useSession();
-  const [entries, setEntries] = useState<HookEntry[]>([]);
   const listRef = useRef<ListImperativeAPI>(null);
-  const idCounterRef = useRef(0);
-  const pendingEntriesRef = useRef<HookEntry[]>([]);
-  const rafRef = useRef<number | null>(null);
-  const lastUpdateRef = useRef<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const [listHeight, setListHeight] = useState(300);
-
-  // Auto-scroll state
   const [autoScroll, setAutoScroll] = useState(true);
 
-  // Load historical hooks (exclude crypto category)
-  const { data: hookHistory } = useQuery<{ hooks: Array<{ id: number; timestamp: string; category: string; symbol: string; direction: string; line: string | null; extra?: Record<string, unknown> }> }>({
-    queryKey: ["hookHistory", device, identifier],
-    queryFn: async () => {
-      const res = await fetch(`/api/hooks/${device}/${identifier}?limit=5000`);
-      if (!res.ok) throw new Error("Failed to load hook history");
-      return res.json();
-    },
-    enabled: !!device && !!identifier,
-    staleTime: Infinity,
-    gcTime: 0,
+  const {
+    entries,
+    clear,
+  } = useLogStream<HookEntry>({
+    event: "hook",
+    path: "hooks",
+    key: "hooks",
+    fromRecord: (record, id) => mapHistory(record, id)!,
+    fromEvent: mapSocket,
+    max: 10000,
   });
 
-  useEffect(() => {
-    if (!hookHistory?.hooks?.length) return;
-    const historicalEntries: HookEntry[] = hookHistory.hooks
-      .filter((r) => r.category !== "crypto")
-      .slice()
-      .reverse()
-      .map((record) => ({
-        id: idCounterRef.current++,
-        timestamp: new Date(record.timestamp),
-        message: {
-          subject: "hook",
-          category: record.category,
-          symbol: record.symbol,
-          dir: record.direction as "enter" | "leave",
-          line: record.line ?? undefined,
-          extra: record.extra,
-        },
-      }));
-    setEntries(historicalEntries);
-  }, [hookHistory]);
+  // Filter out null entries from mapHistory (crypto category)
+  const filteredEntries = useMemo(
+    () => entries.filter((e): e is HookEntry => e !== null),
+    [entries],
+  );
 
   // Resize observer for container
   useEffect(() => {
@@ -312,116 +279,34 @@ export function HookResultsView() {
     return () => observer.disconnect();
   }, []);
 
-  // Throttled flush of pending entries
-  const flushPendingEntries = useCallback(() => {
-    if (pendingEntriesRef.current.length === 0) return;
-
-    const now = performance.now();
-    if (now - lastUpdateRef.current < THROTTLE_MS) {
-      // Schedule another flush
-      if (!rafRef.current) {
-        rafRef.current = requestAnimationFrame(() => {
-          rafRef.current = null;
-          flushPendingEntries();
-        });
-      }
-      return;
-    }
-
-    lastUpdateRef.current = now;
-    const newEntries = pendingEntriesRef.current;
-    pendingEntriesRef.current = [];
-
-    setEntries((prev) => {
-      const combined = [...prev, ...newEntries];
-      // Trim if exceeds max
-      if (combined.length > MAX_ENTRIES) {
-        return combined.slice(-MAX_ENTRIES);
-      }
-      return combined;
-    });
-
-    // Auto-scroll to bottom
-    if (autoScroll && listRef.current) {
+  // Auto-scroll when new entries arrive
+  useEffect(() => {
+    if (autoScroll && listRef.current && filteredEntries.length > 0) {
       requestAnimationFrame(() => {
         listRef.current?.scrollToRow({
-          index: entries.length + newEntries.length - 1,
+          index: filteredEntries.length - 1,
           align: "end",
         });
       });
     }
-  }, [autoScroll, entries.length, listRef]);
+  }, [filteredEntries.length, autoScroll]);
 
-  // Handle incoming hook messages
-  useEffect(() => {
-    if (status !== Status.Ready || !socket) return;
-
-    const handleHook = (message: BaseHookMessage) => {
-      if (message.category === "crypto") return;
-      const entry: HookEntry = {
-        id: idCounterRef.current++,
-        timestamp: new Date(),
-        message,
-      };
-
-      pendingEntriesRef.current.push(entry);
-
-      // Throttle updates
-      if (!rafRef.current) {
-        rafRef.current = requestAnimationFrame(() => {
-          rafRef.current = null;
-          flushPendingEntries();
-        });
-      }
-    };
-
-    socket.on("hook", handleHook);
-
-    return () => {
-      socket.off("hook", handleHook);
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-      }
-    };
-  }, [socket, status, flushPendingEntries]);
-
-  // Handle scroll to detect if user scrolled away from bottom
   const handleRowsRendered = useCallback(
     (visibleRows: { startIndex: number; stopIndex: number }) => {
-      // Check if near bottom
-      const isNearBottom = visibleRows.stopIndex >= entries.length - 3;
+      const isNearBottom = visibleRows.stopIndex >= filteredEntries.length - 3;
       setAutoScroll(isNearBottom);
     },
-    [entries.length],
+    [filteredEntries.length],
   );
 
-  const clearHooksMutation = useMutation({
-    mutationFn: async () => {
-      if (!device || !identifier) return;
-      const res = await fetch(`/api/hooks/${device}/${identifier}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to clear hooks from database");
-    },
-  });
-
-  const handleClear = useCallback(() => {
-    setEntries([]);
-    pendingEntriesRef.current = [];
-    idCounterRef.current = 0;
-    clearHooksMutation.mutate();
-  }, [clearHooksMutation]);
-
   const scrollToLatest = useCallback(() => {
-    if (listRef.current && entries.length > 0) {
-      listRef.current.scrollToRow({ index: entries.length - 1, align: "end" });
+    if (listRef.current && filteredEntries.length > 0) {
+      listRef.current.scrollToRow({ index: filteredEntries.length - 1, align: "end" });
       setAutoScroll(true);
     }
-  }, [entries.length]);
+  }, [filteredEntries.length]);
 
-  // Memoized row props for the list (only custom props, not ariaAttributes/index/style)
-  const rowProps: HookRowProps = useMemo(() => ({ entries, t }), [entries, t]);
+  const rowProps: HookRowProps = useMemo(() => ({ entries: filteredEntries, t }), [filteredEntries, t]);
 
   return (
     <div className="h-full flex flex-col">
@@ -429,7 +314,7 @@ export function HookResultsView() {
       <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>
-            {entries.length.toLocaleString()} {t("hook_results").toLowerCase()}
+            {filteredEntries.length.toLocaleString()} {t("hook_results").toLowerCase()}
           </span>
           {!autoScroll && (
             <Button
@@ -446,7 +331,7 @@ export function HookResultsView() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={handleClear}
+          onClick={clear}
           className="h-7 px-2"
         >
           <Trash2 className="h-3.5 w-3.5 mr-1" />
@@ -455,7 +340,7 @@ export function HookResultsView() {
 
       {/* Content */}
       <div ref={containerRef} className="flex-1 min-h-0">
-        {entries.length === 0 ? (
+        {filteredEntries.length === 0 ? (
           <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
             {t("hook_no_results")}
           </div>
@@ -463,7 +348,7 @@ export function HookResultsView() {
           <List
             listRef={listRef}
             style={{ height: listHeight, width: "100%" }}
-            rowCount={entries.length}
+            rowCount={filteredEntries.length}
             rowHeight={ROW_HEIGHT}
             rowProps={rowProps}
             rowComponent={HookRow}
