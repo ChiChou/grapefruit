@@ -1,7 +1,7 @@
 import { type ReactNode, useCallback } from "react";
 import { useR2, type Platform, type Architecture } from "@frida/react-use-r2";
 import { useSession } from "@/context/SessionContext";
-import { useRpcQuery } from "@/lib/queries";
+import { useFruityQuery } from "@/lib/queries";
 
 interface ProcessInfo {
   platform: string;
@@ -32,7 +32,7 @@ function mapArch(arch: string): Architecture {
 export function R2Provider({ children }: { children: ReactNode }) {
   const { fruity } = useSession();
 
-  const { data: processInfo } = useRpcQuery<ProcessInfo>(
+  const { data: processInfo } = useFruityQuery<ProcessInfo>(
     ["processInfo"],
     (api) => api.info.processInfo(),
   );

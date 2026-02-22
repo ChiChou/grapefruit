@@ -3,7 +3,7 @@ import { Loader2 } from "lucide-react";
 import { t } from "i18next";
 
 import HexView from "../shared/HexView";
-import { useRpcQuery } from "@/lib/queries";
+import { useFruityQuery } from "@/lib/queries";
 
 export interface MemoryPreviewTabParams {
   address: string;
@@ -20,7 +20,7 @@ export function MemoryPreviewTab({
     data: rawData,
     isLoading,
     error,
-  } = useRpcQuery<ArrayBuffer | null>(
+  } = useFruityQuery<ArrayBuffer | null>(
     ["memory", address ?? "", String(size ?? 0)],
     (api) => api.memory.dump(address!, size!),
     { enabled: !!address && !!size },

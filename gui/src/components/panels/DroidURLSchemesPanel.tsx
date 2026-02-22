@@ -17,7 +17,7 @@ import {
 
 import { useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
-import { useDroidRpcQuery, useDroidRpcMutation } from "@/lib/queries";
+import { useDroidQuery, useDroidMutation } from "@/lib/queries";
 
 interface DroidURLScheme {
   activity: string;
@@ -100,7 +100,7 @@ function DroidURLSendView({ scheme }: { scheme: string }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const launchMutation = useDroidRpcMutation<void, { data: string }>(
+  const launchMutation = useDroidMutation<void, { data: string }>(
     (api, { data }) =>
       api.activities.start({
         action: "android.intent.action.VIEW",
@@ -203,7 +203,7 @@ export function DroidURLSchemesPanel() {
     data: manifestXml,
     isLoading,
     error,
-  } = useDroidRpcQuery(["manifest"], (api) => api.manifest.xml());
+  } = useDroidQuery(["manifest"], (api) => api.manifest.xml());
 
   const allSchemes = useMemo(() => {
     if (!manifestXml) return [];

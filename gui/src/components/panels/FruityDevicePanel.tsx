@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-import { useRpcQuery } from "@/lib/queries";
+import { useFruityQuery } from "@/lib/queries";
 
 import type { UIDeviceInfo } from "@agent/fruity/modules/uidevice";
 
@@ -14,7 +14,7 @@ export function FruityDevicePanel() {
     data: deviceInfo,
     isLoading,
     error,
-  } = useRpcQuery<UIDeviceInfo>(["uideviceInfo"], (api) => api.uidevice.info());
+  } = useFruityQuery<UIDeviceInfo>(["uideviceInfo"], (api) => api.uidevice.info());
 
   return (
     <div className="h-full p-4 overflow-auto">

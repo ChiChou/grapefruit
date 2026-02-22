@@ -13,7 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession, Status } from "@/context/SessionContext";
-import { useRpcQuery } from "@/lib/queries";
+import { useFruityQuery } from "@/lib/queries";
 import { FruityUserHooksList } from "./FruityUserHooksList";
 
 interface TapInfo {
@@ -69,7 +69,7 @@ export function FruityHookControlPanel() {
   const [loading, setLoading] = useState<Record<string, boolean>>({});
 
   // Fetch tap status from agent via taps.list() RPC
-  const { data: tapList, isLoading: isLoadingStatus } = useRpcQuery<TapInfo[]>(
+  const { data: tapList, isLoading: isLoadingStatus } = useFruityQuery<TapInfo[]>(
     ["tapsList"],
     (api) => api.taps.list(),
   );

@@ -21,7 +21,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { useRpcQuery } from "@/lib/queries";
+import { useFruityQuery } from "@/lib/queries";
 import {
   objc,
   formatObjCMethod,
@@ -133,7 +133,7 @@ export function FruityClassDetailTab({
   );
   const [isHooking, setIsHooking] = useState(false);
 
-  const { data: classInfo, isLoading } = useRpcQuery<ClassDetail>(
+  const { data: classInfo, isLoading } = useFruityQuery<ClassDetail>(
     ["classDetail", params.className],
     (api) => api.classdump.inspect(params.className),
   );

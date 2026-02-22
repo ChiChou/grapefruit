@@ -8,7 +8,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { useRpcQuery } from "@/lib/queries";
+import { useFruityQuery } from "@/lib/queries";
 
 const FONT_SIZES = [0.75, 1, 1.25, 1.5] as const;
 
@@ -200,7 +200,7 @@ export function FruityUIDumpTab() {
   const [allExpanded, setAllExpanded] = useState(true);
   const [copied, setCopied] = useState(false);
 
-  const { data, isLoading, error, refetch } = useRpcQuery(
+  const { data, isLoading, error, refetch } = useFruityQuery(
     ["uiDump"],
     // Don't include preview (screenshots) - it's slow
     (api) => api.ui.dump(),

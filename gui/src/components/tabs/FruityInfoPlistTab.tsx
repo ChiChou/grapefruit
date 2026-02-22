@@ -2,12 +2,12 @@ import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 
 import { PlistView, type PlistValue } from "@/components/shared/UnifiedPlistViewer";
-import { useRpcQuery } from "@/lib/queries";
+import { useFruityQuery } from "@/lib/queries";
 
 export function FruityInfoPlistTab() {
   const { t } = useTranslation();
 
-  const { data, isLoading } = useRpcQuery(["infoPlist"], (api) =>
+  const { data, isLoading } = useFruityQuery(["infoPlist"], (api) =>
     api.info.plist()
   );
 

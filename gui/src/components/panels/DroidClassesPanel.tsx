@@ -6,7 +6,7 @@ import { List, type RowComponentProps } from "react-window";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDock } from "@/context/DockContext";
-import { useDroidRpcQuery } from "@/lib/queries";
+import { useDroidQuery } from "@/lib/queries";
 
 const ITEM_HEIGHT = 32;
 
@@ -15,7 +15,7 @@ export function DroidClassesPanel() {
   const { openFilePanel } = useDock();
   const [search, setSearch] = useState("");
 
-  const { data: classes = [], isLoading } = useDroidRpcQuery(
+  const { data: classes = [], isLoading } = useDroidQuery(
     ["classes"],
     (api) => api.classes.list() as Promise<string[]>
   );

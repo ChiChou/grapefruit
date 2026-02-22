@@ -8,7 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 import { Status, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
-import { useRpcQuery } from "@/lib/queries";
+import { useFruityQuery } from "@/lib/queries";
 
 import type { BasicInfo } from "@agent/fruity/modules/info";
 
@@ -58,7 +58,7 @@ export function FruityGeneralPanel() {
     data: basicInfo,
     isLoading,
     error,
-  } = useRpcQuery<BasicInfo>(["appInfo"], (api) => api.info.basics());
+  } = useFruityQuery<BasicInfo>(["appInfo"], (api) => api.info.basics());
 
   const openFinderTab = (path: string) => {
     openSingletonPanel({

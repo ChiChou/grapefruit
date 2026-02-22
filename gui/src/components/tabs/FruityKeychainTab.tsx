@@ -28,7 +28,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useRpcQuery, useRpcMutation, useQueryClient } from "@/lib/queries";
+import { useFruityQuery, useFruityMutation, useQueryClient } from "@/lib/queries";
 import {
   useReactTable,
   getCoreRowModel,
@@ -98,12 +98,12 @@ export function FruityKeychainTab() {
     data: items = [],
     isLoading,
     refetch,
-  } = useRpcQuery<KeyChainItem[]>(
+  } = useFruityQuery<KeyChainItem[]>(
     ["keychain", String(withBiometricId)],
     (api) => api.keychain.list(withBiometricId),
   );
 
-  const removeMutation = useRpcMutation<
+  const removeMutation = useFruityMutation<
     void,
     { service: string; account: string }
   >((api, { service, account }) => api.keychain.remove(service, account), {

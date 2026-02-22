@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useDock } from "@/context/DockContext";
 import { Spinner } from "@/components/ui/spinner";
-import { usePlatformRpcQuery } from "@/lib/queries";
+import { usePlatformQuery } from "@/lib/queries";
 import { useSession, Status, Mode, Platform } from "@/context/SessionContext";
 import { useRepl } from "@/context/useRepl";
 import { Input } from "@/components/ui/input";
@@ -59,7 +59,7 @@ export function ImportsListView({ path }: ImportsListViewProps) {
     startWidth: number;
   } | null>(null);
 
-  const { data: importGroups, isLoading: loading } = usePlatformRpcQuery(
+  const { data: importGroups, isLoading: loading } = usePlatformQuery(
     ["importsGrouped", path],
     (rpc) => rpc.symbol.importsGrouped(path),
   );

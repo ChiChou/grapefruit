@@ -8,7 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 import { Status, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
-import { useDroidRpcQuery } from "@/lib/queries";
+import { useDroidQuery } from "@/lib/queries";
 
 import type { ApplicationInfoResult } from "@agent/droid/modules/app";
 
@@ -88,7 +88,7 @@ export function DroidGeneralPanel() {
     data: appInfo,
     isLoading,
     error,
-  } = useDroidRpcQuery<ApplicationInfoResult>(["appInfo"], (api) => api.app.info());
+  } = useDroidQuery<ApplicationInfoResult>(["appInfo"], (api) => api.app.info());
 
   const openFinderTab = (path: string) => {
     openSingletonPanel({

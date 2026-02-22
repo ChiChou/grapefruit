@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-import { useDroidRpcQuery } from "@/lib/queries";
+import { useDroidQuery } from "@/lib/queries";
 
 import type { DeviceInfo } from "@agent/droid/modules/device";
 
@@ -14,7 +14,7 @@ export function DroidDevicePanel() {
     data: deviceInfo,
     isLoading,
     error,
-  } = useDroidRpcQuery<DeviceInfo>(["deviceInfo"], (api) => api.device.info());
+  } = useDroidQuery<DeviceInfo>(["deviceInfo"], (api) => api.device.info());
 
   return (
     <div className="h-full p-4 overflow-auto">

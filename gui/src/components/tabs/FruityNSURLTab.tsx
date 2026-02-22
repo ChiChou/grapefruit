@@ -41,7 +41,7 @@ import { HttpResponseBodyView } from "@/components/shared/HttpResponseBodyView";
 import { useSession, Status } from "@/context/SessionContext";
 
 const TAP_ID = "nsurl";
-import { useRpcQuery } from "@/lib/queries";
+import { useFruityQuery } from "@/lib/queries";
 import type { NSURLEvent } from "@/lib/rpc";
 
 interface WebSocketMessage {
@@ -325,7 +325,7 @@ export function FruityNSURLTab() {
   const [hookEnabled, setHookEnabled] = useState<boolean | null>(null);
   const [hookLoading, setHookLoading] = useState(false);
 
-  const { data: initialActive } = useRpcQuery<boolean>(
+  const { data: initialActive } = useFruityQuery<boolean>(
     ["nsurlActive", device ?? "", identifier ?? ""],
     (api) => api.taps.active(TAP_ID),
   );

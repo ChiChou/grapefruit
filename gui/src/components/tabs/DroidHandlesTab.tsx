@@ -20,7 +20,7 @@ import {
 import { ArrowDown, ArrowUp, ArrowUpDown, RefreshCw } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { useDroidRpcQuery } from "@/lib/queries";
+import { useDroidQuery } from "@/lib/queries";
 
 import type {
   FileDescriptor,
@@ -67,7 +67,7 @@ export function DroidHandlesTab() {
     data: handles = [],
     isLoading,
     refetch,
-  } = useDroidRpcQuery<FileDescriptor[]>(
+  } = useDroidQuery<FileDescriptor[]>(
     ["droidHandles"],
     (api) => api.lsof.fds(),
   );

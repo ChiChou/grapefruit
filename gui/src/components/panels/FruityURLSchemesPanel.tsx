@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/resizable";
 
 import { FruityURLSendView } from "./FruityURLSendView";
-import { useRpcQuery } from "@/lib/queries";
+import { useFruityQuery } from "@/lib/queries";
 
 import type { URLScheme } from "@agent/fruity/modules/info";
 
@@ -26,7 +26,7 @@ export function FruityURLSchemesPanel() {
     data: urlSchemes,
     isLoading,
     error,
-  } = useRpcQuery(["urlSchemes"], (api) => api.info.urls());
+  } = useFruityQuery(["urlSchemes"], (api) => api.info.urls());
 
   const [filteredSchemes, setFilteredSchemes] = useState<URLScheme[] | null>(
     null,

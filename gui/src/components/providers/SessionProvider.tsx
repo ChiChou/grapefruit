@@ -16,6 +16,7 @@ import {
   type SessionClientEvents,
   type SessionServerEvents,
 } from "@/lib/rpc";
+import { fnv1a } from "@/lib/hash";
 
 import { CrashDialog, type CrashDetail } from "@/components/shared/CrashDialog";
 import { DeniedDialog } from "@/components/shared/DeniedDialog";

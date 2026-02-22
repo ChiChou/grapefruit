@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-import { useRpcQuery } from "@/lib/queries";
+import { useFruityQuery } from "@/lib/queries";
 
 import type { PluginInfo } from "@agent/fruity/modules/plugins";
 
@@ -46,7 +46,7 @@ export function FruityPluginsPanel() {
     data: plugins,
     isLoading,
     error,
-  } = useRpcQuery<PluginInfo[]>(["plugins"], (api) => api.plugins.list());
+  } = useFruityQuery<PluginInfo[]>(["plugins"], (api) => api.plugins.list());
 
   const filtered = useMemo(() => {
     if (!plugins) return [];

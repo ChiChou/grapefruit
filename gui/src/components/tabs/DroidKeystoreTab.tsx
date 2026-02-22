@@ -12,7 +12,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { useDroidRpcQuery } from "@/lib/queries";
+import { useDroidQuery } from "@/lib/queries";
 
 import type { KeystoreAlias, KeyInfo } from "@agent/droid/modules/keystore";
 
@@ -111,7 +111,7 @@ function KeyDetail({
     data: keyInfo,
     isLoading,
     error,
-  } = useDroidRpcQuery<KeyInfo | null>(
+  } = useDroidQuery<KeyInfo | null>(
     ["keystoreInfo", alias],
     (api) => api.keystore.info(alias),
   );
@@ -287,7 +287,7 @@ export function DroidKeystoreTab() {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
 
-  const { data: keys = [], isLoading } = useDroidRpcQuery<KeystoreAlias[]>(
+  const { data: keys = [], isLoading } = useDroidQuery<KeystoreAlias[]>(
     ["keystoreAliases"],
     (api) => api.keystore.aliases(),
   );

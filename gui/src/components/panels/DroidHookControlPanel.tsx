@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession, Status } from "@/context/SessionContext";
-import { useDroidRpcQuery } from "@/lib/queries";
+import { useDroidQuery } from "@/lib/queries";
 
 interface TapInfo {
   id: string;
@@ -69,7 +69,7 @@ export function DroidHookControlPanel() {
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [removingHook, setRemovingHook] = useState<string | null>(null);
 
-  const { data: tapList, isLoading: isLoadingStatus } = useDroidRpcQuery<TapInfo[]>(
+  const { data: tapList, isLoading: isLoadingStatus } = useDroidQuery<TapInfo[]>(
     ["tapsList"],
     (api) => api.taps.list(),
   );
@@ -77,7 +77,7 @@ export function DroidHookControlPanel() {
   const {
     data: userHooks = [],
     refetch: refetchUserHooks,
-  } = useDroidRpcQuery<UserHook[]>(
+  } = useDroidQuery<UserHook[]>(
     ["userHooks"],
     (api) => api.hook.userHooks(),
   );

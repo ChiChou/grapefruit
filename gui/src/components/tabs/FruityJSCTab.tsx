@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/resizable";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useTheme } from "@/components/providers/ThemeProvider";
-import { useRpcQuery, useRpcMutation } from "@/lib/queries";
+import { useFruityQuery, useFruityMutation } from "@/lib/queries";
 
 // Configure Monaco for JSC JavaScript (no DOM, just ESNext)
 function handleEditorWillMount(monaco: Monaco) {
@@ -284,13 +284,13 @@ export function FruityJSCTab() {
     data: contexts,
     isLoading,
     refetch,
-  } = useRpcQuery<Record<string, string>>(["jsc"], (api) => api.jsc.list());
+  } = useFruityQuery<Record<string, string>>(["jsc"], (api) => api.jsc.list());
 
-  const runMutation = useRpcMutation<string, { handle: string; js: string }>(
+  const runMutation = useFruityMutation<string, { handle: string; js: string }>(
     (api, { handle, js }) => api.jsc.run(handle, js),
   );
 
-  const dumpMutation = useRpcMutation<
+  const dumpMutation = useFruityMutation<
     Record<string, unknown>,
     { handle: string }
   >((api, { handle }) => api.jsc.dump(handle));

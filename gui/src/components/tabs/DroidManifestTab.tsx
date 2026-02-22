@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ManifestInsights } from "@/components/tabs/ManifestInsights";
-import { useDroidRpcQuery } from "@/lib/queries";
+import { useDroidQuery } from "@/lib/queries";
 
 export function DroidManifestTab() {
   const { t } = useTranslation();
@@ -20,7 +20,7 @@ export function DroidManifestTab() {
     data: xml,
     isLoading,
     error,
-  } = useDroidRpcQuery(["manifest"], (api) => api.manifest.xml());
+  } = useDroidQuery(["manifest"], (api) => api.manifest.xml());
 
   const handleCopy = async () => {
     if (!xml) return;

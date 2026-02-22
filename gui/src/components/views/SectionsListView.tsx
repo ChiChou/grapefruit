@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { useDock } from "@/context/DockContext";
 import { Spinner } from "@/components/ui/spinner";
-import { usePlatformRpcQuery } from "@/lib/queries";
+import { usePlatformQuery } from "@/lib/queries";
 import {
   Table,
   TableBody,
@@ -21,7 +21,7 @@ export function SectionsListView({
   const { openFilePanel } = useDock();
   const { t } = useTranslation();
 
-  const { data: sections, isLoading: loading } = usePlatformRpcQuery(
+  const { data: sections, isLoading: loading } = usePlatformQuery(
     ["sections", path],
     (api) => api.symbol.sections(path)
   );

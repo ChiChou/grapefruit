@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { InfoPlistInsights } from "@/components/tabs/InfoPlistInsights";
-import { useRpcQuery } from "@/lib/queries";
+import { useFruityQuery } from "@/lib/queries";
 
 export function FruityInfoPlistInsightsTab() {
   const { t } = useTranslation();
@@ -14,7 +14,7 @@ export function FruityInfoPlistInsightsTab() {
     data,
     isLoading,
     error,
-  } = useRpcQuery(["infoPlist"], (api) => api.info.plist());
+  } = useFruityQuery(["infoPlist"], (api) => api.info.plist());
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const value = (data?.value as Record<string, any>) ?? null;

@@ -27,7 +27,7 @@ import {
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { toast } from "sonner";
 import { useSession } from "@/context/SessionContext";
-import { useRpcQuery, useRpcMutation, useQueryClient } from "@/lib/queries";
+import { useFruityQuery, useFruityMutation, useQueryClient } from "@/lib/queries";
 import {
   useReactTable,
   getCoreRowModel,
@@ -60,9 +60,9 @@ export function FruityBinaryCookieTab() {
     data: cookies = [],
     isLoading,
     refetch,
-  } = useRpcQuery<Cookie[]>(["cookies"], (api) => api.cookies.list());
+  } = useFruityQuery<Cookie[]>(["cookies"], (api) => api.cookies.list());
 
-  const clearMutation = useRpcMutation<void, void>(
+  const clearMutation = useFruityMutation<void, void>(
     (api) => api.cookies.clear(),
     {
       onSuccess: () => {
@@ -71,7 +71,7 @@ export function FruityBinaryCookieTab() {
     },
   );
 
-  const removeMutation = useRpcMutation<boolean, CookiePredicate>(
+  const removeMutation = useFruityMutation<boolean, CookiePredicate>(
     (api, predicate) => api.cookies.remove(predicate),
     {
       onSuccess: () => {

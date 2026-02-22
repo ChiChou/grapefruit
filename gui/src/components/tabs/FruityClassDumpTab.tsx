@@ -7,7 +7,7 @@ import Editor, { loader } from "@monaco-editor/react";
 
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { Button } from "@/components/ui/button";
-import { useRpcQuery } from "@/lib/queries";
+import { useFruityQuery } from "@/lib/queries";
 import { header, type ClassDumpInfo } from "../../lib/classdump-header.ts";
 
 import type { ClassDetail } from "@agent/fruity/modules/classdump";
@@ -26,7 +26,7 @@ export function FruityClassDumpTab({
   const { t } = useTranslation();
   const { theme } = useTheme();
 
-  const { data: classInfo, isLoading } = useRpcQuery<ClassDetail>(
+  const { data: classInfo, isLoading } = useFruityQuery<ClassDetail>(
     ["classDetail", params.className],
     (api) => api.classdump.inspect(params.className),
   );

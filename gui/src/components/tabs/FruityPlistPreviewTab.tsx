@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 
 import { PlistView } from "@/components/shared/UnifiedPlistViewer";
 import { type PlistValue } from "@/components/shared/PlistTreeView";
-import { useRpcQuery } from "@/lib/queries";
+import { useFruityQuery } from "@/lib/queries";
 
 export interface PlistFilePreviewTabParams {
   path: string;
@@ -21,7 +21,7 @@ export function FruityPlistPreviewTab({
     data,
     isLoading,
     error,
-  } = useRpcQuery(
+  } = useFruityQuery(
     ["plistPreview", fullPath],
     (api) => api.fs.plist(fullPath),
     { enabled: !!fullPath }

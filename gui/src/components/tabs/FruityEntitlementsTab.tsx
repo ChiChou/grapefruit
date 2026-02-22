@@ -3,7 +3,7 @@ import type { IDockviewPanelProps } from "dockview";
 import { Loader2 } from "lucide-react";
 
 import { PlistView, type PlistValue } from "@/components/shared/UnifiedPlistViewer";
-import { useRpcQuery } from "@/lib/queries";
+import { useFruityQuery } from "@/lib/queries";
 
 export interface EntitlementsTabParams {
   path?: string;
@@ -14,7 +14,7 @@ export function FruityEntitlementsTab({
 }: IDockviewPanelProps<EntitlementsTabParams>) {
   const { t } = useTranslation();
 
-  const { data, isLoading } = useRpcQuery(
+  const { data, isLoading } = useFruityQuery(
     ["entitlements", params?.path ?? ""],
     (api) => api.entitlements.plist(params?.path)
   );

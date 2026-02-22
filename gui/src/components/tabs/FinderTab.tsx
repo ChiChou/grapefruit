@@ -18,7 +18,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Mode, Platform, Status, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
-import { useRpcMutation, useDroidRpcMutation } from "@/lib/queries";
+import { useFruityMutation, useDroidMutation } from "@/lib/queries";
 import { DirectoryTree } from "./DirectoryTree";
 import { FileTable } from "./FileTable";
 import type { FinderTabParams, UploadFile } from "../../lib/file-explorer.ts";
@@ -129,21 +129,21 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
     [fsApi],
   );
 
-  const fruityRenameMutation = useRpcMutation<
+  const fruityRenameMutation = useFruityMutation<
     boolean,
     { src: string; dst: string }
   >((api, { src, dst }) => api.fs.mv(src, dst));
 
-  const fruityDeleteMutation = useRpcMutation<boolean, { path: string }>(
+  const fruityDeleteMutation = useFruityMutation<boolean, { path: string }>(
     (api, { path }) => api.fs.rm(path),
   );
 
-  const droidRenameMutation = useDroidRpcMutation<
+  const droidRenameMutation = useDroidMutation<
     boolean,
     { src: string; dst: string }
   >((api, { src, dst }) => api.fs.mv(src, dst));
 
-  const droidDeleteMutation = useDroidRpcMutation<boolean, { path: string }>(
+  const droidDeleteMutation = useDroidMutation<boolean, { path: string }>(
     (api, { path }) => api.fs.rm(path),
   );
 

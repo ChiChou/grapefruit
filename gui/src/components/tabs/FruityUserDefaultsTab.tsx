@@ -26,7 +26,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useRpcQuery, useRpcMutation, useQueryClient } from "@/lib/queries";
+import { useFruityQuery, useFruityMutation, useQueryClient } from "@/lib/queries";
 import {
   useReactTable,
   getCoreRowModel,
@@ -79,9 +79,9 @@ export function FruityUserDefaultsTab() {
     data: defaults,
     isLoading,
     refetch,
-  } = useRpcQuery(["userdefaults"], (api) => api.userdefaults.enumerate());
+  } = useFruityQuery(["userdefaults"], (api) => api.userdefaults.enumerate());
 
-  const removeMutation = useRpcMutation(
+  const removeMutation = useFruityMutation(
     (api, { key }: { key: string }) => api.userdefaults.remove(key),
     {
       onSuccess: () => {
@@ -90,7 +90,7 @@ export function FruityUserDefaultsTab() {
     },
   );
 
-  const updateMutation = useRpcMutation(
+  const updateMutation = useFruityMutation(
     (api, { key, value }: { key: string; value: string | number }) =>
       api.userdefaults.update(key, value),
     {

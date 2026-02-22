@@ -22,7 +22,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { useSession, Status, Platform } from "@/context/SessionContext";
-import { useRpcQuery, useDroidRpcQuery } from "@/lib/queries";
+import { useFruityQuery, useDroidQuery } from "@/lib/queries";
 import { useLogStream } from "@/hooks/useLogStream";
 import { toTime } from "@/lib/format";
 
@@ -347,12 +347,12 @@ export function CryptoResultsView() {
   const [loading, setLoading] = useState<Record<string, boolean>>({});
 
   // Fetch crypto sub-group status (platform-aware)
-  const { data: fruityInitStatus } = useRpcQuery<Record<string, boolean>>(
+  const { data: fruityInitStatus } = useFruityQuery<Record<string, boolean>>(
     ["cryptoStatus", device ?? "", identifier ?? ""],
     (api) => api.crypto.status(),
     { enabled: !isDroid },
   );
-  const { data: droidInitStatus } = useDroidRpcQuery<Record<string, boolean>>(
+  const { data: droidInitStatus } = useDroidQuery<Record<string, boolean>>(
     ["cryptoStatus", device ?? "", identifier ?? ""],
     (api) => api.crypto.status(),
     { enabled: isDroid },

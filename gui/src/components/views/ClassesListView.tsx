@@ -7,7 +7,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useDock } from "@/context/DockContext";
-import { useRpcQuery } from "@/lib/queries";
+import { useFruityQuery } from "@/lib/queries";
 
 interface ClassesListViewProps {
   path: string;
@@ -18,7 +18,7 @@ export function ClassesListView({ path }: ClassesListViewProps) {
   const { t } = useTranslation();
   const [searchValue, setSearchValue] = useState("");
 
-  const { data: classes, isLoading: loading } = useRpcQuery(
+  const { data: classes, isLoading: loading } = useFruityQuery(
     ["moduleClasses", path],
     (api) => api.classdump.classesForModule(path)
   );

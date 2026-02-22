@@ -13,7 +13,7 @@ import {
   TooltipProvider,
 } from "@/components/ui/tooltip";
 import { Spinner } from "@/components/ui/spinner";
-import { useDroidRpcQuery, useDroidRpcMutation } from "@/lib/queries";
+import { useDroidQuery, useDroidMutation } from "@/lib/queries";
 
 import type { ActivityEntry } from "@agent/droid/modules/activities";
 import type { ServiceEntry } from "@agent/droid/modules/services";
@@ -34,34 +34,34 @@ export function DroidComponentsPanel() {
   const [activeTab, setActiveTab] = useState("activities");
 
   const { data: activities = [], isLoading: activitiesLoading } =
-    useDroidRpcQuery<ActivityEntry[]>(["activities"], (api) =>
+    useDroidQuery<ActivityEntry[]>(["activities"], (api) =>
       api.activities.list(),
     );
 
-  const { data: services = [], isLoading: servicesLoading } = useDroidRpcQuery<
+  const { data: services = [], isLoading: servicesLoading } = useDroidQuery<
     ServiceEntry[]
   >(["services"], (api) => api.services.list());
 
   const { data: receivers = [], isLoading: receiversLoading } =
-    useDroidRpcQuery<ReceiverEntry[]>(["receivers"], (api) =>
+    useDroidQuery<ReceiverEntry[]>(["receivers"], (api) =>
       api.receivers.list(),
     );
 
-  const startActivityMutation = useDroidRpcMutation<
+  const startActivityMutation = useDroidMutation<
     void,
     { component: string }
   >((api, { component }) => api.activities.start({ component }));
 
-  const startServiceMutation = useDroidRpcMutation<void, { component: string }>(
+  const startServiceMutation = useDroidMutation<void, { component: string }>(
     (api, { component }) => api.services.start({ component }),
   );
 
-  const stopServiceMutation = useDroidRpcMutation<
+  const stopServiceMutation = useDroidMutation<
     boolean,
     { component: string }
   >((api, { component }) => api.services.stop({ component }));
 
-  const sendBroadcastMutation = useDroidRpcMutation<
+  const sendBroadcastMutation = useDroidMutation<
     void,
     { component: string }
   >((api, { component }) => api.receivers.send({ component }));

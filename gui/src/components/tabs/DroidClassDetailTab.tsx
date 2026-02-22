@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { useDroidRpcQuery } from "@/lib/queries";
+import { useDroidQuery } from "@/lib/queries";
 
 import type { JavaClassDetail } from "@agent/droid/modules/classes";
 
@@ -33,7 +33,7 @@ export function DroidClassDetailTab({
   const [methodSearch, setMethodSearch] = useState("");
   const [fieldSearch, setFieldSearch] = useState("");
 
-  const { data: classInfo, isLoading } = useDroidRpcQuery<JavaClassDetail>(
+  const { data: classInfo, isLoading } = useDroidQuery<JavaClassDetail>(
     ["javaClassDetail", params.className],
     (api) => api.classes.inspect(params.className),
   );

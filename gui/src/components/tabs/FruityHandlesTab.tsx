@@ -21,7 +21,7 @@ import {
 import { ArrowDown, ArrowUp, ArrowUpDown, RefreshCw } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { useRpcQuery } from "@/lib/queries";
+import { useFruityQuery } from "@/lib/queries";
 
 import type {
   FileDescriptor,
@@ -61,7 +61,7 @@ export function FruityHandlesTab() {
     data: handles = [],
     isLoading,
     refetch,
-  } = useRpcQuery<FileDescriptor[]>(["handles"], (api) => api.lsof.fds());
+  } = useFruityQuery<FileDescriptor[]>(["handles"], (api) => api.lsof.fds());
 
   useEffect(() => {
     if (intervalRef.current) {

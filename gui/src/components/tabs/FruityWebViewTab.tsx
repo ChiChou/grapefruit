@@ -34,7 +34,7 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable";
 import { useTheme } from "@/components/providers/ThemeProvider";
-import { useRpcQuery, useRpcMutation } from "@/lib/queries";
+import { useFruityQuery, useFruityMutation } from "@/lib/queries";
 
 import type {
   WKWebViewInfo,
@@ -111,24 +111,24 @@ document.title`);
     data: wkWebviews = [],
     isLoading: isLoadingWK,
     refetch: refetchWK,
-  } = useRpcQuery(["webviews", "wk"], (api) => api.webview.listWK());
+  } = useFruityQuery(["webviews", "wk"], (api) => api.webview.listWK());
 
   const {
     data: uiWebviews = [],
     isLoading: isLoadingUI,
     refetch: refetchUI,
-  } = useRpcQuery(["webviews", "ui"], (api) => api.webview.listUI());
+  } = useFruityQuery(["webviews", "ui"], (api) => api.webview.listUI());
 
   const isLoading = isLoadingWK || isLoadingUI;
 
-  const evaluateMutation = useRpcMutation(
+  const evaluateMutation = useFruityMutation(
     (
       api,
       { kind, handle, js }: { kind: WebViewKind; handle: string; js: string },
     ) => api.webview.evaluate(kind, handle, js),
   );
 
-  const navigateMutation = useRpcMutation(
+  const navigateMutation = useFruityMutation(
     (
       api,
       { kind, handle, url }: { kind: WebViewKind; handle: string; url: string },

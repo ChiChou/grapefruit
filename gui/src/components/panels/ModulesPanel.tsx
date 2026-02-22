@@ -16,7 +16,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Platform, useSession } from "@/context/SessionContext";
-import { usePlatformRpcQuery } from "@/lib/queries";
+import { usePlatformQuery } from "@/lib/queries";
 import type { ModuleInfo } from "@agent/common/symbol";
 
 const ITEM_HEIGHT = 72;
@@ -28,7 +28,7 @@ export function ModulesPanel() {
   const isDroid = platform === Platform.Droid;
   const [search, setSearch] = useState("");
 
-  const { data: modules = [], isLoading } = usePlatformRpcQuery(
+  const { data: modules = [], isLoading } = usePlatformQuery(
     ["modules"],
     (api) => api.symbol.modules(),
   );

@@ -5,7 +5,7 @@ import { Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSession, Status } from "@/context/SessionContext";
 import { formatObjCMethod } from "@/lib/hook-template";
-import { useRpcQuery } from "@/lib/queries";
+import { useFruityQuery } from "@/lib/queries";
 
 interface UserHook {
   type: "objc" | "native";
@@ -23,7 +23,7 @@ export function FruityUserHooksList() {
     data: hooks = [],
     isLoading: loading,
     refetch,
-  } = useRpcQuery<UserHook[]>(["userHooks"], (api) => api.hook.userHooks());
+  } = useFruityQuery<UserHook[]>(["userHooks"], (api) => api.hook.userHooks());
 
   // Listen for hooks:refresh event to reload the list
   useEffect(() => {

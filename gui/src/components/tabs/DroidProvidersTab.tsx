@@ -13,7 +13,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { useDroidRpcQuery, useDroidRpcMutation } from "@/lib/queries";
+import { useDroidQuery, useDroidMutation } from "@/lib/queries";
 
 import type { ProviderEntry } from "@agent/droid/modules/provider";
 import type { QueryResult, QueryOptions } from "@agent/droid/modules/provider";
@@ -183,7 +183,7 @@ function QueryPane({
     setLastInitialUri(initialUri);
   }
 
-  const queryMutation = useDroidRpcMutation<
+  const queryMutation = useDroidMutation<
     QueryResult,
     { uri: string; options?: QueryOptions }
   >((api, { uri, options }) => api.provider.query(uri, options));
@@ -297,7 +297,7 @@ export function DroidProvidersTab() {
   const [search, setSearch] = useState("");
   const [selectedAuthority, setSelectedAuthority] = useState<string | null>(null);
 
-  const { data: providers = [], isLoading } = useDroidRpcQuery<ProviderEntry[]>(
+  const { data: providers = [], isLoading } = useDroidQuery<ProviderEntry[]>(
     ["providers"],
     (api) => api.provider.list(),
   );

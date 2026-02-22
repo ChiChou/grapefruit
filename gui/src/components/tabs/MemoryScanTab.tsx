@@ -22,7 +22,7 @@ import {
 
 import HexView from "@/components/shared/HexView";
 import { Platform, Status, useSession } from "@/context/SessionContext";
-import { usePlatformRpcQuery } from "@/lib/queries";
+import { usePlatformQuery } from "@/lib/queries";
 import type { MemoryScanEvent } from "@/lib/rpc";
 
 type DataType =
@@ -138,12 +138,12 @@ interface AddressInfo {
 }
 
 function DetailPanel({ address }: { address: string }) {
-  const { data, isLoading, error } = usePlatformRpcQuery<ArrayBuffer | null>(
+  const { data, isLoading, error } = usePlatformQuery<ArrayBuffer | null>(
     ["memoryScanDetail", address],
     (api) => api.memory.dump(address, DUMP_SIZE),
   );
 
-  const { data: info } = usePlatformRpcQuery<AddressInfo>(
+  const { data: info } = usePlatformQuery<AddressInfo>(
     ["memoryScanInfo", address],
     (api) => api.memory.addressInfo(address),
   );

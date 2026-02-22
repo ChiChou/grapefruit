@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
 import { useDock } from "@/context/DockContext";
-import { useRpcQuery } from "@/lib/queries";
+import { useFruityQuery } from "@/lib/queries";
 
 const ITEM_HEIGHT = 32;
 
@@ -23,7 +23,7 @@ export function FruityClassesPanel() {
   const [scope, setScope] = useState<ScopeType>(isDaemon ? "__main__" : "__app__");
   const [search, setSearch] = useState("");
 
-  const { data: classes = [], isLoading } = useRpcQuery(
+  const { data: classes = [], isLoading } = useFruityQuery(
     ["classes", scope],
     (api) => api.classdump.list(scope) as Promise<string[]>
   );
