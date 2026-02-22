@@ -14,9 +14,170 @@ import { JNIStore } from "../lib/store/jni.ts";
 import { XPCStore } from "../lib/store/xpc.ts";
 import { createTapStore } from "../lib/store/taps.ts";
 import { toHAR } from "../lib/har.ts";
-import type { JNILog } from "@agent/droid/hooks/jni";
-
 const LOG_TAIL_BYTES = 1024 * 1024; // 1MB
+
+interface LogStore<TRecord> {
+  query(options: Record<string, unknown>, defaultLimit: number): TRecord[];
+  count(filterValues?: Record<string, unknown>): number;
+  rm(): void;
+}
+
+/**
+ * Factory to create GET + DELETE route pair for a DB-backed log store.
+ */
+function createHistoryRoutes<TRecord>(config: {
+  path: string;
+  createStore: (deviceId: string, identifier: string) => LogStore<TRecord>;
+  responseKey: string;
+  defaultLimit: number;
+  mapRecord: (record: TRecord) => unknown;
+  extraQueryParams?: string[];
+}) {
+  const app = new Hono();
+
+  app.get(`/${config.path}/:device/:identifier`, (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+
+    const limit = parseInt(c.req.query("limit") || String(config.defaultLimit), 10);
+    const offset = parseInt(c.req.query("offset") || "0", 10);
+    const since = c.req.query("since");
+
+    const extraParams: Record<string, string | undefined> = {};
+    for (const param of config.extraQueryParams ?? []) {
+      extraParams[param] = c.req.query(param);
+    }
+
+    try {
+      const store = config.createStore(deviceId, identifier);
+
+      const records = store.query({ limit, offset, since, ...extraParams }, config.defaultLimit);
+      const mapped = records.map(config.mapRecord);
+
+      // Build count filter from extra params
+      const countFilter: Record<string, unknown> = {};
+      for (const param of config.extraQueryParams ?? []) {
+        if (extraParams[param]) countFilter[param] = extraParams[param];
+      }
+      const total = store.count(
+        Object.keys(countFilter).length > 0 ? countFilter : undefined,
+      );
+
+      return c.json({ [config.responseKey]: mapped, total, limit, offset });
+    } catch (e) {
+      console.error(`Failed to query ${config.path}:`, e);
+      return c.json({ [config.responseKey]: [], total: 0, limit, offset });
+    }
+  });
+
+  app.delete(`/${config.path}/:device/:identifier`, (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+
+    try {
+      config.createStore(deviceId, identifier).rm();
+      return c.body(null, 204);
+    } catch (e) {
+      console.error(`Failed to clear ${config.path}:`, e);
+      return c.text(`Failed to clear ${config.path}`, 500);
+    }
+  });
+
+  return app;
+}
+
+const hookRoutes = createHistoryRoutes({
+  path: "hooks",
+  createStore: (d, i) => new HookStore(d, i),
+  responseKey: "hooks",
+  defaultLimit: 1000,
+  extraQueryParams: ["category"],
+  mapRecord: (r) => ({
+    id: r.id,
+    timestamp: r.timestamp,
+    category: r.category,
+    symbol: r.symbol,
+    direction: r.direction,
+    line: r.line,
+    extra: r.extra ? JSON.parse(r.extra) : undefined,
+    createdAt: r.createdAt,
+  }),
+});
+
+const cryptoRoutes = createHistoryRoutes({
+  path: "history/crypto",
+  createStore: (d, i) => new CryptoStore(d, i),
+  responseKey: "logs",
+  defaultLimit: 1000,
+  mapRecord: (r) => ({
+    id: r.id,
+    timestamp: r.timestamp,
+    symbol: r.symbol,
+    direction: r.direction,
+    line: r.line,
+    extra: r.extra ? JSON.parse(r.extra) : undefined,
+    backtrace: r.backtrace ? JSON.parse(r.backtrace) : undefined,
+    data: r.data ? Buffer.from(r.data).toString("base64") : undefined,
+    createdAt: r.createdAt,
+  }),
+});
+
+const jniRoutes = createHistoryRoutes({
+  path: "history/jni",
+  createStore: (d, i) => new JNIStore(d, i),
+  responseKey: "logs",
+  defaultLimit: 5000,
+  extraQueryParams: ["method"],
+  mapRecord: (r) => ({
+    id: r.id,
+    timestamp: r.timestamp,
+    type: r.type,
+    method: r.method,
+    callType: r.callType,
+    threadId: r.threadId,
+    args: r.args ? JSON.parse(r.args) : undefined,
+    ret: r.ret,
+    backtrace: r.backtrace ? JSON.parse(r.backtrace) : undefined,
+    library: r.library,
+    createdAt: r.createdAt,
+  }),
+});
+
+const flutterRoutes = createHistoryRoutes({
+  path: "history/flutter",
+  createStore: (d, i) => new FlutterStore(d, i),
+  responseKey: "logs",
+  defaultLimit: 5000,
+  mapRecord: (r) => ({
+    id: r.id,
+    timestamp: r.timestamp,
+    type: r.type,
+    direction: r.direction,
+    channel: r.channel,
+    data: r.data ? JSON.parse(r.data) : undefined,
+    createdAt: r.createdAt,
+  }),
+});
+
+const xpcRoutes = createHistoryRoutes({
+  path: "history/xpc",
+  createStore: (d, i) => new XPCStore(d, i),
+  responseKey: "logs",
+  defaultLimit: 5000,
+  extraQueryParams: ["protocol"],
+  mapRecord: (r) => ({
+    id: r.id,
+    timestamp: r.timestamp,
+    protocol: r.protocol,
+    event: r.event,
+    direction: r.direction,
+    service: r.service,
+    peer: r.peer,
+    message: r.message ? JSON.parse(r.message) : undefined,
+    backtrace: r.backtrace ? JSON.parse(r.backtrace) : undefined,
+    createdAt: r.createdAt,
+  }),
+});
 
 const routes = new Hono()
   .get("/logs/:device/:identifier/:type", async (c) => {
@@ -78,61 +239,12 @@ const routes = new Hono()
 
     return c.body(null, 204);
   })
-  // Hook log endpoints
-  .get("/hooks/:device/:identifier", (c) => {
-    const deviceId = c.req.param("device");
-    const identifier = c.req.param("identifier");
-
-    const limit = parseInt(c.req.query("limit") || "1000", 10);
-    const offset = parseInt(c.req.query("offset") || "0", 10);
-    const category = c.req.query("category");
-    const since = c.req.query("since");
-
-    try {
-      const hookStore = new HookStore(deviceId, identifier);
-
-      const records = hookStore.query({
-        limit,
-        offset,
-        category,
-        since,
-      });
-
-      const hooks = records.map((r) => ({
-        id: r.id,
-        timestamp: r.timestamp,
-        category: r.category,
-        symbol: r.symbol,
-        direction: r.direction,
-        line: r.line,
-        extra: r.extra ? JSON.parse(r.extra) : undefined,
-        createdAt: r.createdAt,
-      }));
-
-      const total = hookStore.count(category);
-
-      return c.json({ hooks, total, limit, offset });
-    } catch (e) {
-      console.error("Failed to query hooks:", e);
-      return c.json({ hooks: [], total: 0, limit, offset });
-    }
-  })
-  .delete("/hooks/:device/:identifier", (c) => {
-    const deviceId = c.req.param("device");
-    const identifier = c.req.param("identifier");
-
-    try {
-      new HookStore(deviceId, identifier).rm();
-      return c.body(null, 204);
-    } catch (e) {
-      console.error("Failed to clear hooks:", e);
-      return c.text("Failed to clear hooks", 500);
-    }
-  })
+  // DB-backed log stores
+  .route("/", hookRoutes)
+  // Legacy alias for hooks delete
   .delete("/hooks/:device/:identifier/db", (c) => {
     const deviceId = c.req.param("device");
     const identifier = c.req.param("identifier");
-
     try {
       new HookStore(deviceId, identifier).rm();
       return c.body(null, 204);
@@ -141,148 +253,10 @@ const routes = new Hono()
       return c.text("Failed to delete hooks", 500);
     }
   })
-  // Crypto log endpoints
-  .get("/history/crypto/:device/:identifier", (c) => {
-    const deviceId = c.req.param("device");
-    const identifier = c.req.param("identifier");
-
-    const limit = parseInt(c.req.query("limit") || "1000", 10);
-    const offset = parseInt(c.req.query("offset") || "0", 10);
-    const since = c.req.query("since");
-
-    try {
-      const cryptoStore = new CryptoStore(deviceId, identifier);
-
-      const records = cryptoStore.query({
-        limit,
-        offset,
-        since,
-      });
-
-      const logs = records.map((r) => ({
-        id: r.id,
-        timestamp: r.timestamp,
-        symbol: r.symbol,
-        direction: r.direction,
-        line: r.line,
-        extra: r.extra ? JSON.parse(r.extra) : undefined,
-        backtrace: r.backtrace ? JSON.parse(r.backtrace) : undefined,
-        data: r.data ? Buffer.from(r.data).toString("base64") : undefined,
-        createdAt: r.createdAt,
-      }));
-
-      const total = cryptoStore.count();
-
-      return c.json({ logs, total, limit, offset });
-    } catch (e) {
-      console.error("Failed to query crypto logs:", e);
-      return c.json({ logs: [], total: 0, limit, offset });
-    }
-  })
-  .delete("/history/crypto/:device/:identifier", (c) => {
-    const deviceId = c.req.param("device");
-    const identifier = c.req.param("identifier");
-
-    try {
-      new CryptoStore(deviceId, identifier).rm();
-      return c.body(null, 204);
-    } catch (e) {
-      console.error("Failed to clear crypto logs:", e);
-      return c.text("Failed to clear crypto logs", 500);
-    }
-  })
-  // JNI Trace endpoints
-  .get("/history/jni/:device/:identifier", (c) => {
-    const deviceId = c.req.param("device");
-    const identifier = c.req.param("identifier");
-
-    const limit = parseInt(c.req.query("limit") || "5000", 10);
-    const offset = parseInt(c.req.query("offset") || "0", 10);
-    const since = c.req.query("since");
-    const method = c.req.query("method");
-
-    try {
-      const store = new JNIStore(deviceId, identifier);
-
-      const records = store.query({ limit, offset, since, method });
-      const total = store.count(method);
-
-      const logs: JNILog[] = records.map((r) => ({
-        id: r.id,
-        timestamp: r.timestamp,
-        type: r.type,
-        method: r.method,
-        callType: r.callType,
-        threadId: r.threadId,
-        args: r.args ? JSON.parse(r.args) : undefined,
-        ret: r.ret,
-        backtrace: r.backtrace ? JSON.parse(r.backtrace) : undefined,
-        library: r.library,
-        createdAt: r.createdAt,
-      }));
-
-      return c.json({ logs, total, limit, offset });
-    } catch (e) {
-      console.error("Failed to query jni logs:", e);
-      return c.json({ logs: [], total: 0, limit, offset });
-    }
-  })
-  .delete("/history/jni/:device/:identifier", (c) => {
-    const deviceId = c.req.param("device");
-    const identifier = c.req.param("identifier");
-
-    try {
-      new JNIStore(deviceId, identifier).rm();
-      return c.body(null, 204);
-    } catch (e) {
-      console.error("Failed to clear jni logs:", e);
-      return c.text("Failed to clear jni logs", 500);
-    }
-  })
-  // Flutter log endpoints
-  .get("/history/flutter/:device/:identifier", (c) => {
-    const deviceId = c.req.param("device");
-    const identifier = c.req.param("identifier");
-
-    const limit = parseInt(c.req.query("limit") || "5000", 10);
-    const offset = parseInt(c.req.query("offset") || "0", 10);
-    const since = c.req.query("since");
-
-    try {
-      const store = new FlutterStore(deviceId, identifier);
-
-      const records = store.query({ limit, offset, since });
-      const total = store.count();
-
-      const logs = records.map((r) => ({
-        id: r.id,
-        timestamp: r.timestamp,
-        type: r.type,
-        direction: r.direction,
-        channel: r.channel,
-        data: r.data ? JSON.parse(r.data) : undefined,
-        createdAt: r.createdAt,
-      }));
-
-      return c.json({ logs, total, limit, offset });
-    } catch (e) {
-      console.error("Failed to query flutter logs:", e);
-      return c.json({ logs: [], total: 0, limit, offset });
-    }
-  })
-  .delete("/history/flutter/:device/:identifier", (c) => {
-    const deviceId = c.req.param("device");
-    const identifier = c.req.param("identifier");
-
-    try {
-      new FlutterStore(deviceId, identifier).rm();
-      return c.body(null, 204);
-    } catch (e) {
-      console.error("Failed to clear flutter logs:", e);
-      return c.text("Failed to clear flutter logs", 500);
-    }
-  })
-  // NSURL endpoints
+  .route("/", cryptoRoutes)
+  .route("/", jniRoutes)
+  .route("/", flutterRoutes)
+  // NSURL endpoints (not factored — different pattern)
   .get("/history/nsurl/:device/:identifier/har", (c) => {
     const deviceId = c.req.param("device");
     const identifier = c.req.param("identifier");
@@ -333,7 +307,6 @@ const routes = new Hono()
       return c.text("Failed to clear NSURL records", 500);
     }
   })
-  // NSURL attachment download
   .get("/history/nsurl/:device/:identifier/attachment/:requestId", async (c) => {
     const deviceId = c.req.param("device");
     const identifier = c.req.param("identifier");
@@ -365,52 +338,7 @@ const routes = new Hono()
       return c.text("Failed to serve attachment", 500);
     }
   })
-  // XPC log endpoints
-  .get("/history/xpc/:device/:identifier", (c) => {
-    const deviceId = c.req.param("device");
-    const identifier = c.req.param("identifier");
-
-    const limit = parseInt(c.req.query("limit") || "5000", 10);
-    const offset = parseInt(c.req.query("offset") || "0", 10);
-    const since = c.req.query("since");
-    const protocol = c.req.query("protocol");
-
-    try {
-      const store = new XPCStore(deviceId, identifier);
-      const records = store.query({ limit, offset, since, protocol });
-      const total = store.count(protocol);
-
-      const logs = records.map((r) => ({
-        id: r.id,
-        timestamp: r.timestamp,
-        protocol: r.protocol,
-        event: r.event,
-        direction: r.direction,
-        service: r.service,
-        peer: r.peer,
-        message: r.message ? JSON.parse(r.message) : undefined,
-        backtrace: r.backtrace ? JSON.parse(r.backtrace) : undefined,
-        createdAt: r.createdAt,
-      }));
-
-      return c.json({ logs, total, limit, offset });
-    } catch (e) {
-      console.error("Failed to query xpc logs:", e);
-      return c.json({ logs: [], total: 0, limit, offset });
-    }
-  })
-  .delete("/history/xpc/:device/:identifier", (c) => {
-    const deviceId = c.req.param("device");
-    const identifier = c.req.param("identifier");
-
-    try {
-      new XPCStore(deviceId, identifier).rm();
-      return c.body(null, 204);
-    } catch (e) {
-      console.error("Failed to clear xpc logs:", e);
-      return c.text("Failed to clear xpc logs", 500);
-    }
-  })
+  .route("/", xpcRoutes)
   // Taps snapshot endpoints
   .get("/taps/:device/:identifier", (c) => {
     const deviceId = c.req.param("device");

@@ -1,24 +1,13 @@
-import { eq, and, gt, desc, count as countFn } from "drizzle-orm";
 import { crypto } from "../schema.ts";
 import { db } from "./db.ts";
+import { BaseLogStore } from "./base.ts";
 
-export interface CryptoRecord {
-  id: number;
-  timestamp: string;
-  symbol: string;
-  direction: string;
-  line: string | null;
-  extra: string | null;
-  backtrace: string | null;
-  data: Buffer | null;
-  createdAt: string;
-}
+export type CryptoRecord = typeof crypto.$inferSelect;
 
-export class CryptoStore {
-  constructor(
-    private deviceId: string,
-    private identifier: string,
-  ) {}
+export class CryptoStore extends BaseLogStore<typeof crypto> {
+  constructor(deviceId: string, identifier: string) {
+    super(crypto, deviceId, identifier);
+  }
 
   append(message: Record<string, unknown>, data?: Buffer | null): void {
     const extra = message.extra as Record<string, unknown> | undefined;
@@ -35,58 +24,6 @@ export class CryptoStore {
         backtrace: btrace?.length ? JSON.stringify(btrace) : null,
         data: data ?? null,
       })
-      .run();
-  }
-
-  query(
-    options: { limit?: number; offset?: number; since?: string } = {},
-  ): CryptoRecord[] {
-    const { limit = 1000, offset = 0, since } = options;
-
-    const conditions = [
-      eq(crypto.deviceId, this.deviceId),
-      eq(crypto.identifier, this.identifier),
-    ];
-
-    if (since) {
-      conditions.push(gt(crypto.timestamp, since));
-    }
-
-    const rows = db
-      .select()
-      .from(crypto)
-      .where(and(...conditions))
-      .orderBy(desc(crypto.id))
-      .limit(limit)
-      .offset(offset)
-      .all();
-
-    return rows as CryptoRecord[];
-  }
-
-  count(): number {
-    const result = db
-      .select({ count: countFn() })
-      .from(crypto)
-      .where(
-        and(
-          eq(crypto.deviceId, this.deviceId),
-          eq(crypto.identifier, this.identifier),
-        ),
-      )
-      .get();
-
-    return result?.count ?? 0;
-  }
-
-  rm(): void {
-    db.delete(crypto)
-      .where(
-        and(
-          eq(crypto.deviceId, this.deviceId),
-          eq(crypto.identifier, this.identifier),
-        ),
-      )
       .run();
   }
 }
