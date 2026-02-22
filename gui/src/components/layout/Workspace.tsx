@@ -31,6 +31,7 @@ import {
   ModuleExportedTab,
 } from "../tabs/ModuleViewTabs";
 import { FruityClassDetailTab } from "../tabs/FruityClassDetailTab";
+import { FruityClassDumpTab } from "../tabs/FruityClassDumpTab";
 import { DroidClassDetailTab } from "../tabs/DroidClassDetailTab";
 import { FinderTab } from "../tabs/FinderTab";
 import { ImagePreviewTab } from "../tabs/ImagePreviewTab";
@@ -127,6 +128,7 @@ function WorkspaceContent() {
     moduleSymbols: ModuleSymbolsTab,
     moduleExported: ModuleExportedTab,
     classDetail: FruityClassDetailTab,
+    classDump: FruityClassDumpTab,
     javaClassDetail: DroidClassDetailTab,
     finder: FinderTab,
     imagePreview: ImagePreviewTab,

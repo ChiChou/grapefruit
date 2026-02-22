@@ -128,6 +128,7 @@
   "account": "Account",
   "label": "Label",
   "class": "Class",
+  "failed_to_load_class": "Failed to load class info",
   "alias": "Alias",
   "invisible": "Invisible",
   "custom_icon": "Custom Icon",

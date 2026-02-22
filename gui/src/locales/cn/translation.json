@@ -130,6 +130,7 @@
   "creation_time": "创建时间",
   "modification_time": "修改时间",
   "class": "类别",
+  "failed_to_load_class": "加载类信息失败",
   "alias": "别名",
   "invisible": "隐藏",
   "custom_icon": "自定义图标",

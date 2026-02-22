@@ -1,12 +1,13 @@
 import { useMemo, useState } from "react";
 import { useParams } from "react-router";
 import { useTranslation } from "react-i18next";
-import { Search } from "lucide-react";
+import { Search, FileCode } from "lucide-react";
 import { List, type RowComponentProps } from "react-window";
 
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Button } from "@/components/ui/button";
 import { useDock } from "@/context/DockContext";
 import { useRpcQuery } from "@/lib/queries";
 
@@ -115,12 +116,12 @@ function ClassRow({
 
   return (
     <div
-      className="px-3 py-1.5 border-b border-border/50 hover:bg-accent/50 transition-colors"
+      className="px-3 py-1.5 border-b border-border/50 hover:bg-accent/50 transition-colors group flex items-center"
       style={style}
     >
       <button
         type="button"
-        className="text-sm font-mono truncate text-foreground hover:text-primary transition-colors w-full text-left cursor-pointer"
+        className="text-sm font-mono truncate text-foreground/80 hover:text-primary transition-colors flex-1 text-left cursor-pointer"
         onClick={() =>
           openFilePanel({
             id: `class_${className}`,
@@ -132,6 +133,22 @@ function ClassRow({
       >
         {className}
       </button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6 shrink-0 text-muted-foreground"
+        title="classdump"
+        onClick={() =>
+          openFilePanel({
+            id: `classdump_${className}`,
+            component: "classDump",
+            title: `Classdump - ${className}`,
+            params: { className },
+          })
+        }
+      >
+        <FileCode className="h-3.5 w-3.5" />
+      </Button>
     </div>
   );
 }

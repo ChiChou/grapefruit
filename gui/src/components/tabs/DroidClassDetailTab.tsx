@@ -87,7 +87,7 @@ export function DroidClassDetailTab({
   return (
     <div className="h-full flex flex-col p-4 overflow-y-auto">
       {/* Header: superclass chain + interfaces */}
-      <div className="flex flex-wrap gap-2 items-center mb-4 text-sm">
+      <div className="flex flex-wrap gap-2 items-center mb-2 text-sm">
         <div className="flex flex-wrap gap-1 items-center">
           {classInfo.superClass && (
             <span className="flex items-center">
@@ -103,21 +103,20 @@ export function DroidClassDetailTab({
           )}
           <span className="font-mono font-semibold">{classInfo.name}</span>
         </div>
+        {classInfo.interfaces.length > 0 && (
+          <div className="flex flex-wrap gap-1 items-center ml-2">
+            {classInfo.interfaces.map((iface) => (
+              <Badge
+                key={iface}
+                variant="secondary"
+                className="font-mono text-[10px] px-1.5 py-0"
+              >
+                {iface}
+              </Badge>
+            ))}
+          </div>
+        )}
       </div>
-
-      {classInfo.interfaces.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-4">
-          {classInfo.interfaces.map((iface) => (
-            <Badge
-              key={iface}
-              variant="secondary"
-              className="font-mono text-xs"
-            >
-              {iface}
-            </Badge>
-          ))}
-        </div>
-      )}
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <Tabs
