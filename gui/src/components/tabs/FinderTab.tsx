@@ -157,8 +157,10 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
       setIsLoading(true);
       loadDirectory(path)
         .then(({ cwd, writable, list }) => {
-          const data = list.filter((e) => !e.dir);
-          data.sort((a, b) => a.name.localeCompare(b.name));
+          const data = [...list].sort((a, b) => {
+            if (a.dir !== b.dir) return a.dir ? -1 : 1;
+            return a.name.localeCompare(b.name);
+          });
           setFullCwd(cwd);
           setCwdWritable(writable);
           setItems(data);
@@ -372,6 +374,14 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
     [fullCwd, deleteMutation, t, handleDirectorySelect],
   );
 
+  const handleNavigate = useCallback(
+    (folderName: string) => {
+      if (!fullCwd) return;
+      handleDirectorySelect(`${fullCwd}/${folderName}`);
+    },
+    [fullCwd, handleDirectorySelect],
+  );
+
   const handleUpload = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
@@ -471,6 +481,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
                   apiReady={apiReady}
                   loadDirectory={loadDirectory}
                   onDirectorySelect={handleDirectorySelect}
+                  currentPath={activeTab === "bundle" ? fullCwd : null}
                 />
               )}
               </TabsContent>
@@ -483,6 +494,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
                   apiReady={apiReady}
                   loadDirectory={loadDirectory}
                   onDirectorySelect={handleDirectorySelect}
+                  currentPath={activeTab === "home" ? fullCwd : null}
                 />
               )}
             </TabsContent>
@@ -512,6 +524,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
               cwd={fullCwd!}
               onDownload={handleDownload}
               onPreview={handlePreview}
+              onNavigate={handleNavigate}
               onRename={handleRename}
               onDelete={handleDelete}
               onBatchDelete={handleBatchDelete}

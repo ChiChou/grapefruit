@@ -53,6 +53,7 @@ interface FileTableProps {
   cwd: string;
   onDownload: (fileName: string) => void;
   onPreview: (fileName: string, type: string) => void;
+  onNavigate?: (folderName: string) => void;
   onRename: (oldName: string, newName: string) => Promise<void>;
   onDelete: (fileName: string) => Promise<void>;
   onBatchDelete?: (fileNames: string[]) => Promise<void>;
@@ -67,6 +68,7 @@ export function FileTable({
   cwd,
   onDownload,
   onPreview,
+  onNavigate,
   onRename,
   onDelete,
   onBatchDelete,
@@ -386,6 +388,7 @@ export function FileTable({
           </TableHeader>
           <TableBody>
             {items.map((item) => {
+              const isFolder = item.dir;
               const isEditing = editingFile === item.name;
               const isDeleting = deletingFile === item.name;
 
@@ -400,7 +403,7 @@ export function FileTable({
                     </TableCell>
                   )}
                   <TableCell>
-                    {item.dir ? (
+                    {isFolder ? (
                       <Folder className="w-4 h-4 text-yellow-500" />
                     ) : (
                       <File className="w-4 h-4 text-muted-foreground" />
@@ -442,6 +445,14 @@ export function FileTable({
                           <X className="h-4 w-4" />
                         </Button>
                       </div>
+                    ) : isFolder ? (
+                      <button
+                        type="button"
+                        onClick={() => onNavigate?.(item.name)}
+                        className="hover:text-amber-600 dark:hover:text-amber-400 hover:underline"
+                      >
+                        {item.name}
+                      </button>
                     ) : (
                       <button
                         type="button"
@@ -455,15 +466,19 @@ export function FileTable({
                   <TableCell>
                     {!isEditing && (
                       <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => onDownload(item.name)}
-                          title={t("download")}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
+                        {isFolder ? (
+                          <div className="h-7 w-7" />
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => onDownload(item.name)}
+                            title={t("download")}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        )}
                         {!isReadOnly && (
                           <Button
                             variant="ghost"
@@ -508,64 +523,66 @@ export function FileTable({
                     )}
                   </TableCell>
                   <TableCell className="text-right text-sm">
-                    {item.dir ? "-" : formatSize(item.size)}
+                    {isFolder ? "-" : formatSize(item.size)}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {formatDate(item.created)}
                   </TableCell>
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        render={
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            title={t("open_with")}
-                          />
-                        }
-                      >
-                        <SquareArrowOutUpRight className="h-4 w-4" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start">
-                        <DropdownMenuItem
-                          onClick={() => onPreview(item.name, "text")}
+                    {!isFolder && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              title={t("open_with")}
+                            />
+                          }
                         >
-                          <FileText className="mr-2 h-4 w-4" />
-                          {t("text_editor")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => onPreview(item.name, "hex")}
-                        >
-                          <Binary className="mr-2 h-4 w-4" />
-                          {t("hex_view")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => onPreview(item.name, "sqlite")}
-                        >
-                          <Database className="mr-2 h-4 w-4" />
-                          {t("sqlite_editor")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => onPreview(item.name, "image")}
-                        >
-                          <FileImage className="mr-2 h-4 w-4" />
-                          {t("image_preview")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => onPreview(item.name, "plist")}
-                        >
-                          <FileJson className="mr-2 h-4 w-4" />
-                          {t("plist_preview")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => onPreview(item.name, "font")}
-                        >
-                          <Type className="mr-2 h-4 w-4" />
-                          {t("font_preview")}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                          <SquareArrowOutUpRight className="h-4 w-4" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          <DropdownMenuItem
+                            onClick={() => onPreview(item.name, "text")}
+                          >
+                            <FileText className="mr-2 h-4 w-4" />
+                            {t("text_editor")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => onPreview(item.name, "hex")}
+                          >
+                            <Binary className="mr-2 h-4 w-4" />
+                            {t("hex_view")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => onPreview(item.name, "sqlite")}
+                          >
+                            <Database className="mr-2 h-4 w-4" />
+                            {t("sqlite_editor")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => onPreview(item.name, "image")}
+                          >
+                            <FileImage className="mr-2 h-4 w-4" />
+                            {t("image_preview")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => onPreview(item.name, "plist")}
+                          >
+                            <FileJson className="mr-2 h-4 w-4" />
+                            {t("plist_preview")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => onPreview(item.name, "font")}
+                          >
+                            <Type className="mr-2 h-4 w-4" />
+                            {t("font_preview")}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </TableCell>
                 </TableRow>
               );

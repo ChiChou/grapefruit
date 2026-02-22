@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronRight, ChevronDown, Folder, FolderOpen } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import type {
@@ -15,6 +15,7 @@ interface DirectoryTreeProps {
   apiReady: boolean;
   loadDirectory: LoadDirectoryFn;
   onDirectorySelect: DirectorySelectFn;
+  currentPath?: string | null;
 }
 
 function createRootNode(root: RootType): TreeNode {
@@ -80,15 +81,30 @@ function getNodeAtPath(
   return getNodeAtPath(node.children, path, pathIndex + 1);
 }
 
+function absoluteToTreePath(
+  absolutePath: string,
+  rootPath: string,
+  root: RootType,
+): string[] | null {
+  if (absolutePath === rootPath) return [root];
+  if (!absolutePath.startsWith(rootPath + "/")) return null;
+  const relative = absolutePath.slice(rootPath.length + 1);
+  return [root, ...relative.split("/")];
+}
+
 export function DirectoryTree({
   root,
   rootPath,
   apiReady,
   loadDirectory,
   onDirectorySelect,
+  currentPath,
 }: DirectoryTreeProps) {
   const [nodes, setNodes] = useState<TreeNode[]>([]);
   const [activePath, setActivePath] = useState<string | null>(null);
+  const nodesRef = useRef(nodes);
+  nodesRef.current = nodes;
+  const lastInternalNavRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!apiReady) return;
@@ -116,6 +132,75 @@ export function DirectoryTree({
       });
   }, [apiReady, root, rootPath, loadDirectory]);
 
+  // Sync tree expansion/highlight when currentPath changes externally
+  // (e.g. navigating into a folder from the file list)
+  useEffect(() => {
+    if (!currentPath) return;
+
+    // Skip if this navigation originated from the tree itself
+    if (lastInternalNavRef.current === currentPath) {
+      lastInternalNavRef.current = null;
+      return;
+    }
+    lastInternalNavRef.current = null;
+
+    const segments = absoluteToTreePath(currentPath, rootPath, root);
+    if (!segments) return;
+
+    // Set highlight immediately
+    setActivePath(segments.join("/"));
+
+    let cancelled = false;
+
+    // Walk depth-by-depth, loading children as needed and expanding
+    (async () => {
+      for (let i = 0; i < segments.length; i++) {
+        if (cancelled) return;
+        const pathSoFar = segments.slice(0, i + 1);
+        const node = getNodeAtPath(nodesRef.current, pathSoFar, 0);
+        if (!node) return;
+
+        // Expand this node
+        setNodes((prev) =>
+          updateNodeAtPath(prev, pathSoFar, 0, (n) => ({
+            ...n,
+            isExpanded: true,
+          })),
+        );
+
+        // If children not loaded, load them
+        if (node.children === null && i < segments.length - 1) {
+          const isRootNode =
+            pathSoFar.length === 1 && pathSoFar[0] === root;
+          const fullPath = isRootNode
+            ? rootPath
+            : `${rootPath}/${pathSoFar.slice(1).join("/")}`;
+
+          try {
+            const { list } = await loadDirectory(fullPath);
+            if (cancelled) return;
+            setNodes((prev) =>
+              updateNodeAtPath(prev, pathSoFar, 0, (n) => ({
+                ...n,
+                children: buildDirectoryNodes(list),
+                isLoading: false,
+                isExpanded: true,
+              })),
+            );
+            // Allow state to settle so nodesRef picks up new children
+            await new Promise((r) => setTimeout(r, 0));
+          } catch {
+            return;
+          }
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentPath, rootPath, root, loadDirectory]);
+
   const handleNodeClick = (path: string[]) => {
     const pathStr = path.join("/");
     setActivePath(pathStr);
@@ -125,6 +210,7 @@ export function DirectoryTree({
     const isRootNode = path.length === 1 && path[0] === root;
     const fullPath = isRootNode ? rootPath : `${rootPath}/${path.slice(1).join("/")}`;
 
+    lastInternalNavRef.current = fullPath;
     onDirectorySelect(fullPath);
 
     if (targetNode.isExpanded) {
