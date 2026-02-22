@@ -280,7 +280,7 @@ export function DirectoryTree({
           style={{ paddingLeft: `${depth * 16 + 8}px` }}
           onClick={() => handleNodeClick(currentPath)}
         >
-          <span className="w-4 h-4 mr-1 flex items-center justify-center">
+          <span className="w-4 h-4 mr-1 shrink-0 flex items-center justify-center">
             {node.isLoading ? (
               <Spinner className="size-3" />
             ) : node.isExpanded ? (
@@ -290,9 +290,9 @@ export function DirectoryTree({
             )}
           </span>
           {node.isExpanded ? (
-            <FolderOpen className="w-4 h-4 mr-2 text-yellow-500" />
+            <FolderOpen className="w-4 h-4 mr-2 shrink-0 text-yellow-500" />
           ) : (
-            <Folder className="w-4 h-4 mr-2 text-yellow-500" />
+            <Folder className="w-4 h-4 mr-2 shrink-0 text-yellow-500" />
           )}
           <span className="text-sm truncate">{node.meta.name}</span>
         </button>
