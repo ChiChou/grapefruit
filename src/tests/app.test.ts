@@ -9,6 +9,9 @@ import { HookStore } from "../lib/store/hooks.ts";
 import { CryptoStore } from "../lib/store/crypto.ts";
 import { NSURLStore } from "../lib/store/nsurl.ts";
 import { FlutterStore } from "../lib/store/flutter.ts";
+import { JNIStore } from "../lib/store/jni.ts";
+import { XPCStore } from "../lib/store/xpc.ts";
+import { createTapStore } from "../lib/store/taps.ts";
 
 const device = "test-device";
 const identifier = "com.test.app";
@@ -19,6 +22,8 @@ function getStores() {
     crypto: new CryptoStore(device, identifier),
     nsurl: new NSURLStore(device, identifier),
     flutter: new FlutterStore(device, identifier),
+    jni: new JNIStore(device, identifier),
+    xpc: new XPCStore(device, identifier),
   };
 }
 
@@ -193,9 +198,7 @@ describe("Logs API", () => {
       Array.from({ length: 10 }, (_, i) => `line${i}`).join("\n") + "\n";
     await fs.writeFile(nodePath.join(logsDir, "syslog.log"), lines);
 
-    const r = await app.request(
-      `/api/logs/${device}/${identifier}/syslog`,
-    );
+    const r = await app.request(`/api/logs/${device}/${identifier}/syslog`);
     const text = await r.text();
     const returned = text.split("\n").filter(Boolean);
     assert.strictEqual(returned.length, 10);
@@ -330,7 +333,6 @@ describe("Hooks API", () => {
     assert.strictEqual(body.hooks[0].extra.method, "share");
   });
 
-
   it("should paginate with limit and offset", async () => {
     const { hooks: hookStore } = getStores();
     for (let i = 0; i < 5; i++) {
@@ -365,24 +367,6 @@ describe("Hooks API", () => {
     });
 
     const r = await app.request(`/api/hooks/${device}/${identifier}`, {
-      method: "DELETE",
-    });
-    assert.strictEqual(r.status, 204);
-
-    const r2 = await app.request(`/api/hooks/${device}/${identifier}`);
-    const body = (await r2.json()) as { total: number };
-    assert.strictEqual(body.total, 0);
-  });
-
-  it("should delete hooks via /db endpoint", async () => {
-    const { hooks: hookStore } = getStores();
-    hookStore.append({
-      category: "c",
-      symbol: "s",
-      dir: "out",
-    });
-
-    const r = await app.request(`/api/hooks/${device}/${identifier}/db`, {
       method: "DELETE",
     });
     assert.strictEqual(r.status, 204);
@@ -629,13 +613,244 @@ describe("Flutter Logs API", () => {
       channel: "test/channel",
     });
 
-    const r = await app.request(`/api/history/flutter/${device}/${identifier}`, {
+    const r = await app.request(
+      `/api/history/flutter/${device}/${identifier}`,
+      {
+        method: "DELETE",
+      },
+    );
+    assert.strictEqual(r.status, 204);
+
+    const r2 = await app.request(
+      `/api/history/flutter/${device}/${identifier}`,
+    );
+    const body = (await r2.json()) as { total: number };
+    assert.strictEqual(body.total, 0);
+  });
+});
+
+describe("JNI Logs API", () => {
+  afterEach(() => {
+    getStores().jni.rm();
+  });
+
+  it("should return empty jni logs", async () => {
+    const r = await app.request(`/api/history/jni/${device}/${identifier}`);
+    assert.strictEqual(r.status, 200);
+    const body = (await r.json()) as { logs: unknown[]; total: number };
+    assert.deepStrictEqual(body.logs, []);
+    assert.strictEqual(body.total, 0);
+  });
+
+  it("should return inserted jni logs", async () => {
+    const { jni: store } = getStores();
+    store.append({
+      subject: "jni",
+      type: "call",
+      method: "GetStringUTFChars",
+      callType: "JNIEnv",
+      threadId: 1,
+      args: ["0x1234"],
+      ret: "hello",
+      library: "libnative.so",
+    });
+    store.append({
+      subject: "jni",
+      type: "call",
+      method: "FindClass",
+      callType: "JNIEnv",
+      threadId: 2,
+      args: ["com/example/Test"],
+      ret: "0x5678",
+    });
+
+    const r = await app.request(`/api/history/jni/${device}/${identifier}`);
+    const body = (await r.json()) as { logs: any[]; total: number };
+    assert.strictEqual(body.total, 2);
+    assert.strictEqual(body.logs.length, 2);
+    // newest first
+    assert.strictEqual(body.logs[0].method, "FindClass");
+    assert.strictEqual(body.logs[1].method, "GetStringUTFChars");
+    assert.strictEqual(body.logs[1].library, "libnative.so");
+  });
+
+  it("should filter by method", async () => {
+    const { jni: store } = getStores();
+    store.append({
+      subject: "jni",
+      type: "call",
+      method: "GetStringUTFChars",
+      callType: "JNIEnv",
+      threadId: 1,
+      args: [],
+      ret: "",
+    });
+    store.append({
+      subject: "jni",
+      type: "call",
+      method: "FindClass",
+      callType: "JNIEnv",
+      threadId: 1,
+      args: [],
+      ret: "",
+    });
+
+    const r = await app.request(
+      `/api/history/jni/${device}/${identifier}?method=FindClass`,
+    );
+    const body = (await r.json()) as { logs: any[]; total: number };
+    assert.strictEqual(body.total, 1);
+    assert.strictEqual(body.logs[0].method, "FindClass");
+  });
+
+  it("should clear jni logs", async () => {
+    const { jni: store } = getStores();
+    store.append({
+      subject: "jni",
+      type: "call",
+      method: "FindClass",
+      callType: "JNIEnv",
+      threadId: 1,
+      args: [],
+      ret: "",
+    });
+
+    const r = await app.request(`/api/history/jni/${device}/${identifier}`, {
       method: "DELETE",
     });
     assert.strictEqual(r.status, 204);
 
-    const r2 = await app.request(`/api/history/flutter/${device}/${identifier}`);
+    const r2 = await app.request(`/api/history/jni/${device}/${identifier}`);
     const body = (await r2.json()) as { total: number };
     assert.strictEqual(body.total, 0);
+  });
+});
+
+describe("XPC Logs API", () => {
+  afterEach(() => {
+    getStores().xpc.rm();
+  });
+
+  it("should return empty xpc logs", async () => {
+    const r = await app.request(`/api/history/xpc/${device}/${identifier}`);
+    assert.strictEqual(r.status, 200);
+    const body = (await r.json()) as { logs: unknown[]; total: number };
+    assert.deepStrictEqual(body.logs, []);
+    assert.strictEqual(body.total, 0);
+  });
+
+  it("should return inserted xpc logs", async () => {
+    const { xpc: store } = getStores();
+    store.append({
+      event: "send",
+      dir: "out",
+      name: "com.apple.springboard",
+      peer: 42,
+      message: { type: "xpc", key: "value" },
+    });
+    store.append({
+      event: "receive",
+      dir: "in",
+      name: "com.apple.cfprefsd",
+      message: { type: "nsxpc", method: "getPrefs" },
+    });
+
+    const r = await app.request(`/api/history/xpc/${device}/${identifier}`);
+    const body = (await r.json()) as { logs: any[]; total: number };
+    assert.strictEqual(body.total, 2);
+    assert.strictEqual(body.logs.length, 2);
+    // newest first
+    assert.strictEqual(body.logs[0].protocol, "nsxpc");
+    assert.strictEqual(body.logs[0].service, "com.apple.cfprefsd");
+    assert.strictEqual(body.logs[1].protocol, "xpc");
+    assert.strictEqual(body.logs[1].peer, 42);
+  });
+
+  it("should filter by protocol", async () => {
+    const { xpc: store } = getStores();
+    store.append({
+      event: "send",
+      dir: "out",
+      message: { type: "xpc" },
+    });
+    store.append({
+      event: "send",
+      dir: "out",
+      message: { type: "nsxpc" },
+    });
+
+    const r = await app.request(
+      `/api/history/xpc/${device}/${identifier}?protocol=nsxpc`,
+    );
+    const body = (await r.json()) as { logs: any[]; total: number };
+    assert.strictEqual(body.total, 1);
+    assert.strictEqual(body.logs[0].protocol, "nsxpc");
+  });
+
+  it("should clear xpc logs", async () => {
+    const { xpc: store } = getStores();
+    store.append({
+      event: "send",
+      dir: "out",
+      message: { type: "xpc" },
+    });
+
+    const r = await app.request(`/api/history/xpc/${device}/${identifier}`, {
+      method: "DELETE",
+    });
+    assert.strictEqual(r.status, 204);
+
+    const r2 = await app.request(`/api/history/xpc/${device}/${identifier}`);
+    const body = (await r2.json()) as { total: number };
+    assert.strictEqual(body.total, 0);
+  });
+});
+
+describe("Taps API", () => {
+  afterEach(() => {
+    createTapStore(device, identifier).clear();
+  });
+
+  it("should return null for empty taps", async () => {
+    const r = await app.request(`/api/taps/${device}/${identifier}`);
+    assert.strictEqual(r.status, 200);
+    const body = await r.json();
+    assert.strictEqual(body, null);
+  });
+
+  it("should return saved taps", async () => {
+    const store = createTapStore(device, identifier);
+    const rules = [
+      { type: "builtin" as const, id: "crypto" },
+      {
+        type: "objc" as const,
+        cls: "NSURLSession",
+        sel: "dataTaskWithRequest:",
+      },
+    ];
+    store.save(rules);
+
+    const r = await app.request(`/api/taps/${device}/${identifier}`);
+    assert.strictEqual(r.status, 200);
+    const body = await r.json();
+    assert.strictEqual(body.length, 2);
+    assert.strictEqual(body[0].type, "builtin");
+    assert.strictEqual(body[0].id, "crypto");
+    assert.strictEqual(body[1].type, "objc");
+    assert.strictEqual(body[1].cls, "NSURLSession");
+  });
+
+  it("should clear taps", async () => {
+    const store = createTapStore(device, identifier);
+    store.save([{ type: "builtin" as const, id: "crypto" }]);
+
+    const r = await app.request(`/api/taps/${device}/${identifier}`, {
+      method: "DELETE",
+    });
+    assert.strictEqual(r.status, 204);
+
+    const r2 = await app.request(`/api/taps/${device}/${identifier}`);
+    const body = await r2.json();
+    assert.strictEqual(body, null);
   });
 });
