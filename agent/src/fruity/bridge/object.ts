@@ -88,6 +88,36 @@ export function toJsArray(
   return arr;
 }
 
+export function toObjC(value: unknown): ObjC.Object {
+  if (value === null || value === undefined) return ObjC.classes.NSNull.null();
+  if (typeof value === "string")
+    return ObjC.classes.NSString.stringWithString_(value);
+  if (typeof value === "number")
+    return ObjC.classes.NSNumber.numberWithDouble_(value);
+  if (typeof value === "boolean")
+    return ObjC.classes.NSNumber.numberWithBool_(value ? 1 : 0);
+  if (value instanceof Date)
+    return ObjC.classes.NSDate.dateWithTimeIntervalSince1970_(
+      value.getTime() / 1000,
+    );
+  if (Array.isArray(value)) {
+    const arr = ObjC.classes.NSMutableArray.alloc().init();
+    for (const item of value) arr.addObject_(toObjC(item));
+    return arr;
+  }
+  if (typeof value === "object") {
+    const dict = ObjC.classes.NSMutableDictionary.alloc().init();
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      dict.setObject_forKey_(
+        toObjC(v),
+        ObjC.classes.NSString.stringWithString_(k),
+      );
+    }
+    return dict;
+  }
+  return ObjC.classes.NSString.stringWithString_(String(value));
+}
+
 export function description(obj: ObjC.Object) {
   if (!obj) return `${obj}`;
   if (obj.isKindOfClass_(ObjC.classes.NSBlock))

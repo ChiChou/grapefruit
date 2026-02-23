@@ -1,5 +1,28 @@
 import Java from "frida-java-bridge";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+export function toJava(value: unknown): Java.Wrapper | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string") return Java.use("java.lang.String").$new(value);
+  if (typeof value === "number") return Java.use("java.lang.Double").$new(value);
+  if (typeof value === "boolean")
+    return Java.use("java.lang.Boolean").$new(value);
+  if (Array.isArray(value)) {
+    const list = Java.use("java.util.ArrayList").$new();
+    for (const item of value) list.add(toJava(item));
+    return list;
+  }
+  if (typeof value === "object") {
+    const map = Java.use("java.util.HashMap").$new();
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      map.put(k, toJava(v));
+    }
+    return map;
+  }
+  return Java.use("java.lang.String").$new(String(value));
+}
+
 export function toJS(obj: Java.Wrapper | null): unknown {
   if (obj === null) return null;
 
