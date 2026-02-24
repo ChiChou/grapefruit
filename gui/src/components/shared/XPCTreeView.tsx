@@ -8,35 +8,35 @@ function XPCLeaf({ node }: { node: XPCNode }) {
     case "string":
       return (
         <span className="text-emerald-600 dark:text-emerald-400">
-          &quot;{node.value}&quot;
+          {node.description}
         </span>
       );
     case "bool":
       return (
         <span className="text-amber-600 dark:text-amber-400">
-          {String(node.value)}
+          {String(node.description)}
         </span>
       );
     case "int64":
     case "uint64":
     case "double":
       return (
-        <span className="text-sky-600 dark:text-sky-400">{node.value}</span>
+        <span className="text-sky-600 dark:text-sky-400">
+          {node.description}
+        </span>
       );
     case "uuid":
       return (
-        <span className="text-cyan-600 dark:text-cyan-400">{node.value}</span>
-      );
-    case "data":
-      return (
-        <span className="text-muted-foreground">
-          &lt;data {node.length} bytes&gt;
+        <span className="text-cyan-600 dark:text-cyan-400">
+          {node.description}
         </span>
       );
+    case "data":
+      return <span className="text-muted-foreground">{node.description}</span>;
     case "fd":
       return (
         <span className="text-orange-600 dark:text-orange-400">
-          fd({node.value}){node.path ? ` \u2192 ${node.path}` : ""}
+          {node.description}
         </span>
       );
     case "date":
@@ -48,31 +48,17 @@ function XPCLeaf({ node }: { node: XPCNode }) {
     case "error":
       return (
         <span className="text-red-600 dark:text-red-400">
-          &lt;error&gt; {node.description}
+          {node.description}
         </span>
       );
     case "shmem":
-      return (
-        <span className="text-muted-foreground">
-          &lt;shmem&gt; {node.description}
-        </span>
-      );
+      return <span className="text-muted-foreground">{node.description}</span>;
     case "endpoint":
-      return (
-        <span className="text-muted-foreground">
-          &lt;endpoint&gt; {node.description}
-        </span>
-      );
+      return <span className="text-muted-foreground">{node.description}</span>;
     case "connection":
-      return (
-        <span className="text-muted-foreground">
-          &lt;connection&gt; {node.description}
-        </span>
-      );
+      return <span className="text-muted-foreground">{node.description}</span>;
     default:
-      return (
-        <span className="text-muted-foreground">{node.description}</span>
-      );
+      return <span className="text-muted-foreground">{node.description}</span>;
   }
 }
 
@@ -88,8 +74,13 @@ function XPCTreeNode({
   const [expanded, setExpanded] = useState(depth < 3);
   const paddingLeft = depth * 16 + 4;
 
+  // short description for xpc collection types
+  const shorten = (str: string) => {
+    const end = str.indexOf(", contents");
+    return end !== -1 ? str.substring(0, end) + " }" : str;
+  };
+
   if (node.type === "dictionary") {
-    const count = node.keys.length;
     return (
       <div>
         <div
@@ -114,13 +105,7 @@ function XPCTreeNode({
             </span>
           )}
           <span className="text-muted-foreground">
-            {"{"}
-            {!expanded && (
-              <span className="ml-1">
-                ...{count} {count === 1 ? "entry" : "entries"}
-                {"}"}
-              </span>
-            )}
+            {shorten(node.description)}
           </span>
         </div>
         {expanded && (
@@ -136,9 +121,7 @@ function XPCTreeNode({
             <div
               className="text-muted-foreground font-mono py-px"
               style={{ paddingLeft: paddingLeft + 20 }}
-            >
-              {"}"}
-            </div>
+            ></div>
           </>
         )}
       </div>
@@ -146,7 +129,6 @@ function XPCTreeNode({
   }
 
   if (node.type === "array") {
-    const count = node.values.length;
     return (
       <div>
         <div
@@ -171,12 +153,7 @@ function XPCTreeNode({
             </span>
           )}
           <span className="text-muted-foreground">
-            [
-            {!expanded && (
-              <span className="ml-1">
-                ...{count} {count === 1 ? "item" : "items"}]
-              </span>
-            )}
+            {shorten(node.description)}
           </span>
         </div>
         {expanded && (
@@ -192,9 +169,7 @@ function XPCTreeNode({
             <div
               className="text-muted-foreground font-mono py-px"
               style={{ paddingLeft: paddingLeft + 20 }}
-            >
-              ]
-            </div>
+            ></div>
           </>
         )}
       </div>
