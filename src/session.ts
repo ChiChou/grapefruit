@@ -13,7 +13,6 @@ import { FlutterStore } from "./lib/store/flutter.ts";
 import { JNIStore } from "./lib/store/jni.ts";
 import { XPCStore } from "./lib/store/xpc.ts";
 import { HermesStore } from "./lib/store/hermes.ts";
-import { createTapStore } from "./lib/store/taps.ts";
 import { setup as setupRelay } from "./relay.ts";
 import type {
   Platform,
@@ -68,7 +67,6 @@ function setupSocketHandlers(
   >,
   session: Awaited<ReturnType<typeof import("frida").Device.prototype.attach>>,
   logger: LogWriter,
-  tapStore: ReturnType<typeof createTapStore>,
 ) {
   session.detached.connect((reason, crash) => {
     console.error("session detached:", reason, crash);
@@ -107,18 +105,6 @@ function setupSocketHandlers(
             ack(rpcErrorMessage(ns, method, err), null);
           },
         )
-        .then(() => {
-          // Auto-persist after tap toggles (runs on success OR failure,
-          // because start() may partially succeed before throwing)
-          if (ns === "taps" && (method === "start" || method === "stop")) {
-            script.exports
-              .snapshot()
-              .then((snap: any) => tapStore.save(snap))
-              .catch((e: unknown) =>
-                console.warn("Failed to persist tap snapshot:", e),
-              );
-          }
-        })
         .catch((err: Error) => {
           console.error(`RPC method ${method} failed:`, err);
           ack(rpcErrorMessage(ns, method, err), null);
@@ -224,23 +210,12 @@ export async function connect(socket: SessionSocket, params: SessionParams) {
   };
 
   const logHandles = await LogWriter.open(deviceId, identifier);
-  const tapStore = createTapStore(deviceId, identifier);
   const script = await session.createScript(await agent(platform));
 
   setupRelay(socket, script, logHandles, stores);
-  setupSocketHandlers(socket, script, session, logHandles, tapStore);
+  setupSocketHandlers(socket, script, session, logHandles);
 
   await script.load();
-
-  // Restore saved taps before emitting ready
-  const saved = tapStore.load();
-  if (saved) {
-    try {
-      await script.exports.restore(saved);
-    } catch (e) {
-      console.warn("Failed to restore taps:", e);
-    }
-  }
 
   socket.emit("ready", session.pid);
 }
