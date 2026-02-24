@@ -78,7 +78,7 @@ export function LeftPanelView() {
       kind: "route" as const,
       route: f.route,
       icon: <Icon className="h-5 w-5" />,
-      label: f.labelKey ? t(f.labelKey) : f.labelFallback,
+      label: t(f.label),
     };
   });
 

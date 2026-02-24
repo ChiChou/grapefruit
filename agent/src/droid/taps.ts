@@ -3,6 +3,7 @@ import type { TapInfo, TapRule } from "@/common/taps.js";
 import * as hookGroup from "./hooks/index.js";
 import * as flutter from "./hooks/flutter.js";
 import * as jni from "./hooks/jni.js";
+import * as privacy from "./hooks/privacy.js";
 
 interface TapEntry {
   start(): void;
@@ -31,6 +32,7 @@ for (const id of BUILTIN_GROUPS) {
 
 registry.set("flutter", flutter);
 registry.set("jni", jni);
+registry.set("privacy", privacy);
 
 export function list(): TapInfo[] {
   const result: TapInfo[] = [];

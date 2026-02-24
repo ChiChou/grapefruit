@@ -9,8 +9,8 @@ function LauncherItem({ feature }: { feature: PanelFeature }) {
   const { t } = useTranslation();
   const { openSingletonPanel } = useDock();
 
-  const title = feature.labelKey ? t(feature.labelKey) : feature.labelFallback;
-  const desc = feature.descKey ? t(feature.descKey) : feature.descFallback;
+  const title = t(feature.label);
+  const desc = t(feature.desc);
   const Icon = feature.icon;
 
   return (

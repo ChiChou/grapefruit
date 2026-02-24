@@ -128,6 +128,11 @@ export function setup(
         break;
       }
 
+      case "privacy":
+        socket.emit("privacy", payload);
+        stores.privacy.append(payload);
+        break;
+
       case "hook":
         socket.emit("hook", payload);
         stores.hooks.append(payload);

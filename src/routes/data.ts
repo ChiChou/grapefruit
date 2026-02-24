@@ -13,6 +13,7 @@ import { FlutterStore } from "../lib/store/flutter.ts";
 import { JNIStore } from "../lib/store/jni.ts";
 import { XPCStore } from "../lib/store/xpc.ts";
 import { HermesStore } from "../lib/store/hermes.ts";
+import { PrivacyStore } from "../lib/store/privacy.ts";
 import { createTapStore } from "../lib/store/taps.ts";
 import { toHAR } from "../lib/har.ts";
 const LOG_TAIL_BYTES = 1024 * 1024; // 1MB
@@ -186,6 +187,26 @@ const xpcRoutes = createHistoryRoutes({
   }),
 });
 
+const privacyRoutes = createHistoryRoutes({
+  path: "history/privacy",
+  createStore: (d, i) => new PrivacyStore(d, i),
+  responseKey: "logs",
+  defaultLimit: 1000,
+  extraQueryParams: ["category", "severity"],
+  mapRecord: (r) => ({
+    id: r.id,
+    timestamp: r.timestamp,
+    category: r.category,
+    severity: r.severity,
+    symbol: r.symbol,
+    direction: r.direction,
+    line: r.line,
+    extra: r.extra ? JSON.parse(r.extra) : undefined,
+    backtrace: r.backtrace ? JSON.parse(r.backtrace) : undefined,
+    createdAt: r.createdAt,
+  }),
+});
+
 const routes = new Hono()
   .get("/logs/:device/:identifier/:type", async (c) => {
     const deviceId = c.req.param("device");
@@ -340,6 +361,7 @@ const routes = new Hono()
     },
   )
   .route("/", xpcRoutes)
+  .route("/", privacyRoutes)
   // Hermes capture endpoints
   .get("/hermes/:device/:identifier", (c) => {
     const deviceId = c.req.param("device");

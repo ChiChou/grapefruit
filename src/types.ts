@@ -7,9 +7,11 @@ import type { FlutterStore } from "./lib/store/flutter.ts";
 import type { JNIStore } from "./lib/store/jni.ts";
 import type { XPCStore } from "./lib/store/xpc.ts";
 import type { HermesStore } from "./lib/store/hermes.ts";
+import type { PrivacyStore } from "./lib/store/privacy.ts";
 
 import type { NSURLEvent } from "./lib/store/nsurl.ts";
 import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
+import type { PrivacyMessage } from "@agent/common/hooks/privacy";
 import type { JNIEvent } from "@agent/droid/hooks/jni";
 
 export type Platform = "fruity" | "droid";
@@ -41,6 +43,7 @@ export interface ServerToClientEvents {
   nsurl: (event: NSURLEvent) => void;
   xpc: (event: Record<string, unknown>) => void;
   jni: (event: JNIEvent) => void;
+  privacy: (msg: PrivacyMessage) => void;
   hermes: (event: { url: string; hash: string; size: number }) => void;
   memoryScan: (
     event: { event: string; [key: string]: unknown },
@@ -65,6 +68,7 @@ export interface SessionStores {
   jni: JNIStore;
   xpc: XPCStore;
   hermes: HermesStore;
+  privacy: PrivacyStore;
 }
 
 export type SessionSocket = Socket<ClientToServerEvents, ServerToClientEvents>;

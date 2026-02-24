@@ -13,6 +13,7 @@ import { FlutterStore } from "./lib/store/flutter.ts";
 import { JNIStore } from "./lib/store/jni.ts";
 import { XPCStore } from "./lib/store/xpc.ts";
 import { HermesStore } from "./lib/store/hermes.ts";
+import { PrivacyStore } from "./lib/store/privacy.ts";
 import { setup as setupRelay } from "./relay.ts";
 import type {
   Platform,
@@ -207,6 +208,7 @@ export async function connect(socket: SessionSocket, params: SessionParams) {
     jni: new JNIStore(deviceId, identifier),
     xpc: new XPCStore(deviceId, identifier),
     hermes: new HermesStore(deviceId, identifier),
+    privacy: new PrivacyStore(deviceId, identifier),
   };
 
   const logHandles = await LogWriter.open(deviceId, identifier);

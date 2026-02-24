@@ -48,7 +48,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             <CommandGroup heading={t("navigation")}>
               {routes.map((r) => {
                 const Icon = r.icon;
-                const label = r.labelKey ? t(r.labelKey) : r.labelFallback;
+                const label = t(r.label);
                 return (
                   <CommandItem
                     key={r.route}
@@ -69,7 +69,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             <CommandGroup heading={t("tools")}>
               {panels.map((p) => {
                 const Icon = p.icon;
-                const label = p.labelKey ? t(p.labelKey) : p.labelFallback;
+                const label = t(p.label);
                 return (
                   <CommandItem
                     key={p.id}

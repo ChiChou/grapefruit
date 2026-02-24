@@ -517,5 +517,7 @@
   "rn_js_bundles": "JavaScript Bundles",
   "rn_no_bundles": "No bundles captured.",
   "rn_js_expression": "JavaScript expression...",
-  "clear_all": "Clear all"
+  "clear_all": "Clear all",
+  "privacy_monitor": "Privacy API Monitor",
+  "home_privacy_desc": "Monitor access to sensitive APIs and data flows"
 }

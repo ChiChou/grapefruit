@@ -154,6 +154,33 @@ export const hermes = sqliteTable(
   ],
 );
 
+export const privacy = sqliteTable(
+  "privacy",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    deviceId: text("device_id").notNull(),
+    identifier: text("identifier").notNull(),
+    timestamp: text("timestamp").notNull(),
+    category: text("category").notNull(),
+    severity: text("severity").notNull(),
+    symbol: text("symbol").notNull(),
+    direction: text("direction").notNull(),
+    line: text("line"),
+    extra: text("extra"),
+    backtrace: text("backtrace"),
+    createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_privacy_device_identifier").on(
+      table.deviceId,
+      table.identifier,
+    ),
+    index("idx_privacy_timestamp").on(table.timestamp),
+    index("idx_privacy_category").on(table.category),
+    index("idx_privacy_severity").on(table.severity),
+  ],
+);
+
 export const crypto = sqliteTable(
   "crypto",
   {

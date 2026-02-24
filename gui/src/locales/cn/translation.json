@@ -509,5 +509,7 @@
   "rn_js_bundles": "JavaScript 包",
   "rn_no_bundles": "暂无捕获的包。",
   "rn_js_expression": "JavaScript 表达式...",
-  "clear_all": "清空全部"
+  "clear_all": "清空全部",
+  "privacy_monitor": "720 隐私卫士",
+  "home_privacy_desc": "监控敏感 API 调用，检测潜在隐私泄露"
 }
