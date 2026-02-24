@@ -195,15 +195,7 @@ const nsxpcColumns: ColumnDef<NSXPCEntry>[] = [
 ];
 
 
-function XPCDetailPanel({ entry }: { entry: XPCEntry | null }) {
-  if (!entry) {
-    return (
-      <div className="h-full flex items-center justify-center text-muted-foreground text-xs">
-        Select a message to view details
-      </div>
-    );
-  }
-
+function XPCDetailPanel({ entry }: { entry: XPCEntry }) {
   return (
     <div className="h-full overflow-auto p-3 text-xs space-y-3">
       <div>
@@ -230,15 +222,7 @@ function XPCDetailPanel({ entry }: { entry: XPCEntry | null }) {
   );
 }
 
-function NSXPCDetailPanel({ entry }: { entry: NSXPCEntry | null }) {
-  if (!entry) {
-    return (
-      <div className="h-full flex items-center justify-center text-muted-foreground text-xs">
-        Select a message to view details
-      </div>
-    );
-  }
-
+function NSXPCDetailPanel({ entry }: { entry: NSXPCEntry }) {
   return (
     <div className="h-full overflow-auto p-3 text-xs space-y-3">
       <div className="space-y-1">
@@ -597,10 +581,14 @@ export function FruityXPCTab() {
                 />
               </div>
             </ResizablePanel>
-            <ResizableHandle />
-            <ResizablePanel defaultSize="35%" minSize="15%">
-              <XPCDetailPanel entry={selectedXpc} />
-            </ResizablePanel>
+            {selectedXpc && (
+              <>
+                <ResizableHandle />
+                <ResizablePanel defaultSize="35%" minSize="15%">
+                  <XPCDetailPanel entry={selectedXpc} />
+                </ResizablePanel>
+              </>
+            )}
           </ResizablePanelGroup>
         </TabsContent>
 
@@ -620,10 +608,14 @@ export function FruityXPCTab() {
                 />
               </div>
             </ResizablePanel>
-            <ResizableHandle />
-            <ResizablePanel defaultSize="35%" minSize="15%">
-              <NSXPCDetailPanel entry={selectedNsxpc} />
-            </ResizablePanel>
+            {selectedNsxpc && (
+              <>
+                <ResizableHandle />
+                <ResizablePanel defaultSize="35%" minSize="15%">
+                  <NSXPCDetailPanel entry={selectedNsxpc} />
+                </ResizablePanel>
+              </>
+            )}
           </ResizablePanelGroup>
         </TabsContent>
       </Tabs>

@@ -1,4 +1,4 @@
-import { useRef, type RefObject } from "react";
+import { useCallback, useRef, type RefObject } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -44,8 +44,33 @@ export function LogTable<T extends { id: number }>({
   const virtualRows = rowVirtualizer.getVirtualItems();
   const totalSize = rowVirtualizer.getTotalSize();
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+      e.preventDefault();
+      const currentIndex =
+        selectedId !== null
+          ? data.findIndex((item) => item.id === selectedId)
+          : -1;
+      const nextIndex =
+        e.key === "ArrowDown"
+          ? Math.min(currentIndex + 1, data.length - 1)
+          : Math.max(currentIndex - 1, 0);
+      if (nextIndex >= 0 && nextIndex < data.length) {
+        onSelect(data[nextIndex].id);
+        rowVirtualizer.scrollToIndex(nextIndex, { align: "auto" });
+      }
+    },
+    [data, selectedId, onSelect, rowVirtualizer],
+  );
+
   return (
-    <div ref={containerRef} className="flex-1 overflow-auto">
+    <div
+      ref={containerRef}
+      className="flex-1 overflow-auto focus-visible:outline-none"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+    >
       <table className="w-full text-xs border-collapse">
         <thead className="sticky top-0 bg-background z-10">
           {table.getHeaderGroups().map((headerGroup) => (

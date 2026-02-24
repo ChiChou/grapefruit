@@ -308,87 +308,83 @@ export function JNITab() {
         </div>
       </ResizablePanel>
 
-      <ResizableHandle />
-
-      {/* Right: detail panel */}
-      <ResizablePanel defaultSize="35%" minSize="15%">
-        <div className="h-full overflow-auto p-3 text-xs">
-          {!selectedEntry ? (
-            <div className="h-full flex items-center justify-center text-muted-foreground">
-              Select an event to view details
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <div>
-                  <span className="text-muted-foreground">{t("time")}: </span>
-                  {toTime(selectedEntry.timestamp)}
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Method: </span>
-                  <span className="font-mono text-primary">
-                    {selectedEntry.event.method}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Call Type: </span>
-                  {selectedEntry.event.callType}
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Thread ID: </span>
-                  {selectedEntry.event.threadId}
-                </div>
-                {selectedEntry.event.library && (
+      {selectedEntry && (
+        <>
+          <ResizableHandle />
+          <ResizablePanel defaultSize="35%" minSize="15%">
+            <div className="h-full overflow-auto p-3 text-xs">
+              <div className="space-y-3">
+                <div className="space-y-1">
                   <div>
-                    <span className="text-muted-foreground">Library: </span>
-                    {selectedEntry.event.library}
+                    <span className="text-muted-foreground">{t("time")}: </span>
+                    {toTime(selectedEntry.timestamp)}
                   </div>
-                )}
-              </div>
-
-              {selectedEntry.event.args.length > 0 && (
-                <div>
-                  <div className="text-muted-foreground mb-1">Arguments</div>
-                  <pre className="rounded border bg-muted/20 p-2 overflow-auto max-h-40 whitespace-pre-wrap break-all">
-                    {selectedEntry.event.args
-                      .map((a, i) => `[${i}] ${a}`)
-                      .join("\n")}
-                  </pre>
-                </div>
-              )}
-
-              {selectedEntry.event.ret && (
-                <div>
-                  <div className="text-muted-foreground mb-1">Return Value</div>
-                  <pre className="rounded border bg-muted/20 p-2 overflow-auto max-h-20 whitespace-pre-wrap break-all">
-                    {selectedEntry.event.ret}
-                  </pre>
-                </div>
-              )}
-
-              {selectedEntry.event.backtrace &&
-                selectedEntry.event.backtrace.length > 0 && (
                   <div>
-                    <div className="text-muted-foreground mb-1">Backtrace</div>
-                    <div className="rounded border bg-muted/20 p-2 overflow-auto max-h-60 text-[10px] font-mono space-y-0.5">
-                      {selectedEntry.event.backtrace.map((frame, i) => (
-                        <div
-                          key={i}
-                          className="p-1 rounded hover:bg-muted/50 break-all"
-                        >
-                          <span className="text-muted-foreground mr-2">
-                            #{i}
-                          </span>
-                          {frame}
-                        </div>
-                      ))}
+                    <span className="text-muted-foreground">Method: </span>
+                    <span className="font-mono text-primary">
+                      {selectedEntry.event.method}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Call Type: </span>
+                    {selectedEntry.event.callType}
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Thread ID: </span>
+                    {selectedEntry.event.threadId}
+                  </div>
+                  {selectedEntry.event.library && (
+                    <div>
+                      <span className="text-muted-foreground">Library: </span>
+                      {selectedEntry.event.library}
                     </div>
+                  )}
+                </div>
+
+                {selectedEntry.event.args.length > 0 && (
+                  <div>
+                    <div className="text-muted-foreground mb-1">Arguments</div>
+                    <pre className="rounded border bg-muted/20 p-2 overflow-auto max-h-40 whitespace-pre-wrap break-all">
+                      {selectedEntry.event.args
+                        .map((a, i) => `[${i}] ${a}`)
+                        .join("\n")}
+                    </pre>
                   </div>
                 )}
+
+                {selectedEntry.event.ret && (
+                  <div>
+                    <div className="text-muted-foreground mb-1">Return Value</div>
+                    <pre className="rounded border bg-muted/20 p-2 overflow-auto max-h-20 whitespace-pre-wrap break-all">
+                      {selectedEntry.event.ret}
+                    </pre>
+                  </div>
+                )}
+
+                {selectedEntry.event.backtrace &&
+                  selectedEntry.event.backtrace.length > 0 && (
+                    <div>
+                      <div className="text-muted-foreground mb-1">Backtrace</div>
+                      <div className="rounded border bg-muted/20 p-2 overflow-auto max-h-60 text-[10px] font-mono space-y-0.5">
+                        {selectedEntry.event.backtrace.map((frame, i) => (
+                          <div
+                            key={i}
+                            className="p-1 rounded hover:bg-muted/50 break-all"
+                          >
+                            <span className="text-muted-foreground mr-2">
+                              #{i}
+                            </span>
+                            {frame}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+              </div>
             </div>
-          )}
-        </div>
-      </ResizablePanel>
+          </ResizablePanel>
+        </>
+      )}
     </ResizablePanelGroup>
   );
 }

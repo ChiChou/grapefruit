@@ -338,59 +338,55 @@ export function FlutterMethodChannelsTab() {
         </div>
       </ResizablePanel>
 
-      <ResizableHandle />
+      {selectedEntry && (
+        <>
+          <ResizableHandle />
+          <ResizablePanel defaultSize="35%" minSize="15%">
+            <div className="h-full overflow-auto p-3 text-xs">
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <div>
+                    <span className="text-muted-foreground">{t("time")}: </span>
+                    {toTime(selectedEntry.timestamp)}
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">
+                      {t("flutter_channel")}:{" "}
+                    </span>
+                    {selectedEntry.channel}
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">{t("method")}: </span>
+                    {selectedEntry.method}
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">
+                      {t("hook_direction")}:{" "}
+                    </span>
+                    {selectedEntry.direction === "dart"
+                      ? "\u2192 Native"
+                      : "\u2192 Dart"}
+                  </div>
+                </div>
 
-      {/* Right: detail panel */}
-      <ResizablePanel defaultSize="35%" minSize="15%">
-        <div className="h-full overflow-auto p-3 text-xs">
-          {!selectedEntry ? (
-            <div className="h-full flex items-center justify-center text-muted-foreground">
-              {t("flutter_select_event")}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="space-y-1">
                 <div>
-                  <span className="text-muted-foreground">{t("time")}: </span>
-                  {toTime(selectedEntry.timestamp)}
+                  <div className="text-muted-foreground mb-1">args</div>
+                  <pre className="rounded border bg-muted/20 p-2 overflow-auto max-h-40 whitespace-pre-wrap break-all">
+                    {formatJson(selectedEntry.event.args) || "-"}
+                  </pre>
                 </div>
-                <div>
-                  <span className="text-muted-foreground">
-                    {t("flutter_channel")}:{" "}
-                  </span>
-                  {selectedEntry.channel}
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{t("method")}: </span>
-                  {selectedEntry.method}
-                </div>
-                <div>
-                  <span className="text-muted-foreground">
-                    {t("hook_direction")}:{" "}
-                  </span>
-                  {selectedEntry.direction === "dart"
-                    ? "\u2192 Native"
-                    : "\u2192 Dart"}
-                </div>
-              </div>
 
-              <div>
-                <div className="text-muted-foreground mb-1">args</div>
-                <pre className="rounded border bg-muted/20 p-2 overflow-auto max-h-40 whitespace-pre-wrap break-all">
-                  {formatJson(selectedEntry.event.args) || "-"}
-                </pre>
-              </div>
-
-              <div>
-                <div className="text-muted-foreground mb-1">result</div>
-                <pre className="rounded border bg-muted/20 p-2 overflow-auto max-h-40 whitespace-pre-wrap break-all">
-                  {formatJson(selectedEntry.event.result) || "-"}
-                </pre>
+                <div>
+                  <div className="text-muted-foreground mb-1">result</div>
+                  <pre className="rounded border bg-muted/20 p-2 overflow-auto max-h-40 whitespace-pre-wrap break-all">
+                    {formatJson(selectedEntry.event.result) || "-"}
+                  </pre>
+                </div>
               </div>
             </div>
-          )}
-        </div>
-      </ResizablePanel>
+          </ResizablePanel>
+        </>
+      )}
     </ResizablePanelGroup>
   );
 }
