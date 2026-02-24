@@ -67,15 +67,19 @@ export function SectionsListView({
             <TableRow key={section.addr}>
               <TableCell className="font-mono">{section.name}</TableCell>
               <TableCell className="font-mono">
-                <button
-                  type="button"
-                  className="text-amber-600 dark:text-amber-400 hover:underline cursor-pointer text-left"
-                  onClick={() =>
-                    openMemoryPreviewTab(section.addr, section.size)
-                  }
-                >
-                  {section.addr}
-                </button>
+                {section.addr !== "0x0" ? (
+                  <button
+                    type="button"
+                    className="text-amber-600 dark:text-amber-400 hover:underline cursor-pointer text-left"
+                    onClick={() =>
+                      openMemoryPreviewTab(section.addr, section.size)
+                    }
+                  >
+                    {section.addr}
+                  </button>
+                ) : (
+                  <span className="text-muted-foreground">{section.addr}</span>
+                )}
               </TableCell>
               <TableCell className="font-mono text-right">
                 {"0x" + section.size.toString(16)}
