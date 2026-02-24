@@ -67,7 +67,7 @@ function formatResult(value: any): string {
 
 let nextId = 0;
 
-export function CodeEditorTab() {
+export function CodeScratchPadTab() {
   const { t } = useTranslation();
   const { theme } = useTheme();
   const { content, setContent, save, dirty } = useRepl();
@@ -244,7 +244,7 @@ export function CodeEditorTab() {
       <div className="flex-1 min-h-0">
         <ResizablePanelGroup
           orientation="horizontal"
-          autoSaveId="code-editor-split"
+          autoSaveId="code-scratch-pad-split"
         >
           <ResizablePanel defaultSize="65%" minSize="30%">
             {isPending ? (

@@ -169,7 +169,7 @@
   "no_jscontext_found": "No JSContext found",
   "handle": "Handle",
   "description": "Description",
-  "code_editor": "Code Editor",
+  "code_scratch_pad": "Code Scratch Pad",
   "globals": "Globals",
   "execute_javascript": "Execute JavaScript",
   "loading_globals": "Loading globals...",

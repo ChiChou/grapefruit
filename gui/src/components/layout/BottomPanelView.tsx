@@ -15,7 +15,7 @@ import { Status, Platform, useSession } from "@/context/SessionContext";
 import { LogPanel, type LogViewerHandle } from "../shared/LogPanel";
 import { HookResultsView } from "../shared/HookResultsView";
 import { CryptoResultsView } from "../shared/CryptoResultsView";
-import { CodeEditorTab } from "../tabs/CodeEditorTab";
+import { CodeScratchPadTab } from "../tabs/CodeScratchPadTab";
 
 const BOTTOM_PANEL_TAB_STATE = "BOTTOM_PANEL_TAB_STATE";
 
@@ -160,7 +160,7 @@ export function BottomPanelView() {
           className="rounded-none border-b-2 border-transparent data-active:border-primary flex items-center gap-2"
         >
           <Terminal className="h-4 w-4" />
-          {t("code_editor")}
+          {t("code_scratch_pad")}
         </TabsTrigger>
       </TabsList>
       <TabsContent
@@ -209,7 +209,7 @@ export function BottomPanelView() {
         keepMounted
         hidden={activeTab !== "repl"}
       >
-        <CodeEditorTab />
+        <CodeScratchPadTab />
       </TabsContent>
     </Tabs>
   );

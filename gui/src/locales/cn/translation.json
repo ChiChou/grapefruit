@@ -169,7 +169,7 @@
   "no_jscontext_found": "未找到 JSContext",
   "handle": "句柄",
   "description": "描述",
-  "code_editor": "代码编辑器",
+  "code_scratch_pad": "代码草稿板",
   "globals": "全局对象",
   "execute_javascript": "执行 JavaScript",
   "loading_globals": "正在加载全局对象...",
