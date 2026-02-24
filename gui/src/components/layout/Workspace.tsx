@@ -59,6 +59,7 @@ import { FruityInfoPlistInsightsTab } from "../tabs/FruityInfoPlistInsightsTab";
 import { DroidManifestTab } from "../tabs/DroidManifestTab";
 import { DroidProvidersTab } from "../tabs/DroidProvidersTab";
 import { FruityXPCTab } from "../tabs/FruityXPCTab";
+import { ReactNativeTab } from "../tabs/ReactNativeTab";
 import { NoCloseTabHeader } from "../tabs/NoCloseTabHeader";
 
 import { DockContext, useDockActions } from "@/context/DockContext";
@@ -155,6 +156,7 @@ function WorkspaceContent() {
     droidManifest: DroidManifestTab,
     droidProviders: DroidProvidersTab,
     xpc: FruityXPCTab,
+    reactNative: ReactNativeTab,
   };
 
   const tabComponents = {

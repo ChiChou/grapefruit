@@ -495,5 +495,14 @@
   "perm_desc_BLUETOOTH_CONNECT": "连接已配对的蓝牙设备",
   "perm_desc_UWB_RANGING": "与附近设备进行超宽带测距",
   "perm_desc_ACTIVITY_RECOGNITION": "检测步行、骑行等身体活动",
-  "perm_desc_POST_NOTIFICATIONS": "向用户推送通知"
+  "perm_desc_POST_NOTIFICATIONS": "向用户推送通知",
+
+  "rn_instances": "实例",
+  "rn_not_detected": "未检测到 React Native 运行时。",
+  "rn_no_instances": "未找到实例。",
+  "rn_select_instance": "选择一个实例进行检查。",
+  "rn_js_bundles": "JavaScript 包",
+  "rn_no_bundles": "暂无捕获的包。",
+  "rn_js_expression": "JavaScript 表达式...",
+  "clear_all": "清空全部"
 }

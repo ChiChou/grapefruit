@@ -503,5 +503,14 @@
   "perm_desc_BLUETOOTH_CONNECT": "Connect to paired Bluetooth devices",
   "perm_desc_UWB_RANGING": "Perform ultra-wideband ranging with nearby devices",
   "perm_desc_ACTIVITY_RECOGNITION": "Detect physical activities such as walking or cycling",
-  "perm_desc_POST_NOTIFICATIONS": "Post notifications to the user"
+  "perm_desc_POST_NOTIFICATIONS": "Post notifications to the user",
+
+  "rn_instances": "Instances",
+  "rn_not_detected": "React Native runtime not detected.",
+  "rn_no_instances": "No instances found.",
+  "rn_select_instance": "Select an instance to inspect.",
+  "rn_js_bundles": "JavaScript Bundles",
+  "rn_no_bundles": "No bundles captured.",
+  "rn_js_expression": "JavaScript expression...",
+  "clear_all": "Clear all"
 }

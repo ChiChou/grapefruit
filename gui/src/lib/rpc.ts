@@ -64,6 +64,7 @@ export interface SessionClientEvents {
   nsurl: (event: NSURLEvent) => void;
   xpc: (event: XPCSocketEvent) => void;
   jni: (event: JNIEvent) => void;
+  hermes: (event: { url: string; hash: string; size: number }) => void;
   memoryScan: (event: MemoryScanEvent, data?: ArrayBuffer) => void;
   fatal: (detail: unknown) => void;
 }
@@ -97,7 +98,7 @@ export type AsyncDroidRPC = RemoteRPC<DroidRPCRoute>;
  */
 export type CommonRPC = Pick<
   AsyncFruityRPC,
-  "symbol" | "memory" | "native" | "sqlite" | "script" | "syslog"
+  "symbol" | "memory" | "native" | "sqlite" | "script" | "syslog" | "rn"
 >;
 
 type Platform = "fruity" | "droid";
