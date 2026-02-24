@@ -179,7 +179,7 @@ export function FruityHandlesTab() {
         {isLoading && handles.length === 0 ? (
           <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
             <Spinner />
-            {t("loading")}...
+            {t("loading")}
           </div>
         ) : (
           <Table>
@@ -241,7 +241,10 @@ export function FruityHandlesTab() {
               ))}
               {handles.length === 0 && !isLoading && (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={3}
+                    className="text-center text-muted-foreground"
+                  >
                     {t("no_results")}
                   </TableCell>
                 </TableRow>

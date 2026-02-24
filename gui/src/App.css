@@ -1,35 +1,60 @@
 /* Custom dockview theme that inherits from the app's color system */
 .dockview-theme-app {
-  --dv-paneview-active-outline-color: var(--primary);
-  --dv-tabs-and-actions-container-font-size: 13px;
-  --dv-tabs-and-actions-container-height: 35px;
-  --dv-drag-over-background-color: color-mix(in oklch, var(--accent) 50%, transparent);
-  --dv-drag-over-border-color: transparent;
-  --dv-tabs-container-scrollbar-color: var(--muted-foreground);
-  --dv-icon-hover-background-color: color-mix(in oklch, var(--accent) 50%, transparent);
-  --dv-floating-box-shadow: 0 4px 12px color-mix(in oklch, var(--background) 60%, transparent);
-  --dv-overlay-z-index: 999;
-  --dv-tab-font-size: inherit;
-  --dv-border-radius: 0px;
-  --dv-tab-margin: 0;
-  --dv-sash-color: transparent;
-  --dv-active-sash-color: var(--primary);
-  --dv-active-sash-transition-duration: 0.1s;
-  --dv-active-sash-transition-delay: 0.5s;
+    --dv-paneview-active-outline-color: var(--primary);
+    --dv-tabs-and-actions-container-font-size: 13px;
+    --dv-tabs-and-actions-container-height: 40px;
+    --dv-drag-over-background-color: color-mix(
+        in oklch,
+        var(--accent) 50%,
+        transparent
+    );
+    --dv-drag-over-border-color: transparent;
+    --dv-tabs-container-scrollbar-color: var(--muted-foreground);
+    --dv-icon-hover-background-color: color-mix(
+        in oklch,
+        var(--accent) 50%,
+        transparent
+    );
+    --dv-floating-box-shadow: 0 4px 12px
+        color-mix(in oklch, var(--background) 60%, transparent);
+    --dv-overlay-z-index: 999;
+    --dv-tab-font-size: inherit;
+    --dv-border-radius: 6px;
+    --dv-tab-margin: 0 4px 0 0;
+    --dv-sash-color: transparent;
+    --dv-active-sash-color: var(--primary);
+    --dv-active-sash-transition-duration: 0.1s;
+    --dv-active-sash-transition-delay: 0.5s;
 
-  --dv-background-color: var(--background);
-  --dv-group-view-background-color: var(--background);
-  --dv-tabs-and-actions-container-background-color: var(--secondary);
-  --dv-activegroup-visiblepanel-tab-background-color: var(--background);
-  --dv-activegroup-hiddenpanel-tab-background-color: var(--muted);
-  --dv-inactivegroup-visiblepanel-tab-background-color: var(--background);
-  --dv-inactivegroup-hiddenpanel-tab-background-color: var(--muted);
-  --dv-tab-divider-color: var(--border);
-  --dv-activegroup-visiblepanel-tab-color: var(--foreground);
-  --dv-activegroup-hiddenpanel-tab-color: var(--muted-foreground);
-  --dv-inactivegroup-visiblepanel-tab-color: var(--muted-foreground);
-  --dv-inactivegroup-hiddenpanel-tab-color: color-mix(in oklch, var(--muted-foreground) 60%, transparent);
-  --dv-separator-border: var(--border);
-  --dv-paneview-header-border-color: var(--border);
-  --dv-scrollbar-background-color: color-mix(in oklch, var(--muted-foreground) 40%, transparent);
+    --dv-background-color: var(--background);
+    --dv-group-view-background-color: var(--background);
+    --dv-tabs-and-actions-container-background-color: var(--secondary);
+    --dv-activegroup-visiblepanel-tab-background-color: var(--background);
+    --dv-activegroup-hiddenpanel-tab-background-color: var(--muted);
+    --dv-inactivegroup-visiblepanel-tab-background-color: var(--background);
+    --dv-inactivegroup-hiddenpanel-tab-background-color: var(--muted);
+    --dv-tab-divider-color: transparent;
+    --dv-activegroup-visiblepanel-tab-color: var(--foreground);
+    --dv-activegroup-hiddenpanel-tab-color: var(--muted-foreground);
+    --dv-inactivegroup-visiblepanel-tab-color: var(--muted-foreground);
+    --dv-inactivegroup-hiddenpanel-tab-color: color-mix(
+        in oklch,
+        var(--muted-foreground) 60%,
+        transparent
+    );
+    --dv-separator-border: var(--border);
+    --dv-paneview-header-border-color: var(--border);
+    --dv-scrollbar-background-color: color-mix(
+        in oklch,
+        var(--muted-foreground) 40%,
+        transparent
+    );
+}
+
+.dockview-theme-app .dv-tab {
+    padding: 0.375rem 0.75rem;
+}
+
+.dockview-theme-app .dv-tab .dv-default-tab .dv-default-tab-content {
+    line-height: 1.4;
 }

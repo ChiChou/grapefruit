@@ -53,7 +53,7 @@ export function PlistView({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex items-center justify-between p-2 border-b">
         <Tabs
           value={viewMode}
           onValueChange={(v) => setViewMode(v as "tree" | "text")}
