@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { t } from "i18next";
 import { StatusBar } from "./StatusBar";
 
@@ -18,6 +18,7 @@ import {
 
 import { LeftPanelView } from "./LeftPanelView";
 import { BottomPanelView } from "./BottomPanelView";
+import { CommandPalette } from "./CommandPalette";
 import { useSession } from "@/context/SessionContext";
 import SessionProvider from "../providers/SessionProvider";
 import { FruityHandlesTab } from "../tabs/FruityHandlesTab";
@@ -108,13 +109,45 @@ function WorkspaceContent() {
   const [dockApi, setDockApi] = useState<DockviewApi | null>(null);
   const { openSingletonPanel, openFilePanel } = useDockActions(dockApi);
 
+  const getLayoutKey = useCallback(() => {
+    if (!device) return null;
+    const target = bundle || pid;
+    if (!target) return null;
+    return `workspace-dockview-layout:${device}:${mode}:${target}`;
+  }, [device, bundle, pid, mode]);
+
+  const resetLayout = useCallback(() => {
+    if (!dockApi) return;
+    const key = getLayoutKey();
+    if (key) localStorage.removeItem(key);
+    // Remove all existing panels
+    for (const panel of dockApi.panels) {
+      panel.api.close();
+    }
+    createDefaultLayout(dockApi);
+  }, [dockApi, getLayoutKey]);
+
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const dockContextValue = useMemo(
     () => ({
       api: dockApi,
       openSingletonPanel,
       openFilePanel,
+      resetLayout,
     }),
-    [dockApi, openSingletonPanel, openFilePanel],
+    [dockApi, openSingletonPanel, openFilePanel, resetLayout],
   );
 
   const components = {
@@ -161,13 +194,6 @@ function WorkspaceContent() {
 
   const tabComponents = {
     noClose: NoCloseTabHeader,
-  };
-
-  const getLayoutKey = () => {
-    if (!device) return null;
-    const target = bundle || pid;
-    if (!target) return null;
-    return `workspace-dockview-layout:${device}:${mode}:${target}`;
   };
 
   const onReady = (event: DockviewReadyEvent) => {
@@ -265,8 +291,11 @@ function WorkspaceContent() {
         <StatusBar
           bottomPanelVisible={bottomPanelVisible}
           setBottomPanelVisible={setBottomPanelVisible}
+          onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+          onResetLayout={resetLayout}
         />
       </div>
+      <CommandPalette open={commandPaletteOpen} onOpenChange={setCommandPaletteOpen} />
     </DockContext.Provider>
   );
 }

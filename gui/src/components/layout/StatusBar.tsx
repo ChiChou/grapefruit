@@ -10,6 +10,8 @@ import {
   Circle,
   Loader2,
   CircleAlert,
+  Command,
+  RotateCcw,
 } from "lucide-react";
 
 import {
@@ -24,11 +26,15 @@ import { Status, useSession } from "@/context/SessionContext";
 interface StatusBarProps {
   bottomPanelVisible: boolean;
   setBottomPanelVisible: (visible: boolean) => void;
+  onOpenCommandPalette: () => void;
+  onResetLayout: () => void;
 }
 
 export function StatusBar({
   bottomPanelVisible,
   setBottomPanelVisible,
+  onOpenCommandPalette,
+  onResetLayout,
 }: StatusBarProps) {
   const { t } = useTranslation();
   const { status, device, pid } = useSession();
@@ -64,7 +70,9 @@ export function StatusBar({
 
   const killProcessMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/device/${device}/kill/${pid}`, { method: "POST" });
+      const res = await fetch(`/api/device/${device}/kill/${pid}`, {
+        method: "POST",
+      });
       if (!res.ok) throw new Error("Failed to kill process");
     },
     onSuccess: () => {
@@ -85,7 +93,7 @@ export function StatusBar({
 
   return (
     <footer
-      className={`${getStatusColor()} px-4 py-1 text-sm text-white flex items-center justify-between`}
+      className={`${getStatusColor()} px-4 py-1 text-xs text-white flex items-center justify-between`}
     >
       <div className="flex items-center gap-1">
         <DropdownMenu>
@@ -131,18 +139,37 @@ export function StatusBar({
           </button>
         )}
       </div>
-      <button
-        type="button"
-        onClick={() => setBottomPanelVisible(!bottomPanelVisible)}
-        className="p-0.5 hover:bg-white/20 rounded transition-colors"
-        title={bottomPanelVisible ? t("hide_panel") : t("show_panel")}
-      >
-        {bottomPanelVisible ? (
-          <PanelBottomClose className="w-4 h-4" />
-        ) : (
-          <PanelBottomOpen className="w-4 h-4" />
-        )}
-      </button>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={onOpenCommandPalette}
+          className="px-1.5 py-0.5 hover:bg-white/20 rounded transition-colors flex items-center gap-0.5"
+          title={t("command_palette")}
+        >
+          <Command className="w-3 h-3" />K
+        </button>
+        <button
+          type="button"
+          onClick={onResetLayout}
+          className="px-1.5 py-0.5 hover:bg-white/20 rounded transition-colors flex items-center gap-1"
+          title={t("reset_workspace")}
+        >
+          <RotateCcw className="w-3 h-3" />
+          {t("reset_workspace")}
+        </button>
+        <button
+          type="button"
+          onClick={() => setBottomPanelVisible(!bottomPanelVisible)}
+          className="p-0.5 hover:bg-white/20 rounded transition-colors"
+          title={bottomPanelVisible ? t("hide_panel") : t("show_panel")}
+        >
+          {bottomPanelVisible ? (
+            <PanelBottomClose className="w-4 h-4" />
+          ) : (
+            <PanelBottomOpen className="w-4 h-4" />
+          )}
+        </button>
+      </div>
     </footer>
   );
 }

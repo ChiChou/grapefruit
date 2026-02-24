@@ -1,16 +1,5 @@
 import { Link, NavLink, Outlet } from "react-router";
-import { t } from "i18next";
-import {
-  Info,
-  Package,
-  Braces,
-  Link as LinkIcon,
-  MapPin,
-  Anchor,
-  Blocks,
-  Puzzle,
-  Smartphone,
-} from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import {
   Tooltip,
@@ -19,7 +8,8 @@ import {
 } from "@/components/ui/tooltip";
 import { DarkmodeToggle } from "../shared/DarkmodeToggle";
 import { LanguageSelector } from "../shared/LanguageSelector";
-import { useSession, Platform, Mode } from "@/context/SessionContext";
+import { useSession, Mode } from "@/context/SessionContext";
+import { getRouteFeatures } from "@/lib/features";
 
 import logo from "../../assets/grapefruit.svg";
 
@@ -75,45 +65,22 @@ type NavEntry =
   | { kind: "action"; id: string; icon: React.ReactNode; label: string; action: () => void };
 
 export function LeftPanelView() {
+  const { t } = useTranslation();
   const { device, bundle, platform, mode, pid } = useSession();
   // Determine the target for URL (bundle for app mode, pid for daemon mode)
   const target = mode === Mode.App ? bundle : pid;
   const basePath = `/workspace/${platform}/${device}/${mode}/${target}`;
 
-  const navKey = `${platform}:${mode}`;
-  const navItems: NavEntry[] = ({
-    [`${Platform.Fruity}:${Mode.App}`]: [
-      { kind: "route", route: "general", icon: <Info className="h-5 w-5" />, label: t("general") },
-      { kind: "route", route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
-      { kind: "route", route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
-      { kind: "route", route: "urls", icon: <LinkIcon className="h-5 w-5" />, label: "URL Schemes" },
-      { kind: "route", route: "extensions", icon: <Blocks className="h-5 w-5" />, label: "Extensions" },
-      { kind: "route", route: "hooks", icon: <Anchor className="h-5 w-5" />, label: t("hooks") },
-      { kind: "route", route: "device", icon: <Smartphone className="h-5 w-5" />, label: t("device_info") },
-      { kind: "route", route: "geolocation", icon: <MapPin className="h-5 w-5" />, label: t("geolocation_simulation") },
-    ],
-    [`${Platform.Fruity}:${Mode.Daemon}`]: [
-      { kind: "route", route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
-      { kind: "route", route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
-      { kind: "route", route: "hooks", icon: <Anchor className="h-5 w-5" />, label: t("hooks") },
-      { kind: "route", route: "device", icon: <Smartphone className="h-5 w-5" />, label: t("device_info") },
-    ],
-    [`${Platform.Droid}:${Mode.App}`]: [
-      { kind: "route", route: "general", icon: <Info className="h-5 w-5" />, label: t("general") },
-      { kind: "route", route: "components", icon: <Puzzle className="h-5 w-5" />, label: t("components") },
-      { kind: "route", route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
-      { kind: "route", route: "urls", icon: <LinkIcon className="h-5 w-5" />, label: "URL Schemes" },
-      { kind: "route", route: "hooks", icon: <Anchor className="h-5 w-5" />, label: t("hooks") },
-      { kind: "route", route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
-      { kind: "route", route: "device", icon: <Smartphone className="h-5 w-5" />, label: t("device_info") },
-    ],
-    [`${Platform.Droid}:${Mode.Daemon}`]: [
-      { kind: "route", route: "modules", icon: <Package className="h-5 w-5" />, label: t("modules") },
-      { kind: "route", route: "classes", icon: <Braces className="h-5 w-5" />, label: t("classes") },
-      { kind: "route", route: "hooks", icon: <Anchor className="h-5 w-5" />, label: t("hooks") },
-      { kind: "route", route: "device", icon: <Smartphone className="h-5 w-5" />, label: t("device_info") },
-    ],
-  } satisfies Record<string, NavEntry[]>)[navKey] ?? [];
+  const routeItems = getRouteFeatures(platform, mode);
+  const navItems: NavEntry[] = routeItems.map((f) => {
+    const Icon = f.icon;
+    return {
+      kind: "route" as const,
+      route: f.route,
+      icon: <Icon className="h-5 w-5" />,
+      label: f.labelKey ? t(f.labelKey) : f.labelFallback,
+    };
+  });
 
   return (
     <div className="flex h-full">

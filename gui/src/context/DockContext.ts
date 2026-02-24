@@ -14,12 +14,17 @@ export interface DockContextType {
    * If a panel with the same id exists, it will be focused.
    */
   openFilePanel: (options: AddPanelOptions) => void;
+  /**
+   * Reset the dock layout to the default (Home tab only).
+   */
+  resetLayout: () => void;
 }
 
 const defaultContext: DockContextType = {
   api: null,
   openSingletonPanel: () => {},
   openFilePanel: () => {},
+  resetLayout: () => {},
 };
 
 export const DockContext = React.createContext<DockContextType>(defaultContext);
