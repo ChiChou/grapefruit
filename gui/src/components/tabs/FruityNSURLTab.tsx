@@ -18,7 +18,7 @@ import {
   generate,
   type FormatId,
   type RequestInfo,
-} from "@/lib/codegen";
+} from "@/lib/codegen/nsurl";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -123,10 +123,7 @@ function parseCookieValue(value: string): { key: string; value: string }[] {
   });
 }
 
-function handleEventPure(
-  map: Map<string, CapturedRequest>,
-  event: NSURLEvent,
-) {
+function handleEventPure(map: Map<string, CapturedRequest>, event: NSURLEvent) {
   const { event: eventType, requestId } = event;
 
   function getOrCreate(id: string): CapturedRequest {
@@ -479,7 +476,10 @@ export function FruityNSURLTab() {
         <a
           href={`/api/history/nsurl/${device}/${identifier}/har`}
           download={`${identifier}.har`}
-          className={buttonVariants({ variant: "outline", size: "sm" }) + " h-8 px-2.5 text-xs no-underline"}
+          className={
+            buttonVariants({ variant: "outline", size: "sm" }) +
+            " h-8 px-2.5 text-xs no-underline"
+          }
         >
           <Download className="w-3.5 h-3.5" />
           Export HAR

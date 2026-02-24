@@ -8,7 +8,7 @@ import Editor, { loader } from "@monaco-editor/react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { useFruityQuery } from "@/lib/queries";
-import { header, type ClassDumpInfo } from "../../lib/classdump-header.ts";
+import { header, type ClassDumpInfo } from "@/lib/codegen/header";
 
 import type { ClassDetail } from "@agent/fruity/modules/classdump";
 

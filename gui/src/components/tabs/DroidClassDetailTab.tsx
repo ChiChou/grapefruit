@@ -19,7 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useDroidQuery } from "@/lib/queries";
 import { useRepl } from "@/context/useRepl";
-import { java, javaBatch } from "@/lib/hook-template";
+import { java, javaBatch } from "@/lib/codegen/hookjs.ts";
 
 import type { JavaClassDetail, JavaMethod } from "@agent/droid/modules/classes";
 

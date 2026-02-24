@@ -21,7 +21,7 @@ import { useDock } from "@/context/DockContext";
 import { useFruityMutation, useDroidMutation } from "@/lib/queries";
 import { DirectoryTree } from "./DirectoryTree";
 import { FileTable } from "./FileTable";
-import type { FinderTabParams, UploadFile } from "../../lib/file-explorer.ts";
+import type { FinderTabParams, UploadFile } from "@/lib/explorer.ts";
 
 export type { FinderTabParams };
 

@@ -4,7 +4,7 @@ import { Trash2, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useSession, Status } from "@/context/SessionContext";
-import { formatObjCMethod } from "@/lib/hook-template";
+import { formatObjCMethod } from "@/lib/codegen/hookjs";
 import { useFruityQuery } from "@/lib/queries";
 
 interface UserHook {

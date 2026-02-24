@@ -26,7 +26,7 @@ import {
   objc,
   formatObjCMethod,
   type ObjCHookTarget,
-} from "@/lib/hook-template.ts";
+} from "@/lib/codegen/hookjs";
 
 import type { ClassDetail } from "@agent/fruity/modules/classdump";
 
@@ -311,7 +311,10 @@ export function FruityClassDetailTab({
           ))}
           <span className="font-mono font-semibold">{classInfo.name}</span>
         </div>
-        <div className="text-xs text-muted-foreground font-mono mt-0.5 truncate" title={classInfo.module}>
+        <div
+          className="text-xs text-muted-foreground font-mono mt-0.5 truncate"
+          title={classInfo.module}
+        >
           {classInfo.module}
         </div>
       </div>
@@ -323,9 +326,7 @@ export function FruityClassDetailTab({
             <Checkbox
               checked={
                 displayedMethods.length > 0 &&
-                displayedMethods.every((m) =>
-                  selectedMethods.has(m.name),
-                )
+                displayedMethods.every((m) => selectedMethods.has(m.name))
               }
               onCheckedChange={(checked) => handleSelectAll(!!checked)}
               aria-label="Select all"
@@ -344,9 +345,7 @@ export function FruityClassDetailTab({
               size="sm"
               onClick={handleBatchHook}
               disabled={
-                status !== Status.Ready ||
-                selectedCount === 0 ||
-                isHooking
+                status !== Status.Ready || selectedCount === 0 || isHooking
               }
               className="gap-1.5 h-7"
             >

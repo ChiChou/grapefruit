@@ -17,7 +17,7 @@ import { useSession, Status, Mode, Platform } from "@/context/SessionContext";
 import { useRepl } from "@/context/useRepl";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { native, type NativeHookTarget } from "@/lib/hook-template";
+import { native, type NativeHookTarget } from "@/lib/codegen/hookjs";
 import { NativeHookDialog } from "@/components/shared/NativeHookDialog";
 
 import type { ImportGroup, Imported } from "@agent/common/symbol";
@@ -36,7 +36,17 @@ const DEFAULT_WIDTHS = {
 export function ImportsListView({ path }: ImportsListViewProps) {
   const { openFilePanel } = useDock();
   const { t } = useTranslation();
-  const { fruity, droid, status, platform, mode, device, bundle, pid, fridaMajor } = useSession();
+  const {
+    fruity,
+    droid,
+    status,
+    platform,
+    mode,
+    device,
+    bundle,
+    pid,
+    fridaMajor,
+  } = useSession();
   const api = platform === Platform.Droid ? droid : fruity;
   const { appendCode } = useRepl();
   const navigate = useNavigate();

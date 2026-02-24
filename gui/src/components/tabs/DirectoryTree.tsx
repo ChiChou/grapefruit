@@ -6,7 +6,7 @@ import type {
   RootType,
   LoadDirectoryFn,
   DirectorySelectFn,
-} from "../../lib/file-explorer.ts";
+} from "@/lib/explorer.ts";
 import type { MetaData } from "@agent/fruity/modules/fs";
 
 interface DirectoryTreeProps {
@@ -170,8 +170,7 @@ export function DirectoryTree({
 
         // If children not loaded, load them
         if (node.children === null && i < segments.length - 1) {
-          const isRootNode =
-            pathSoFar.length === 1 && pathSoFar[0] === root;
+          const isRootNode = pathSoFar.length === 1 && pathSoFar[0] === root;
           const fullPath = isRootNode
             ? rootPath
             : `${rootPath}/${pathSoFar.slice(1).join("/")}`;
@@ -208,7 +207,9 @@ export function DirectoryTree({
     if (!targetNode) return;
 
     const isRootNode = path.length === 1 && path[0] === root;
-    const fullPath = isRootNode ? rootPath : `${rootPath}/${path.slice(1).join("/")}`;
+    const fullPath = isRootNode
+      ? rootPath
+      : `${rootPath}/${path.slice(1).join("/")}`;
 
     lastInternalNavRef.current = fullPath;
     onDirectorySelect(fullPath);
@@ -273,9 +274,7 @@ export function DirectoryTree({
         <button
           type="button"
           className={`flex items-center w-full py-1 px-2 text-left ${
-            isActive
-              ? "bg-amber-100 dark:bg-amber-900"
-              : "hover:bg-accent"
+            isActive ? "bg-amber-100 dark:bg-amber-900" : "hover:bg-accent"
           }`}
           style={{ paddingLeft: `${depth * 16 + 8}px` }}
           onClick={() => handleNodeClick(currentPath)}

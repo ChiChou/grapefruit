@@ -45,7 +45,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { MetaData } from "@agent/fruity/modules/fs";
-import { formatSize, formatDate, typeFor } from "../../lib/file-explorer.ts";
+import { formatSize, formatDate, typeFor } from "@/lib/explorer.ts";
 
 interface FileTableProps {
   items: MetaData[];
@@ -288,9 +288,7 @@ export function FileTable({
       {!isReadOnly && (
         <div className="flex items-center gap-2 px-2 py-1 border-b shrink-0">
           <Checkbox
-            checked={
-              selectedFiles.size === items.length && items.length > 0
-            }
+            checked={selectedFiles.size === items.length && items.length > 0}
             onCheckedChange={toggleSelectAll}
             aria-label={t("select_all")}
           />
@@ -323,8 +321,7 @@ export function FileTable({
                     <DialogDescription>
                       {t("batch_delete_confirm", {
                         count: selectedFiles.size,
-                      })}
-                      {" "}
+                      })}{" "}
                       {t("batch_delete_warning")}
                     </DialogDescription>
                   </DialogHeader>
@@ -335,10 +332,7 @@ export function FileTable({
                     >
                       {t("cancel")}
                     </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={handleBatchDelete}
-                    >
+                    <Button variant="destructive" onClick={handleBatchDelete}>
                       {t("delete")}
                     </Button>
                   </DialogFooter>
@@ -504,7 +498,10 @@ export function FileTable({
                             >
                               <SquareArrowOutUpRight className="h-4 w-4" />
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" className="min-w-44">
+                            <DropdownMenuContent
+                              align="start"
+                              className="min-w-44"
+                            >
                               <DropdownMenuItem
                                 onClick={() => onPreview(item.name, "text")}
                               >

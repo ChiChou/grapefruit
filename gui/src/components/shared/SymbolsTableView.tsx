@@ -20,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useDock } from "@/context/DockContext";
 import { useSession, Status, Mode, Platform } from "@/context/SessionContext";
 import { useRepl } from "@/context/useRepl";
-import { native, type NativeHookTarget } from "@/lib/hook-template";
+import { native, type NativeHookTarget } from "@/lib/codegen/hookjs";
 import { NativeHookDialog } from "@/components/shared/NativeHookDialog";
 
 import type { Symbol, Exported } from "@agent/common/symbol";
@@ -51,7 +51,17 @@ export function SymbolsTableView({
 }: SymbolsTableViewProps) {
   const { t } = useTranslation();
   const { openFilePanel } = useDock();
-  const { fruity, droid, status, platform, mode, device, bundle, pid, fridaMajor } = useSession();
+  const {
+    fruity,
+    droid,
+    status,
+    platform,
+    mode,
+    device,
+    bundle,
+    pid,
+    fridaMajor,
+  } = useSession();
   const api = platform === Platform.Droid ? droid : fruity;
   const { appendCode } = useRepl();
   const navigate = useNavigate();
@@ -60,7 +70,9 @@ export function SymbolsTableView({
   const [globalFilter, setGlobalFilter] = useState("");
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [hookDialogOpen, setHookDialogOpen] = useState(false);
-  const [hookDialogTarget, setHookDialogTarget] = useState<SymbolItem | null>(null);
+  const [hookDialogTarget, setHookDialogTarget] = useState<SymbolItem | null>(
+    null,
+  );
   const [columnSizing, setColumnSizing] = useState<Record<string, number>>({
     select: DEFAULT_WIDTHS.select,
     actions: DEFAULT_WIDTHS.actions,
