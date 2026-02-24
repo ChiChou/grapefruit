@@ -409,17 +409,6 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
   useEffect(() => {
     if (!apiReady || !roots) return;
 
-    // Absolute path from params takes priority
-    if (params?.path?.startsWith("/")) {
-      if (params.path.startsWith(roots.bundle)) {
-        setActiveTab("bundle");
-      } else {
-        setActiveTab("home");
-      }
-      handleDirectorySelect(params.path);
-      return;
-    }
-
     // On first load, restore saved directory from localStorage
     if (!restoredRef.current && initialSavedCwd) {
       restoredRef.current = true;
@@ -429,7 +418,21 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
     restoredRef.current = true;
 
     handleDirectorySelect(activeTab === "bundle" ? roots.bundle : roots.home);
-  }, [apiReady, roots, activeTab, handleDirectorySelect, initialSavedCwd, params?.path]);
+  }, [apiReady, roots, activeTab, handleDirectorySelect, initialSavedCwd]);
+
+  // Navigate to absolute path from params (e.g. opened from lsof)
+  const handledParamsRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!apiReady || !roots || !params?.path?.startsWith("/")) return;
+    if (handledParamsRef.current === params.path) return;
+    handledParamsRef.current = params.path;
+    if (params.path.startsWith(roots.bundle)) {
+      setActiveTab("bundle");
+    } else {
+      setActiveTab("home");
+    }
+    handleDirectorySelect(params.path);
+  }, [apiReady, roots, params?.path, handleDirectorySelect]);
 
   // Persist finder state to localStorage
   useEffect(() => {
