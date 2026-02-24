@@ -72,10 +72,12 @@ export function typeFor(filename: string): string {
 
     case "strings":
     case "loctable":
-    case "xcprivacy":
     case "archiver":
     case "plist":
       return "plist";
+
+    case "xcprivacy":
+      return "xcprivacy";
 
     case "ttf":
     case "otf":

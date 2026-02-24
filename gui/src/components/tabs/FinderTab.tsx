@@ -194,6 +194,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
         sqlite: "sqliteEditor",
         image: "imagePreview",
         plist: "plistPreview",
+        xcprivacy: "xcprivacy",
         font: "fontPreview",
       };
 
