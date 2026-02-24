@@ -1078,6 +1078,39 @@ const JAVA_VM: MethodDef[] = [
   },
 ];
 
+// the original table is too much noise for most use cases,
+// we filter it down to a smaller set that is relevant to RE / privacy analysis
+const EABLED = new Set([
+  // Class & method resolution
+  "FindClass",
+  "DefineClass",
+  "GetMethodID",
+  "GetStaticMethodID",
+  "GetFieldID",
+  "GetStaticFieldID",
+  // Native registration
+  "RegisterNatives",
+  "UnregisterNatives",
+  // String operations
+  "NewStringUTF",
+  "GetStringUTFChars",
+  "NewString",
+  "GetStringChars",
+  // Object creation
+  "NewObject",
+  "NewObjectV",
+  "NewObjectA",
+  "AllocObject",
+  // Reflection
+  "FromReflectedMethod",
+  "FromReflectedField",
+  "ToReflectedMethod",
+  "ToReflectedField",
+  // JavaVM
+  "AttachCurrentThread",
+  "AttachCurrentThreadAsDaemon",
+]);
+
 const INT_TYPES = new Set(["jint", "jsize", "jbyte", "jshort"]);
 
 function readValue(type: string, ptr: NativePointer): string {
@@ -1112,7 +1145,7 @@ function hookTable(
 
   for (let i = 0; i < methods.length; i++) {
     const method = methods[i];
-    if (method.name.startsWith("reserved")) continue;
+    if (!EABLED.has(method.name)) continue;
 
     const fnPtr = fnTable.add(i * ptrSize).readPointer();
     if (fnPtr.isNull()) continue;
