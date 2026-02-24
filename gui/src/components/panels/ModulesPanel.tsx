@@ -173,7 +173,7 @@ function ModuleRow({
                   const url = `/api/dump/${device}/${pid}?path=${encodeURIComponent(mod.path)}`;
                   const res = await fetch(url, { method: "HEAD" });
                   if (res.ok) {
-                    window.open(url);
+                    location.replace(url);
                   } else {
                     toast.warning(t("dump_decrypted_error"));
                   }

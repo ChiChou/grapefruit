@@ -178,7 +178,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
       const url = new URL(window.location.href);
       url.pathname = `/api/download/${device}/${pid}`;
       url.searchParams.set("path", `${fullCwd}/${fileName}`);
-      window.open(url.toString());
+      location.replace(url.toString());
     },
     [pid, device, fullCwd],
   );
