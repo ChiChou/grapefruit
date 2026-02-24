@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import { styleText } from "node:util";
 
@@ -115,6 +116,15 @@ export function setup(
         const { subject: _, ...event } = payload;
         socket.emit("jni", event);
         stores.jni.append(payload);
+        break;
+      }
+
+      case "hermes": {
+        const buf = data ? Buffer.from(data) : Buffer.alloc(0);
+        const hash = createHash("sha256").update(buf).digest("hex");
+        const hermesEvent = { url: payload.url as string, hash, size: buf.length };
+        socket.emit("hermes", hermesEvent);
+        stores.hermes.append(hermesEvent, buf);
         break;
       }
 

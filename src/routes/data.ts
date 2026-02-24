@@ -12,6 +12,7 @@ import { NSURLStore } from "../lib/store/nsurl.ts";
 import { FlutterStore } from "../lib/store/flutter.ts";
 import { JNIStore } from "../lib/store/jni.ts";
 import { XPCStore } from "../lib/store/xpc.ts";
+import { HermesStore } from "../lib/store/hermes.ts";
 import { createTapStore } from "../lib/store/taps.ts";
 import { toHAR } from "../lib/har.ts";
 const LOG_TAIL_BYTES = 1024 * 1024; // 1MB
@@ -339,6 +340,80 @@ const routes = new Hono()
     },
   )
   .route("/", xpcRoutes)
+  // Hermes capture endpoints
+  .get("/hermes/:device/:identifier", (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+    const limit = parseInt(c.req.query("limit") || "100", 10);
+    const offset = parseInt(c.req.query("offset") || "0", 10);
+
+    try {
+      const store = new HermesStore(deviceId, identifier);
+      const records = store.query({ limit, offset });
+      const total = store.count();
+
+      return c.json({
+        logs: records.map((r) => ({
+          id: r.id,
+          url: r.url,
+          hash: r.hash,
+          size: r.size,
+          createdAt: r.createdAt,
+        })),
+        total,
+        limit,
+        offset,
+      });
+    } catch (e) {
+      console.error("Failed to query Hermes records:", e);
+      return c.json({ logs: [], total: 0, limit, offset });
+    }
+  })
+  .get("/hermes/:device/:identifier/download/:id", (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+    const id = parseInt(c.req.param("id"), 10);
+
+    try {
+      const store = new HermesStore(deviceId, identifier);
+      const blob = store.getBlob(id);
+      if (!blob) return c.text("Not found", 404);
+
+      const filename = blob.url.split("/").pop() || `hermes-${id}.bin`;
+      c.header("Content-Disposition", `attachment; filename="${filename}"`);
+      c.header("Content-Type", "application/octet-stream");
+      c.header("Content-Length", blob.data.length.toString());
+      return c.body(new Uint8Array(blob.data).buffer as ArrayBuffer);
+    } catch (e) {
+      console.error("Failed to serve Hermes blob:", e);
+      return c.text("Failed to serve Hermes blob", 500);
+    }
+  })
+  .delete("/hermes/:device/:identifier/:id", (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+    const id = Number(c.req.param("id"));
+
+    try {
+      new HermesStore(deviceId, identifier).rmOne(id);
+      return c.body(null, 204);
+    } catch (e) {
+      console.error("Failed to delete Hermes record:", e);
+      return c.text("Failed to delete Hermes record", 500);
+    }
+  })
+  .delete("/hermes/:device/:identifier", (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+
+    try {
+      new HermesStore(deviceId, identifier).rm();
+      return c.body(null, 204);
+    } catch (e) {
+      console.error("Failed to clear Hermes records:", e);
+      return c.text("Failed to clear Hermes records", 500);
+    }
+  })
   // Taps snapshot endpoints
   .get("/taps/:device/:identifier", (c) => {
     const deviceId = c.req.param("device");

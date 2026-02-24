@@ -6,6 +6,7 @@ import type { CryptoStore } from "./lib/store/crypto.ts";
 import type { FlutterStore } from "./lib/store/flutter.ts";
 import type { JNIStore } from "./lib/store/jni.ts";
 import type { XPCStore } from "./lib/store/xpc.ts";
+import type { HermesStore } from "./lib/store/hermes.ts";
 
 import type { NSURLEvent } from "./lib/store/nsurl.ts";
 import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
@@ -40,6 +41,7 @@ export interface ServerToClientEvents {
   nsurl: (event: NSURLEvent) => void;
   xpc: (event: Record<string, unknown>) => void;
   jni: (event: JNIEvent) => void;
+  hermes: (event: { url: string; hash: string; size: number }) => void;
   memoryScan: (
     event: { event: string; [key: string]: unknown },
     data?: ArrayBuffer,
@@ -62,6 +64,7 @@ export interface SessionStores {
   flutter: FlutterStore;
   jni: JNIStore;
   xpc: XPCStore;
+  hermes: HermesStore;
 }
 
 export type SessionSocket = Socket<ClientToServerEvents, ServerToClientEvents>;

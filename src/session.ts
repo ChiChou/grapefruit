@@ -12,6 +12,7 @@ import { CryptoStore } from "./lib/store/crypto.ts";
 import { FlutterStore } from "./lib/store/flutter.ts";
 import { JNIStore } from "./lib/store/jni.ts";
 import { XPCStore } from "./lib/store/xpc.ts";
+import { HermesStore } from "./lib/store/hermes.ts";
 import { createTapStore } from "./lib/store/taps.ts";
 import { setup as setupRelay } from "./relay.ts";
 import type {
@@ -210,6 +211,7 @@ export async function connect(socket: SessionSocket, params: SessionParams) {
     flutter: new FlutterStore(deviceId, identifier),
     jni: new JNIStore(deviceId, identifier),
     xpc: new XPCStore(deviceId, identifier),
+    hermes: new HermesStore(deviceId, identifier),
   };
 
   const logHandles = await LogWriter.open(deviceId, identifier);

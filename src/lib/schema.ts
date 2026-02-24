@@ -135,6 +135,25 @@ export const xpcLogs = sqliteTable(
   ],
 );
 
+export const hermes = sqliteTable(
+  "hbc",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    deviceId: text("device_id").notNull(),
+    identifier: text("identifier").notNull(),
+    url: text("url").notNull(),
+    hash: text("hash").notNull(),
+    size: integer("size").notNull(),
+    data: blob("data", { mode: "buffer" }).notNull(),
+    createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_hbc_device_identifier").on(table.deviceId, table.identifier),
+    uniqueIndex("idx_hbc_hash").on(table.hash),
+    index("idx_hbc_created_at").on(table.createdAt),
+  ],
+);
+
 export const crypto = sqliteTable(
   "crypto",
   {
