@@ -56,6 +56,11 @@ async function resolveAppPid(
   return device.spawn(bundleId, opt);
 }
 
+function rpcErrorMessage(ns: string, method: string, err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err);
+  return `RPC method ${ns}.${method} failed: ${msg}`;
+}
+
 function setupSocketHandlers(
   socket: SessionSocket,
   script: Awaited<
@@ -99,7 +104,7 @@ function setupSocketHandlers(
           (result) => ack(null, result),
           (err: Error) => {
             console.error(`RPC method ${method} failed:`, err);
-            ack(err, null);
+            ack(rpcErrorMessage(ns, method, err), null);
           },
         )
         .then(() => {
@@ -116,7 +121,7 @@ function setupSocketHandlers(
         })
         .catch((err: Error) => {
           console.error(`RPC method ${method} failed:`, err);
-          ack(err, null);
+          ack(rpcErrorMessage(ns, method, err), null);
         });
     })
     .on("eval", (source, name, ack) => {
@@ -124,13 +129,17 @@ function setupSocketHandlers(
       script.exports
         .invoke("script", "evaluate", [source, name])
         .then((result: unknown) => ack(null, result))
-        .catch((err: Error) => ack(err, null));
+        .catch((err: Error) =>
+          ack(rpcErrorMessage("script", "evaluate", err), null),
+        );
     })
     .on("clearLog", (type, ack) => {
       logger
         .empty(type)
         .then(() => ack(null, true))
-        .catch((err) => ack(err, null));
+        .catch((err) =>
+          ack(rpcErrorMessage("log", "clearLog", err), null),
+        );
     })
     .on("disconnect", () => {
       console.info("socket disconnected");

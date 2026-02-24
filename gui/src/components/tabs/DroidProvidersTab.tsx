@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Search, Globe, Play } from "lucide-react";
+import { Search, Globe, Play, CircleAlert, Info } from "lucide-react";
 import { List, type RowComponentProps } from "react-window";
 
 import { Input } from "@/components/ui/input";
@@ -65,40 +65,16 @@ function ProviderRow({
   );
 }
 
-function formatError(error: unknown): { message: string; stack?: string } {
-  if (error instanceof Error) {
-    return { message: error.message, stack: error.stack };
-  }
-  if (typeof error === "object" && error !== null) {
-    const obj = error as Record<string, unknown>;
-    const message = typeof obj.message === "string" ? obj.message : "";
-    const stack = typeof obj.stack === "string" ? obj.stack : undefined;
-    const description =
-      typeof obj.description === "string" ? obj.description : undefined;
-    return {
-      message: message || description || JSON.stringify(error, null, 2),
-      stack,
-    };
-  }
-  return { message: String(error) };
-}
-
-function QueryError({ error }: { error: unknown }) {
+function QueryError({ error }: { error: Error }) {
   const { t } = useTranslation();
-  const { message, stack } = formatError(error);
 
   return (
     <div className="p-4">
       <Alert variant="destructive">
+        <CircleAlert className="h-4 w-4" />
         <AlertTitle>{t("error")}</AlertTitle>
-        <AlertDescription className="font-mono text-xs whitespace-pre-wrap mt-2">
-          {message}
-          {stack && (
-            <>
-              {"\n\n"}
-              {stack}
-            </>
-          )}
+        <AlertDescription className="font-mono text-xs mt-2">
+          {error.message}
         </AlertDescription>
       </Alert>
     </div>
@@ -110,8 +86,11 @@ function ResultsTable({ result }: { result: QueryResult }) {
 
   if (result.columns.length === 0) {
     return (
-      <div className="text-sm text-muted-foreground p-4">
-        {t("query_executed_no_results")}
+      <div className="p-4">
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>{t("query_executed_no_results")}</AlertDescription>
+        </Alert>
       </div>
     );
   }
@@ -165,17 +144,18 @@ function QueryPane({ initialUri }: { initialUri: string }) {
   const [selectionArgs, setSelectionArgs] = useState("");
   const [sortOrder, setSortOrder] = useState("");
 
-  // Sync URI when provider selection changes
-  const [lastInitialUri, setLastInitialUri] = useState(initialUri);
-  if (initialUri !== lastInitialUri) {
-    setUri(initialUri);
-    setLastInitialUri(initialUri);
-  }
-
   const queryMutation = useDroidMutation<
     QueryResult,
     { uri: string; options?: QueryOptions }
   >((api, { uri, options }) => api.provider.query(uri, options));
+
+  // Sync URI and clear results when provider selection changes
+  const [lastInitialUri, setLastInitialUri] = useState(initialUri);
+  if (initialUri !== lastInitialUri) {
+    setUri(initialUri);
+    setLastInitialUri(initialUri);
+    queryMutation.reset();
+  }
 
   const handleExecute = () => {
     if (!uri.trim()) return;

@@ -74,16 +74,16 @@ export interface SessionServerEvents {
     mod: string,
     method: string,
     args: any[],
-    ack: (err: Error, result: any) => void,
+    ack: (err: string | null, result: any) => void,
   ) => void;
   eval: (
     source: string,
     name: string,
-    ack: (err: Error | null, result: any) => void,
+    ack: (err: string | null, result: any) => void,
   ) => void;
   clearLog: (
     type: "syslog" | "agent",
-    ack: (err: Error | null, result: any) => void,
+    ack: (err: string | null, result: any) => void,
   ) => void;
 }
 
@@ -134,8 +134,8 @@ function createExecutor(
           namespace,
           method,
           args,
-          (err: Error, result: any) => {
-            if (err) reject(err);
+          (err: string | null, result: any) => {
+            if (err) reject(new Error(err));
             else resolve(result);
           },
         );

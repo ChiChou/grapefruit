@@ -49,7 +49,7 @@ export interface ServerToClientEvents {
   fatal: (detail: unknown) => void;
 }
 
-export type ClientCallback = (err: Error | null, result: any) => void;
+export type ClientCallback = (err: string | null, result: any) => void;
 
 export interface ClientToServerEvents {
   rpc: (mod: string, method: string, args: any[], ack: ClientCallback) => void;
