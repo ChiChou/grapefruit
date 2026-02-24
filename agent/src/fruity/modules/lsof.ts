@@ -375,7 +375,9 @@ struct socket_fdinfo {
 #define PROX_FDTYPE_VNODE 1
 #define PROX_FDTYPE_SOCKET 2
 #define PROX_FDTYPE_KQUEUE 5
+#define PROX_FDTYPE_PIPE 6
 #define PROX_FDTYPE_NETPOLICY 9
+#define PROX_FDTYPE_CHANNEL 10
 
 /* Flavors for proc_pidinfo() */
 #define PROC_PIDLISTFDS 1
@@ -417,6 +419,8 @@ extern struct servent *getservbyport(int, const char *);
 extern void push_vnode(int32_t, char *);
 extern void push_socket(int32_t, char *, char *, int, char *, char *, int,
                         char *);
+extern void push_pipe(int32_t);
+extern void push_channel(int32_t);
 extern void error(char *);
 
 void fds(void) {
@@ -508,12 +512,20 @@ void fds(void) {
       }
       break;
     }
+    case PROX_FDTYPE_PIPE: {
+      push_pipe(finfo->proc_fd);
+      break;
+    }
     case PROX_FDTYPE_KQUEUE: {
       // TODO: missing body
       break;
     }
     case PROX_FDTYPE_NETPOLICY: {
       // TODO: missing body
+      break;
+    }
+    case PROX_FDTYPE_CHANNEL: {
+      push_channel(finfo->proc_fd);
       break;
     }
     default: {
@@ -532,7 +544,9 @@ void fds(void) {
 export const enum ProcFDType {
   VNODE = "vnode",
   SOCKET = "socket",
+  PIPE = "pipe",
   KQUEUE = "kqueue",
+  CHANNEL = "channel",
 }
 
 export interface VnodeFD {
@@ -553,7 +567,17 @@ export interface SocketFD {
   type: ProcFDType.SOCKET;
 }
 
-export type FileDescriptor = VnodeFD | SocketFD;
+export interface PipeFD {
+  fd: number;
+  type: ProcFDType.PIPE;
+}
+
+export interface ChannelFD {
+  fd: number;
+  type: ProcFDType.CHANNEL;
+}
+
+export type FileDescriptor = VnodeFD | SocketFD | PipeFD | ChannelFD;
 
 const libsystem = Module.load("/usr/lib/libSystem.B.dylib");
 
@@ -609,6 +633,22 @@ export function fds() {
     ],
   );
 
+  const push_pipe = new NativeCallback(
+    (fd: number) => {
+      fds.push({ fd, type: ProcFDType.PIPE });
+    },
+    "void",
+    ["int32"],
+  );
+
+  const push_channel = new NativeCallback(
+    (fd: number) => {
+      fds.push({ fd, type: ProcFDType.CHANNEL });
+    },
+    "void",
+    ["int32"],
+  );
+
   const error = new NativeCallback(
     function (msg: NativePointer): void {
       throw new Error(msg.readUtf8String()!);
@@ -627,6 +667,8 @@ export function fds() {
     getservbyport: libsystem.getExportByName("getservbyport"),
     push_vnode,
     push_socket,
+    push_pipe,
+    push_channel,
     error,
   });
 

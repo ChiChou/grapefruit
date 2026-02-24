@@ -409,6 +409,17 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
   useEffect(() => {
     if (!apiReady || !roots) return;
 
+    // Absolute path from params takes priority
+    if (params?.path?.startsWith("/")) {
+      if (params.path.startsWith(roots.bundle)) {
+        setActiveTab("bundle");
+      } else {
+        setActiveTab("home");
+      }
+      handleDirectorySelect(params.path);
+      return;
+    }
+
     // On first load, restore saved directory from localStorage
     if (!restoredRef.current && initialSavedCwd) {
       restoredRef.current = true;
@@ -418,16 +429,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
     restoredRef.current = true;
 
     handleDirectorySelect(activeTab === "bundle" ? roots.bundle : roots.home);
-  }, [apiReady, roots, activeTab, handleDirectorySelect, initialSavedCwd]);
-
-  useEffect(() => {
-    if (!apiReady || !params?.path) return;
-    if (params.path === "!") {
-      setActiveTab("bundle");
-    } else {
-      setActiveTab("home");
-    }
-  }, [apiReady, params?.path]);
+  }, [apiReady, roots, activeTab, handleDirectorySelect, initialSavedCwd, params?.path]);
 
   // Persist finder state to localStorage
   useEffect(() => {

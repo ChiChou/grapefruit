@@ -1,4 +1,3 @@
-import { useSession } from "@/context/SessionContext";
 import { useMemo, useRef, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -22,12 +21,14 @@ import { ArrowDown, ArrowUp, ArrowUpDown, RefreshCw } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useFruityQuery } from "@/lib/queries";
+import { useDock } from "@/context/DockContext";
 
 import type {
   FileDescriptor,
   VnodeFD,
   SocketFD,
 } from "@agent/fruity/modules/lsof";
+import type { BasicInfo } from "@agent/fruity/modules/info";
 
 function isVnodeFD(fd: FileDescriptor): fd is VnodeFD {
   return fd.type === "vnode";
@@ -49,13 +50,20 @@ type SortOrder = "asc" | "desc";
 
 export function FruityHandlesTab() {
   const { t } = useTranslation();
-  const { pid, device } = useSession();
+  const { openSingletonPanel } = useDock();
   const [sortKey, setSortKey] = useState<SortKey>("fd");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [reloadInterval, setReloadInterval] = useState(0);
   const [showVnode, setShowVnode] = useState(true);
   const [showSocket, setShowSocket] = useState(true);
+  const [showPipe, setShowPipe] = useState(true);
+  const [showChannel, setShowChannel] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const { data: appInfo } = useFruityQuery<BasicInfo>(
+    ["appInfo"],
+    (api) => api.info.basics(),
+  );
 
   const {
     data: handles = [],
@@ -94,6 +102,8 @@ export function FruityHandlesTab() {
       .filter((handle) => {
         if (handle.type === "vnode" && !showVnode) return false;
         if (handle.type === "socket" && !showSocket) return false;
+        if (handle.type === "pipe" && !showPipe) return false;
+        if (handle.type === "channel" && !showChannel) return false;
         return true;
       })
       .sort((a, b) => {
@@ -111,7 +121,7 @@ export function FruityHandlesTab() {
         }
         return sortOrder === "asc" ? cmp : -cmp;
       });
-  }, [handles, sortKey, sortOrder, showVnode, showSocket]);
+  }, [handles, sortKey, sortOrder, showVnode, showSocket, showPipe, showChannel]);
 
   const SortIcon = ({ column }: { column: SortKey }) => {
     if (sortKey !== column) return <ArrowUpDown className="h-4 w-4 ml-1" />;
@@ -144,6 +154,26 @@ export function FruityHandlesTab() {
             />
             <Label htmlFor="filter-socket" className="text-sm cursor-pointer">
               socket
+            </Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="filter-pipe"
+              checked={showPipe}
+              onCheckedChange={(checked) => setShowPipe(checked === true)}
+            />
+            <Label htmlFor="filter-pipe" className="text-sm cursor-pointer">
+              pipe
+            </Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="filter-channel"
+              checked={showChannel}
+              onCheckedChange={(checked) => setShowChannel(checked === true)}
+            />
+            <Label htmlFor="filter-channel" className="text-sm cursor-pointer">
+              channel
             </Label>
           </div>
         </div>
@@ -221,14 +251,25 @@ export function FruityHandlesTab() {
                   <TableCell>{handle.type}</TableCell>
                   <TableCell className="font-mono text-xs break-all">
                     {isVnodeFD(handle) && (
-                      <a
-                        href={`/api/download/${device}/${pid}?path=${encodeURIComponent(
-                          handle.path,
-                        )}`}
-                        className="underline text-amber-600 hover:text-amber-500 dark:text-amber-400 dark:hover:text-amber-300"
-                      >
-                        {handle.path}
-                      </a>
+                      appInfo && (handle.path.startsWith(appInfo.home) || handle.path.startsWith(appInfo.path)) ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const dir = handle.path.substring(0, handle.path.lastIndexOf("/")) || "/";
+                            openSingletonPanel({
+                              id: "finder_tab",
+                              component: "finder",
+                              title: "Finder",
+                              params: { path: dir },
+                            });
+                          }}
+                          className="text-left underline text-amber-600 hover:text-amber-500 dark:text-amber-400 dark:hover:text-amber-300"
+                        >
+                          {handle.path}
+                        </button>
+                      ) : (
+                        <span>{handle.path}</span>
+                      )
                     )}
                     {isSocketFD(handle) && (
                       <span>

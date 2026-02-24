@@ -164,7 +164,7 @@ export function FruityGeneralPanel() {
             <div className="flex items-start">
               <PathDisplay
                 path={basicInfo.path}
-                onClick={() => openFinderTab("!")}
+                onClick={() => openFinderTab(basicInfo.path)}
               />
               <CopyButton text={basicInfo.path} />
             </div>
@@ -198,7 +198,7 @@ export function FruityGeneralPanel() {
             <div className="flex items-start">
               <PathDisplay
                 path={basicInfo.home}
-                onClick={() => openFinderTab("~")}
+                onClick={() => openFinderTab(basicInfo.home)}
               />
               <CopyButton text={basicInfo.home} />
             </div>
