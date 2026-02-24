@@ -1,9 +1,5 @@
 import { getGlobalExport } from "@/lib/polyfill.js";
 
-// ---------------------------------------------------------------------------
-// types
-// ---------------------------------------------------------------------------
-
 export enum FDType {
   TCP = "tcp",
   TCP6 = "tcp6",
@@ -41,10 +37,6 @@ export interface FileEntry {
 
 export type FileDescriptor = TcpEntry | UdpEntry | FileEntry;
 
-// ---------------------------------------------------------------------------
-// native helpers
-// ---------------------------------------------------------------------------
-
 const open = new NativeFunction(getGlobalExport("open"), "int", [
   "pointer",
   "int",
@@ -70,10 +62,6 @@ const readdir = new NativeFunction(getGlobalExport("readdir"), "pointer", [
 const closedir = new NativeFunction(getGlobalExport("closedir"), "int", [
   "pointer",
 ]);
-
-// ---------------------------------------------------------------------------
-// proc helpers
-// ---------------------------------------------------------------------------
 
 /** Read a proc file via chunked reads (proc files report size 0). */
 function readProcFile(path: string): string {
@@ -105,10 +93,6 @@ function resolveLink(path: string): string | null {
   return buf.readUtf8String(n);
 }
 
-// ---------------------------------------------------------------------------
-// TCP state mapping
-// ---------------------------------------------------------------------------
-
 const TCP_STATES: Record<string, string> = {
   "01": "ESTABLISHED",
   "02": "SYN_SENT",
@@ -122,10 +106,6 @@ const TCP_STATES: Record<string, string> = {
   "0A": "LISTEN",
   "0B": "CLOSING",
 };
-
-// ---------------------------------------------------------------------------
-// IP address parsing
-// ---------------------------------------------------------------------------
 
 /** Parse a hex-encoded IPv4 address (little-endian 32-bit). */
 function parseIPv4(hex: string): string {
@@ -146,8 +126,8 @@ function parseIPv6(hex: string): string {
   // Convert each 32-bit LE word to two 16-bit network-order groups
   const groups: string[] = [];
   for (const w of words) {
-    groups.push(((w & 0xff) << 8 | (w >> 8) & 0xff).toString(16));
-    groups.push(((w >> 16 & 0xff) << 8 | (w >> 24) & 0xff).toString(16));
+    groups.push((((w & 0xff) << 8) | ((w >> 8) & 0xff)).toString(16));
+    groups.push(((((w >> 16) & 0xff) << 8) | ((w >> 24) & 0xff)).toString(16));
   }
 
   const full = groups.join(":");
@@ -182,22 +162,19 @@ function compressIPv6(addr: string): string {
   if (bestLen >= 2) {
     const before = parts.slice(0, bestStart);
     const after = parts.slice(bestStart + bestLen);
-    const mid = bestStart === 0 && bestStart + bestLen === parts.length
-      ? "::"
-      : bestStart === 0
-        ? "::" + after.join(":")
-        : bestStart + bestLen === parts.length
-          ? before.join(":") + "::"
-          : before.join(":") + "::" + after.join(":");
+    const mid =
+      bestStart === 0 && bestStart + bestLen === parts.length
+        ? "::"
+        : bestStart === 0
+          ? "::" + after.join(":")
+          : bestStart + bestLen === parts.length
+            ? before.join(":") + "::"
+            : before.join(":") + "::" + after.join(":");
     return mid;
   }
 
   return addr;
 }
-
-// ---------------------------------------------------------------------------
-// /proc/self/net parsing
-// ---------------------------------------------------------------------------
 
 interface NetEntry {
   localIp: string;
@@ -239,10 +216,6 @@ function parseNetFile(content: string, isV6: boolean): NetEntry[] {
   return entries;
 }
 
-// ---------------------------------------------------------------------------
-// /proc/self/fd listing
-// ---------------------------------------------------------------------------
-
 /** d_name offset: 19 on 64-bit, 11 on 32-bit */
 const DIRENT_D_NAME_OFFSET = Process.pointerSize === 8 ? 19 : 11;
 
@@ -279,10 +252,6 @@ function listFds(): FdLink[] {
   return results;
 }
 
-// ---------------------------------------------------------------------------
-// main export
-// ---------------------------------------------------------------------------
-
 export function fds(): FileDescriptor[] {
   // 1. Parse net files
   const tcpContent = readProcFile("/proc/self/net/tcp");
@@ -297,10 +266,14 @@ export function fds(): FileDescriptor[] {
 
   // 2. Build inode -> net entry map
   const inodeMap = new Map<number, { entry: NetEntry; type: FDType }>();
-  for (const e of tcpEntries) inodeMap.set(e.inode, { entry: e, type: FDType.TCP });
-  for (const e of tcp6Entries) inodeMap.set(e.inode, { entry: e, type: FDType.TCP6 });
-  for (const e of udpEntries) inodeMap.set(e.inode, { entry: e, type: FDType.UDP });
-  for (const e of udp6Entries) inodeMap.set(e.inode, { entry: e, type: FDType.UDP6 });
+  for (const e of tcpEntries)
+    inodeMap.set(e.inode, { entry: e, type: FDType.TCP });
+  for (const e of tcp6Entries)
+    inodeMap.set(e.inode, { entry: e, type: FDType.TCP6 });
+  for (const e of udpEntries)
+    inodeMap.set(e.inode, { entry: e, type: FDType.UDP });
+  for (const e of udp6Entries)
+    inodeMap.set(e.inode, { entry: e, type: FDType.UDP6 });
 
   // 3. List fds and correlate
   const fdLinks = listFds();

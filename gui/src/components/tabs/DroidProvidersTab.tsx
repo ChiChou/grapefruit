@@ -25,8 +25,6 @@ function shortName(fullName: string): string {
   return idx >= 0 ? fullName.substring(idx + 1) : fullName;
 }
 
-// --- Provider list row ---
-
 function ProviderRow({
   index,
   style,
@@ -67,8 +65,6 @@ function ProviderRow({
   );
 }
 
-// --- Query error display ---
-
 function formatError(error: unknown): { message: string; stack?: string } {
   if (error instanceof Error) {
     return { message: error.message, stack: error.stack };
@@ -77,7 +73,8 @@ function formatError(error: unknown): { message: string; stack?: string } {
     const obj = error as Record<string, unknown>;
     const message = typeof obj.message === "string" ? obj.message : "";
     const stack = typeof obj.stack === "string" ? obj.stack : undefined;
-    const description = typeof obj.description === "string" ? obj.description : undefined;
+    const description =
+      typeof obj.description === "string" ? obj.description : undefined;
     return {
       message: message || description || JSON.stringify(error, null, 2),
       stack,
@@ -107,8 +104,6 @@ function QueryError({ error }: { error: unknown }) {
     </div>
   );
 }
-
-// --- Query results table ---
 
 function ResultsTable({ result }: { result: QueryResult }) {
   const { t } = useTranslation();
@@ -162,13 +157,7 @@ function ResultsTable({ result }: { result: QueryResult }) {
   );
 }
 
-// --- Query pane ---
-
-function QueryPane({
-  initialUri,
-}: {
-  initialUri: string;
-}) {
+function QueryPane({ initialUri }: { initialUri: string }) {
   const { t } = useTranslation();
   const [uri, setUri] = useState(initialUri);
   const [projection, setProjection] = useState("");
@@ -205,9 +194,10 @@ function QueryPane({
       options.sortOrder = sortOrder;
     }
 
-    queryMutation.mutate(
-      { uri: uri.trim(), options: Object.keys(options).length > 0 ? options : undefined },
-    );
+    queryMutation.mutate({
+      uri: uri.trim(),
+      options: Object.keys(options).length > 0 ? options : undefined,
+    });
   };
 
   return (
@@ -220,7 +210,9 @@ function QueryPane({
             value={uri}
             onChange={(e) => setUri(e.target.value)}
             className="font-mono text-sm"
-            onKeyDown={(e) => { if (e.key === "Enter") handleExecute(); }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleExecute();
+            }}
           />
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -290,12 +282,12 @@ function QueryPane({
   );
 }
 
-// --- Main tab ---
-
 export function DroidProvidersTab() {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
-  const [selectedAuthority, setSelectedAuthority] = useState<string | null>(null);
+  const [selectedAuthority, setSelectedAuthority] = useState<string | null>(
+    null,
+  );
 
   const { data: providers = [], isLoading } = useDroidQuery<ProviderEntry[]>(
     ["providers"],

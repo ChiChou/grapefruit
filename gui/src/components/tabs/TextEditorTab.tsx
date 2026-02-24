@@ -47,7 +47,6 @@ const LANGUAGES = [
 ];
 
 const MAGIKA_TO_SYNTAX: Record<string, string> = {
-  // --- Web / Hybrid ---
   javascript: "javascript",
   typescript: "typescript",
   tsx: "typescript",
@@ -60,22 +59,20 @@ const MAGIKA_TO_SYNTAX: Record<string, string> = {
   vue: "html", // Vue files often highlight well as HTML or specialized vue
   wasm: "wasm",
 
-  // --- Native Android ---
   kotlin: "kotlin",
   java: "java",
   gradle: "gradle",
   xml: "xml",
-  smali: "smali", // Common in decompiled Android apps
+  // smali: "smali",
+  // is there anyone would include that in the package?
 
-  // --- Native iOS ---
   swift: "swift",
   objectivec: "objectivec",
   appleplist: "xml",
 
-  // --- Cross Platform ---
-  dart: "dart", // Flutter
+  // dart: "dart",
+  // unlikely to be included in prod
 
-  // --- Config / Data / Scripts ---
   yaml: "yaml",
   ini: "ini",
   toml: "toml",
@@ -90,7 +87,6 @@ const MAGIKA_TO_SYNTAX: Record<string, string> = {
   pem: "plaintext", // Certificates
   license: "plaintext",
 
-  // --- Fallbacks ---
   txt: "plaintext",
   txtutf8: "plaintext",
   txtascii: "plaintext",
@@ -232,7 +228,12 @@ export function TextEditorTab({
     <div className="h-full flex flex-col bg-background">
       <div className="flex-none px-4 py-2 bg-muted/50 border-b flex justify-between items-center gap-4">
         <span className="truncate text-sm">{fullPath}</span>
-        <Select value={selectedLanguage} onValueChange={(v) => { if (v) setSelectedLanguage(v) }}>
+        <Select
+          value={selectedLanguage}
+          onValueChange={(v) => {
+            if (v) setSelectedLanguage(v);
+          }}
+        >
           <SelectTrigger className="w-40">
             <SelectValue />
           </SelectTrigger>

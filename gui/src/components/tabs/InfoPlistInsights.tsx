@@ -139,7 +139,6 @@ const ALL_PERMISSION_KEYS = Object.keys(PERMISSION_LABELS);
 function parsePlistInsights(value: Record<string, any>, t: TFunction) {
   const insights: Insight[] = [];
 
-  // --- ATS analysis ---
   const ats = value.NSAppTransportSecurity as
     | Record<string, unknown>
     | undefined;
@@ -208,7 +207,6 @@ function parsePlistInsights(value: Record<string, any>, t: TFunction) {
     });
   }
 
-  // --- Encryption ---
   if (value.ITSAppUsesNonExemptEncryption === true) {
     insights.push({
       id: "encryption",
@@ -232,7 +230,6 @@ function parsePlistInsights(value: Record<string, any>, t: TFunction) {
     });
   }
 
-  // --- Permissions ---
   const permissions: PermissionEntry[] = [];
   for (const key of ALL_PERMISSION_KEYS) {
     if (key in value) {
@@ -274,7 +271,6 @@ function parsePlistInsights(value: Record<string, any>, t: TFunction) {
     });
   }
 
-  // --- URL Schemes ---
   const urlTypes = value.CFBundleURLTypes as
     | Array<Record<string, unknown>>
     | undefined;

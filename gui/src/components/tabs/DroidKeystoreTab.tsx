@@ -57,9 +57,7 @@ function InfoRow({
 }) {
   return (
     <div className="flex items-start py-1.5 border-b border-border/50">
-      <div className="text-xs text-muted-foreground w-48 shrink-0">
-        {label}
-      </div>
+      <div className="text-xs text-muted-foreground w-48 shrink-0">{label}</div>
       <div className="text-sm flex-1 min-w-0">{children}</div>
     </div>
   );
@@ -96,24 +94,15 @@ function ArrayDisplay({ items }: { items: string[] }) {
   );
 }
 
-// --- Detail pane ---
-
-function KeyDetail({
-  alias,
-  entryType,
-}: {
-  alias: string;
-  entryType: string;
-}) {
+function KeyDetail({ alias, entryType }: { alias: string; entryType: string }) {
   const { t } = useTranslation();
 
   const {
     data: keyInfo,
     isLoading,
     error,
-  } = useDroidQuery<KeyInfo | null>(
-    ["keystoreInfo", alias],
-    (api) => api.keystore.info(alias),
+  } = useDroidQuery<KeyInfo | null>(["keystoreInfo", alias], (api) =>
+    api.keystore.info(alias),
   );
 
   if (error) {
@@ -160,9 +149,7 @@ function KeyDetail({
             {entryType}
           </Badge>
         </InfoRow>
-        <InfoRow label={t("origin")}>
-          {decodeOrigin(keyInfo.origin)}
-        </InfoRow>
+        <InfoRow label={t("origin")}>{decodeOrigin(keyInfo.origin)}</InfoRow>
         <InfoRow label={t("purposes")}>
           <ArrayDisplay items={decodePurposes(keyInfo.purposes)} />
         </InfoRow>
@@ -208,9 +195,7 @@ function KeyDetail({
           <BoolBadge value={keyInfo.isUserConfirmationRequired} />
         </InfoRow>
         <InfoRow label={t("auth_valid_on_body")}>
-          <BoolBadge
-            value={keyInfo.isUserAuthenticationValidWhileOnBody}
-          />
+          <BoolBadge value={keyInfo.isUserAuthenticationValidWhileOnBody} />
         </InfoRow>
 
         {(keyInfo.keyValidityStart ||
@@ -239,8 +224,6 @@ function KeyDetail({
     </div>
   );
 }
-
-// --- List pane ---
 
 function AliasRow({
   index,
@@ -279,8 +262,6 @@ function AliasRow({
     </button>
   );
 }
-
-// --- Main tab ---
 
 export function DroidKeystoreTab() {
   const { t } = useTranslation();
@@ -364,10 +345,7 @@ export function DroidKeystoreTab() {
       </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel>
-        <KeyDetail
-          alias={selected}
-          entryType={selectedEntry.entryType}
-        />
+        <KeyDetail alias={selected} entryType={selectedEntry.entryType} />
       </ResizablePanel>
     </ResizablePanelGroup>
   );

@@ -33,10 +33,6 @@ import * as keychain from "./modules/keychain.js";
 import * as userdefaults from "./modules/userdefaults.js";
 import * as lsof from "./modules/lsof.js";
 
-// ---------------------------------------------------------------------------
-// test suites
-// ---------------------------------------------------------------------------
-
 async function testInfo() {
   console.log("\n--- info ---");
 
@@ -511,10 +507,6 @@ async function testLsof() {
     }
   });
 }
-
-// ---------------------------------------------------------------------------
-// runner
-// ---------------------------------------------------------------------------
 
 async function run() {
   console.log("=== fruity module tests ===");

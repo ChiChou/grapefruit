@@ -4,8 +4,6 @@ import { resolve, dirname } from "path";
 
 const AGENT_TYPES = resolve(import.meta.dirname!, "../agent/types");
 
-// --- Types ---
-
 interface ParamInfo {
   name: string;
   type: string;
@@ -26,8 +24,6 @@ interface ModuleResult {
   functions: FuncInfo[];
   types: TypeDef[];
 }
-
-// --- TS AST Helpers ---
 
 function parseFile(filePath: string): ts.SourceFile {
   const code = readFileSync(filePath, "utf-8");
@@ -53,8 +49,6 @@ function paramToInfo(
   return { name, type };
 }
 
-// --- Resolve import paths ---
-
 function resolveImportPath(specifier: string, importerDir: string): string {
   if (specifier.startsWith("@/common/")) {
     const rel = specifier.slice("@/common/".length).replace(/\.js$/, ".d.ts");
@@ -63,8 +57,6 @@ function resolveImportPath(specifier: string, importerDir: string): string {
   const rel = specifier.replace(/\.js$/, ".d.ts");
   return resolve(importerDir, rel);
 }
-
-// --- Extract module info ---
 
 function extractModule(
   filePath: string,
@@ -348,8 +340,6 @@ function extractModule(
   return { functions, types };
 }
 
-// --- Parse router file ---
-
 interface NamespaceInfo {
   name: string;
   importPath: string; // resolved absolute path to .d.ts
@@ -398,15 +388,11 @@ function parseRouter(
   return namespaces;
 }
 
-// --- Unwrap Promise<T> for display ---
-
 function unwrapReturn(returnType: string): string {
   const match = returnType.match(/^Promise<(.+)>$/s);
   if (match) return match[1];
   return returnType;
 }
-
-// --- Check if a return type references a named type we should show ---
 
 function referencesType(returnType: string, typeName: string): boolean {
   // Simple heuristic: check if typeName appears as a word boundary in the return type
@@ -415,8 +401,6 @@ function referencesType(returnType: string, typeName: string): boolean {
   );
   return re.test(returnType);
 }
-
-// --- Generate markdown ---
 
 function generateMarkdown(
   namespaces: Map<string, { filePath: string }>,
@@ -481,8 +465,6 @@ function generateMarkdown(
 
   return lines.join("\n");
 }
-
-// --- Main ---
 
 function main() {
   const fruityNs = parseRouter(

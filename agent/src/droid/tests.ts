@@ -29,10 +29,6 @@ import * as provider from "./modules/provider.js";
 import * as device from "./modules/device.js";
 import * as fs from "./modules/fs.js";
 
-// ---------------------------------------------------------------------------
-// test suites
-// ---------------------------------------------------------------------------
-
 async function testDevice() {
   console.log("\n--- device ---");
 
@@ -370,12 +366,7 @@ async function testFs() {
 
     await fs.rm(dstPath);
   });
-
 }
-
-// ---------------------------------------------------------------------------
-// runner
-// ---------------------------------------------------------------------------
 
 async function run() {
   console.log("=== droid module tests ===");
