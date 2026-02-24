@@ -12,5 +12,5 @@ export function SymbolsListView({ path }: SymbolsListViewProps) {
     (api) => api.symbol.symbols(path)
   );
 
-  return <SymbolsTableView symbols={symbols ?? null} loading={loading} />;
+  return <SymbolsTableView symbols={symbols ?? null} loading={loading} selectable={false} />;
 }

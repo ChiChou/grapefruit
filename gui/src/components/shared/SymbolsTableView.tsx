@@ -31,6 +31,7 @@ interface SymbolsTableViewProps {
   symbols: SymbolItem[] | null;
   loading: boolean;
   modulePath?: string;
+  selectable?: boolean;
 }
 
 const DEFAULT_WIDTHS = {
@@ -46,6 +47,7 @@ export function SymbolsTableView({
   symbols,
   loading,
   modulePath,
+  selectable = true,
 }: SymbolsTableViewProps) {
   const { t } = useTranslation();
   const { openFilePanel } = useDock();
@@ -198,46 +200,48 @@ export function SymbolsTableView({
   const columns = useMemo<ColumnDef<SymbolItem>[]>(() => {
     const cols: ColumnDef<SymbolItem>[] = [];
 
-    cols.push({
-      id: "select",
-      header: "",
-      size: 90,
-      minSize: 90,
-      cell: ({ row }) => {
-        const item = row.original;
-        if (!isFunction(item)) return <span className="h-4 w-4" />;
-        return (
-          <div className="flex items-center gap-1">
-            <Checkbox
-              checked={row.getIsSelected()}
-              onCheckedChange={(value) => row.toggleSelected(!!value)}
-              aria-label="Select row"
-              className="shrink-0"
-            />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={() => handleHookFunction(item)}
-              disabled={status !== Status.Ready}
-              title={t("hook_add")}
-            >
-              <Anchor className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={() => handleGenerateCode(item)}
-              title={t("hook_generate_code")}
-            >
-              <Code className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        );
-      },
-      enableResizing: false,
-    });
+    if (selectable) {
+      cols.push({
+        id: "select",
+        header: "",
+        size: 90,
+        minSize: 90,
+        cell: ({ row }) => {
+          const item = row.original;
+          if (!isFunction(item)) return <span className="h-4 w-4" />;
+          return (
+            <div className="flex items-center gap-1">
+              <Checkbox
+                checked={row.getIsSelected()}
+                onCheckedChange={(value) => row.toggleSelected(!!value)}
+                aria-label="Select row"
+                className="shrink-0"
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => handleHookFunction(item)}
+                disabled={status !== Status.Ready}
+                title={t("hook_add")}
+              >
+                <Anchor className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => handleGenerateCode(item)}
+                title={t("hook_generate_code")}
+              >
+                <Code className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          );
+        },
+        enableResizing: false,
+      });
+    }
 
     cols.push(
       {
@@ -303,6 +307,7 @@ export function SymbolsTableView({
     handleHookFunction,
     handleGenerateCode,
     status,
+    selectable,
   ]);
 
   const table = useReactTable({
@@ -320,7 +325,7 @@ export function SymbolsTableView({
     getFilteredRowModel: getFilteredRowModel(),
     columnResizeMode: "onChange" as ColumnResizeMode,
     enableColumnResizing: true,
-    enableRowSelection: (row) => isFunction(row.original),
+    enableRowSelection: selectable ? (row) => isFunction(row.original) : false,
   });
 
   const { rows } = table.getRowModel();
@@ -377,32 +382,34 @@ export function SymbolsTableView({
         </div>
       </div>
 
-      <div className="flex items-center gap-2 mb-2">
-        <Checkbox
-          checked={table.getIsAllPageRowsSelected()}
-          indeterminate={table.getIsSomePageRowsSelected()}
-          onCheckedChange={(value) =>
-            table.toggleAllPageRowsSelected(!!value)
-          }
-          aria-label="Select all"
-          className="shrink-0"
-        />
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleBatchGenerateCode}
-          disabled={selectedCount === 0}
-          className="gap-1.5"
-        >
-          <Code className="h-4 w-4" />
-          {t("hook_batch_generate")}
-        </Button>
-        {selectedCount > 0 && (
-          <span className="text-sm text-muted-foreground">
-            {t("hook_selected_count", { count: selectedCount })}
-          </span>
-        )}
-      </div>
+      {selectable && (
+        <div className="flex items-center gap-2 mb-2">
+          <Checkbox
+            checked={table.getIsAllPageRowsSelected()}
+            indeterminate={table.getIsSomePageRowsSelected()}
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(!!value)
+            }
+            aria-label="Select all"
+            className="shrink-0"
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleBatchGenerateCode}
+            disabled={selectedCount === 0}
+            className="gap-1.5"
+          >
+            <Code className="h-4 w-4" />
+            {t("hook_batch_generate")}
+          </Button>
+          {selectedCount > 0 && (
+            <span className="text-sm text-muted-foreground">
+              {t("hook_selected_count", { count: selectedCount })}
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="text-xs text-muted-foreground mb-1">
         {rows.length.toLocaleString()} / {data.length.toLocaleString()}{" "}
