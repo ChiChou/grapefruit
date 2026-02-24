@@ -1,8 +1,4 @@
 /**
- * Hook code generation utilities for Frida
- */
-
-/**
  * Format an Objective-C method name in standard notation
  * e.g., cls="NSObject", sel="- release" → "-[NSObject release]"
  */
@@ -24,7 +20,17 @@ export interface ObjCHookTarget {
   sel: string;
 }
 
-export type HookTarget = NativeHookTarget | ObjCHookTarget;
+export interface JavaHookTarget {
+  type: "java";
+  cls: string;
+  name: string;
+  argumentTypes: string[];
+  returnType: string;
+}
+
+export type HookTarget = NativeHookTarget | ObjCHookTarget | JavaHookTarget;
+
+const unroll = (fn: () => Iterable<string>) => [...fn()].join("\n");
 
 const interceptorBlock = (name: string) => `Interceptor.attach(addr, {
   onEnter(args) {
@@ -39,7 +45,10 @@ const interceptorBlock = (name: string) => `Interceptor.attach(addr, {
 /**
  * Generate Frida hook code for a native function
  */
-export function native(target: NativeHookTarget, fridaMajor: number = 17): string {
+export function native(
+  target: NativeHookTarget,
+  fridaMajor: number = 17,
+): string {
   const { module, name } = target;
 
   if (fridaMajor >= 17) {
@@ -115,6 +124,61 @@ export function objc(target: ObjCHookTarget): string {
 `;
 }
 
+function* javaMethodBlock(
+  name: string,
+  argumentTypes: string[],
+  returnType: string,
+  indent: string,
+) {
+  const overload = `.overload(${argumentTypes.map((t) => JSON.stringify(t)).join(", ")})`;
+  const args = argumentTypes.map((_, i) => `a${i}`).join(", ");
+
+  yield `${indent}cls.${name}${overload}.implementation = function(${args}) {`;
+  yield `${indent}  console.log("[${name}] called");`;
+  if (returnType === "void") {
+    yield `${indent}  this.${name}(${args});`;
+  } else {
+    yield `${indent}  const ret = this.${name}(${args});`;
+    yield `${indent}  console.log("[${name}] returned:", ret);`;
+    yield `${indent}  return ret;`;
+  }
+  yield `${indent}};`;
+}
+
+/**
+ * Generate Frida hook code for a Java method
+ */
+export function java(target: JavaHookTarget): string {
+  const { cls, name, argumentTypes, returnType } = target;
+
+  return unroll(function* () {
+    yield `Java.perform(() => {`;
+    yield `  const cls = Java.use(${JSON.stringify(cls)});`;
+    yield* javaMethodBlock(name, argumentTypes, returnType, "  ");
+    yield `});`;
+  });
+}
+
+/**
+ * Generate Frida hook code for multiple Java methods on the same class
+ */
+export function javaBatch(
+  cls: string,
+  methods: Omit<JavaHookTarget, "type" | "cls">[],
+): string {
+  return unroll(function* () {
+    yield `Java.perform(() => {`;
+    yield `  const cls = Java.use(${JSON.stringify(cls)});`;
+
+    for (const { name, argumentTypes, returnType } of methods) {
+      yield "";
+      yield* javaMethodBlock(name, argumentTypes, returnType, "  ");
+    }
+
+    yield `});`;
+  });
+}
+
 /**
  * Generate hook code for multiple targets
  */
@@ -126,6 +190,8 @@ export function batch(targets: HookTarget[], fridaMajor: number = 17): string {
       parts.push(native(target, fridaMajor));
     } else if (target.type === "objc") {
       parts.push(objc(target));
+    } else if (target.type === "java") {
+      parts.push(java(target));
     }
   }
 
