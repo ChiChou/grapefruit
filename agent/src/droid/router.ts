@@ -9,6 +9,7 @@ import * as keystore from "./modules/keystore.js";
 import * as lsof from "./modules/lsof.js";
 import * as manifest from "./modules/manifest.js";
 import * as provider from "./modules/provider.js";
+import * as rn from "./modules/rn.js";
 import * as receivers from "./modules/receivers.js";
 import * as services from "./modules/services.js";
 
@@ -36,6 +37,7 @@ export default {
   native,
   provider,
   receivers,
+  rn,
   script,
   services,
   sqlite,

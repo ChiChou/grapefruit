@@ -6,6 +6,7 @@ interface PosixApi {
   close: NativeFunction<number, [number]>;
   lseek: NativeFunction<Int64, [number, Int64 | number, number]>;
   rename: NativeFunction<number, [NativePointer, NativePointer]>;
+  unlink: NativeFunction<number, [NativePointer]>;
   access: NativeFunction<number, [NativePointer, number]>;
   mkdir: NativeFunction<number, [NativePointer, number]>;
 }
@@ -35,6 +36,7 @@ function getApi(): PosixApi {
       "pointer",
       "pointer",
     ]),
+    unlink: new NativeFunction(getGlobalExport("unlink"), "int", ["pointer"]),
     access: new NativeFunction(getGlobalExport("access"), "int", [
       "pointer",
       "int",
@@ -87,6 +89,11 @@ export function rename(src: string, dst: string): boolean {
   const result = api.rename(srcBuf, dstBuf) as number;
   if (result !== 0) throw new Error(`rename failed: ${src} -> ${dst}`);
   return true;
+}
+
+export function unlink(path: string): void {
+  const api = getApi();
+  api.unlink(Memory.allocUtf8String(path));
 }
 
 export function isWritable(path: string): boolean {
