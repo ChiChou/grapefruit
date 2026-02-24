@@ -1,7 +1,4 @@
-const escapeRegExp = (value: string) =>
-  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -26,33 +23,32 @@ export function ClassesListView({ path }: ClassesListViewProps) {
   const searchTerm = searchValue.trim();
   const searchLower = searchTerm.toLowerCase();
 
-  const filtered = classes?.filter((c) =>
-    c.toLowerCase().includes(searchLower),
+  const filtered = useMemo(
+    () => classes?.filter((c) => c.toLowerCase().includes(searchLower)),
+    [classes, searchLower],
   );
 
   const highlightMatch = useCallback(
     (className: string) => {
-      if (!searchTerm) {
-        return className;
-      }
+      if (!searchTerm) return className;
 
-      const regex = new RegExp(`(${escapeRegExp(searchTerm)})`, "ig");
-      const parts = className.split(regex);
+      const lower = className.toLowerCase();
+      const idx = lower.indexOf(searchLower);
+      if (idx === -1) return className;
 
-      return parts.map((part, index) => {
-        if (part.toLowerCase() === searchLower && part.length > 0) {
-          return (
-            <span
-              key={`${className}-${index}`}
-              className="rounded bg-yellow-200 px-0.5 text-yellow-900 dark:bg-yellow-400/70 dark:text-yellow-900"
-            >
-              {part}
-            </span>
-          );
-        }
+      const before = className.slice(0, idx);
+      const match = className.slice(idx, idx + searchTerm.length);
+      const after = className.slice(idx + searchTerm.length);
 
-        return <span key={`${className}-${index}-plain`}>{part}</span>;
-      });
+      return (
+        <>
+          {before}
+          <span className="rounded bg-yellow-200 px-0.5 text-yellow-900 dark:bg-yellow-400/70 dark:text-yellow-900">
+            {match}
+          </span>
+          {after}
+        </>
+      );
     },
     [searchLower, searchTerm],
   );
