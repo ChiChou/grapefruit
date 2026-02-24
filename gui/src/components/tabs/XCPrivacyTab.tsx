@@ -15,8 +15,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useFruityQuery } from "@/lib/queries";
 
-// ── Apple Required-Reason API labels ─────────────────────────────────
-
 const API_TYPE_LABELS: Record<string, string> = {
   "NSPrivacyAccessedAPICategoryFileTimestamp": "File Timestamp",
   "NSPrivacyAccessedAPICategorySystemBootTime": "System Boot Time",
@@ -90,8 +88,6 @@ const PURPOSE_LABELS: Record<string, string> = {
   NSPrivacyCollectedDataTypePurposeOther: "Other",
 };
 
-// ── Severity system (matching InfoPlistInsights) ─────────────────────
-
 type Severity = "high" | "medium" | "info" | "ok";
 
 const SEVERITY_CONFIG: Record<
@@ -119,8 +115,6 @@ const SEVERITY_CONFIG: Record<
     label: "OK",
   },
 };
-
-// ── Parsing ──────────────────────────────────────────────────────────
 
 interface Insight {
   id: string;
@@ -275,8 +269,6 @@ function parseXCPrivacy(value: Record<string, any>) {
   return { insights, accessedAPIs, collectedData };
 }
 
-// ── Subcomponents ────────────────────────────────────────────────────
-
 function InsightCard({ insight }: { insight: Insight }) {
   const cfg = SEVERITY_CONFIG[insight.severity];
   const Icon = cfg.icon;
@@ -314,8 +306,6 @@ function InsightCard({ insight }: { insight: Insight }) {
     </div>
   );
 }
-
-// ── Main component ───────────────────────────────────────────────────
 
 export interface XCPrivacyTabParams {
   path: string;

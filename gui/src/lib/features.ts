@@ -108,8 +108,6 @@ const routeFeatures: Record<FeatureKey, RouteFeature[]> = {
   ],
 };
 
-// ── Panel features (dock panel launchers) ────────────────────────────
-
 const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
   "fruity:app": [
     pf("finder_tab", "finder", FolderSearch, "finder", "home_finder_desc", { path: "~" }),
@@ -154,8 +152,6 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
     pf("privacy_tab", "privacy", ShieldAlert, "privacy_monitor", "home_privacy_desc"),
   ],
 };
-
-// ── Helpers ──────────────────────────────────────────────────────────
 
 export function getRouteFeatures(
   platform: PlatformType | undefined,

@@ -73,8 +73,6 @@ const SEVERITY_CONFIG: Record<
   },
 };
 
-// ── Category Config ──
-
 const CATEGORY_ICONS: Record<PrivacyCategory, typeof Mic> = {
   microphone: Mic,
   camera: Camera,
