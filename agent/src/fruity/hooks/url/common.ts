@@ -34,26 +34,80 @@ export interface TaskBoundData {
   id?: string;
 }
 
-export interface NetworkEvent {
-  event: string;
+interface NetworkEventBase {
   requestId: string;
   timestamp: number;
-  [key: string]: unknown;
 }
+
+export interface RequestWillBeSentEvent extends NetworkEventBase {
+  event: "requestWillBeSent";
+  request: SerializedRequest;
+  redirectResponse?: SerializedResponse;
+}
+
+export interface ResponseReceivedEvent extends NetworkEventBase {
+  event: "responseReceived";
+  response: SerializedResponse;
+}
+
+export interface DataReceivedEvent extends NetworkEventBase {
+  event: "dataReceived";
+  dataLength: string;
+}
+
+export interface LoadingFinishedEvent extends NetworkEventBase {
+  event: "loadingFinished";
+}
+
+export interface LoadingFailedEvent extends NetworkEventBase {
+  event: "loadingFailed";
+  error: string;
+}
+
+export interface MechanismEvent extends NetworkEventBase {
+  event: "mechanism";
+  mechanism: string;
+}
+
+export interface WebSocketSendEvent extends NetworkEventBase {
+  event: "webSocketSend";
+  messageType: string;
+  dataLength?: number;
+  message?: string;
+  error?: string;
+}
+
+export interface WebSocketReceiveEvent extends NetworkEventBase {
+  event: "webSocketReceive";
+  messageType: string;
+  dataLength?: number;
+  message?: string;
+  error?: string;
+}
+
+export type NetworkEvent =
+  | RequestWillBeSentEvent
+  | ResponseReceivedEvent
+  | DataReceivedEvent
+  | LoadingFinishedEvent
+  | LoadingFailedEvent
+  | MechanismEvent
+  | WebSocketSendEvent
+  | WebSocketReceiveEvent;
 
 export interface RequestState {
   request: NSURLRequest | null;
   mechanismRecorded?: boolean;
 }
 
-interface SerializedRequest {
+export interface SerializedRequest {
   url: string;
   method: string;
   headers: Record<string, string>;
   body?: string;
 }
 
-interface SerializedResponse {
+export interface SerializedResponse {
   url?: string;
   mimeType?: string;
   expectedContentLength: number;
@@ -168,15 +222,15 @@ export function recordRequestWillBeSent(
   request: NSURLRequest,
   redirectResponse: NSURLResponse | null,
 ): void {
-  const event: NetworkEvent = {
+  const event: RequestWillBeSentEvent = {
     event: "requestWillBeSent",
     requestId,
     timestamp: Date.now(),
     request: serializeRequest(request),
+    ...(redirectResponse && {
+      redirectResponse: serializeResponse(redirectResponse),
+    }),
   };
-  if (redirectResponse) {
-    event.redirectResponse = serializeResponse(redirectResponse);
-  }
   emitNetworkEvent(event);
 }
 
@@ -184,12 +238,13 @@ export function recordResponseReceived(
   requestId: string,
   response: NSURLResponse,
 ): void {
-  emitNetworkEvent({
+  const event: ResponseReceivedEvent = {
     event: "responseReceived",
     requestId,
     timestamp: Date.now(),
     response: serializeResponse(response),
-  });
+  };
+  emitNetworkEvent(event);
 }
 
 export function recordDataReceived(
@@ -197,42 +252,43 @@ export function recordDataReceived(
   dataLength: number | string,
   data?: ArrayBuffer | null,
 ): void {
-  emitNetworkEvent(
-    {
-      event: "dataReceived",
-      requestId,
-      timestamp: Date.now(),
-      dataLength:
-        typeof dataLength === "string" ? dataLength : String(dataLength),
-    },
-    data,
-  );
+  const event: DataReceivedEvent = {
+    event: "dataReceived",
+    requestId,
+    timestamp: Date.now(),
+    dataLength:
+      typeof dataLength === "string" ? dataLength : String(dataLength),
+  };
+  emitNetworkEvent(event, data);
 }
 
 export function recordLoadingFinished(requestId: string): void {
-  emitNetworkEvent({
+  const event: LoadingFinishedEvent = {
     event: "loadingFinished",
     requestId,
     timestamp: Date.now(),
-  });
+  };
+  emitNetworkEvent(event);
 }
 
 export function recordLoadingFailed(requestId: string, error: NSError): void {
-  emitNetworkEvent({
+  const event: LoadingFailedEvent = {
     event: "loadingFailed",
     requestId,
     timestamp: Date.now(),
     error: error.toString(),
-  });
+  };
+  emitNetworkEvent(event);
 }
 
 export function recordMechanism(mechanism: string, requestId: string): void {
-  emitNetworkEvent({
+  const event: MechanismEvent = {
     event: "mechanism",
     requestId,
     timestamp: Date.now(),
     mechanism,
-  });
+  };
+  emitNetworkEvent(event);
 }
 
 export function recordWebSocketMessage(
@@ -241,24 +297,39 @@ export function recordWebSocketMessage(
   message: NSURLSessionWebSocketMessage,
   error?: NSError | null,
 ): void {
-  const event: NetworkEvent = {
-    event: `webSocket${type === "send" ? "Send" : "Receive"}`,
-    requestId: task.taskIdentifier().toString(),
-    timestamp: Date.now(),
-    messageType: message.type() === 0 ? "data" : "string",
-  };
+  const requestId = task.taskIdentifier().toString();
+  const timestamp = Date.now();
+  const messageType = message.type() === 0 ? "data" : "string";
 
+  const extras: { dataLength?: number; message?: string; error?: string } = {};
   const msgData = message.data();
   const msgString = message.string();
   if (message.type() === 0 && msgData) {
-    event.dataLength = msgData.length();
+    extras.dataLength = msgData.length();
   } else if (message.type() === 1 && msgString) {
-    event.message = msgString.toString();
+    extras.message = msgString.toString();
   }
-
   if (error) {
-    event.error = error.toString();
+    extras.error = error.toString();
   }
 
-  emitNetworkEvent(event);
+  if (type === "send") {
+    const event: WebSocketSendEvent = {
+      event: "webSocketSend",
+      requestId,
+      timestamp,
+      messageType,
+      ...extras,
+    };
+    emitNetworkEvent(event);
+  } else {
+    const event: WebSocketReceiveEvent = {
+      event: "webSocketReceive",
+      requestId,
+      timestamp,
+      messageType,
+      ...extras,
+    };
+    emitNetworkEvent(event);
+  }
 }

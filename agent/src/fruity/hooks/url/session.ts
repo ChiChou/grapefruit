@@ -87,6 +87,16 @@ const delegateMethodHandlers: Record<string, InvocationListenerCallbacks> = {
       recordResponseReceived(requestId, wrapObjC<NSURLResponse>(args[4]));
     },
   },
+  "URLSession:dataTask:didReceiveData:": {
+    onEnter(args) {
+      const dataTask = wrapObjC<NSURLSessionDataTask>(args[3]);
+      const data = wrapObjC<NSData>(args[4]);
+      const requestId = getOrAssignTaskId(dataTask);
+      const len = data.length();
+      const chunk = len > 0 ? data.bytes().readByteArray(len) : null;
+      recordDataReceived(requestId, len, chunk);
+    },
+  },
   "URLSession:task:didCompleteWithError:": {
     onEnter(args) {
       const task = wrapObjC<NSURLSessionTask>(args[3]);
@@ -228,48 +238,6 @@ export function hookTaskCompletion(klass: ObjC.Object) {
   });
 }
 
-/**
- * Hook internal data delivery on the task class.
- * This fires for ALL data tasks regardless of delegate/CH setup,
- * covering Swift async URLSession.data(for:) and similar paths.
- *
- * The internal method receives dispatch_data_t, not NSData.
- */
-export function hookTaskDataReceive(klass: ObjC.Object) {
-  const sel = "_onqueue_didReceiveDispatchData:completion:";
-  const imp = getMethodImp(klass, sel, false);
-  if (!imp) return null;
-
-  const dispatch_data_create_map = new NativeFunction(
-    getGlobalExport("dispatch_data_create_map"),
-    "pointer",
-    ["pointer", "pointer", "pointer"],
-  );
-
-  return Interceptor.attach(imp, {
-    onEnter(args) {
-      const task = wrapObjC<NSURLSessionTask>(args[0]);
-      const bound = ObjC.getBoundData(task) as TaskBoundData;
-      if (!bound?.id) return;
-
-      const dispatchData = args[2];
-      if (dispatchData.isNull()) return;
-
-      // Map dispatch_data_t to a contiguous buffer
-      const bufPtr = Memory.alloc(Process.pointerSize);
-      const sizePtr = Memory.alloc(Process.pointerSize);
-      dispatch_data_create_map(dispatchData, bufPtr, sizePtr);
-      const buf = bufPtr.readPointer();
-      const len = Number(sizePtr.readULong());
-
-      if (len > 0 && !buf.isNull()) {
-        const chunk = buf.readByteArray(len);
-        recordDataReceived(bound.id, len, chunk);
-      }
-    },
-  });
-}
-
 export function hookSessionCreation() {
   const sel = "sessionWithConfiguration:delegate:delegateQueue:";
   const classes = [
@@ -374,6 +342,11 @@ export function hookAsyncMethods() {
 
           if (isDownload && !first.isNull()) {
             streamFileData(wrapObjC<NSURL>(first), rid);
+          } else if (!first.isNull()) {
+            const nsdata = wrapObjC<NSData>(first);
+            const len = nsdata.length();
+            const chunk = len > 0 ? nsdata.bytes().readByteArray(len) : null;
+            recordDataReceived(rid, len, chunk);
           }
 
           recordLoadingFinished(rid);

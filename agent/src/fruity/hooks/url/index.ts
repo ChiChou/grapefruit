@@ -26,7 +26,6 @@ import { hooks } from "./common.js";
 import {
   hookResume,
   hookTaskCompletion,
-  hookTaskDataReceive,
   hookSessionCreation,
   hookAsyncMethods as hookSessionAsyncMethods,
 } from "./session.js";
@@ -47,6 +46,13 @@ export function start() {
 
   const { __NSCFURLSessionTask, NSURLSessionTask, __NSCFLocalSessionTask } =
     ObjC.classes;
+
+  // https://github.com/FLEXTool/FLEX/blob/6cfc82bd9e6483/Classes/Network/PonyDebugger/FLEXNetworkObserver.m#L607
+  // In iOS 7 resume lives in __NSCFLocalSessionTask
+  // In iOS 8 resume lives in NSURLSessionTask
+  // In iOS 9 resume lives in __NSCFURLSessionTask
+  // In iOS 14 resume lives in NSURLSessionTask
+
   if (__NSCFURLSessionTask) {
     hooks.push(hookResume(__NSCFURLSessionTask));
     const ch = hookTaskCompletion(__NSCFURLSessionTask);
@@ -60,7 +66,7 @@ export function start() {
   }
 
   if (__NSCFLocalSessionTask) {
-    const dr = hookTaskDataReceive(__NSCFLocalSessionTask);
+    const dr = hookResume(__NSCFLocalSessionTask);
     if (dr) hooks.push(dr);
   }
 

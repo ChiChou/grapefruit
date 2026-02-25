@@ -12,8 +12,15 @@ import {
   getMethodImp,
   recordWebSocketMessage,
   emitNetworkEvent,
-  type NetworkEvent,
+  type WebSocketSendEvent,
 } from "./common.js";
+
+interface WebSocketSendBoundData {
+  requestId?: string;
+  messageType?: string;
+  dataLength?: number;
+  messageText?: string;
+}
 
 export function hookWebSocketMethods() {
   const classes = [
@@ -26,7 +33,11 @@ export function hookWebSocketMethods() {
 
   for (const clazz of classes) {
     // -sendMessage:completionHandler:
-    const sendImp = getMethodImp(clazz, "sendMessage:completionHandler:", false);
+    const sendImp = getMethodImp(
+      clazz,
+      "sendMessage:completionHandler:",
+      false,
+    );
     if (sendImp) {
       hooks.push(
         Interceptor.attach(sendImp, {
@@ -49,25 +60,24 @@ export function hookWebSocketMethods() {
                     if (innerArgs[1].isNull()) return;
 
                     const block = new ObjC.Object(innerArgs[0]);
-                    const meta = ObjC.getBoundData(block) as {
-                      requestId?: string;
-                      messageType?: string;
-                      dataLength?: number;
-                      messageText?: string;
-                    };
+                    const meta = ObjC.getBoundData(
+                      block,
+                    ) as WebSocketSendBoundData;
                     if (!meta?.requestId) return;
 
-                    const event: NetworkEvent = {
+                    const event: WebSocketSendEvent = {
                       event: "webSocketSend",
                       requestId: meta.requestId,
                       timestamp: Date.now(),
-                      messageType: meta.messageType,
+                      messageType: meta.messageType ?? "data",
+                      ...(meta.dataLength !== undefined && {
+                        dataLength: meta.dataLength,
+                      }),
+                      ...(meta.messageText !== undefined && {
+                        message: meta.messageText,
+                      }),
+                      error: wrapObjC<NSError>(innerArgs[1]).toString(),
                     };
-                    if (meta.dataLength !== undefined)
-                      event.dataLength = meta.dataLength;
-                    if (meta.messageText !== undefined)
-                      event.message = meta.messageText;
-                    event.error = wrapObjC<NSError>(innerArgs[1]).toString();
                     emitNetworkEvent(event);
                   },
                 }),
@@ -80,7 +90,7 @@ export function hookWebSocketMethods() {
             const msgType = message.type();
             const msgData = message.data();
             const msgString = message.string();
-            const snapshot: Record<string, unknown> = {
+            const snapshot: WebSocketSendBoundData = {
               requestId,
               messageType: msgType === 0 ? "data" : "string",
             };
@@ -97,7 +107,11 @@ export function hookWebSocketMethods() {
     }
 
     // -receiveMessageWithCompletionHandler:
-    const recvImp = getMethodImp(clazz, "receiveMessageWithCompletionHandler:", false);
+    const recvImp = getMethodImp(
+      clazz,
+      "receiveMessageWithCompletionHandler:",
+      false,
+    );
     if (recvImp) {
       hooks.push(
         Interceptor.attach(recvImp, {
