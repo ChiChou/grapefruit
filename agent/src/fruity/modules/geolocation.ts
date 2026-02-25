@@ -129,18 +129,19 @@ export function fake(lat: number, lng: number) {
     ] as ObjC.ObjectMethod;
     if (typeof method !== "function") continue;
 
-    Interceptor.attach(method.implementation, {
+    const l = Interceptor.attach(method.implementation, {
       onEnter(args) {
         const delegate = new ObjC.Object(args[0]).delegate();
         hookDelegate(delegate);
       },
     });
+    listeners.push(l);
   }
 }
 
 export function dismiss() {
   listeners.forEach((l) => l.detach());
-  listeners = [];
+  listeners.length = 0;
 
   hooked.clear();
 }
