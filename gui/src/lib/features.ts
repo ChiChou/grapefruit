@@ -192,6 +192,13 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
       path: "/",
     }),
     pf("handles_tab", "handles", FolderOpen, "lsof", "home_lsof_desc"),
+    pf(
+      "memory_scan_tab",
+      "memoryScan",
+      Search,
+      "memory_scanner",
+      "home_memory_scan_desc",
+    ),
     pf("nsurl_tab", "nsurl", Network, "NSURL", "home_nsurl_desc"),
     pf("xpc_tab", "xpc", Cable, "XPC", "home_xpc_desc"),
     pf(
@@ -255,6 +262,20 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
     pf("finder_tab", "finder", FolderSearch, "finder", "home_finder_desc", {
       path: "/",
     }),
+    pf(
+      "droid_handles_tab",
+      "droidHandles",
+      FolderOpen,
+      "lsof",
+      "home_lsof_desc",
+    ),
+    pf(
+      "memory_scan_tab",
+      "memoryScan",
+      Search,
+      "memory_scanner",
+      "home_memory_scan_desc",
+    ),
     pf("jni_trace_tab", "jni", Cpu, "jni_trace", "home_jni_desc"),
   ],
 };
