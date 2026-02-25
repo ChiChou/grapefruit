@@ -7,6 +7,7 @@ import {
   createCallbackContext,
 } from "@/common/hermes.js";
 import { readFile, unlink } from "@/lib/posix.js";
+import { tracker } from "@/droid/lib/weak.js";
 
 const CLASS_NAMES: Record<RNArch, string> = {
   legacy: "com.facebook.react.bridge.CatalystInstanceImpl",
@@ -16,6 +17,7 @@ const CLASS_NAMES: Record<RNArch, string> = {
 let injecting = false;
 const cb = createCallbackContext();
 let callbackHooked = false;
+const store = tracker;
 
 function hookBundleLoader() {
   try {
@@ -59,8 +61,14 @@ function hashcode(instance: Java.Wrapper): string {
 export function arch() {
   return perform(() => {
     const result = { legacy: false, bridgeless: false };
-    try { Java.use(CLASS_NAMES.legacy); result.legacy = true; } catch {}
-    try { Java.use(CLASS_NAMES.bridgeless); result.bridgeless = true; } catch {}
+    try {
+      Java.use(CLASS_NAMES.legacy);
+      result.legacy = true;
+    } catch {}
+    try {
+      Java.use(CLASS_NAMES.bridgeless);
+      result.bridgeless = true;
+    } catch {}
     return result;
   });
 }
@@ -75,7 +83,9 @@ export function list() {
       try {
         Java.choose(className, {
           onMatch(instance) {
-            results.push({ className, arch, handle: hashcode(instance) });
+            const handle = hashcode(instance);
+            store.put(handle, instance);
+            results.push({ className, arch, handle });
           },
           onComplete() {},
         });
@@ -92,25 +102,14 @@ export function inject(
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     Java.perform(() => {
-      const className = CLASS_NAMES[arch];
-      let found: Java.Wrapper | null = null;
-
-      Java.choose(className, {
-        onMatch(instance) {
-          if (hashcode(instance) === handle) {
-            found = instance;
-            return "stop" as const;
-          }
-        },
-        onComplete() {},
-      });
-
-      if (!found) {
+      let instance: Java.Wrapper;
+      try {
+        instance = store.get(handle);
+      } catch {
         reject(new Error("Instance not found for handle: " + handle));
         return;
       }
 
-      const instance = found as Java.Wrapper;
       const { id, path } = cb.prepare(script);
 
       ensureCallbackHook();

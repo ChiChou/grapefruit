@@ -9,35 +9,26 @@ import {
 
 import * as Dictionary from "@/fruity/bridge/object.js";
 import { iterateNSArray } from "@/fruity/bridge/nsarray.js";
-import { AliveTracker } from "@/fruity/lib/alive.js";
+import { tracker } from "@/fruity/lib/weak.js";
 
 interface JSContext extends NSObject {
   evaluateScript_(script: StringLike): NSObject;
   objectForKeyedSubscript_(key: StringLike): NSObject;
 }
 
-let tracker: AliveTracker | null = null;
-
-function getTracker(): AliveTracker {
-  if (!tracker) {
-    tracker = new AliveTracker(ObjC.classes.JSContext);
-  }
-  return tracker;
-}
-
 export function list() {
-  const t = getTracker();
+  const t = tracker;
   const result = new Map<string, string>();
   for (const instance of ObjC.chooseSync(ObjC.classes.JSContext)) {
     const handle = instance.handle.toString();
-    t.track(handle);
+    t.put(handle, instance);
     result.set(handle, instance.toString());
   }
   return Object.fromEntries(result);
 }
 
 function get(handle: string): JSContext {
-  return getTracker().get(handle) as JSContext;
+  return tracker.get(handle) as JSContext;
 }
 
 type BridgedClass = {

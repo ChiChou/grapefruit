@@ -1,7 +1,13 @@
 import ObjC from "frida-objc-bridge";
-import type { NSObject, StringLike, NSURL, NSString } from "@/fruity/typings.js";
+import type {
+  NSObject,
+  StringLike,
+  NSURL,
+  NSString,
+} from "@/fruity/typings.js";
 
 import { performOnMainThread } from "@/fruity/lib/dispatch.js";
+import { tracker } from "@/fruity/lib/weak.js";
 
 const WebViewKinds = ["UI", "WK"] as const;
 
@@ -88,6 +94,7 @@ function choose(clazz: ObjC.Object): Promise<ObjC.Object[]> {
   });
 }
 
+
 export async function listWK(): Promise<WKWebViewInfo[]> {
   const { WKWebView } = ObjC.classes;
   if (!WKWebView) return [];
@@ -99,6 +106,7 @@ export async function listWK(): Promise<WKWebViewInfo[]> {
     instances.map((instance) => {
       const webview = instance as WKWebView;
       const handle = instance.handle.toString();
+      tracker.put(handle, instance);
 
       const conf = webview.configuration() as WKWebViewConfiguration;
       const pref = conf.preferences();
@@ -133,6 +141,7 @@ export async function listUI(): Promise<UIWebViewInfo[]> {
     instances.map((instance) => {
       const webview = instance as UIWebView;
       const handle = instance.handle.toString();
+      tracker.put(handle, instance);
 
       return performOnMainThread(() => {
         const req = webview.request();
@@ -180,30 +189,12 @@ function UIGetTitle(webview: UIWebView) {
   }
 }
 
-function getInstance(kind: Kind, handle: string): Promise<WebView> {
-  const clazz = ObjC.classes[`${kind}WebView`];
-  if (!clazz)
-    return Promise.reject(new Error(`${kind}WebView class not found`));
-
-  return new Promise((resolve, reject) => {
-    let found = false;
-    ObjC.choose(clazz, {
-      onMatch(instance) {
-        if (instance.handle.toString() === handle) {
-          found = true;
-          resolve(instance as WebView);
-          return "stop";
-        }
-      },
-      onComplete() {
-        if (!found) reject(new Error(`${kind}WebView ${handle} not found`));
-      },
-    });
-  });
+function getInstance(kind: Kind, handle: string): WebView {
+  return tracker.get(handle) as WebView;
 }
 
 export async function evaluate(kind: Kind, handle: string, js: string) {
-  const instance = await getInstance(kind, handle);
+  const instance = getInstance(kind, handle);
 
   if (kind === "UI") {
     return performOnMainThread(() => {
@@ -234,7 +225,7 @@ export async function navigate(
   handle: string,
   url: string,
 ): Promise<void> {
-  const instance = await getInstance(kind, handle);
+  const instance = getInstance(kind, handle);
 
   if (kind === "UI") {
     return performOnMainThread(() => {
