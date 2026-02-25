@@ -511,5 +511,11 @@
   "rn_js_expression": "JavaScript 表达式...",
   "clear_all": "清空全部",
   "privacy_monitor": "720 隐私卫士",
-  "home_privacy_desc": "监控敏感 API 调用，检测潜在隐私泄露"
+  "home_privacy_desc": "监控敏感 API 调用，检测潜在隐私泄露",
+
+  "thread_state_waiting": "等待中",
+  "thread_state_suspended": "已挂起",
+  "thread_state_running": "运行中",
+  "thread_state_stopped": "已停止",
+  "thread_state_halted": "已停止"
 }

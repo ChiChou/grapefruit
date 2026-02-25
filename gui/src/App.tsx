@@ -26,6 +26,7 @@ import { FruityHooksPanel } from "./components/panels/FruityHooksPanel";
 import { FruityPluginsPanel } from "./components/panels/FruityPluginsPanel";
 import { DroidHooksPanel } from "./components/panels/DroidHooksPanel";
 import { PlaceholderPanel } from "./components/panels/PlaceholderPanel";
+import { ThreadsPanel } from "./components/panels/ThreadsPanel";
 
 import { Platform, useSession } from "./context/SessionContext";
 import { AlertTriangle } from "lucide-react";
@@ -91,6 +92,7 @@ function App() {
           {/* Android (droid) panels */}
           <Route path="components" element={<DroidComponentsPanel />} />
           <Route path="device" element={<DevicePanelRoute />} />
+          <Route path="threads" element={<ThreadsPanel />} />
           {/* Placeholder for unsupported modes */}
           <Route path="placeholder" element={<PlaceholderPanel />} />
         </Route>

@@ -21,6 +21,7 @@ import * as sqlite from "@/common/sqlite.js";
 import * as symbol from "@/common/symbol.js";
 import * as script from "@/common/script.js";
 import * as syslog from "@/common/syslog.js";
+import * as threads from "@/common/threads.js";
 
 export default {
   activities,
@@ -44,4 +45,5 @@ export default {
   symbol,
   syslog,
   taps,
+  threads,
 };

@@ -51,11 +51,12 @@ export interface PanelFeature {
 
 type FeatureKey = `${PlatformType}:${ModeType}`;
 
-const rf = (
-  route: string,
-  icon: LucideIcon,
-  label: string,
-): RouteFeature => ({ kind: "route", route, icon, label });
+const rf = (route: string, icon: LucideIcon, label: string): RouteFeature => ({
+  kind: "route",
+  route,
+  icon,
+  label,
+});
 
 const pf = (
   id: string,
@@ -84,12 +85,14 @@ const routeFeatures: Record<FeatureKey, RouteFeature[]> = {
     rf("hooks", Anchor, "hooks"),
     rf("device", Smartphone, "device_info"),
     rf("geolocation", MapPin, "geolocation_simulation"),
+    rf("threads", Cpu, "Threads"),
   ],
   "fruity:daemon": [
     rf("modules", Package, "modules"),
     rf("classes", Braces, "classes"),
     rf("hooks", Anchor, "hooks"),
     rf("device", Smartphone, "device_info"),
+    rf("threads", Cpu, "Threads"),
   ],
   "droid:app": [
     rf("general", Info, "general"),
@@ -99,57 +102,160 @@ const routeFeatures: Record<FeatureKey, RouteFeature[]> = {
     rf("hooks", Anchor, "hooks"),
     rf("modules", Package, "modules"),
     rf("device", Smartphone, "device_info"),
+    rf("threads", Cpu, "Threads"),
   ],
   "droid:daemon": [
     rf("modules", Package, "modules"),
     rf("classes", Braces, "classes"),
-    rf("hooks", Anchor, "hooks"),
-    rf("device", Smartphone, "device_info"),
+    rf("threads", Cpu, "Threads"),
   ],
 };
 
 const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
   "fruity:app": [
-    pf("finder_tab", "finder", FolderSearch, "finder", "home_finder_desc", { path: "~" }),
+    pf("finder_tab", "finder", FolderSearch, "finder", "home_finder_desc", {
+      path: "~",
+    }),
     pf("handles_tab", "handles", FolderOpen, "lsof", "home_lsof_desc"),
-    pf("info_plist_tab", "infoPlist", FileText, "Info.plist", "home_infoplist_desc"),
-    pf("info_plist_insights_tab", "infoPlistInsights", FileSearch, "plist_insights_title", "home_plist_insights_desc"),
-    pf("binary_cookie_tab", "binaryCookie", Cookie, "Binary Cookies", "home_cookies_desc"),
-    pf("userdefaults_tab", "userdefaults", Settings, "UserDefaults", "home_userdefaults_desc"),
-    pf("entitlements_tab", "entitlements", Shield, "Entitlements", "home_entitlements_desc"),
+    pf(
+      "info_plist_tab",
+      "infoPlist",
+      FileText,
+      "Info.plist",
+      "home_infoplist_desc",
+    ),
+    pf(
+      "info_plist_insights_tab",
+      "infoPlistInsights",
+      FileSearch,
+      "plist_insights_title",
+      "home_plist_insights_desc",
+    ),
+    pf(
+      "binary_cookie_tab",
+      "binaryCookie",
+      Cookie,
+      "Binary Cookies",
+      "home_cookies_desc",
+    ),
+    pf(
+      "userdefaults_tab",
+      "userdefaults",
+      Settings,
+      "UserDefaults",
+      "home_userdefaults_desc",
+    ),
+    pf(
+      "entitlements_tab",
+      "entitlements",
+      Shield,
+      "Entitlements",
+      "home_entitlements_desc",
+    ),
     pf("keychain_tab", "keychain", FolderKey, "KeyChain", "home_keychain_desc"),
     pf("ui_dump_tab", "uiDump", Layout, "inspect_ui", "home_ui_desc"),
     pf("webview_tab", "webview", Globe, "WebViews", "home_webview_desc"),
     pf("jsc_tab", "jsc", Code, "JSContext", "home_jsc_desc"),
-    pf("memory_scan_tab", "memoryScan", Search, "memory_scanner", "home_memory_scan_desc"),
+    pf(
+      "memory_scan_tab",
+      "memoryScan",
+      Search,
+      "memory_scanner",
+      "home_memory_scan_desc",
+    ),
     pf("nsurl_tab", "nsurl", Network, "NSURL", "home_nsurl_desc"),
-    pf("flutter_channels_tab", "flutterChannels", Smartphone, "flutter_channels", "flutter_channels_desc"),
+    pf(
+      "flutter_channels_tab",
+      "flutterChannels",
+      Smartphone,
+      "flutter_channels",
+      "flutter_channels_desc",
+    ),
     pf("xpc_tab", "xpc", Cable, "XPC", "home_xpc_desc"),
-    pf("rn_tab", "reactNative", Smartphone, "React Native", "RN bridge inspector, JS injection REPL"),
-    pf("privacy_tab", "privacy", ShieldAlert, "privacy_monitor", "home_privacy_desc"),
+    pf(
+      "rn_tab",
+      "reactNative",
+      Smartphone,
+      "React Native",
+      "RN bridge inspector, JS injection REPL",
+    ),
+    pf(
+      "privacy_tab",
+      "privacy",
+      ShieldAlert,
+      "privacy_monitor",
+      "home_privacy_desc",
+    ),
   ],
   "fruity:daemon": [
-    pf("finder_tab", "finder", FolderSearch, "finder", "home_finder_desc", { path: "/" }),
+    pf("finder_tab", "finder", FolderSearch, "finder", "home_finder_desc", {
+      path: "/",
+    }),
     pf("handles_tab", "handles", FolderOpen, "lsof", "home_lsof_desc"),
     pf("nsurl_tab", "nsurl", Network, "NSURL", "home_nsurl_desc"),
     pf("xpc_tab", "xpc", Cable, "XPC", "home_xpc_desc"),
-    pf("privacy_tab", "privacy", ShieldAlert, "privacy_monitor", "home_privacy_desc"),
+    pf(
+      "privacy_tab",
+      "privacy",
+      ShieldAlert,
+      "privacy_monitor",
+      "home_privacy_desc",
+    ),
   ],
   "droid:app": [
-    pf("finder_tab", "finder", FolderSearch, "finder", "home_finder_desc", { path: "/" }),
-    pf("droid_handles_tab", "droidHandles", FolderOpen, "lsof", "home_lsof_desc"),
-    pf("droid_manifest_tab", "droidManifest", FileCode, "AndroidManifest.xml", "home_manifest_desc"),
+    pf("finder_tab", "finder", FolderSearch, "finder", "home_finder_desc", {
+      path: "/",
+    }),
+    pf(
+      "droid_handles_tab",
+      "droidHandles",
+      FolderOpen,
+      "lsof",
+      "home_lsof_desc",
+    ),
+    pf(
+      "droid_manifest_tab",
+      "droidManifest",
+      FileCode,
+      "AndroidManifest.xml",
+      "home_manifest_desc",
+    ),
     pf("keystore_tab", "keystore", KeyRound, "keystore", "home_keystore_desc"),
-    pf("droid_providers_tab", "droidProviders", Database, "content_providers", "home_providers_desc"),
+    pf(
+      "droid_providers_tab",
+      "droidProviders",
+      Database,
+      "content_providers",
+      "home_providers_desc",
+    ),
     pf("jni_trace_tab", "jni", Cpu, "jni_trace", "home_jni_desc"),
-    pf("flutter_channels_tab", "flutterChannels", Smartphone, "flutter_channels", "flutter_channels_desc"),
-    pf("rn_tab", "reactNative", Smartphone, "React Native", "RN bridge inspector, JS injection REPL"),
-    pf("privacy_tab", "privacy", ShieldAlert, "privacy_monitor", "home_privacy_desc"),
+    pf(
+      "flutter_channels_tab",
+      "flutterChannels",
+      Smartphone,
+      "flutter_channels",
+      "flutter_channels_desc",
+    ),
+    pf(
+      "rn_tab",
+      "reactNative",
+      Smartphone,
+      "React Native",
+      "RN bridge inspector, JS injection REPL",
+    ),
+    pf(
+      "privacy_tab",
+      "privacy",
+      ShieldAlert,
+      "privacy_monitor",
+      "home_privacy_desc",
+    ),
   ],
   "droid:daemon": [
-    pf("finder_tab", "finder", FolderSearch, "finder", "home_finder_desc", { path: "/" }),
+    pf("finder_tab", "finder", FolderSearch, "finder", "home_finder_desc", {
+      path: "/",
+    }),
     pf("jni_trace_tab", "jni", Cpu, "jni_trace", "home_jni_desc"),
-    pf("privacy_tab", "privacy", ShieldAlert, "privacy_monitor", "home_privacy_desc"),
   ],
 };
 

@@ -519,5 +519,11 @@
   "rn_js_expression": "JavaScript expression...",
   "clear_all": "Clear all",
   "privacy_monitor": "Privacy API Monitor",
-  "home_privacy_desc": "Monitor access to sensitive APIs and data flows"
+  "home_privacy_desc": "Monitor access to sensitive APIs and data flows",
+
+  "thread_state_waiting": "Waiting",
+  "thread_state_suspended": "Suspended",
+  "thread_state_running": "Running",
+  "thread_state_stopped": "Stopped",
+  "thread_state_halted": "Halted"
 }

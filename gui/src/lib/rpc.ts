@@ -161,7 +161,7 @@ export type AsyncDroidRPC = RemoteRPC<DroidRPCRoute>;
  */
 export type CommonRPC = Pick<
   AsyncFruityRPC,
-  "symbol" | "memory" | "native" | "sqlite" | "script" | "syslog" | "rn"
+  "symbol" | "memory" | "native" | "sqlite" | "script" | "syslog" | "rn" | "threads"
 >;
 
 type Platform = "fruity" | "droid";
