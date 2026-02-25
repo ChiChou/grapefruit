@@ -1,8 +1,5 @@
 import ObjC from "frida-objc-bridge";
 
-// if (Process.pointerSize !== 8)
-//   throw new Error("This module only supports 64-bit");
-
 const CLLocationDegrees: NativeFunctionReturnType = "double";
 const CLLocationCoordinate2D: NativeFunctionReturnType = [
   CLLocationDegrees,
@@ -42,8 +39,7 @@ export function fake(lat: number, lng: number) {
     if (location.handle.isNull()) return location;
 
     const fake = CLLocationCoordinate2DMake(lat, lng);
-    const newLocation = ObjC.classes.CLLocation.alloc();
-    newLocation[
+    const newLocation = ObjC.classes.CLLocation.alloc()[
       "- initWithCoordinate:" +
         "altitude:" +
         "horizontalAccuracy:" +
@@ -68,29 +64,27 @@ export function fake(lat: number, lng: number) {
     [sel: string]: (this: InvocationContext, args: InvocationArguments) => void;
   } = {
     "- locationManager:didUpdateToLocation:fromLocation:": function (args) {
-      console.log(
-        "- locationManager:didUpdateToLocation:fromLocation:",
-        new ObjC.Object(args[3]),
-        new ObjC.Object(args[4]),
-      );
-
       const to = new ObjC.Object(args[3]);
       const from = new ObjC.Object(args[4]);
+      console.log(
+        "- locationManager:didUpdateToLocation:fromLocation:",
+        to,
+        from,
+      );
 
       args[3] = fakeWithOrigin(to);
       args[4] = fakeWithOrigin(from);
     },
     "- locationManager:didUpdateLocations:": function (args) {
-      const newArray = ObjC.classes.NSMutableArray.alloc().init();
       const array = new ObjC.Object(args[3]);
       const count = array.count().valueOf();
-      for (var i = 0; i !== count; i++) {
+      const newArray =
+        ObjC.classes.NSMutableArray.alloc().initWithCapacity_(count);
+      for (let i = 0; i !== count; i++) {
         const location = array.objectAtIndex_(i);
-        const newLocation = fakeWithOrigin(location);
-        newArray.addObject_(newLocation);
+        newArray.addObject_(fakeWithOrigin(location));
       }
-      args[3] = newArray.copy().autorelease();
-      newArray.release();
+      args[3] = newArray.autorelease();
     },
     "- locationManager:didUpdateHeading:": function (args) {
       console.log(
@@ -119,7 +113,8 @@ export function fake(lat: number, lng: number) {
 
   const instances = ObjC.chooseSync(ObjC.classes.CLLocationManager);
   for (const mgr of instances) {
-    hookDelegate(mgr.delegate());
+    const delegate = mgr.delegate();
+    if (!delegate.handle.isNull()) hookDelegate(delegate);
     ObjC.schedule(ObjC.mainQueue, () => mgr.startUpdatingLocation());
   }
 
