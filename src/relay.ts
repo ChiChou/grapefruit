@@ -5,7 +5,16 @@ import { styleText } from "node:util";
 import { asset } from "./lib/assets.ts";
 import type { LogWriter } from "./lib/log-writer.ts";
 import type { NSURLEvent } from "./lib/store/nsurl.ts";
-import type { SessionSocket, SessionStores } from "./types.ts";
+import type { XPCEvent } from "./lib/store/xpc.ts";
+import type { BaseMessage } from "@agent/common/hooks/context";
+import type { PrivacyMessage } from "@agent/common/hooks/privacy";
+import type { JNIEvent } from "@agent/droid/hooks/jni";
+import type {
+  SessionSocket,
+  SessionStores,
+  FlutterEvent,
+  MemoryScanEvent,
+} from "./types.ts";
 
 async function loadBridge(name: string) {
   const valid = ["objc", "java", "swift"];
@@ -65,7 +74,7 @@ export function setup(
         break;
 
       case "nsurl": {
-        const event = payload as NSURLEvent;
+        let event = payload as NSURLEvent;
 
         if (event.event === "dataReceived" && data) {
           requestsWithBody.add(event.requestId);
@@ -75,7 +84,7 @@ export function setup(
           event.event === "loadingFinished" &&
           requestsWithBody.has(event.requestId)
         ) {
-          event.hasBody = true;
+          event = { ...event, hasBody: true };
           requestsWithBody.delete(event.requestId);
         }
 
@@ -99,23 +108,23 @@ export function setup(
       }
 
       case "flutter": {
-        const { subject: _, ...event } = payload;
+        const { subject: _, ...event } = payload as { subject: string } & FlutterEvent;
         socket.emit("flutter", event);
         stores.flutter.append(event);
         break;
       }
 
       case "xpc": {
-        const { subject: _, ...event } = payload;
+        const { subject: _, ...event } = payload as { subject: string } & XPCEvent;
         socket.emit("xpc", event);
-        stores.xpc.append(payload);
+        stores.xpc.append(event);
         break;
       }
 
       case "jni": {
-        const { subject: _, ...event } = payload;
+        const event = payload as JNIEvent;
         socket.emit("jni", event);
-        stores.jni.append(payload);
+        stores.jni.append(event);
         break;
       }
 
@@ -128,32 +137,38 @@ export function setup(
         break;
       }
 
-      case "privacy":
-        socket.emit("privacy", payload);
-        stores.privacy.append(payload);
+      case "privacy": {
+        const msg = payload as PrivacyMessage;
+        socket.emit("privacy", msg);
+        stores.privacy.append(msg);
         break;
+      }
 
-      case "hook":
-        socket.emit("hook", payload);
-        stores.hooks.append(payload);
+      case "hook": {
+        const msg = payload as BaseMessage;
+        socket.emit("hook", msg);
+        stores.hooks.append(msg);
         break;
+      }
 
       case "memoryScan":
         socket.emit(
           "memoryScan",
-          payload,
+          payload as MemoryScanEvent,
           data ? new Uint8Array(data).buffer : undefined,
         );
         break;
 
-      case "crypto":
+      case "crypto": {
+        const msg = payload as BaseMessage;
         socket.emit(
           "crypto",
-          payload,
+          msg,
           data ? new Uint8Array(data).buffer : undefined,
         );
-        stores.crypto.append(payload, data ?? null);
+        stores.crypto.append(msg, data ?? null);
         break;
+      }
 
       case "fatal":
         console.error(

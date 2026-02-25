@@ -11,12 +11,75 @@ import type { RPCRoute as DroidRPCRoute } from "@agent/droid/registry";
 import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
 import type { JNIEvent } from "@agent/droid/hooks/jni";
 
-export interface NSURLEvent {
-  event: string;
+interface NSURLEventBase {
   requestId: string;
   timestamp: number;
-  [key: string]: unknown;
 }
+
+interface RequestWillBeSentEvent extends NSURLEventBase {
+  event: "requestWillBeSent";
+  request: {
+    method: string;
+    url: string;
+    headers: Record<string, string>;
+    body?: string;
+  };
+  redirectResponse?: {
+    url?: string;
+    mimeType?: string;
+    expectedContentLength: number;
+    statusCode?: number;
+    headers?: Record<string, string>;
+  };
+}
+
+interface ResponseReceivedEvent extends NSURLEventBase {
+  event: "responseReceived";
+  response: {
+    url?: string;
+    mimeType?: string;
+    expectedContentLength: number;
+    statusCode?: number;
+    headers?: Record<string, string>;
+  };
+}
+
+interface DataReceivedEvent extends NSURLEventBase {
+  event: "dataReceived";
+  dataLength: string;
+}
+
+interface LoadingFinishedEvent extends NSURLEventBase {
+  event: "loadingFinished";
+  hasBody?: boolean;
+}
+
+interface LoadingFailedEvent extends NSURLEventBase {
+  event: "loadingFailed";
+  error: string;
+}
+
+interface MechanismEvent extends NSURLEventBase {
+  event: "mechanism";
+  mechanism: string;
+}
+
+interface WebSocketMessageEvent extends NSURLEventBase {
+  event: "webSocketSend" | "webSocketReceive";
+  messageType: "data" | "string";
+  dataLength?: number;
+  message?: string;
+  error?: string;
+}
+
+export type NSURLEvent =
+  | RequestWillBeSentEvent
+  | ResponseReceivedEvent
+  | DataReceivedEvent
+  | LoadingFinishedEvent
+  | LoadingFailedEvent
+  | MechanismEvent
+  | WebSocketMessageEvent;
 
 import type { XPCNode, XPCNodeType } from "@agent/fruity/hooks/xpc";
 export type { XPCNode, XPCNodeType };

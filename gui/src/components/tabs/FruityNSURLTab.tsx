@@ -124,8 +124,6 @@ function parseCookieValue(value: string): { key: string; value: string }[] {
 }
 
 function handleEventPure(map: Map<string, CapturedRequest>, event: NSURLEvent) {
-  const { event: eventType, requestId } = event;
-
   function getOrCreate(id: string): CapturedRequest {
     let entry = map.get(id);
     if (!entry) {
@@ -142,85 +140,65 @@ function handleEventPure(map: Map<string, CapturedRequest>, event: NSURLEvent) {
     return entry;
   }
 
-  switch (eventType) {
+  switch (event.event) {
     case "requestWillBeSent": {
-      const req = event["request"] as
-        | {
-            method: string;
-            url: string;
-            headers: Record<string, string>;
-            body?: string;
-          }
-        | undefined;
-      if (!req) break;
-      const entry = getOrCreate(requestId);
-      entry.method = req.method;
-      entry.url = req.url;
-      entry.requestHeaders = req.headers || {};
-      entry.requestBody = req.body;
+      const entry = getOrCreate(event.requestId);
+      entry.method = event.request.method;
+      entry.url = event.request.url;
+      entry.requestHeaders = event.request.headers || {};
+      entry.requestBody = event.request.body;
       break;
     }
     case "responseReceived": {
-      const resp = event["response"] as
-        | {
-            url?: string;
-            mimeType?: string;
-            statusCode?: number;
-            headers?: Record<string, string>;
-          }
-        | undefined;
-      if (!resp) break;
-      const entry = getOrCreate(requestId);
-      entry.statusCode = resp.statusCode;
-      entry.mimeType = resp.mimeType;
-      entry.responseHeaders = resp.headers;
-      if (resp.url && !entry.url) entry.url = resp.url;
+      const entry = getOrCreate(event.requestId);
+      entry.statusCode = event.response.statusCode;
+      entry.mimeType = event.response.mimeType;
+      entry.responseHeaders = event.response.headers;
+      if (event.response.url && !entry.url) entry.url = event.response.url;
       break;
     }
     case "dataReceived": {
-      const entry = getOrCreate(requestId);
+      const entry = getOrCreate(event.requestId);
       try {
-        entry.size += BigInt(event["dataLength"] as string);
+        entry.size += BigInt(event.dataLength);
       } catch {
         /* ignore invalid */
       }
       break;
     }
     case "loadingFinished": {
-      const entry = getOrCreate(requestId);
+      const entry = getOrCreate(event.requestId);
       entry.endTime = event.timestamp;
       entry.duration = event.timestamp - entry.startTime;
-      if (event["hasBody"] || event["attachment"]) {
-        entry.attachment = entry.attachment ?? requestId;
+      if (event.hasBody) {
+        entry.attachment = entry.attachment ?? event.requestId;
       }
       break;
     }
     case "loadingFailed": {
-      const entry = getOrCreate(requestId);
-      entry.error = event["error"] as string | undefined;
+      const entry = getOrCreate(event.requestId);
+      entry.error = event.error;
       entry.endTime = event.timestamp;
       entry.duration = event.timestamp - entry.startTime;
       break;
     }
     case "mechanism": {
-      const entry = getOrCreate(requestId);
-      entry.mechanism = event["mechanism"] as string | undefined;
+      const entry = getOrCreate(event.requestId);
+      entry.mechanism = event.mechanism;
       break;
     }
     case "webSocketSend":
     case "webSocketReceive": {
-      const entry = getOrCreate(requestId);
+      const entry = getOrCreate(event.requestId);
       entry.isWebSocket = true;
       if (!entry.method) entry.method = "WS";
       if (!entry.wsMessages) entry.wsMessages = [];
       entry.wsMessages.push({
-        direction: eventType === "webSocketSend" ? "send" : "receive",
-        messageType: (event["messageType"] as "data" | "string") ?? "data",
-        message: event["message"] as string | undefined,
-        dataLength: event["dataLength"]
-          ? Number(event["dataLength"])
-          : undefined,
-        error: event["error"] as string | undefined,
+        direction: event.event === "webSocketSend" ? "send" : "receive",
+        messageType: event.messageType ?? "data",
+        message: event.message,
+        dataLength: event.dataLength ? Number(event.dataLength) : undefined,
+        error: event.error,
         timestamp: event.timestamp,
       });
       break;

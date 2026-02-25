@@ -18,9 +18,16 @@ import { createTapStore } from "../lib/store/taps.ts";
 import { toHAR } from "../lib/har.ts";
 const LOG_TAIL_BYTES = 1024 * 1024; // 1MB
 
+interface QueryOptions {
+  limit?: number;
+  offset?: number;
+  since?: string;
+  filters?: Record<string, string | number | boolean | undefined>;
+}
+
 interface LogStore<TRecord> {
-  query(options: Record<string, unknown>, defaultLimit: number): TRecord[];
-  count(filterValues?: Record<string, unknown>): number;
+  query(options: QueryOptions, defaultLimit: number): TRecord[];
+  count(filters?: Record<string, string | number | boolean>): number;
   rm(): void;
 }
 
@@ -48,27 +55,28 @@ function createHistoryRoutes<TRecord>(config: {
     const offset = parseInt(c.req.query("offset") || "0", 10);
     const since = c.req.query("since");
 
-    const extraParams: Record<string, string | undefined> = {};
+    const filters: Record<string, string | undefined> = {};
     for (const param of config.extraQueryParams ?? []) {
-      extraParams[param] = c.req.query(param);
+      filters[param] = c.req.query(param);
     }
+    const hasFilters = Object.values(filters).some((v) => v !== undefined);
 
     try {
       const store = config.createStore(deviceId, identifier);
 
       const records = store.query(
-        { limit, offset, since, ...extraParams },
+        { limit, offset, since, filters: hasFilters ? filters : undefined },
         config.defaultLimit,
       );
       const mapped = records.map(config.mapRecord);
 
-      // Build count filter from extra params
-      const countFilter: Record<string, unknown> = {};
+      const countFilters: Record<string, string> = {};
       for (const param of config.extraQueryParams ?? []) {
-        if (extraParams[param]) countFilter[param] = extraParams[param];
+        const v = filters[param];
+        if (v) countFilters[param] = v;
       }
       const total = store.count(
-        Object.keys(countFilter).length > 0 ? countFilter : undefined,
+        Object.keys(countFilters).length > 0 ? countFilters : undefined,
       );
 
       return c.json({ [config.responseKey]: mapped, total, limit, offset });

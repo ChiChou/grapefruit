@@ -34,6 +34,21 @@ export interface TaskBoundData {
   id?: string;
 }
 
+export interface SerializedRequest {
+  url: string;
+  method: string;
+  headers: Record<string, string>;
+  body?: string;
+}
+
+export interface SerializedResponse {
+  url?: string;
+  mimeType?: string;
+  expectedContentLength: number;
+  statusCode?: number;
+  headers?: Record<string, string>;
+}
+
 interface NetworkEventBase {
   requestId: string;
   timestamp: number;
@@ -69,17 +84,9 @@ export interface MechanismEvent extends NetworkEventBase {
   mechanism: string;
 }
 
-export interface WebSocketSendEvent extends NetworkEventBase {
-  event: "webSocketSend";
-  messageType: string;
-  dataLength?: number;
-  message?: string;
-  error?: string;
-}
-
-export interface WebSocketReceiveEvent extends NetworkEventBase {
-  event: "webSocketReceive";
-  messageType: string;
+export interface WebSocketMessageEvent extends NetworkEventBase {
+  event: "webSocketSend" | "webSocketReceive";
+  messageType: "data" | "string";
   dataLength?: number;
   message?: string;
   error?: string;
@@ -92,27 +99,11 @@ export type NetworkEvent =
   | LoadingFinishedEvent
   | LoadingFailedEvent
   | MechanismEvent
-  | WebSocketSendEvent
-  | WebSocketReceiveEvent;
+  | WebSocketMessageEvent;
 
 export interface RequestState {
   request: NSURLRequest | null;
   mechanismRecorded?: boolean;
-}
-
-export interface SerializedRequest {
-  url: string;
-  method: string;
-  headers: Record<string, string>;
-  body?: string;
-}
-
-export interface SerializedResponse {
-  url?: string;
-  mimeType?: string;
-  expectedContentLength: number;
-  statusCode?: number;
-  headers?: Record<string, string>;
 }
 
 export const hooks: InvocationListener[] = [];
@@ -297,39 +288,23 @@ export function recordWebSocketMessage(
   message: NSURLSessionWebSocketMessage,
   error?: NSError | null,
 ): void {
-  const requestId = task.taskIdentifier().toString();
-  const timestamp = Date.now();
-  const messageType = message.type() === 0 ? "data" : "string";
+  const event: WebSocketMessageEvent = {
+    event: type === "send" ? "webSocketSend" : "webSocketReceive",
+    requestId: task.taskIdentifier().toString(),
+    timestamp: Date.now(),
+    messageType: message.type() === 0 ? "data" : "string",
+  };
 
-  const extras: { dataLength?: number; message?: string; error?: string } = {};
   const msgData = message.data();
   const msgString = message.string();
   if (message.type() === 0 && msgData) {
-    extras.dataLength = msgData.length();
+    event.dataLength = msgData.length();
   } else if (message.type() === 1 && msgString) {
-    extras.message = msgString.toString();
+    event.message = msgString.toString();
   }
   if (error) {
-    extras.error = error.toString();
+    event.error = error.toString();
   }
 
-  if (type === "send") {
-    const event: WebSocketSendEvent = {
-      event: "webSocketSend",
-      requestId,
-      timestamp,
-      messageType,
-      ...extras,
-    };
-    emitNetworkEvent(event);
-  } else {
-    const event: WebSocketReceiveEvent = {
-      event: "webSocketReceive",
-      requestId,
-      timestamp,
-      messageType,
-      ...extras,
-    };
-    emitNetworkEvent(event);
-  }
+  emitNetworkEvent(event);
 }

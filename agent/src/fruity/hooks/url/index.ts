@@ -23,6 +23,19 @@ limitations under the License.
 import ObjC from "frida-objc-bridge";
 
 import { hooks } from "./common.js";
+
+export type {
+  NetworkEvent,
+  RequestWillBeSentEvent,
+  ResponseReceivedEvent,
+  DataReceivedEvent,
+  LoadingFinishedEvent,
+  LoadingFailedEvent,
+  MechanismEvent,
+  WebSocketMessageEvent,
+  SerializedRequest,
+  SerializedResponse,
+} from "./common.js";
 import {
   hookResume,
   hookTaskCompletion,

@@ -32,11 +32,11 @@ export class BaseLogStore<TTable extends LogTable> {
       limit?: number;
       offset?: number;
       since?: string;
-      [key: string]: unknown;
+      filters?: Record<string, string | number | boolean | undefined>;
     } = {},
     defaultLimit = 1000,
   ): TTable["$inferSelect"][] {
-    const { limit = defaultLimit, offset = 0, since, ...rest } = options;
+    const { limit = defaultLimit, offset = 0, since, filters } = options;
 
     const conditions: SQL[] = [
       eq(this.table.deviceId, this.deviceId),
@@ -47,10 +47,12 @@ export class BaseLogStore<TTable extends LogTable> {
       conditions.push(gt(this.table.timestamp, since));
     }
 
-    for (const filter of this.extraFilters) {
-      const value = rest[filter.queryParam];
-      if (value !== undefined && value !== null) {
-        conditions.push(eq(filter.column, value));
+    if (filters) {
+      for (const filter of this.extraFilters) {
+        const value = filters[filter.queryParam];
+        if (value !== undefined) {
+          conditions.push(eq(filter.column, value));
+        }
       }
     }
 
@@ -64,16 +66,16 @@ export class BaseLogStore<TTable extends LogTable> {
       .all() as TTable["$inferSelect"][];
   }
 
-  count(filterValues?: Record<string, unknown>): number {
+  count(filters?: Record<string, string | number | boolean>): number {
     const conditions: SQL[] = [
       eq(this.table.deviceId, this.deviceId),
       eq(this.table.identifier, this.identifier),
     ];
 
-    if (filterValues) {
+    if (filters) {
       for (const filter of this.extraFilters) {
-        const value = filterValues[filter.queryParam];
-        if (value !== undefined && value !== null) {
+        const value = filters[filter.queryParam];
+        if (value !== undefined) {
           conditions.push(eq(filter.column, value));
         }
       }

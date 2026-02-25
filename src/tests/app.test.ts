@@ -509,7 +509,7 @@ describe("NSURL API", () => {
       event: "responseReceived",
       requestId: "req-1",
       timestamp: 1100,
-      response: { statusCode: 200, mimeType: "application/json", headers: {} },
+      response: { statusCode: 200, mimeType: "application/json", expectedContentLength: 0, headers: {} },
     });
 
     const r = await app.request(`/api/history/nsurl/${device}/${identifier}`);
@@ -742,15 +742,15 @@ describe("XPC Logs API", () => {
   it("should return inserted xpc logs", async () => {
     const { xpc: store } = getStores();
     store.append({
-      event: "send",
-      dir: "out",
+      event: "sent",
+      dir: ">",
       name: "com.apple.springboard",
       peer: 42,
       message: { type: "xpc", key: "value" },
     });
     store.append({
-      event: "receive",
-      dir: "in",
+      event: "received",
+      dir: "<",
       name: "com.apple.cfprefsd",
       message: { type: "nsxpc", method: "getPrefs" },
     });
@@ -769,13 +769,13 @@ describe("XPC Logs API", () => {
   it("should filter by protocol", async () => {
     const { xpc: store } = getStores();
     store.append({
-      event: "send",
-      dir: "out",
+      event: "sent",
+      dir: ">",
       message: { type: "xpc" },
     });
     store.append({
-      event: "send",
-      dir: "out",
+      event: "sent",
+      dir: ">",
       message: { type: "nsxpc" },
     });
 
@@ -790,8 +790,8 @@ describe("XPC Logs API", () => {
   it("should clear xpc logs", async () => {
     const { xpc: store } = getStores();
     store.append({
-      event: "send",
-      dir: "out",
+      event: "sent",
+      dir: ">",
       message: { type: "xpc" },
     });
 

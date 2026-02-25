@@ -5,7 +5,7 @@ import type { HookStore } from "./lib/store/hooks.ts";
 import type { CryptoStore } from "./lib/store/crypto.ts";
 import type { FlutterStore } from "./lib/store/flutter.ts";
 import type { JNIStore } from "./lib/store/jni.ts";
-import type { XPCStore } from "./lib/store/xpc.ts";
+import type { XPCStore, XPCEvent } from "./lib/store/xpc.ts";
 import type { HermesStore } from "./lib/store/hermes.ts";
 import type { PrivacyStore } from "./lib/store/privacy.ts";
 
@@ -13,6 +13,20 @@ import type { NSURLEvent } from "./lib/store/nsurl.ts";
 import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
 import type { PrivacyMessage } from "@agent/common/hooks/privacy";
 import type { JNIEvent } from "@agent/droid/hooks/jni";
+
+export interface FlutterEvent {
+  type: "method" | "event" | "message";
+  dir: "native" | "dart";
+  channel: string;
+  method?: string;
+  args?: unknown;
+  result?: unknown;
+}
+
+export type MemoryScanEvent =
+  | { event: "progress"; current: number; total: number }
+  | { event: "match"; address: string; size: number }
+  | { event: "done"; count: number };
 
 export type Platform = "fruity" | "droid";
 export type Mode = "app" | "daemon";
@@ -38,17 +52,14 @@ export interface ServerToClientEvents {
     event: "inactive" | "active" | "forerground" | "background",
   ) => void;
   hook: (msg: BaseHookMessage) => void;
-  flutter: (event: Record<string, unknown>) => void;
+  flutter: (event: FlutterEvent) => void;
   crypto: (msg: BaseHookMessage, data?: ArrayBuffer) => void;
   nsurl: (event: NSURLEvent) => void;
-  xpc: (event: Record<string, unknown>) => void;
+  xpc: (event: XPCEvent) => void;
   jni: (event: JNIEvent) => void;
   privacy: (msg: PrivacyMessage) => void;
   hermes: (event: { url: string; hash: string; size: number }) => void;
-  memoryScan: (
-    event: { event: string; [key: string]: unknown },
-    data?: ArrayBuffer,
-  ) => void;
+  memoryScan: (event: MemoryScanEvent, data?: ArrayBuffer) => void;
   fatal: (detail: unknown) => void;
 }
 

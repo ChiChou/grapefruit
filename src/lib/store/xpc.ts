@@ -4,6 +4,15 @@ import { BaseLogStore } from "./base.ts";
 
 export type XPCRecord = typeof xpcLogs.$inferSelect;
 
+export interface XPCEvent {
+  event: "received" | "sent";
+  dir: "<" | ">";
+  name?: string;
+  peer?: number;
+  message?: { type?: string } & Record<string, unknown>;
+  backtrace?: string[];
+}
+
 export class XPCStore extends BaseLogStore<typeof xpcLogs> {
   constructor(deviceId: string, identifier: string) {
     super(xpcLogs, deviceId, identifier, [
@@ -11,10 +20,8 @@ export class XPCStore extends BaseLogStore<typeof xpcLogs> {
     ]);
   }
 
-  append(payload: Record<string, unknown>): void {
-    const message = payload.message as Record<string, unknown> | undefined;
-    const isNsxpc = message?.type === "nsxpc";
-    const backtrace = payload.backtrace as string[] | undefined;
+  append(payload: XPCEvent): void {
+    const isNsxpc = payload.message?.type === "nsxpc";
 
     db.insert(xpcLogs)
       .values({
@@ -22,12 +29,12 @@ export class XPCStore extends BaseLogStore<typeof xpcLogs> {
         identifier: this.identifier,
         timestamp: new Date().toISOString(),
         protocol: isNsxpc ? "nsxpc" : "xpc",
-        event: (payload.event as string) || "unknown",
-        direction: (payload.dir as string) || "unknown",
-        service: (payload.name as string) || null,
-        peer: (payload.peer as number) || null,
-        message: message ? JSON.stringify(message) : "{}",
-        backtrace: backtrace?.length ? JSON.stringify(backtrace) : null,
+        event: payload.event || "unknown",
+        direction: payload.dir || "unknown",
+        service: payload.name || null,
+        peer: payload.peer || null,
+        message: payload.message ? JSON.stringify(payload.message) : "{}",
+        backtrace: payload.backtrace?.length ? JSON.stringify(payload.backtrace) : null,
       })
       .run();
   }

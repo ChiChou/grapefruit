@@ -12,7 +12,7 @@ import {
   getMethodImp,
   recordWebSocketMessage,
   emitNetworkEvent,
-  type WebSocketSendEvent,
+  type WebSocketMessageEvent,
 } from "./common.js";
 
 interface WebSocketSendBoundData {
@@ -65,11 +65,12 @@ export function hookWebSocketMethods() {
                     ) as WebSocketSendBoundData;
                     if (!meta?.requestId) return;
 
-                    const event: WebSocketSendEvent = {
+                    const event: WebSocketMessageEvent = {
                       event: "webSocketSend",
                       requestId: meta.requestId,
                       timestamp: Date.now(),
-                      messageType: meta.messageType ?? "data",
+                      messageType:
+                        (meta.messageType as "data" | "string") ?? "data",
                       ...(meta.dataLength !== undefined && {
                         dataLength: meta.dataLength,
                       }),

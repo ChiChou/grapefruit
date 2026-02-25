@@ -4,6 +4,14 @@ import { BaseLogStore } from "./base.ts";
 
 export type HookRecord = typeof hooks.$inferSelect;
 
+export interface HookInput {
+  category: string;
+  symbol: string;
+  dir: string;
+  line?: string;
+  extra?: Record<string, unknown>;
+}
+
 export class HookStore extends BaseLogStore<typeof hooks> {
   constructor(deviceId: string, identifier: string) {
     super(hooks, deviceId, identifier, [
@@ -11,18 +19,17 @@ export class HookStore extends BaseLogStore<typeof hooks> {
     ]);
   }
 
-  append(message: Record<string, unknown>): void {
-    const extra = message.extra as Record<string, unknown> | undefined;
+  append(message: HookInput): void {
     db.insert(hooks)
       .values({
         deviceId: this.deviceId,
         identifier: this.identifier,
         timestamp: new Date().toISOString(),
-        category: (message.category as string) || "unknown",
-        symbol: (message.symbol as string) || "unknown",
-        direction: (message.dir as string) || "unknown",
-        line: (message.line as string) || null,
-        extra: extra ? JSON.stringify(extra) : null,
+        category: message.category || "unknown",
+        symbol: message.symbol || "unknown",
+        direction: message.dir || "unknown",
+        line: message.line || null,
+        extra: message.extra ? JSON.stringify(message.extra) : null,
       })
       .run();
   }

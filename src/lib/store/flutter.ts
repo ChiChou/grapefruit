@@ -1,6 +1,7 @@
 import { flutter } from "../schema.ts";
 import { db } from "./db.ts";
 import { BaseLogStore } from "./base.ts";
+import type { FlutterEvent } from "../../types.ts";
 
 export type FlutterRecord = typeof flutter.$inferSelect;
 
@@ -9,16 +10,16 @@ export class FlutterStore extends BaseLogStore<typeof flutter> {
     super(flutter, deviceId, identifier);
   }
 
-  append(event: Record<string, unknown>): void {
+  append(event: FlutterEvent): void {
     const { type, dir, channel, ...rest } = event;
     db.insert(flutter)
       .values({
         deviceId: this.deviceId,
         identifier: this.identifier,
         timestamp: new Date().toISOString(),
-        type: (type as string) || "unknown",
-        direction: (dir as string) || "unknown",
-        channel: (channel as string) || "unknown",
+        type: type || "unknown",
+        direction: dir || "unknown",
+        channel: channel || "unknown",
         data: Object.keys(rest).length > 0 ? JSON.stringify(rest) : null,
       })
       .run();

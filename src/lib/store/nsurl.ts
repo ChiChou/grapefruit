@@ -36,45 +36,90 @@ export interface CapturedRequest {
   attachment?: string | null;
 }
 
-export interface NSURLEvent {
-  event: string;
+interface NSURLEventBase {
   requestId: string;
   timestamp: number;
-  [key: string]: unknown;
 }
+
+interface RequestWillBeSentEvent extends NSURLEventBase {
+  event: "requestWillBeSent";
+  request: {
+    method: string;
+    url: string;
+    headers: Record<string, string>;
+    body?: string;
+  };
+  redirectResponse?: {
+    url?: string;
+    mimeType?: string;
+    expectedContentLength: number;
+    statusCode?: number;
+    headers?: Record<string, string>;
+  };
+}
+
+interface ResponseReceivedEvent extends NSURLEventBase {
+  event: "responseReceived";
+  response: {
+    url?: string;
+    mimeType?: string;
+    expectedContentLength: number;
+    statusCode?: number;
+    headers?: Record<string, string>;
+  };
+}
+
+interface DataReceivedEvent extends NSURLEventBase {
+  event: "dataReceived";
+  dataLength: string;
+}
+
+interface LoadingFinishedEvent extends NSURLEventBase {
+  event: "loadingFinished";
+  hasBody?: boolean;
+}
+
+interface LoadingFailedEvent extends NSURLEventBase {
+  event: "loadingFailed";
+  error: string;
+}
+
+interface MechanismEvent extends NSURLEventBase {
+  event: "mechanism";
+  mechanism: string;
+}
+
+interface WebSocketMessageEvent extends NSURLEventBase {
+  event: "webSocketSend" | "webSocketReceive";
+  messageType: "data" | "string";
+  dataLength?: number;
+  message?: string;
+  error?: string;
+}
+
+export type NSURLEvent =
+  | RequestWillBeSentEvent
+  | ResponseReceivedEvent
+  | DataReceivedEvent
+  | LoadingFinishedEvent
+  | LoadingFailedEvent
+  | MechanismEvent
+  | WebSocketMessageEvent;
 
 function merge(req: CapturedRequest, event: NSURLEvent): void {
   switch (event.event) {
     case "requestWillBeSent": {
-      const r = event.request as
-        | {
-            method: string;
-            url: string;
-            headers: Record<string, string>;
-            body?: string;
-          }
-        | undefined;
-      if (!r) break;
-      req.method = r.method;
-      req.url = r.url;
-      req.requestHeaders = r.headers || {};
-      req.requestBody = r.body;
+      req.method = event.request.method;
+      req.url = event.request.url;
+      req.requestHeaders = event.request.headers || {};
+      req.requestBody = event.request.body;
       break;
     }
     case "responseReceived": {
-      const r = event.response as
-        | {
-            url?: string;
-            mimeType?: string;
-            statusCode?: number;
-            headers?: Record<string, string>;
-          }
-        | undefined;
-      if (!r) break;
-      req.statusCode = r.statusCode;
-      req.mimeType = r.mimeType;
-      req.responseHeaders = r.headers;
-      if (r.url && !req.url) req.url = r.url;
+      req.statusCode = event.response.statusCode;
+      req.mimeType = event.response.mimeType;
+      req.responseHeaders = event.response.headers;
+      if (event.response.url && !req.url) req.url = event.response.url;
       break;
     }
     case "dataReceived": {
@@ -91,13 +136,13 @@ function merge(req: CapturedRequest, event: NSURLEvent): void {
       break;
     }
     case "loadingFailed": {
-      req.error = event.error as string | undefined;
+      req.error = event.error;
       req.endTime = event.timestamp;
       req.duration = event.timestamp - req.startTime;
       break;
     }
     case "mechanism": {
-      req.mechanism = event.mechanism as string | undefined;
+      req.mechanism = event.mechanism;
       break;
     }
     case "webSocketSend":
@@ -107,10 +152,10 @@ function merge(req: CapturedRequest, event: NSURLEvent): void {
       if (!req.wsMessages) req.wsMessages = [];
       req.wsMessages.push({
         direction: event.event === "webSocketSend" ? "send" : "receive",
-        messageType: (event.messageType as "data" | "string") ?? "data",
-        message: event.message as string | undefined,
+        messageType: event.messageType ?? "data",
+        message: event.message,
         dataLength: event.dataLength ? Number(event.dataLength) : undefined,
-        error: event.error as string | undefined,
+        error: event.error,
         timestamp: event.timestamp,
       });
       break;
