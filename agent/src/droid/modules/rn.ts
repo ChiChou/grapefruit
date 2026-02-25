@@ -7,7 +7,7 @@ import {
   createCallbackContext,
 } from "@/common/hermes.js";
 import { readFile, unlink } from "@/lib/posix.js";
-import { tracker } from "@/droid/lib/weak.js";
+import { getTracker } from "@/droid/lib/weak.js";
 
 const CLASS_NAMES: Record<RNArch, string> = {
   legacy: "com.facebook.react.bridge.CatalystInstanceImpl",
@@ -17,8 +17,6 @@ const CLASS_NAMES: Record<RNArch, string> = {
 let injecting = false;
 const cb = createCallbackContext();
 let callbackHooked = false;
-const store = tracker;
-
 function hookBundleLoader() {
   try {
     const CatalystInstanceImpl = Java.use(CLASS_NAMES.legacy);
@@ -84,7 +82,7 @@ export function list() {
         Java.choose(className, {
           onMatch(instance) {
             const handle = hashcode(instance);
-            store.put(handle, instance);
+            getTracker().put(handle, instance);
             results.push({ className, arch, handle });
           },
           onComplete() {},
@@ -104,7 +102,7 @@ export function inject(
     Java.perform(() => {
       let instance: Java.Wrapper;
       try {
-        instance = store.get(handle);
+        instance = getTracker().get(handle);
       } catch {
         reject(new Error("Instance not found for handle: " + handle));
         return;

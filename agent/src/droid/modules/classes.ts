@@ -25,7 +25,11 @@ export interface JavaClassDetail {
 }
 
 export function list() {
-  return perform(() => Java.enumerateLoadedClassesSync());
+  return Java.available
+    ? perform(() => Java.enumerateLoadedClassesSync())
+    : Promise.reject(
+        new Error("Java runtime is not available in this process"),
+      );
 }
 
 export function inspect(name: string) {

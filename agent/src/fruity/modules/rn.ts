@@ -7,7 +7,7 @@ import {
 } from "@/common/hermes.js";
 import { unlink } from "@/lib/posix.js";
 import { NSData, NSURL } from "../typings.js";
-import { tracker } from "@/fruity/lib/weak.js";
+import { getTracker } from "@/fruity/lib/weak.js";
 
 const CLASS_NAMES: Record<RNArch, string> = {
   legacy: "RCTCxxBridge",
@@ -17,7 +17,6 @@ const CLASS_NAMES: Record<RNArch, string> = {
 const interceptors: InvocationListener[] = [];
 const cb = createCallbackContext();
 let injecting = false;
-
 
 function attachBundle(
   method: ObjC.ObjectMethod | undefined,
@@ -123,7 +122,7 @@ export function list(): RNInstance[] {
     ObjC.choose(cls, {
       onMatch(instance) {
         const handle = instance.handle.toString();
-        tracker.put(handle, instance);
+        getTracker().put(handle, instance);
         results.push({ className, arch, handle });
       },
       onComplete() {},
@@ -145,7 +144,7 @@ export function inject(
       return;
     }
 
-    const instance = tracker.get(handle);
+    const instance = getTracker().get(handle);
     const { id, path } = cb.prepare(script);
     console.log(`[rn.inject] ${arch} id=${id} path=${path}`);
 

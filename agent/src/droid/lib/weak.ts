@@ -37,4 +37,9 @@ export class RefTracker {
   }
 }
 
-export const tracker = new RefTracker();
+let singleton: RefTracker | null = null;
+
+export function getTracker(): RefTracker {
+  if (!singleton) singleton = new RefTracker();
+  return singleton;
+}

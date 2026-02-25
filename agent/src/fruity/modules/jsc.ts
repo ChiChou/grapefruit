@@ -9,7 +9,7 @@ import {
 
 import * as Dictionary from "@/fruity/bridge/object.js";
 import { iterateNSArray } from "@/fruity/bridge/nsarray.js";
-import { tracker } from "@/fruity/lib/weak.js";
+import { getTracker } from "@/fruity/lib/weak.js";
 
 interface JSContext extends NSObject {
   evaluateScript_(script: StringLike): NSObject;
@@ -17,7 +17,7 @@ interface JSContext extends NSObject {
 }
 
 export function list() {
-  const t = tracker;
+  const t = getTracker();
   const result = new Map<string, string>();
   for (const instance of ObjC.chooseSync(ObjC.classes.JSContext)) {
     const handle = instance.handle.toString();
@@ -28,7 +28,7 @@ export function list() {
 }
 
 function get(handle: string): JSContext {
-  return tracker.get(handle) as JSContext;
+  return getTracker().get(handle) as JSContext;
 }
 
 type BridgedClass = {

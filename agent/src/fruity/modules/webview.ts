@@ -7,7 +7,7 @@ import type {
 } from "@/fruity/typings.js";
 
 import { performOnMainThread } from "@/fruity/lib/dispatch.js";
-import { tracker } from "@/fruity/lib/weak.js";
+import { getTracker } from "@/fruity/lib/weak.js";
 
 const WebViewKinds = ["UI", "WK"] as const;
 
@@ -94,7 +94,6 @@ function choose(clazz: ObjC.Object): Promise<ObjC.Object[]> {
   });
 }
 
-
 export async function listWK(): Promise<WKWebViewInfo[]> {
   const { WKWebView } = ObjC.classes;
   if (!WKWebView) return [];
@@ -106,7 +105,7 @@ export async function listWK(): Promise<WKWebViewInfo[]> {
     instances.map((instance) => {
       const webview = instance as WKWebView;
       const handle = instance.handle.toString();
-      tracker.put(handle, instance);
+      getTracker().put(handle, instance);
 
       const conf = webview.configuration() as WKWebViewConfiguration;
       const pref = conf.preferences();
@@ -141,7 +140,7 @@ export async function listUI(): Promise<UIWebViewInfo[]> {
     instances.map((instance) => {
       const webview = instance as UIWebView;
       const handle = instance.handle.toString();
-      tracker.put(handle, instance);
+      getTracker().put(handle, instance);
 
       return performOnMainThread(() => {
         const req = webview.request();
@@ -190,7 +189,7 @@ function UIGetTitle(webview: UIWebView) {
 }
 
 function getInstance(kind: Kind, handle: string): WebView {
-  return tracker.get(handle) as WebView;
+  return getTracker().get(handle) as WebView;
 }
 
 export async function evaluate(kind: Kind, handle: string, js: string) {
