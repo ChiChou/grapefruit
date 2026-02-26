@@ -63,6 +63,7 @@ import { FruityXPCTab } from "../tabs/FruityXPCTab";
 import { ReactNativeTab } from "../tabs/ReactNativeTab";
 import { PrivacyTab } from "../tabs/PrivacyTab";
 import { XCPrivacyTab } from "../tabs/XCPrivacyTab";
+import { DroidHttpTab } from "../tabs/DroidHttpTab";
 import { NoCloseTabHeader } from "../tabs/NoCloseTabHeader";
 
 import { DockContext, useDockActions } from "@/context/DockContext";
@@ -194,6 +195,7 @@ function WorkspaceContent() {
     reactNative: ReactNativeTab,
     privacy: PrivacyTab,
     xcprivacy: XCPrivacyTab,
+    droidHttp: DroidHttpTab,
   };
 
   const tabComponents = {

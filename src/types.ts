@@ -8,6 +8,7 @@ import type { JNIStore } from "./lib/store/jni.ts";
 import type { XPCStore, XPCEvent } from "./lib/store/xpc.ts";
 import type { HermesStore } from "./lib/store/hermes.ts";
 import type { PrivacyStore } from "./lib/store/privacy.ts";
+import type { HttpStore, HttpEvent } from "./lib/store/http.ts";
 
 import type { NSURLEvent } from "./lib/store/nsurl.ts";
 import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
@@ -56,6 +57,7 @@ export interface ServerToClientEvents {
   crypto: (msg: BaseHookMessage, data?: ArrayBuffer) => void;
   nsurl: (event: NSURLEvent) => void;
   xpc: (event: XPCEvent) => void;
+  droidHttp: (event: HttpEvent) => void;
   jni: (event: JNIEvent) => void;
   privacy: (msg: PrivacyMessage) => void;
   hermes: (event: { url: string; hash: string; size: number }) => void;
@@ -73,6 +75,7 @@ export interface ClientToServerEvents {
 
 export interface SessionStores {
   nsurl: NSURLStore;
+  http: HttpStore;
   hooks: HookStore;
   crypto: CryptoStore;
   flutter: FlutterStore;

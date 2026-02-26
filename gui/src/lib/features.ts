@@ -257,6 +257,7 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
       "privacy_monitor",
       "home_privacy_desc",
     ),
+    pf("droid_http_tab", "droidHttp", Network, "HTTP", "home_http_desc"),
   ],
   "droid:daemon": [
     pf("finder_tab", "finder", FolderSearch, "finder", "home_finder_desc", {

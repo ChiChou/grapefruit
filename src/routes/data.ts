@@ -9,6 +9,7 @@ import paths from "../lib/paths.ts";
 import { HookStore } from "../lib/store/hooks.ts";
 import { CryptoStore } from "../lib/store/crypto.ts";
 import { NSURLStore } from "../lib/store/nsurl.ts";
+import { HttpStore } from "../lib/store/http.ts";
 import { FlutterStore } from "../lib/store/flutter.ts";
 import { JNIStore } from "../lib/store/jni.ts";
 import { XPCStore } from "../lib/store/xpc.ts";
@@ -364,6 +365,94 @@ const routes = new Hono()
         );
       } catch (e) {
         console.error("Failed to serve attachment:", e);
+        return c.text("Failed to serve attachment", 500);
+      }
+    },
+  )
+  // HTTP (Android) endpoints — same pattern as NSURL
+  .get("/history/http/:device/:identifier/har", (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+
+    try {
+      const httpStore = new HttpStore(deviceId, identifier);
+      const requests = httpStore.query({ limit: 10000, offset: 0 });
+      const har = toHAR(requests);
+
+      c.header(
+        "Content-Disposition",
+        `attachment; filename="${identifier}-http.har"`,
+      );
+      return c.json(har);
+    } catch (e) {
+      console.error("Failed to export HTTP HAR:", e);
+      return c.text("Failed to export HAR", 500);
+    }
+  })
+  .get("/history/http/:device/:identifier", (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+
+    const limit = parseInt(c.req.query("limit") || "5000", 10);
+    const offset = parseInt(c.req.query("offset") || "0", 10);
+
+    try {
+      const httpStore = new HttpStore(deviceId, identifier);
+
+      const requests = httpStore.query({ limit, offset });
+      const total = httpStore.count();
+
+      return c.json({ requests, total, limit, offset });
+    } catch (e) {
+      console.error("Failed to query HTTP records:", e);
+      return c.json({ requests: [], total: 0, limit, offset });
+    }
+  })
+  .delete("/history/http/:device/:identifier", (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+
+    try {
+      new HttpStore(deviceId, identifier).rm();
+      return c.body(null, 204);
+    } catch (e) {
+      console.error("Failed to clear HTTP records:", e);
+      return c.text("Failed to clear HTTP records", 500);
+    }
+  })
+  .get(
+    "/history/http/:device/:identifier/attachment/:requestId",
+    async (c) => {
+      const deviceId = c.req.param("device");
+      const identifier = c.req.param("identifier");
+      const requestId = c.req.param("requestId");
+
+      try {
+        const httpStore = new HttpStore(deviceId, identifier);
+
+        const attachment = httpStore.getAttachment(requestId);
+
+        if (!attachment) {
+          return c.text("No attachment found", 404);
+        }
+
+        const stat = await fs.stat(attachment.path).catch(() => null);
+        if (!stat) {
+          return c.text("Attachment file not found", 404);
+        }
+
+        c.header(
+          "Content-Type",
+          attachment.mimeType || "application/octet-stream",
+        );
+        c.header("Content-Length", stat.size.toString());
+        return c.body(
+          Readable.toWeb(
+            createReadStream(attachment.path),
+          ) as unknown as ReadableStream,
+        );
+      } catch (e) {
+        console.error("Failed to serve HTTP attachment:", e);
         return c.text("Failed to serve attachment", 500);
       }
     },

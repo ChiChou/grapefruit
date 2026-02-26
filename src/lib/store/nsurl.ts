@@ -31,6 +31,7 @@ export interface CapturedRequest {
   requestBody?: string;
   error?: string;
   mechanism?: string;
+  backtrace?: string[];
   isWebSocket?: boolean;
   wsMessages?: WebSocketMessage[];
   attachment?: string | null;

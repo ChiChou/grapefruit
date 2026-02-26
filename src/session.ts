@@ -7,6 +7,7 @@ import { check as isRestrictedBundle } from "./lib/regulation.ts";
 import { LogWriter } from "./lib/log-writer.ts";
 import { fnv1a } from "./lib/hash.ts";
 import { NSURLStore } from "./lib/store/nsurl.ts";
+import { HttpStore } from "./lib/store/http.ts";
 import { HookStore } from "./lib/store/hooks.ts";
 import { CryptoStore } from "./lib/store/crypto.ts";
 import { FlutterStore } from "./lib/store/flutter.ts";
@@ -202,6 +203,7 @@ export async function connect(socket: SessionSocket, params: SessionParams) {
   // Create store instances
   const stores: SessionStores = {
     nsurl: new NSURLStore(deviceId, identifier),
+    http: new HttpStore(deviceId, identifier),
     hooks: new HookStore(deviceId, identifier),
     crypto: new CryptoStore(deviceId, identifier),
     flutter: new FlutterStore(deviceId, identifier),

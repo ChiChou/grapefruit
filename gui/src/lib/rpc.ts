@@ -106,6 +106,103 @@ export interface XPCSocketEvent {
   backtrace?: string[];
 }
 
+interface HttpEventBase {
+  requestId: string;
+  timestamp: number;
+}
+
+interface HttpCallStartEvent extends HttpEventBase {
+  type: "callStart";
+  request: {
+    url: string;
+    method: string;
+    headers: Record<string, string>;
+    body?: string;
+    bodyLength?: number;
+  };
+  backtrace?: string[];
+}
+
+interface HttpResponseHeadersEvent extends HttpEventBase {
+  type: "responseHeaders";
+  response: {
+    url?: string;
+    statusCode: number;
+    statusMessage?: string;
+    headers: Record<string, string>;
+    contentType?: string;
+    contentLength?: number;
+  };
+}
+
+interface HttpResponseBodyEvent extends HttpEventBase {
+  type: "responseBody";
+  body?: string;
+  bodyLength?: number;
+  hasBody?: boolean;
+}
+
+interface HttpResponseBodyChunkEvent extends HttpEventBase {
+  type: "responseBodyChunk";
+  bytesRead?: number;
+  charsRead?: number;
+  encoding?: string;
+}
+
+interface HttpResponseBodyEndEvent extends HttpEventBase {
+  type: "responseBodyEnd";
+  hasBody?: boolean;
+}
+
+interface HttpCallEndEvent extends HttpEventBase {
+  type: "callEnd";
+  hasBody?: boolean;
+}
+
+interface HttpCallFailedEvent extends HttpEventBase {
+  type: "callFailed";
+  error?: string;
+}
+
+interface HttpWsOpenEvent extends HttpEventBase {
+  type: "wsOpen";
+  url?: string;
+  protocol?: string | null;
+}
+
+interface HttpWsMessageEvent extends HttpEventBase {
+  type: "wsMessage";
+  direction: "send" | "receive";
+  messageType: "text" | "binary";
+  message?: string;
+  dataLength?: number;
+}
+
+interface HttpWsCloseEvent extends HttpEventBase {
+  type: "wsClose";
+  code?: number;
+  reason?: string;
+  direction?: "send" | "receive";
+}
+
+interface HttpWsFailureEvent extends HttpEventBase {
+  type: "wsFailure";
+  error?: string;
+}
+
+export type HttpEvent =
+  | HttpCallStartEvent
+  | HttpResponseHeadersEvent
+  | HttpResponseBodyEvent
+  | HttpResponseBodyChunkEvent
+  | HttpResponseBodyEndEvent
+  | HttpCallEndEvent
+  | HttpCallFailedEvent
+  | HttpWsOpenEvent
+  | HttpWsMessageEvent
+  | HttpWsCloseEvent
+  | HttpWsFailureEvent;
+
 export interface MemoryScanEvent {
   event: "match" | "progress" | "done";
   address?: string;
@@ -125,6 +222,7 @@ export interface SessionClientEvents {
   flutter: (event: Record<string, unknown>) => void;
   crypto: (message: BaseHookMessage) => void;
   nsurl: (event: NSURLEvent) => void;
+  droidHttp: (event: HttpEvent) => void;
   xpc: (event: XPCSocketEvent) => void;
   jni: (event: JNIEvent) => void;
   hermes: (event: { url: string; hash: string; size: number }) => void;

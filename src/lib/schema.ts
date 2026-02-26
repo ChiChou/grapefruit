@@ -74,10 +74,7 @@ export const flutter = sqliteTable(
     createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [
-    index("idx_flutter_device_identifier").on(
-      table.deviceId,
-      table.identifier,
-    ),
+    index("idx_flutter_device_identifier").on(table.deviceId, table.identifier),
     index("idx_flutter_timestamp").on(table.timestamp),
   ],
 );
@@ -100,10 +97,7 @@ export const jni = sqliteTable(
     createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [
-    index("idx_jni_device_identifier").on(
-      table.deviceId,
-      table.identifier,
-    ),
+    index("idx_jni_device_identifier").on(table.deviceId, table.identifier),
     index("idx_jni_method").on(table.method),
     index("idx_jni_timestamp").on(table.timestamp),
   ],
@@ -171,13 +165,36 @@ export const privacy = sqliteTable(
     createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [
-    index("idx_privacy_device_identifier").on(
-      table.deviceId,
-      table.identifier,
-    ),
+    index("idx_privacy_device_identifier").on(table.deviceId, table.identifier),
     index("idx_privacy_timestamp").on(table.timestamp),
     index("idx_privacy_category").on(table.category),
     index("idx_privacy_severity").on(table.severity),
+  ],
+);
+
+export const httpRequests = sqliteTable(
+  "http_requests",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    deviceId: text("device_id").notNull(),
+    identifier: text("identifier").notNull(),
+    requestId: text("request_id").notNull(),
+    data: text("data").notNull(),
+    attachment: text("attachment"),
+    mime: text("mime"),
+    createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_http_requests_device_identifier").on(
+      table.deviceId,
+      table.identifier,
+    ),
+    uniqueIndex("idx_http_requests_request_id").on(
+      table.deviceId,
+      table.identifier,
+      table.requestId,
+    ),
   ],
 );
 
@@ -197,10 +214,7 @@ export const crypto = sqliteTable(
     createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [
-    index("idx_crypto_device_identifier").on(
-      table.deviceId,
-      table.identifier,
-    ),
+    index("idx_crypto_device_identifier").on(table.deviceId, table.identifier),
     index("idx_crypto_timestamp").on(table.timestamp),
   ],
 );

@@ -15,6 +15,8 @@ import type {
   FlutterEvent,
   MemoryScanEvent,
 } from "./types.ts";
+import type { HttpEvent } from "./lib/store/http.ts";
+import type { SessionSocket, SessionStores } from "./types.ts";
 
 async function loadBridge(name: string) {
   const valid = ["objc", "java", "swift"];
@@ -36,6 +38,26 @@ export function setup(
   stores: SessionStores,
 ) {
   const requestsWithBody = new Set<string>();
+  const writeChains = new Map<string, Promise<void>>();
+
+  function chainWrite(
+    key: string,
+    dir: string,
+    filePath: string,
+    buf: Buffer,
+    mode: "append" | "write",
+  ): void {
+    const prev = writeChains.get(key) ?? Promise.resolve();
+    const next = prev
+      .then(() => fs.promises.mkdir(dir, { recursive: true }))
+      .then(() =>
+        mode === "append"
+          ? fs.promises.appendFile(filePath, buf)
+          : fs.promises.writeFile(filePath, buf),
+      )
+      .catch((e) => console.error("Failed to write attachment:", e));
+    writeChains.set(key, next);
+  }
 
   script.destroyed.connect(() => {
     console.error("script is destroyed");
@@ -96,13 +118,74 @@ export function setup(
         try {
           const attachment = stores.nsurl.upsert(event);
           if (attachment && data) {
-            fs.promises
-              .mkdir(stores.nsurl.attachmentsDir, { recursive: true })
-              .then(() => fs.promises.appendFile(attachment, Buffer.from(data)))
-              .catch((e) => console.error("Failed to write attachment:", e));
+            chainWrite(
+              event.requestId,
+              stores.nsurl.attachmentsDir,
+              attachment,
+              Buffer.from(data),
+              "append",
+            );
           }
         } catch (e) {
           console.error("Failed to persist NSURL event:", e);
+        }
+        break;
+      }
+
+      case "http": {
+        const event = payload as HttpEvent;
+
+        if (
+          (event.type === "responseBody" || event.type === "responseBodyChunk") &&
+          data
+        ) {
+          requestsWithBody.add(event.requestId);
+        }
+
+        if (event.type === "responseBody" && event.body) {
+          requestsWithBody.add(event.requestId);
+        }
+
+        if (
+          (event.type === "callEnd" || event.type === "responseBodyEnd") &&
+          requestsWithBody.has(event.requestId)
+        ) {
+          event.hasBody = true;
+          requestsWithBody.delete(event.requestId);
+        }
+
+        if (event.type === "responseBody" && requestsWithBody.has(event.requestId)) {
+          event.hasBody = true;
+          requestsWithBody.delete(event.requestId);
+        }
+
+        if (event.type === "callFailed") {
+          requestsWithBody.delete(event.requestId);
+        }
+
+        socket.emit("droidHttp", event);
+        try {
+          const attachment = stores.http.upsert(event);
+          if (attachment && event.type === "responseBody" && event.body) {
+            chainWrite(
+              event.requestId,
+              stores.http.attachmentsDir,
+              attachment,
+              Buffer.from(event.body as string),
+              "write",
+            );
+          }
+          if (attachment && data) {
+            chainWrite(
+              event.requestId,
+              stores.http.attachmentsDir,
+              attachment,
+              Buffer.from(data),
+              "append",
+            );
+          }
+        } catch (e) {
+          console.error("Failed to persist HTTP event:", e);
         }
         break;
       }

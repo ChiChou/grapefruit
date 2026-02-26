@@ -223,6 +223,7 @@
   "home_webview_desc": "调试内嵌的 Web 内容",
   "home_jsc_desc": "探索 JavaScriptCore 上下文",
   "home_nsurl_desc": "捕获 NSURLSession 网络流量",
+  "home_http_desc": "捕获 Android HTTP/HTTPS 流量",
   "category_files": "文件与数据",
   "category_security": "安全",
   "category_ui": "界面与网页",

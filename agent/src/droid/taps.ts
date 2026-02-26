@@ -4,6 +4,7 @@ import * as hookGroup from "./hooks/index.js";
 import * as flutter from "./hooks/flutter.js";
 import * as jni from "./hooks/jni.js";
 import * as privacy from "./hooks/privacy.js";
+import * as http from "./hooks/http/common.js";
 
 interface TapEntry {
   start(): void;
@@ -33,6 +34,7 @@ for (const id of BUILTIN_GROUPS) {
 registry.set("flutter", flutter);
 registry.set("jni", jni);
 registry.set("privacy", privacy);
+registry.set("http", http);
 
 export function list(): TapInfo[] {
   const result: TapInfo[] = [];
