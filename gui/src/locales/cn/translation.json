@@ -518,5 +518,7 @@
   "thread_state_suspended": "已挂起",
   "thread_state_running": "运行中",
   "thread_state_stopped": "已停止",
-  "thread_state_halted": "已停止"
+  "thread_state_halted": "已停止",
+
+  "no_extensions": "未找到扩展"
 }

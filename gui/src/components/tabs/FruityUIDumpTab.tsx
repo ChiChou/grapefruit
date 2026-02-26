@@ -4,7 +4,7 @@ import { useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 import { RefreshCw, Copy, Check, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -339,7 +339,13 @@ export function FruityUIDumpTab() {
             }}
           >
             {isLoading && !data ? (
-              <div className="text-sm text-muted-foreground flex items-center gap-2"><Spinner />{t("loading")}</div>
+              <div className="space-y-2 p-2">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2 ml-4" />
+                <Skeleton className="h-4 w-2/3 ml-8" />
+                <Skeleton className="h-4 w-1/3 ml-8" />
+                <Skeleton className="h-4 w-1/2 ml-4" />
+              </div>
             ) : data ? (
               <TreeNode
                 key={expandKey}

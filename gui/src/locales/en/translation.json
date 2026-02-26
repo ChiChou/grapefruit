@@ -526,5 +526,7 @@
   "thread_state_suspended": "Suspended",
   "thread_state_running": "Running",
   "thread_state_stopped": "Stopped",
-  "thread_state_halted": "Halted"
+  "thread_state_halted": "Halted",
+
+  "no_extensions": "No extensions found"
 }

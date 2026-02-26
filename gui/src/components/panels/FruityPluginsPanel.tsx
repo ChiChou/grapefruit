@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Search, Copy, Check } from "lucide-react";
+import { Search, Copy, Check, PackageOpen } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 import { useFruityQuery } from "@/lib/queries";
 
@@ -46,6 +47,7 @@ export function FruityPluginsPanel() {
     data: plugins,
     isLoading,
     error,
+    refetch,
   } = useFruityQuery<PluginInfo[]>(["plugins"], (api) => api.plugins.list());
 
   const filtered = useMemo(() => {
@@ -60,44 +62,63 @@ export function FruityPluginsPanel() {
     );
   }, [plugins, search]);
 
-  if (error) {
-    return (
-      <div className="h-full p-4 overflow-auto">
-        <Alert variant="destructive">
-          <AlertTitle>{t("error")}</AlertTitle>
-          <AlertDescription>{(error as Error)?.message}</AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
   return (
     <div className="h-full flex flex-col">
-      <div className="p-4 pb-2 space-y-2">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={t("search")}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        {plugins && (
+      {!isLoading && !error && plugins && plugins.length > 0 && (
+        <div className="p-4 pb-2 space-y-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={t("search")}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
           <div className="text-sm text-muted-foreground">
             {filtered.length} / {plugins.length}
           </div>
-        )}
-      </div>
+        </div>
+      )}
       <div className="flex-1 min-h-0 overflow-auto">
-        {isLoading ? (
+        {error ? (
+          <div className="flex flex-col items-center justify-center gap-2 p-8 text-center h-full">
+            <Alert variant="destructive">
+              <AlertTitle>{t("error")}</AlertTitle>
+              <AlertDescription>{(error as Error)?.message}</AlertDescription>
+            </Alert>
+            <Button
+              variant="link"
+              size="sm"
+              className="text-xs"
+              onClick={() => refetch()}
+            >
+              {t("reload")}
+            </Button>
+          </div>
+        ) : isLoading ? (
           <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
             <Spinner />
             {t("loading")}...
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-            No extensions found
+          <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
+            <PackageOpen className="size-8" />
+            <span className="text-sm">
+              {search.trim()
+                ? t("no_results")
+                : t("no_extensions")}
+            </span>
+            {!search.trim() && (
+              <Button
+                variant="link"
+                size="sm"
+                className="text-xs"
+                onClick={() => refetch()}
+              >
+                {t("reload")}
+              </Button>
+            )}
           </div>
         ) : (
           <div className="divide-y divide-border">

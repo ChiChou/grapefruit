@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Search } from "lucide-react";
+import { Search, UnlinkIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   ResizablePanel,
   ResizablePanelGroup,
@@ -26,6 +27,7 @@ export function FruityURLSchemesPanel() {
     data: urlSchemes,
     isLoading,
     error,
+    refetch,
   } = useFruityQuery(["urlSchemes"], (api) => api.info.urls());
 
   const [filteredSchemes, setFilteredSchemes] = useState<URLScheme[] | null>(
@@ -54,15 +56,24 @@ export function FruityURLSchemesPanel() {
 
   const schemeList = (
     <>
-      {error && (
-        <Alert variant="destructive">
-          <AlertTitle>{t("error")}</AlertTitle>
-          <AlertDescription>
-            {(error as Error)?.message}
-          </AlertDescription>
-        </Alert>
-      )}
-      {isLoading ? (
+      {error ? (
+        <div className="flex flex-col items-center justify-center gap-2 p-8 text-center h-full">
+          <Alert variant="destructive">
+            <AlertTitle>{t("error")}</AlertTitle>
+            <AlertDescription>
+              {(error as Error)?.message}
+            </AlertDescription>
+          </Alert>
+          <Button
+            variant="link"
+            size="sm"
+            className="text-xs"
+            onClick={() => refetch()}
+          >
+            {t("reload")}
+          </Button>
+        </div>
+      ) : isLoading ? (
         <div className="space-y-4">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-4 w-3/4" />
@@ -96,10 +107,23 @@ export function FruityURLSchemesPanel() {
           ))}
         </div>
       ) : (
-        <div className="space-y-4">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
+        <div className="flex flex-col items-center justify-center gap-2 p-8 text-center text-muted-foreground h-full">
+          <UnlinkIcon className="size-8" />
+          <span className="text-sm">
+            {searchQuery.trim()
+              ? t("no_results")
+              : t("no_url_schemes")}
+          </span>
+          {!searchQuery.trim() && (
+            <Button
+              variant="link"
+              size="sm"
+              className="text-xs"
+              onClick={() => refetch()}
+            >
+              {t("reload")}
+            </Button>
+          )}
         </div>
       )}
     </>
@@ -107,17 +131,19 @@ export function FruityURLSchemesPanel() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-4 pb-2">
-        <div className="relative">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={t("search")}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8"
-          />
+      {!isLoading && urlSchemes && urlSchemes.length > 0 && (
+        <div className="p-4 pb-2">
+          <div className="relative">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={t("search")}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8"
+            />
+          </div>
         </div>
-      </div>
+      )}
       {selectedScheme ? (
         <ResizablePanelGroup orientation="vertical" className="flex-1 min-h-0">
           <ResizablePanel defaultSize="60%" minSize="30%">
