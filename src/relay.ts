@@ -16,7 +16,6 @@ import type {
   MemoryScanEvent,
 } from "./types.ts";
 import type { HttpEvent } from "./lib/store/http.ts";
-import type { SessionSocket, SessionStores } from "./types.ts";
 
 async function loadBridge(name: string) {
   const valid = ["objc", "java", "swift"];
@@ -89,7 +88,8 @@ export function setup(
       case "syslog":
         if (data) {
           const text = data.toString();
-          console.log(`[syslog]`, text);
+          // do not add newline, as text already contain it
+          process.stderr.write(`[syslog] ${text}`);
           socket.emit("syslog", text);
           logger.appendSyslog(text);
         }
@@ -136,7 +136,8 @@ export function setup(
         const event = payload as HttpEvent;
 
         if (
-          (event.type === "responseBody" || event.type === "responseBodyChunk") &&
+          (event.type === "responseBody" ||
+            event.type === "responseBodyChunk") &&
           data
         ) {
           requestsWithBody.add(event.requestId);
@@ -154,7 +155,10 @@ export function setup(
           requestsWithBody.delete(event.requestId);
         }
 
-        if (event.type === "responseBody" && requestsWithBody.has(event.requestId)) {
+        if (
+          event.type === "responseBody" &&
+          requestsWithBody.has(event.requestId)
+        ) {
           event.hasBody = true;
           requestsWithBody.delete(event.requestId);
         }
@@ -191,14 +195,18 @@ export function setup(
       }
 
       case "flutter": {
-        const { subject: _, ...event } = payload as { subject: string } & FlutterEvent;
+        const { subject: _, ...event } = payload as {
+          subject: string;
+        } & FlutterEvent;
         socket.emit("flutter", event);
         stores.flutter.append(event);
         break;
       }
 
       case "xpc": {
-        const { subject: _, ...event } = payload as { subject: string } & XPCEvent;
+        const { subject: _, ...event } = payload as {
+          subject: string;
+        } & XPCEvent;
         socket.emit("xpc", event);
         stores.xpc.append(event);
         break;
@@ -214,7 +222,11 @@ export function setup(
       case "hermes": {
         const buf = data ? Buffer.from(data) : Buffer.alloc(0);
         const hash = createHash("sha256").update(buf).digest("hex");
-        const hermesEvent = { url: payload.url as string, hash, size: buf.length };
+        const hermesEvent = {
+          url: payload.url as string,
+          hash,
+          size: buf.length,
+        };
         socket.emit("hermes", hermesEvent);
         stores.hermes.append(hermesEvent, buf);
         break;
