@@ -6,7 +6,7 @@ type Fn<R extends NativeFunctionReturnValue, A extends Ptr[]> = NativeFunction<
   A
 >;
 
-export interface ObjCApi {
+interface ObjCApi {
   // libsystem_malloc
   free: Fn<void, [Ptr]>;
 
@@ -80,7 +80,7 @@ export interface ObjCApi {
   _dispatch_main_q: NativePointer;
 }
 
-const api = ObjC.api as unknown as ObjCApi;
+export const api = ObjC.api as unknown as ObjCApi;
 
 function libobjcFn<R extends NativeFunctionReturnValue, A extends Ptr[]>(
   name: string,
