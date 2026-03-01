@@ -2,6 +2,8 @@ import ObjC from "frida-objc-bridge";
 import {
   copyIvars,
   copyProperties,
+  copySuperClasses,
+  resolveMethod,
   type Ivar,
   type Property,
 } from "@/fruity/bridge/runtime.js";
@@ -69,31 +71,14 @@ export function inspect(name: string): ClassDetail {
   if (!clazz) throw new Error(`class ${name} not found`);
 
   const methods: Method[] = clazz.$methods.map((sel) => {
-    const meth = clazz[sel] as ObjC.ObjectMethod;
-    // const addr = meth.implementation;
-
-    // too much overhead
-    // const mod = Process.findModuleByAddress(addr);
-    // const offset = mod ? `${mod.name}+${addr.sub(mod.base)}` : "";
-    // const impl = `${addr} ${offset}`;
-
-    return {
-      name: sel,
-      impl: meth.implementation.toString(),
-      types: meth.types,
-    };
+    const { imp: impl, types } = resolveMethod(clazz, sel);
+    return { name: sel, impl, types };
   });
 
   const protocols = Object.keys(clazz.$protocols);
   const module = clazz.$moduleName;
   const ivars = copyIvars(clazz);
-
-  const proto = [];
-  {
-    let cur = clazz;
-    while ((cur = cur.$superClass)) proto.unshift(cur.$className);
-  }
-
+  const proto = copySuperClasses(clazz);
   const properties = copyProperties(clazz);
 
   return {

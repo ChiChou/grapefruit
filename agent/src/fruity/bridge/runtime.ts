@@ -1,8 +1,10 @@
 import ObjC from "frida-objc-bridge";
 
 type Ptr = NativePointerValue;
-type Fn<R extends NativeFunctionReturnValue, A extends Ptr[]> =
-  NativeFunction<R, A>;
+type Fn<R extends NativeFunctionReturnValue, A extends Ptr[]> = NativeFunction<
+  R,
+  A
+>;
 
 export interface ObjCApi {
   // libsystem_malloc
@@ -43,10 +45,7 @@ export interface ObjCApi {
   objc_allocateProtocol: Fn<NativePointer, [Ptr]>;
   objc_registerProtocol: Fn<void, [Ptr]>;
   protocol_getName: Fn<NativePointer, [Ptr]>;
-  protocol_copyMethodDescriptionList: Fn<
-    NativePointer,
-    [Ptr, Ptr, Ptr, Ptr]
-  >;
+  protocol_copyMethodDescriptionList: Fn<NativePointer, [Ptr, Ptr, Ptr, Ptr]>;
   protocol_copyPropertyList: Fn<NativePointer, [Ptr, Ptr]>;
   protocol_copyProtocolList: Fn<NativePointer, [Ptr, Ptr]>;
   protocol_addProtocol: Fn<void, [Ptr, Ptr]>;
@@ -103,15 +102,52 @@ let extras: {
 function extraApi() {
   if (extras) return extras;
   return (extras = {
-    class_copyPropertyList: libobjcFn("class_copyPropertyList", "pointer", ["pointer", "pointer"]),
-    property_copyAttributeValue: libobjcFn("property_copyAttributeValue", "pointer", ["pointer", "pointer"]),
+    class_copyPropertyList: libobjcFn("class_copyPropertyList", "pointer", [
+      "pointer",
+      "pointer",
+    ]),
+    property_copyAttributeValue: libobjcFn(
+      "property_copyAttributeValue",
+      "pointer",
+      ["pointer", "pointer"],
+    ),
   });
+}
+
+export interface ObjCMethod {
+  name: string;
+  imp: string;
+  types: string;
+}
+
+export function resolveMethod(clazz: ObjC.Object, sel: string): ObjCMethod {
+  const isClassMethod = sel.startsWith("+ ");
+  const selName = sel.substring(2);
+  const selPtr = api.sel_registerName(Memory.allocUtf8String(selName));
+  const target = isClassMethod
+    ? api.object_getClass(clazz.handle)
+    : clazz.handle;
+  const methodHandle = api.class_getInstanceMethod(target, selPtr);
+  const impl = api.method_getImplementation(methodHandle).toString();
+  const types = api
+    .method_getTypeEncoding(methodHandle)
+    .readUtf8String() as string;
+  return { name: sel, imp: impl, types };
 }
 
 export interface Ivar {
   name: string;
   offset: number;
   type: string;
+}
+
+export function copySuperClasses(clazz: ObjC.Object): string[] {
+  const proto = [];
+  {
+    let cur = clazz;
+    while ((cur = cur.$superClass)) proto.unshift(cur.$className);
+  }
+  return proto;
 }
 
 export function copyIvars(clazz: ObjC.Object): Ivar[] {
