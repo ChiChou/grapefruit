@@ -319,7 +319,7 @@ export function header(info: ClassDumpInfo): string {
     const selParts = cleanSel.split(":").filter((s) => s.length > 0);
 
     // Reconstruct Method definition
-    let methodLine = `${methodSymbol} (${parsed.ret}) `;
+    let methodLine = `${methodSymbol} (${parsed.ret})`;
 
     if (realArgs.length === 0) {
       methodLine += `${cleanSel}`;
