@@ -92,9 +92,16 @@ export function swizzle(klassName: string, sel: string) {
     }
   }
 
-  const selPtr = ObjC.selector(sel);
+  // sel may arrive with "+ " or "- " prefix from the frontend
+  const isClassMethod = sel.startsWith("+ ");
+  const selName =
+    sel.startsWith("+ ") || sel.startsWith("- ") ? sel.substring(2) : sel;
+
+  const selPtr = ObjC.selector(selName);
   const klass = ObjC.classes[klassName];
-  const methodHandle = api.class_getInstanceMethod(klass.handle, selPtr);
+  const methodHandle = isClassMethod
+    ? api.class_getClassMethod(klass.handle, selPtr)
+    : api.class_getInstanceMethod(klass.handle, selPtr);
   if (methodHandle.isNull())
     throw new Error(`Method ${klassName} ${sel} not found`);
 
@@ -139,6 +146,29 @@ export function swizzle(klassName: string, sel: string) {
   });
 
   hooked.get(klassName)!.set(sel, listener);
+}
+
+export function batchSwizzle(
+  klassName: string,
+  selectors: string[],
+): { hooked: string[]; errors: Record<string, string> } {
+  const hookedSels: string[] = [];
+  const errors: Record<string, string> = {};
+  for (const sel of selectors) {
+    try {
+      swizzle(klassName, sel);
+      hookedSels.push(sel);
+    } catch (e) {
+      errors[sel] = (e as Error).message;
+    }
+  }
+  return { hooked: hookedSels, errors };
+}
+
+export function batchUnswizzle(cls: string, selectors: string[]) {
+  for (const sel of selectors) {
+    unswizzle(cls, sel);
+  }
 }
 
 export function unswizzle(cls: string, sel: string) {

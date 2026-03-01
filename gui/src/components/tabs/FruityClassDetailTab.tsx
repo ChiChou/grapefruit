@@ -254,13 +254,15 @@ export function FruityClassDetailTab({
     if (!fruity || status !== Status.Ready || !classInfo) return;
     setIsHooking(true);
     try {
-      let successCount = 0;
-      for (const methodName of selectedMethods) {
-        try {
-          await fruity.objc.swizzle(classInfo.name, methodName);
-          successCount++;
-        } catch (error) {
-          console.error(`Failed to hook ${methodName}:`, error);
+      const result = await fruity.objc.batchSwizzle(
+        classInfo.name,
+        [...selectedMethods],
+      );
+      const successCount = result.hooked.length;
+      const errorCount = Object.keys(result.errors).length;
+      if (errorCount > 0) {
+        for (const [sel, msg] of Object.entries(result.errors)) {
+          console.error(`Failed to hook ${sel}:`, msg);
         }
       }
       if (successCount > 0) {
