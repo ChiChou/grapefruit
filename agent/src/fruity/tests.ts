@@ -32,6 +32,12 @@ import * as fs from "./modules/fs.js";
 import * as keychain from "./modules/keychain.js";
 import * as userdefaults from "./modules/userdefaults.js";
 import * as lsof from "./modules/lsof.js";
+import * as plugins from "./modules/plugins.js";
+import * as uidevice from "./modules/uidevice.js";
+import * as ui from "./modules/ui.js";
+import * as webview from "./modules/webview.js";
+import * as jsc from "./modules/jsc.js";
+import * as rn from "./modules/rn.js";
 
 async function testInfo() {
   console.log("\n--- info ---");
@@ -82,10 +88,18 @@ async function testInfo() {
     const p = info.plist();
     assertType(p, "object", "plist");
     assert(p !== null, "plist should not be null");
-    const dict = p as Record<string, unknown>;
+    assertKeys(
+      p as unknown as Record<string, unknown>,
+      ["xml", "value"],
+      "plist",
+    );
+    assertType(p.xml, "string", "xml");
+    assert(p.xml.length > 0, "xml should be non-empty");
+    assertType(p.value, "object", "value");
+    const dict = p.value as Record<string, unknown>;
     assert(
       "CFBundleIdentifier" in dict,
-      "plist should contain CFBundleIdentifier",
+      "plist.value should contain CFBundleIdentifier",
     );
     console.log(`    CFBundleIdentifier=${dict.CFBundleIdentifier}`);
   });
@@ -217,6 +231,15 @@ async function testClassdump() {
     assert(threw, "should throw for nonexistent class");
     console.log("    correctly threw for nonexistent class");
   });
+
+  await test("classdump.inheritance returns superclass mapping", async () => {
+    const map = classdump.inheritance();
+    assertType(map, "object", "inheritance");
+    const keys = Object.keys(map);
+    assertNonEmpty(keys, "inheritance keys");
+    assert(map["NSObject"] === null, "NSObject superclass should be null");
+    console.log(`    ${keys.length} classes in inheritance map`);
+  });
 }
 
 async function testCookies() {
@@ -253,19 +276,20 @@ async function testFs() {
     const result = fs.ls(home);
     assertKeys(
       result as unknown as Record<string, unknown>,
-      ["cwd", "list"],
+      ["cwd", "writable", "list"],
       "ls result",
     );
     assertType(result.cwd, "string", "cwd");
+    assertType(result.writable, "boolean", "writable");
     assertArray(result.list, "list");
     assert(result.cwd.startsWith("/"), "cwd should be absolute path");
-    console.log(`    cwd=${result.cwd}`);
+    console.log(`    cwd=${result.cwd} writable=${result.writable}`);
     console.log(`    ${result.list.length} entries`);
     if (result.list.length > 0) {
       const first = result.list[0];
       assertKeys(
         first as unknown as Record<string, unknown>,
-        ["name", "dir", "size", "created", "symlink", "writable"],
+        ["name", "dir", "protection", "size", "alias", "created", "symlink"],
         "MetaData",
       );
       console.log(
@@ -299,12 +323,25 @@ async function testFs() {
     const a = fs.attrs(result.cwd);
     assertKeys(
       a as unknown as Record<string, unknown>,
-      ["uid", "gid", "perm", "size", "type", "owner", "group"],
+      [
+        "uid",
+        "gid",
+        "perm",
+        "size",
+        "type",
+        "owner",
+        "group",
+        "created",
+        "protection",
+      ],
       "attrs",
     );
     assertType(a.uid, "number", "uid");
     assertType(a.gid, "number", "gid");
     assertType(a.perm, "number", "perm");
+    assertType(a.size, "number", "size");
+    assertType(a.owner, "string", "owner");
+    assertType(a.group, "string", "group");
     console.log(
       `    uid=${a.uid} gid=${a.gid} perm=${a.perm.toString(8)} type=${a.type}`,
     );
@@ -422,6 +459,31 @@ async function testFs() {
       );
     }
   });
+
+  await test("fs.mkdirp creates nested directories", async () => {
+    const ts = Date.now();
+    const topDir = home + "/igf_mkdirp_test_" + ts;
+    const testDir = topDir + "/sub/dir";
+    fs.mkdirp(testDir);
+
+    const result = fs.ls(testDir);
+    assertType(result.cwd, "string", "cwd");
+    console.log(`    created ${testDir}`);
+
+    // cleanup
+    fs.rm(topDir);
+    console.log("    cleaned up test directory");
+  });
+
+  await test("fs.access checks path writability", async () => {
+    const writable = fs.access(home);
+    assertType(writable, "boolean", "access");
+    console.log(`    home writable=${writable}`);
+
+    const bundleWritable = fs.access(bundle);
+    assertType(bundleWritable, "boolean", "bundle access");
+    console.log(`    bundle writable=${bundleWritable}`);
+  });
 }
 
 async function testKeychain() {
@@ -508,6 +570,190 @@ async function testLsof() {
   });
 }
 
+async function testPlugins() {
+  console.log("\n--- plugins ---");
+
+  await test("plugins.list returns array of plugin info", async () => {
+    const items = plugins.list();
+    assertArray(items, "list");
+    console.log(`    ${items.length} plugins`);
+    if (items.length > 0) {
+      const first = items[0];
+      assertKeys(
+        first as unknown as Record<string, unknown>,
+        ["identifier", "extensionPoint", "displayName", "version", "path", "uuid"],
+        "plugin entry",
+      );
+      assertType(first.identifier, "string", "identifier");
+      assertType(first.path, "string", "path");
+      console.log(
+        `    first: id=${first.identifier} name=${first.displayName}`,
+      );
+    }
+  });
+}
+
+async function testUIDevice() {
+  console.log("\n--- uidevice ---");
+
+  await test("uidevice.info returns device info fields", async () => {
+    const d = uidevice.info();
+    assertKeys(
+      d as unknown as Record<string, unknown>,
+      [
+        "name",
+        "model",
+        "localizedModel",
+        "systemName",
+        "systemVersion",
+        "identifierForVendor",
+        "batteryLevel",
+        "batteryState",
+        "userInterfaceIdiom",
+        "isMultitaskingSupported",
+      ],
+      "uidevice.info",
+    );
+    assertType(d.name, "string", "name");
+    assertType(d.model, "string", "model");
+    assertType(d.systemName, "string", "systemName");
+    assertType(d.systemVersion, "string", "systemVersion");
+    assertType(d.batteryLevel, "number", "batteryLevel");
+    assertType(d.batteryState, "string", "batteryState");
+    assertType(d.isMultitaskingSupported, "boolean", "isMultitaskingSupported");
+    console.log(
+      `    ${d.name} ${d.model} ${d.systemName} ${d.systemVersion}`,
+    );
+    console.log(
+      `    battery=${d.batteryLevel} state=${d.batteryState} idiom=${d.userInterfaceIdiom}`,
+    );
+  });
+}
+
+async function testUI() {
+  console.log("\n--- ui ---");
+
+  await test("ui.dump returns view hierarchy", async () => {
+    const tree = await ui.dump();
+    assert(tree !== null, "dump should return a node");
+    if (tree) {
+      assertKeys(
+        tree as unknown as Record<string, unknown>,
+        ["clazz", "children", "frame"],
+        "UIDumpNode",
+      );
+      assertType(tree.clazz, "string", "clazz");
+      assertArray(tree.children!, "children");
+      console.log(
+        `    root: ${tree.clazz} children=${tree.children!.length}`,
+      );
+    }
+  });
+
+  skip("ui.highlight", "side-effect: modifies UI overlay");
+  skip("ui.dismissHighlight", "side-effect: modifies UI overlay");
+}
+
+async function testWebview() {
+  console.log("\n--- webview ---");
+
+  await test("webview.listWK returns array of WKWebView info", async () => {
+    const views = await webview.listWK();
+    assertArray(views, "listWK");
+    console.log(`    ${views.length} WKWebView instances`);
+    if (views.length > 0) {
+      const first = views[0];
+      assertKeys(
+        first as unknown as Record<string, unknown>,
+        ["handle", "kind", "js", "jsAutoOpenWindow"],
+        "WKWebViewInfo",
+      );
+      assertType(first.handle, "string", "handle");
+      assert(first.kind === "WK", `kind should be WK, got ${first.kind}`);
+      assertType(first.js, "boolean", "js");
+      console.log(
+        `    first: handle=${first.handle} url=${first.url ?? "(none)"} js=${first.js}`,
+      );
+    }
+  });
+
+  await test("webview.listUI returns array of UIWebView info", async () => {
+    const views = await webview.listUI();
+    assertArray(views, "listUI");
+    console.log(`    ${views.length} UIWebView instances`);
+    if (views.length > 0) {
+      const first = views[0];
+      assertKeys(
+        first as unknown as Record<string, unknown>,
+        ["handle", "kind"],
+        "UIWebViewInfo",
+      );
+      assert(first.kind === "UI", `kind should be UI, got ${first.kind}`);
+      console.log(
+        `    first: handle=${first.handle} url=${first.url ?? "(none)"}`,
+      );
+    }
+  });
+
+  skip("webview.evaluate", "requires active webview handle");
+  skip("webview.navigate", "side-effect: navigates webview");
+}
+
+async function testJsc() {
+  console.log("\n--- jsc ---");
+
+  await test("jsc.list returns JSContext map", async () => {
+    const contexts = jsc.list();
+    assertType(contexts, "object", "list");
+    const handles = Object.keys(contexts);
+    console.log(`    ${handles.length} JSContext instances`);
+    if (handles.length > 0) {
+      const first = handles[0];
+      assertType(contexts[first], "string", "context description");
+      console.log(`    first: handle=${first}`);
+    }
+  });
+
+  skip("jsc.dump", "requires active JSContext handle");
+  skip("jsc.run", "side-effect: executes code in JSContext");
+}
+
+async function testRn() {
+  console.log("\n--- rn ---");
+
+  await test("rn.arch returns architecture flags", async () => {
+    const a = rn.arch();
+    assertKeys(
+      a as unknown as Record<string, unknown>,
+      ["legacy", "bridgeless"],
+      "rn.arch",
+    );
+    assertType(a.legacy, "boolean", "legacy");
+    assertType(a.bridgeless, "boolean", "bridgeless");
+    console.log(`    legacy=${a.legacy} bridgeless=${a.bridgeless}`);
+  });
+
+  await test("rn.list returns RN instances array", async () => {
+    const instances = rn.list();
+    assertArray(instances, "list");
+    console.log(`    ${instances.length} React Native instances`);
+    if (instances.length > 0) {
+      const first = instances[0];
+      assertKeys(
+        first as unknown as Record<string, unknown>,
+        ["className", "arch", "handle"],
+        "RNInstance",
+      );
+      assertType(first.handle, "string", "handle");
+      console.log(
+        `    first: class=${first.className} arch=${first.arch}`,
+      );
+    }
+  });
+
+  skip("rn.inject", "side-effect: injects script into React Native");
+}
+
 async function run() {
   console.log("=== fruity module tests ===");
 
@@ -525,6 +771,20 @@ async function run() {
   await testKeychain();
   await testUserDefaults();
   await testLsof();
+  await testPlugins();
+  await testUIDevice();
+  await testUI();
+  await testWebview();
+  await testJsc();
+  await testRn();
+
+  // side-effect only modules (no safe read-only API)
+  console.log("\n--- geolocation ---");
+  skip("geolocation.fake", "side-effect: fakes GPS location");
+  skip("geolocation.dismiss", "side-effect: removes location hooks");
+
+  console.log("\n--- url ---");
+  skip("url.open", "side-effect: triggers URL handler");
 
   summary();
 }
