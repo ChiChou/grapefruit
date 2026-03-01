@@ -1,27 +1,12 @@
 import ObjC from "frida-objc-bridge";
+import {
+  copyIvars,
+  copyProperties,
+  type Ivar,
+  type Property,
+} from "@/fruity/bridge/runtime.js";
 
-type Tree<T> = {
-  [name: string]: Tree<T> | T;
-};
-
-const PROPERTY_ATTRS = "TRC&WNOD" as const;
-type Property = Record<(typeof PROPERTY_ATTRS)[number], string>;
-
-// interface Property {
-//   T: string; // type
-//   R?: ""; // readonly
-//   C?: ""; // copy
-//   "&"?: ""; // strong
-//   W?: ""; // weak
-//   N?: ""; // nonatomic
-//   D?: ""; // dynamic
-// }
-
-export interface Ivar {
-  name: string;
-  offset: number;
-  type: string;
-}
+export type { Ivar, Property };
 
 export interface Method {
   name: string;
@@ -71,137 +56,11 @@ export function list(scope: string): string[] {
   return all;
 }
 
-function copyIvars(clazz: ObjC.Object) {
-  const { pointerSize } = Process;
-  const numIvarsBuf = Memory.alloc(pointerSize);
-  const ivarHandles = ObjC.api.class_copyIvarList(clazz.handle, numIvarsBuf);
-  const result: Ivar[] = [];
-
-  if (ivarHandles.isNull()) return result;
-
-  try {
-    const numIvars = numIvarsBuf.readUInt();
-    for (let i = 0; i < numIvars; i++) {
-      const handle = ivarHandles.add(i * pointerSize).readPointer();
-      const name = ObjC.api.ivar_getName(handle).readUtf8String() as string;
-      const offset = ObjC.api.ivar_getOffset(handle).toInt32();
-      const type = ObjC.api
-        .ivar_getTypeEncoding(handle)
-        .readUtf8String() as string;
-
-      result.push({
-        name,
-        offset,
-        type,
-      });
-    }
-  } finally {
-    ObjC.api.free(ivarHandles);
-  }
-
-  return result;
-}
-
-export function hierarchy(): Tree<string> {
-  const tree: Tree<string> = {};
+export function inheritance(): Record<string, string | null> {
+  const result: Record<string, string | null> = {};
   for (const [name, clazz] of Object.entries(ObjC.classes)) {
-    const chain = [name];
-
-    let parent = clazz;
-    /* eslint no-cond-assign:0 */
-    while ((parent = parent.$superClass)) chain.unshift(parent.$className);
-
-    let node = tree;
-    for (const className of chain) {
-      if (!node[className]) node[className] = {};
-      node = node[className] as Tree<string>;
-    }
+    result[name] = clazz.$superClass?.$className ?? null;
   }
-
-  return tree;
-}
-
-let api: {
-  class_copyPropertyList: NativeFunction<
-    NativePointer,
-    [NativePointerValue, NativePointerValue]
-  >;
-  property_copyAttributeValue: NativeFunction<
-    NativePointer,
-    [NativePointerValue, NativePointerValue]
-  >;
-  property_getName: NativeFunction<NativePointer, [NativePointerValue]>;
-};
-
-function ObjCRuntime() {
-  if (api) return api;
-
-  const libobjc = Process.getModuleByName("libobjc.A.dylib");
-  const class_copyPropertyList = new NativeFunction(
-    libobjc.getExportByName("class_copyPropertyList"),
-    "pointer",
-    ["pointer", "pointer"],
-  );
-
-  const property_copyAttributeValue = new NativeFunction(
-    libobjc.getExportByName("property_copyAttributeValue"),
-    "pointer",
-    ["pointer", "pointer"],
-  );
-
-  const property_getName = new NativeFunction(
-    libobjc.getExportByName("property_getName"),
-    "pointer",
-    ["pointer"],
-  );
-
-  return (api = {
-    class_copyPropertyList,
-    property_copyAttributeValue,
-    property_getName,
-  });
-}
-
-function copyProperties(clazz: ObjC.Object): Record<string, Property> {
-  const {
-    property_getName,
-    property_copyAttributeValue,
-    class_copyPropertyList,
-  } = ObjCRuntime();
-
-  const result: Record<string, Property> = {};
-
-  const nPropsBuf = Memory.alloc(Process.pointerSize);
-  const props = class_copyPropertyList(clazz.handle, nPropsBuf);
-  const nProps = nPropsBuf.readUInt();
-
-  if (props.isNull()) return result;
-
-  const keys: Record<string, NativePointerValue> = {};
-  for (const c of PROPERTY_ATTRS) {
-    keys[c] = Memory.allocUtf8String(c);
-  }
-
-  try {
-    for (let i = 0; i < nProps; i++) {
-      const handle = props.add(i * Process.pointerSize).readPointer();
-      const namePtr = property_getName(handle);
-      if (namePtr.isNull()) continue;
-      const name = namePtr.readUtf8String() as string;
-      const attrs: Record<string, string> = {};
-
-      for (const [key, keyStr] of Object.entries(keys)) {
-        const v = property_copyAttributeValue(handle, keyStr);
-        if (v.isNull()) continue;
-        attrs[key] = v.readUtf8String() as string;
-      }
-
-      result[name] = attrs;
-    }
-  } finally {
-    ObjC.api.free(props);
-  }
-
   return result;
 }
 
