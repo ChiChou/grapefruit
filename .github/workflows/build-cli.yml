@@ -13,7 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Node # some CI steps require node
         uses: actions/setup-node@v6
@@ -33,25 +33,25 @@ jobs:
         run: bun run build:all
 
       - name: Upload linux-x64
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: linux-x64
           path: build/Release/igf-linux-x64
 
       - name: Upload windows-x64
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: windows-x64
           path: build/Release/igf-windows-x64.exe
 
       - name: Upload darwin-x64
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: darwin-x64
           path: build/Release/igf-darwin-x64
 
       - name: Upload darwin-arm64
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: darwin-arm64
           path: build/Release/igf-darwin-arm64
