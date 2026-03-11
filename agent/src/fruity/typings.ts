@@ -26,12 +26,12 @@ export interface NSString extends NSObject {
   stringByAppendingPathComponent_(str: StringLike): NSString;
 }
 
-export interface NSArray<T> extends NSObject {
+export interface NSArray<T = NSObject> extends NSObject {
   count(): number;
   objectAtIndex_(index: number): T;
 }
 
-export interface NSSet<T> extends NSObject {
+export interface NSSet<T = NSObject> extends NSObject {
   count(): number;
   allObjects(): NSArray<T>;
 }
@@ -41,14 +41,17 @@ export interface NSURL extends NSObject {
   path(): NSString | null;
 }
 
-export interface NSDictionary<K, V> extends NSObject {
+export interface NSDictionary<K = StringLike, V = NSObject> extends NSObject {
   objectForKey_(key: K): _Nullable<V>;
   allKeys(): NSArray<K>;
   mutableCopy(): NSMutableDictionary<K, V>;
   copy(): NSDictionary<K, V>;
 }
 
-export interface NSMutableDictionary<K, V> extends NSDictionary<K, V> {
+export interface NSMutableDictionary<
+  K = StringLike,
+  V = NSObject,
+> extends NSDictionary<K, V> {
   setObject_forKey_(obj: V | string | number, key: K | string): void;
   removeObjectForKey_(key: K | string): void;
 }
@@ -64,6 +67,7 @@ export interface NSError extends NSObject {
 }
 
 export interface NSData extends NSObject {
+  base64EncodedStringWithOptions_(options: number): NSString;
   writeToFile_atomically_(path: StringLike, atomically: boolean): boolean;
   bytes(): NativePointer;
   length(): number;
