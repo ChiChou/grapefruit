@@ -139,7 +139,7 @@ export function BottomPanelView() {
           className="rounded-none border-b-2 border-transparent data-active:border-primary flex items-center gap-2"
         >
           <Anchor className="h-4 w-4" />
-          {t("hooks")}
+          {t("hook_logs")}
         </TabsTrigger>
         <TabsTrigger
           value="crypto"
