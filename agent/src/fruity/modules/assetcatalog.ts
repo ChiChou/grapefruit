@@ -1,6 +1,7 @@
 import ObjC from "frida-objc-bridge";
-import { NSData } from "../typings.js";
+import { NSArray, NSData } from "../typings.js";
 import coregraphics from "../native/coregraphics.js";
+import uikit from "../native/uikit.js";
 
 export interface AssetCatalogInfo {
   path: string;
@@ -65,14 +66,14 @@ function cgImageSize(cgImage: NativePointer): {
 } {
   const { CGImageGetWidth, CGImageGetHeight } = coregraphics();
   return {
-    width: CGImageGetWidth(cgImage) as number,
-    height: CGImageGetHeight(cgImage) as number,
+    width: CGImageGetWidth(cgImage),
+    height: CGImageGetHeight(cgImage),
   };
 }
 
 function getImages(catalog: ObjC.Object, name: string): ObjC.Object[] {
-  const arr = catalog.imagesWithName_(name);
-  const count = arr.count() as number;
+  const arr = catalog.imagesWithName_(name) as NSArray;
+  const count = arr.count();
   const result: ObjC.Object[] = [];
   for (let i = 0; i < count; i++) {
     result.push(arr.objectAtIndex_(i));
@@ -157,13 +158,8 @@ export function image(
   );
   if (!uiImage) return null;
 
-  const UIKit = Process.findModuleByName("UIKit")!;
-  const pngFn = new NativeFunction(
-    UIKit.getExportByName("UIImagePNGRepresentation")!,
-    "pointer",
-    ["pointer"],
-  );
-  const pngPtr = pngFn(uiImage.handle) as NativePointer;
+  const { UIImagePNGRepresentation } = uikit();
+  const pngPtr = UIImagePNGRepresentation(uiImage.handle);
   if (pngPtr.isNull()) return null;
   const pngData = new ObjC.Object(pngPtr);
 
@@ -243,22 +239,17 @@ export function rawImage(
   );
   if (!uiImage) return null;
 
-  const UIKit = Process.findModuleByName("UIKit")!;
-  const pngFn = new NativeFunction(
-    UIKit.getExportByName("UIImagePNGRepresentation")!,
-    "pointer",
-    ["pointer"],
-  );
-  const pngPtr = pngFn(uiImage.handle) as NativePointer;
+  const { UIImagePNGRepresentation } = uikit();
+  const pngPtr = UIImagePNGRepresentation(uiImage.handle);
   if (pngPtr.isNull()) return null;
-  const pngData = new ObjC.Object(pngPtr);
+  const pngData = new ObjC.Object(pngPtr) as NSData;
 
-  const length = pngData.length() as number;
+  const length = pngData.length();
   if (length === 0) return null;
 
   const suffix = scale > 1 ? `@${scale}x` : "";
   return {
     filename: `${name}${suffix}.png`,
-    data: pngData.base64EncodedStringWithOptions_(0).toString() as string,
+    data: pngData.base64EncodedStringWithOptions_(0).toString(),
   };
 }
