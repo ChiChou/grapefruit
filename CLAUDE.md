@@ -31,3 +31,7 @@ bun test            # run tests
 ```
 
 `bun run prepare` build everything at once, slow
+
+## Skills
+
+`/igf` — CLI interface for the IGF server. Exposes all REST API and agent RPC. See `.claude/skills/igf/` for details.
