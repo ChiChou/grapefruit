@@ -85,6 +85,9 @@ export function typeFor(filename: string): string {
     case "woff2":
       return "font";
 
+    case "car":
+      return "car";
+
     default:
       return "hex";
   }

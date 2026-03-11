@@ -12,6 +12,7 @@ import {
   Database,
   FileJson,
   FileImage,
+  Layers,
   Type,
   Check,
   X,
@@ -537,6 +538,12 @@ export function FileTable({
                               >
                                 <Type className="mr-2 h-4 w-4" />
                                 {t("font_preview")}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => onPreview(item.name, "car")}
+                              >
+                                <Layers className="mr-2 h-4 w-4" />
+                                Assets.car
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>

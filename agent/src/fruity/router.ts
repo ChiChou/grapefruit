@@ -1,3 +1,4 @@
+import * as assetcatalog from "./modules/assetcatalog.js";
 import * as checksec from "./modules/checksec.js";
 import * as classdump from "./modules/classdump.js";
 import * as cookies from "./modules/cookies.js";
@@ -34,6 +35,7 @@ if (!Process.findModuleByName("UIKit")) {
 }
 
 export default {
+  assetcatalog,
   checksec,
   classdump,
   cookies,

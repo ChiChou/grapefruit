@@ -28,6 +28,7 @@ import {
   Blocks,
   Puzzle,
   ShieldAlert,
+  Layers,
 } from "lucide-react";
 
 import type { PlatformType, ModeType } from "@/context/SessionContext";
@@ -116,6 +117,13 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
     pf("finder_tab", "finder", FolderSearch, "finder", "home_finder_desc", {
       path: "~",
     }),
+    pf(
+      "asset_catalog_tab",
+      "assetCatalog",
+      Layers,
+      "Assets.car",
+      "home_assetcatalog_desc",
+    ),
     pf("handles_tab", "handles", FolderOpen, "lsof", "home_lsof_desc"),
     pf(
       "info_plist_tab",

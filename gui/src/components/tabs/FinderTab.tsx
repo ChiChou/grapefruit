@@ -196,6 +196,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
         plist: "plistPreview",
         xcprivacy: "xcprivacy",
         font: "fontPreview",
+        car: "assetCatalog",
       };
 
       const component = componentMap[type];
