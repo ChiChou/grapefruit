@@ -74,10 +74,6 @@ interface ObjCApi {
   // libobjc - selector
   sel_getName: Fn<NativePointer, [Ptr]>;
   sel_registerName: Fn<NativePointer, [Ptr]>;
-
-  // libdispatch
-  dispatch_async_f: Fn<void, [Ptr, Ptr, Ptr]>;
-  _dispatch_main_q: NativePointer;
 }
 
 export const api = ObjC.api as unknown as ObjCApi;
