@@ -1,27 +1,20 @@
 import { parseArgs } from "node:util";
 import { schema } from "./lib/cli.ts";
-import { reset } from "./lib/reset.ts";
 
 const args = parseArgs(schema);
 if (args.values.help) {
   console.log(`
-Usage: igf [command] [options]
-
-Commands:
-  reset              Remove all data, cache, config and log directories
+Usage: igf [options]
 
 Options:
   --frida <16 | 17>  Specify Frida version to use (default: 17)
   --host <host>      Host to bind the server (default: localhost)
   --port <port>      Port to bind the server (default: 31337)
-  --dry-run          Preview what directories would be removed (with reset)
+  --project <path>   Project directory for data/cache/logs (default: .igf in cwd)
+                     Can also be set via PROJECT_DIR environment variable
   --help, -h         Show this help message
   `);
   process.exit(0);
-}
-
-if (args.positionals.includes("reset")) {
-  reset(Boolean(args.values["dry-run"]));
 }
 
 import("./index.ts");

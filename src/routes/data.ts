@@ -5,7 +5,7 @@ import { createReadStream } from "node:fs";
 import { Readable } from "node:stream";
 import nodePath from "node:path";
 
-import paths from "../lib/paths.ts";
+import env from "../lib/env.ts";
 import { HookStore } from "../lib/store/hooks.ts";
 import { CryptoStore } from "../lib/store/crypto.ts";
 import { NSURLStore } from "../lib/store/nsurl.ts";
@@ -228,7 +228,7 @@ const routes = new Hono()
 
     const filename = `${type}.log`;
     const logPath = nodePath.join(
-      paths.data,
+      nodePath.join(env.workdir, "data"),
       "logs",
       deviceId,
       identifier,
@@ -271,7 +271,7 @@ const routes = new Hono()
     const deviceId = c.req.param("device");
     const identifier = c.req.param("identifier");
 
-    const logsDir = nodePath.join(paths.data, "logs", deviceId, identifier);
+    const logsDir = nodePath.join(nodePath.join(env.workdir, "data"), "logs", deviceId, identifier);
     await fs.rm(logsDir, { recursive: true, force: true });
 
     return c.body(null, 204);
@@ -282,14 +282,14 @@ const routes = new Hono()
   .route("/", jniRoutes)
   .route("/", flutterRoutes)
   // NSURL endpoints (not factored — different pattern)
-  .get("/history/nsurl/:device/:identifier/har", (c) => {
+  .get("/history/nsurl/:device/:identifier/har", async (c) => {
     const deviceId = c.req.param("device");
     const identifier = c.req.param("identifier");
 
     try {
       const nsurlStore = new NSURLStore(deviceId, identifier);
       const requests = nsurlStore.query({ limit: 10000, offset: 0 });
-      const har = toHAR(requests);
+      const har = await toHAR(requests);
 
       c.header(
         "Content-Disposition",
@@ -370,14 +370,14 @@ const routes = new Hono()
     },
   )
   // HTTP (Android) endpoints — same pattern as NSURL
-  .get("/history/http/:device/:identifier/har", (c) => {
+  .get("/history/http/:device/:identifier/har", async (c) => {
     const deviceId = c.req.param("device");
     const identifier = c.req.param("identifier");
 
     try {
       const httpStore = new HttpStore(deviceId, identifier);
       const requests = httpStore.query({ limit: 10000, offset: 0 });
-      const har = toHAR(requests);
+      const har = await toHAR(requests);
 
       c.header(
         "Content-Disposition",

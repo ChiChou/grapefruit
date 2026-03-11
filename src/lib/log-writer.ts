@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import paths from "./paths.ts";
+import env from "./env.ts";
 
 export class LogWriter {
   private syslog: fs.FileHandle;
@@ -13,7 +13,7 @@ export class LogWriter {
   }
 
   static async open(deviceId: string, identifier: string): Promise<LogWriter> {
-    const logsDir = path.join(paths.data, "logs", deviceId, identifier);
+    const logsDir = path.join(env.workdir, "data", "logs", deviceId, identifier);
     await fs.mkdir(logsDir, { recursive: true });
     const [syslog, agentLog] = await Promise.all([
       fs.open(path.join(logsDir, "syslog.log"), "a"),

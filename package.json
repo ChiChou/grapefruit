@@ -49,7 +49,6 @@
     "@types/bun": "^1.3.6",
     "better-sqlite3": "^12.6.2",
     "drizzle-orm": "^0.45.1",
-    "env-paths": "^4.0.0",
     "frida": "^17.6.2",
     "frida-remote-stream": "^6.0.3",
     "frida16": "npm:frida@^16.7.19",

@@ -4,7 +4,7 @@ import fs from "node:fs/promises";
 import nodePath from "node:path";
 
 import app from "../app.ts";
-import paths from "../lib/paths.ts";
+import env from "../lib/env.ts";
 import { HookStore } from "../lib/store/hooks.ts";
 import { CryptoStore } from "../lib/store/crypto.ts";
 import { NSURLStore } from "../lib/store/nsurl.ts";
@@ -151,7 +151,7 @@ describe("API tests", () => {
 });
 
 describe("Logs API", () => {
-  const logsDir = nodePath.join(paths.data, "logs", device, identifier);
+  const logsDir = nodePath.join(nodePath.join(env.workdir, "data"), "logs", device, identifier);
 
   afterEach(async () => {
     await fs.rm(logsDir, { recursive: true, force: true });

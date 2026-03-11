@@ -1,11 +1,14 @@
+import fs from "node:fs";
 import path from "node:path";
 
 import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import * as schema from "../schema.ts";
-import paths from "../paths.ts";
+import env from "../env.ts";
 import { asset } from "../assets.ts";
 
-const dbPath = path.join(paths.data, "data.db");
+const dbDir = path.join(env.workdir, "data");
+await fs.promises.mkdir(dbDir, { recursive: true });
+const dbPath = path.join(dbDir, "data.db");
 const migrationsFolder = await asset("drizzle");
 
 // workaround to support both bun and node.js runtime

@@ -1,4 +1,6 @@
+import fs from "node:fs/promises";
 import { hostname } from "node:os";
+import path from "node:path";
 import { parseArgs } from "node:util";
 
 import { schema } from "./cli.ts";
@@ -8,7 +10,13 @@ const { values: argv } = parseArgs(schema);
 const dev = process.env.NODE_ENV === "development";
 const production = process.env.NODE_ENV === "production";
 
-const mapping = { frida: "FRIDA_VERSION", host: "HOST", port: "PORT" } as const;
+const mapping = {
+  frida: "FRIDA_VERSION",
+  host: "HOST",
+  port: "PORT",
+  project: "PROJECT_DIR",
+} as const;
+
 for (const [argKey, envKey] of Object.entries(mapping)) {
   if (argv[argKey as keyof typeof mapping] && process.env[envKey]) {
     console.warn(
@@ -25,6 +33,10 @@ const port = parseInt(argv.port as string, 10) || 31337;
 const frontend = dev ? 3000 : port;
 const envAsNumber = (name: string, defaultValue: number) =>
   parseInt(process.env[name.toUpperCase()] || "0") || defaultValue;
+
+const workdir =
+  (typeof argv.project === "string" ? argv.project : process.env.PROJECT_DIR) ||
+  path.join(process.cwd(), ".igf");
 
 const frida =
   parseInt(argv.frida as string, 10) || envAsNumber("FRIDA_VERSION", 17);
@@ -47,4 +59,5 @@ export default {
   port: envAsNumber(dev ? "BACKEND_PORT" : "PORT", port),
   frontend: envAsNumber("WEB_PORT", frontend),
   timeout: envAsNumber("FRIDA_TIMEOUT", 1000),
+  workdir,
 };

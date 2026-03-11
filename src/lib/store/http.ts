@@ -1,11 +1,11 @@
 import { randomUUID } from "node:crypto";
-import fs from "node:fs";
+import fs from "node:fs/promises";
 import nodePath from "node:path";
 import { eq, and, desc, count as countFn } from "drizzle-orm";
 
 import { httpRequests } from "../schema.ts";
 import { db } from "./db.ts";
-import paths from "../paths.ts";
+import env from "../env.ts";
 import type { CapturedRequest } from "./nsurl.ts";
 
 export interface HttpEvent {
@@ -127,7 +127,7 @@ export class HttpStore {
   ) {}
 
   get attachmentsDir(): string {
-    return nodePath.join(paths.cache, this.deviceId, this.identifier);
+    return nodePath.join(env.workdir, "cache", this.deviceId, this.identifier);
   }
 
   upsert(event: HttpEvent): string | null {
@@ -272,7 +272,7 @@ export class HttpStore {
 
     rows.forEach((row) => {
       if (!row.attachment) return;
-      fs.promises.unlink(row.attachment).catch(() => {});
+      fs.unlink(row.attachment).catch(() => {});
     });
 
     db.delete(httpRequests)

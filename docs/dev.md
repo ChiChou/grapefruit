@@ -70,8 +70,9 @@ Each workspace has its own `package.json`. The root `prepare` script handles bui
 | `FRIDA_TIMEOUT` | `1000`                              | Device discovery timeout (ms)                     |
 | `NODE_ENV`      | —                                   | `development` or `production`                     |
 | `SQLITE`        | —                                   | Set to `better-sqlite3` for Node.js compatibility |
+| `PROJECT_DIR`   | `.igf` in current working directory | Data directory (database, cache, logs)             |
 
-CLI arguments (`--frida`, `--host`, `--port`) take precedence over environment variables.
+CLI arguments (`--frida`, `--host`, `--port`, `--project`) take precedence over environment variables.
 
 ## Build Targets
 
@@ -143,7 +144,4 @@ Coverage output goes to `coverage/lcov.info`.
   frida -U -F -l agent/src/fruity/index.ts \
     -e 'rpc.exports.invoke("info", "processInfo", [])' -q
   ```
-- Data (logs, database, cache) is stored in platform-specific locations:
-  - macOS: `~/Library/Application Support/igf`
-  - Linux: `~/.local/share/igf`
-  - Windows: `%APPDATA%\igf`
+- Data (logs, database, cache) is stored in `.igf/` under the current working directory by default. Use `--project <path>` or the `PROJECT_DIR` environment variable to override.

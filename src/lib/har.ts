@@ -1,4 +1,4 @@
-import fs from "node:fs";
+import fs from "node:fs/promises";
 import type { CapturedRequest } from "./store/nsurl.ts";
 
 interface HARNameValue {
@@ -78,13 +78,13 @@ function isTextMime(mimeType: string): boolean {
   return TEXT_MIME_PREFIXES.some((p) => lower.startsWith(p));
 }
 
-function readAttachment(
+async function readAttachment(
   path: string | null | undefined,
   mimeType: string,
-): { text?: string; encoding?: string } {
+): Promise<{ text?: string; encoding?: string }> {
   if (!path) return {};
   try {
-    const buf = fs.readFileSync(path);
+    const buf = await fs.readFile(path);
     if (buf.length === 0) return {};
     if (isTextMime(mimeType)) {
       return { text: buf.toString("utf-8") };
@@ -114,61 +114,63 @@ function statusText(code: number): string {
   return map[code] ?? "";
 }
 
-export function toHAR(requests: CapturedRequest[]) {
-  const entries: HAREntry[] = requests.map((req) => {
-    const mime = req.mimeType ?? "";
-    const body = readAttachment(req.attachment, mime);
-    const requestBodySize = req.requestBody
-      ? Buffer.byteLength(req.requestBody, "utf-8")
-      : 0;
+export async function toHAR(requests: CapturedRequest[]) {
+  const entries: HAREntry[] = await Promise.all(
+    requests.map(async (req) => {
+      const mime = req.mimeType ?? "";
+      const body = await readAttachment(req.attachment, mime);
+      const requestBodySize = req.requestBody
+        ? Buffer.byteLength(req.requestBody, "utf-8")
+        : 0;
 
-    return {
-      startedDateTime: new Date(req.startTime).toISOString(),
-      time: req.duration ?? 0,
-      request: {
-        method: req.method || "GET",
-        url: req.url,
-        httpVersion: "HTTP/1.1",
-        cookies: [],
-        headers: headersToList(req.requestHeaders),
-        queryString: parseQueryString(req.url),
-        ...(req.requestBody
-          ? {
-              postData: {
-                mimeType:
-                  req.requestHeaders?.["Content-Type"] ??
-                  req.requestHeaders?.["content-type"] ??
-                  "application/octet-stream",
-                text: req.requestBody,
-              },
-            }
-          : {}),
-        headersSize: -1,
-        bodySize: requestBodySize,
-      },
-      response: {
-        status: req.statusCode ?? 0,
-        statusText: statusText(req.statusCode ?? 0),
-        httpVersion: "HTTP/1.1",
-        cookies: [],
-        headers: headersToList(req.responseHeaders),
-        content: {
-          size: req.size,
-          mimeType: mime,
-          ...body,
+      return {
+        startedDateTime: new Date(req.startTime).toISOString(),
+        time: req.duration ?? 0,
+        request: {
+          method: req.method || "GET",
+          url: req.url,
+          httpVersion: "HTTP/1.1",
+          cookies: [],
+          headers: headersToList(req.requestHeaders),
+          queryString: parseQueryString(req.url),
+          ...(req.requestBody
+            ? {
+                postData: {
+                  mimeType:
+                    req.requestHeaders?.["Content-Type"] ??
+                    req.requestHeaders?.["content-type"] ??
+                    "application/octet-stream",
+                  text: req.requestBody,
+                },
+              }
+            : {}),
+          headersSize: -1,
+          bodySize: requestBodySize,
         },
-        redirectURL: "",
-        headersSize: -1,
-        bodySize: req.size,
-      },
-      cache: {},
-      timings: {
-        send: 0,
-        wait: req.duration ?? 0,
-        receive: 0,
-      },
-    };
-  });
+        response: {
+          status: req.statusCode ?? 0,
+          statusText: statusText(req.statusCode ?? 0),
+          httpVersion: "HTTP/1.1",
+          cookies: [],
+          headers: headersToList(req.responseHeaders),
+          content: {
+            size: req.size,
+            mimeType: mime,
+            ...body,
+          },
+          redirectURL: "",
+          headersSize: -1,
+          bodySize: req.size,
+        },
+        cache: {},
+        timings: {
+          send: 0,
+          wait: req.duration ?? 0,
+          receive: 0,
+        },
+      };
+    }),
+  );
 
   return {
     log: {

@@ -3,7 +3,6 @@ import path from "node:path";
 import { readFile } from "node:fs/promises";
 
 import env from "./env.ts";
-import paths from "./paths.ts";
 
 // bun does not support embedded directory as a tree
 // extract assets when it's not present
@@ -18,7 +17,7 @@ async function extract(): Promise<string> {
 
   // this name includes hash
   const name = tar.default.split("/").pop()!;
-  const output = path.join(paths.cache, name);
+  const output = path.join(env.workdir, "cache", name);
   console.log("assets directory:", output);
   const exists = await fs
     .stat(output)
