@@ -418,7 +418,7 @@ export function CryptoResultsView() {
   const handleRowsRendered = useCallback(
     (visibleRows: { startIndex: number; stopIndex: number }) => {
       const isNearBottom = visibleRows.stopIndex >= entries.length - 3;
-      setAutoScroll(isNearBottom);
+      setAutoScroll((prev) => (prev === isNearBottom ? prev : isNearBottom));
     },
     [entries.length],
   );
@@ -434,6 +434,7 @@ export function CryptoResultsView() {
     () => ({ entries, selectedId, onSelect: handleSelect }),
     [entries, selectedId, handleSelect],
   );
+  const listStyle = useMemo(() => ({ height: listHeight, width: "100%" as const }), [listHeight]);
 
   const isDisabled = status !== Status.Ready;
 
@@ -504,7 +505,7 @@ export function CryptoResultsView() {
             ) : (
               <List
                 listRef={listRef}
-                style={{ height: listHeight, width: "100%" }}
+                style={listStyle}
                 rowCount={entries.length}
                 rowHeight={ROW_HEIGHT}
                 rowProps={rowProps}

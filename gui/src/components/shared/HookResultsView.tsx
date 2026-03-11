@@ -234,6 +234,9 @@ const mapHistory = (record: Record<string, unknown>, id: number): HookEntry | nu
   };
 };
 
+const mapHistoryNonNull = (record: Record<string, unknown>, id: number): HookEntry =>
+  mapHistory(record, id)!;
+
 const mapSocket = (id: number, ...args: unknown[]): HookEntry | null => {
   const message = args[0] as BaseHookMessage;
   if (message.category === "crypto") return null;
@@ -254,7 +257,7 @@ export function HookResultsView() {
     event: "hook",
     path: "hooks",
     key: "hooks",
-    fromRecord: (record, id) => mapHistory(record, id)!,
+    fromRecord: mapHistoryNonNull,
     fromEvent: mapSocket,
     max: 10000,
   });
@@ -294,7 +297,7 @@ export function HookResultsView() {
   const handleRowsRendered = useCallback(
     (visibleRows: { startIndex: number; stopIndex: number }) => {
       const isNearBottom = visibleRows.stopIndex >= filteredEntries.length - 3;
-      setAutoScroll(isNearBottom);
+      setAutoScroll((prev) => (prev === isNearBottom ? prev : isNearBottom));
     },
     [filteredEntries.length],
   );
@@ -307,6 +310,7 @@ export function HookResultsView() {
   }, [filteredEntries.length]);
 
   const rowProps: HookRowProps = useMemo(() => ({ entries: filteredEntries, t }), [filteredEntries, t]);
+  const listStyle = useMemo(() => ({ height: listHeight, width: "100%" as const }), [listHeight]);
 
   return (
     <div className="h-full flex flex-col">
@@ -347,7 +351,7 @@ export function HookResultsView() {
         ) : (
           <List
             listRef={listRef}
-            style={{ height: listHeight, width: "100%" }}
+            style={listStyle}
             rowCount={filteredEntries.length}
             rowHeight={ROW_HEIGHT}
             rowProps={rowProps}
