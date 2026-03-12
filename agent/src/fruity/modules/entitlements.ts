@@ -1,8 +1,8 @@
 import ObjC from "frida-objc-bridge";
 
 import cf from "@/fruity/native/corefoundation.js";
-import { NSData } from "@/fruity/typings.js";
-import { dump, toJSON, toXML } from "@/fruity/lib/plist.js";
+import security from "@/fruity/native/security.js";
+import { dump } from "@/fruity/lib/plist.js";
 
 const kSecCSDefaultFlags = 0;
 // const kSecCSInternalInformation = 1 << 0;
@@ -16,28 +16,11 @@ export interface Entitlements {
 }
 
 function dictionary(url: ObjC.Object): NativePointer {
-  ObjC.classes.NSBundle.bundleWithPath_(
-    "/System/Library/Frameworks/Security.framework",
-  ).load();
-
-  const Security = Process.getModuleByName("Security");
-
-  const SecStaticCodeCreateWithPath = new NativeFunction(
-    Security.findExportByName("SecStaticCodeCreateWithPath")!,
-    "int",
-    ["pointer", "uint32", "pointer"],
-  );
-
-  const kSecCodeInfoEntitlementsDict = Security.findExportByName(
-    "kSecCodeInfoEntitlementsDict",
-  )!.readPointer();
-
-  const SecCodeCopySigningInformation = new NativeFunction(
-    Security.findExportByName("SecCodeCopySigningInformation")!,
-    "int",
-    ["pointer", "uint32", "pointer"],
-  );
-
+  const {
+    SecStaticCodeCreateWithPath,
+    SecCodeCopySigningInformation,
+    kSecCodeInfoEntitlementsDict,
+  } = security();
   const { CFRetain, CFRelease } = cf();
 
   const pCodeRef = Memory.alloc(Process.pointerSize);
@@ -85,6 +68,8 @@ function fromPath(path?: string) {
 }
 
 export function plist(path?: string) {
+  if (!ObjC.available) throw new Error("unsupported platform");
+
   const dict = fromPath(path);
   try {
     return dump(new ObjC.Object(dict));

@@ -29,6 +29,15 @@ let cached: {
     NativePointer,
     [NativePointerValue]
   >;
+  SecStaticCodeCreateWithPath: NativeFunction<
+    number,
+    [NativePointerValue, number, NativePointerValue]
+  >;
+  SecCodeCopySigningInformation: NativeFunction<
+    number,
+    [NativePointerValue, number, NativePointerValue]
+  >;
+  kSecCodeInfoEntitlementsDict: NativePointer;
   Security: Module;
 };
 
@@ -93,6 +102,22 @@ export default function api() {
     ["pointer"],
   );
 
+  const SecStaticCodeCreateWithPath = new NativeFunction(
+    Security.getExportByName("SecStaticCodeCreateWithPath"),
+    "int",
+    ["pointer", "uint32", "pointer"],
+  );
+
+  const SecCodeCopySigningInformation = new NativeFunction(
+    Security.getExportByName("SecCodeCopySigningInformation"),
+    "int",
+    ["pointer", "uint32", "pointer"],
+  );
+
+  const kSecCodeInfoEntitlementsDict = Security.getExportByName(
+    "kSecCodeInfoEntitlementsDict",
+  ).readPointer();
+
   cached = {
     SecItemCopyMatching,
     SecItemAdd,
@@ -103,6 +128,9 @@ export default function api() {
     SecAccessControlGetRequirePassword,
     SecAccessControlGetConstraint,
     SecAccessControlGetConstraints,
+    SecStaticCodeCreateWithPath,
+    SecCodeCopySigningInformation,
+    kSecCodeInfoEntitlementsDict,
     Security,
   };
 
