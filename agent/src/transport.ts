@@ -3,6 +3,7 @@ import Java from "frida-java-bridge";
 
 import { mkdirp as objcMkdirp } from "./fruity/modules/fs.js";
 import { mkdirp as javaMkdirp } from "./droid/modules/fs.js";
+import { parseMachO, readEncryptionInfo } from "./fruity/parser/macho.js";
 
 import fs from "fs";
 import path from "path";
@@ -12,55 +13,9 @@ rpc.exports.len = function (path: string) {
   return fs.statSync(path).size;
 };
 
-const MH_MAGIC_64 = 0xfeedfacf;
+const LC_ENCRYPTION_INFO = 0x21;
 const LC_ENCRYPTION_INFO_64 = 0x2c;
-const HEADER_SIZE_64 = 8 * 4; // 32 bytes
 const DUMP_CHUNK_SIZE = 1024 * 1024; // 1MB
-
-interface EncryptionInfo {
-  cryptoff: number;
-  cryptsize: number;
-  cryptid: number;
-  encCmdOffset: number;
-}
-
-function parseEncryptionInfo(path: string): EncryptionInfo | null {
-  const fd = new File(path, "r");
-  try {
-    const headerBuf = fd.readBytes(HEADER_SIZE_64);
-    const header = new DataView(headerBuf);
-
-    const magic = header.getUint32(0, true);
-    if (magic !== MH_MAGIC_64) return null;
-
-    const ncmds = header.getUint32(16, true);
-    const sizeOfCmds = header.getUint32(20, true);
-
-    const cmdsBuf = fd.readBytes(sizeOfCmds);
-    const cmds = new DataView(cmdsBuf);
-
-    let offset = 0;
-    for (let i = 0; i < ncmds && offset + 8 <= cmdsBuf.byteLength; i++) {
-      const cmd = cmds.getUint32(offset, true);
-      const cmdsize = cmds.getUint32(offset + 4, true);
-
-      if (cmd === LC_ENCRYPTION_INFO_64) {
-        return {
-          cryptoff: cmds.getUint32(offset + 8, true),
-          cryptsize: cmds.getUint32(offset + 12, true),
-          cryptid: cmds.getUint32(offset + 16, true),
-          encCmdOffset: HEADER_SIZE_64 + offset,
-        };
-      }
-
-      offset += cmdsize;
-    }
-
-    return null;
-  } finally {
-    fd.close();
-  }
-}
 
 function waitForAck() {
   recv("ack", () => {}).wait();
@@ -118,28 +73,38 @@ function streamFromMemory(base: NativePointer, offset: number, size: number) {
   }
 }
 
-rpc.exports.dump = function (path: string): void {
-  let fileSize: number;
-  try {
-    fileSize = fs.statSync(path).size;
-  } catch {
-    send({ event: "error", message: `file not found: ${path}` });
+rpc.exports.dump = function (filePath: string): void {
+  if (Process.platform !== "darwin") {
+    send({ event: "error", message: "dump is only supported on iOS" });
     return;
   }
 
-  const encInfo = parseEncryptionInfo(path);
+  let fileSize: number;
+  try {
+    fileSize = fs.statSync(filePath).size;
+  } catch {
+    send({ event: "error", message: `file not found: ${filePath}` });
+    return;
+  }
+
+  const mod = Module.load(filePath);
+  const macho = parseMachO(mod);
+  const encLC = macho.loadCommands.find(
+    (lc) => lc.cmd === LC_ENCRYPTION_INFO_64 || lc.cmd === LC_ENCRYPTION_INFO,
+  );
+  const encInfo = encLC ? readEncryptionInfo(encLC) : null;
 
   if (!encInfo || encInfo.cryptid === 0) {
     send({ event: "info", size: fileSize });
     waitForAck();
-    streamFromDisk(path, 0, fileSize);
+    streamFromDisk(filePath, 0, fileSize);
     send({ event: "end" });
     return;
   }
 
-  const mod = Module.load(path);
   const range = Process.findRangeByAddress(mod.base);
   const fatOffset = range!.file!.offset;
+  const encCmdOffset = encLC!.ptr.sub(mod.base).toInt32();
 
   send({ event: "info", size: fileSize });
   waitForAck();
@@ -148,8 +113,8 @@ rpc.exports.dump = function (path: string): void {
   const phaseASize = fatOffset + encInfo.cryptoff;
   if (phaseASize > 0) {
     const zeroPatch = new ArrayBuffer(12);
-    streamFromDisk(path, 0, phaseASize, {
-      offset: fatOffset + encInfo.encCmdOffset + 8,
+    streamFromDisk(filePath, 0, phaseASize, {
+      offset: fatOffset + encCmdOffset + 8,
       data: zeroPatch,
     });
   }
@@ -161,7 +126,7 @@ rpc.exports.dump = function (path: string): void {
   const phaseCStart = fatOffset + encInfo.cryptoff + encInfo.cryptsize;
   const phaseCSize = fileSize - phaseCStart;
   if (phaseCSize > 0) {
-    streamFromDisk(path, phaseCStart, phaseCSize);
+    streamFromDisk(filePath, phaseCStart, phaseCSize);
   }
 
   send({ event: "end" });
