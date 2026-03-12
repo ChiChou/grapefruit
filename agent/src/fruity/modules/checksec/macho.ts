@@ -33,7 +33,7 @@ const LC_RPATH = 0x8000001c;
 
 function checkCanary(macho: MachOParsed): boolean {
   const valid = (s: ModuleSymbolDetails | ModuleImportDetails) => {
-    return s.name === "___stack_chk_fail" || s.name === "___stack_chk_guard";
+    return s.name === "__stack_chk_fail" || s.name === "__stack_chk_guard";
   };
 
   return macho.symbols.some(valid) || macho.imports.some(valid);
