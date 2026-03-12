@@ -173,7 +173,7 @@ export function JNITab() {
   // Sync initial active state from agent
   const { data: initialActive } = useQuery({
     queryKey: ["jniActive", device],
-    queryFn: () => droid!.taps.active(TAP_ID),
+    queryFn: () => droid!.pins.active(TAP_ID),
     enabled: status === Status.Ready && !!droid,
   });
 
@@ -192,9 +192,9 @@ export function JNITab() {
     mutationFn: async (enable: boolean) => {
       if (!droid) return;
       if (enable) {
-        await droid.taps.start(TAP_ID);
+        await droid.pins.start(TAP_ID);
       } else {
-        await droid.taps.stop(TAP_ID);
+        await droid.pins.stop(TAP_ID);
       }
     },
     onSuccess: (_, enable) => {

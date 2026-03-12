@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSession, Status } from "@/context/SessionContext";
 import { useDroidQuery } from "@/lib/queries";
 
-interface TapInfo {
+interface PinInfo {
   id: string;
   active: boolean;
   available: boolean;
@@ -69,9 +69,9 @@ export function DroidHookControlPanel() {
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [removingHook, setRemovingHook] = useState<string | null>(null);
 
-  const { data: tapList, isLoading: isLoadingStatus } = useDroidQuery<TapInfo[]>(
-    ["tapsList"],
-    (api) => api.taps.list(),
+  const { data: pinList, isLoading: isLoadingStatus } = useDroidQuery<PinInfo[]>(
+    ["pinsList"],
+    (api) => api.pins.list(),
   );
 
   const {
@@ -83,14 +83,14 @@ export function DroidHookControlPanel() {
   );
 
   useEffect(() => {
-    if (tapList) {
+    if (pinList) {
       const statusMap: Record<string, boolean> = {};
-      for (const tap of tapList) {
-        statusMap[tap.id] = tap.active;
+      for (const pin of pinList) {
+        statusMap[pin.id] = pin.active;
       }
       setHookStatus(statusMap);
     }
-  }, [tapList]);
+  }, [pinList]);
 
   useEffect(() => {
     const handleRefresh = () => { refetchUserHooks(); };
@@ -105,9 +105,9 @@ export function DroidHookControlPanel() {
 
     try {
       if (enabled) {
-        await droid.taps.start(groupId);
+        await droid.pins.start(groupId);
       } else {
-        await droid.taps.stop(groupId);
+        await droid.pins.stop(groupId);
       }
       setHookStatus((prev) => ({ ...prev, [groupId]: enabled }));
     } catch (error) {

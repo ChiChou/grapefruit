@@ -38,7 +38,7 @@ script.exports.interfaces()
 
 ### `restore(rules)`
 
-Restores previously saved hook rules (taps). Called automatically on session start to re-establish hooks from a prior session:
+Restores previously saved hook rules (pins). Called automatically on session start to re-establish hooks from a prior session:
 
 ```typescript
 script.exports.restore([
@@ -186,8 +186,8 @@ All endpoints are prefixed with `/api`.
 | `GET` | `/history/nsurl/:device/:identifier` | Query network request logs |
 | `DELETE` | `/history/nsurl/:device/:identifier` | Clear network request logs |
 | `GET` | `/history/nsurl/:device/:identifier/attachment/:requestId` | Download request body |
-| `GET` | `/taps/:device/:identifier` | Load tap snapshot |
-| `DELETE` | `/taps/:device/:identifier` | Clear tap snapshot |
+| `GET` | `/pins/:device/:identifier` | Load pin snapshot |
+| `DELETE` | `/pins/:device/:identifier` | Clear pin snapshot |
 
 Query parameters for history endpoints: `limit`, `offset`, `since`, `category` (hooks), `method` (JNI).
 
@@ -205,15 +205,15 @@ Query parameters for history endpoints: `limit`, `offset`, `since`, `category` (
 
 2. **Frontend** emits Socket.IO RPC:
    ```javascript
-   socket.emit("rpc", "taps", "add", [{ category: "objc", symbol: "..." }], callback)
+   socket.emit("rpc", "pins", "add", [{ category: "objc", symbol: "..." }], callback)
    ```
 
 3. **Server** (`ws.ts`) receives the `rpc` event and calls:
    ```javascript
-   script.exports.invoke("taps", "add", [{ category: "objc", symbol: "..." }])
+   script.exports.invoke("pins", "add", [{ category: "objc", symbol: "..." }])
    ```
 
-4. **Agent** (`common/taps.ts`) installs the Interceptor hook in the target process
+4. **Agent** (`common/pins.ts`) installs the Interceptor hook in the target process
 
 5. **Agent** sends hook events back via `send()` when the hooked method is called
 
@@ -224,7 +224,7 @@ Query parameters for history endpoints: `limit`, `offset`, `since`, `category` (
 
 7. **Frontend** receives the `hook` event, updates TanStack Query cache, and renders the log entry
 
-8. **Server** auto-saves the tap snapshot after changes via `script.exports.snapshot()`, persisted to disk for session recovery
+8. **Server** auto-saves the pin snapshot after changes via `script.exports.snapshot()`, persisted to disk for session recovery
 
 ### Example: Browsing the Filesystem
 

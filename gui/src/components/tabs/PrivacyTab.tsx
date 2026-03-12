@@ -252,7 +252,7 @@ export function PrivacyTab() {
   // Sync initial active state
   const { data: initialActive } = useQuery({
     queryKey: ["privacyActive", platform, device],
-    queryFn: () => agent!.taps.active(TAP_ID),
+    queryFn: () => agent!.pins.active(TAP_ID),
     enabled: status === Status.Ready && !!agent,
   });
 
@@ -269,9 +269,9 @@ export function PrivacyTab() {
     mutationFn: async (enable: boolean) => {
       if (!agent) return;
       if (enable) {
-        await agent.taps.start(TAP_ID);
+        await agent.pins.start(TAP_ID);
       } else {
-        await agent.taps.stop(TAP_ID);
+        await agent.pins.stop(TAP_ID);
       }
     },
     onSuccess: (_, enable) => {

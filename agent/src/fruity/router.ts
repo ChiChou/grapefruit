@@ -20,7 +20,7 @@ import * as url from "./modules/url.js";
 import * as userdefaults from "./modules/userdefaults.js";
 import * as webview from "./modules/webview.js";
 
-import * as taps from "./taps.js";
+import * as pins from "./pins.js";
 
 import * as memory from "@/common/memory.js";
 import * as native from "@/common/hooks/native.js";
@@ -57,7 +57,7 @@ export default {
   sqlite,
   symbol,
   syslog,
-  taps,
+  pins,
   threads,
   ui,
   uidevice,

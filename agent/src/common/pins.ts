@@ -1,10 +1,10 @@
-export interface TapInfo {
+export interface PinInfo {
   id: string;
   active: boolean;
   available: boolean;
 }
 
-export type TapRule =
+export type PinRule =
   | { type: "builtin"; id: string }
   | { type: "objc"; cls: string; sel: string }
   | {
@@ -13,4 +13,3 @@ export type TapRule =
       name: string;
       sig?: { args: string[]; returns: string };
     };
-

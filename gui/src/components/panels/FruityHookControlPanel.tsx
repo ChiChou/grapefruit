@@ -16,7 +16,7 @@ import { useSession, Status } from "@/context/SessionContext";
 import { useFruityQuery } from "@/lib/queries";
 import { FruityUserHooksList } from "./FruityUserHooksList";
 
-interface TapInfo {
+interface PinInfo {
   id: string;
   active: boolean;
   available: boolean;
@@ -68,22 +68,22 @@ export function FruityHookControlPanel() {
   const [hookStatus, setHookStatus] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
 
-  // Fetch tap status from agent via taps.list() RPC
-  const { data: tapList, isLoading: isLoadingStatus } = useFruityQuery<TapInfo[]>(
-    ["tapsList"],
-    (api) => api.taps.list(),
+  // Fetch pin status from agent via pins.list() RPC
+  const { data: pinList, isLoading: isLoadingStatus } = useFruityQuery<PinInfo[]>(
+    ["pinsList"],
+    (api) => api.pins.list(),
   );
 
-  // Update local state when tap list is fetched
+  // Update local state when pin list is fetched
   useEffect(() => {
-    if (tapList) {
+    if (pinList) {
       const statusMap: Record<string, boolean> = {};
-      for (const tap of tapList) {
-        statusMap[tap.id] = tap.active;
+      for (const pin of pinList) {
+        statusMap[pin.id] = pin.active;
       }
       setHookStatus(statusMap);
     }
-  }, [tapList]);
+  }, [pinList]);
 
   const handleToggle = async (groupId: string, enabled: boolean) => {
     if (!fruity) return;
@@ -92,9 +92,9 @@ export function FruityHookControlPanel() {
 
     try {
       if (enabled) {
-        await fruity.taps.start(groupId);
+        await fruity.pins.start(groupId);
       } else {
-        await fruity.taps.stop(groupId);
+        await fruity.pins.stop(groupId);
       }
       setHookStatus((prev) => ({ ...prev, [groupId]: enabled }));
     } catch (error) {

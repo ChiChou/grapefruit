@@ -11,7 +11,7 @@ import { NSURLStore } from "../lib/store/nsurl.ts";
 import { FlutterStore } from "../lib/store/flutter.ts";
 import { JNIStore } from "../lib/store/jni.ts";
 import { XPCStore } from "../lib/store/xpc.ts";
-import { createTapStore } from "../lib/store/taps.ts";
+import { createPinStore } from "../lib/store/pins.ts";
 
 const device = "test-device";
 const identifier = "com.test.app";
@@ -806,20 +806,20 @@ describe("XPC Logs API", () => {
   });
 });
 
-describe("Taps API", () => {
+describe("Pins API", () => {
   afterEach(() => {
-    createTapStore(device, identifier).clear();
+    createPinStore(device, identifier).clear();
   });
 
-  it("should return null for empty taps", async () => {
-    const r = await app.request(`/api/taps/${device}/${identifier}`);
+  it("should return null for empty pins", async () => {
+    const r = await app.request(`/api/pins/${device}/${identifier}`);
     assert.strictEqual(r.status, 200);
     const body = await r.json();
     assert.strictEqual(body, null);
   });
 
-  it("should return saved taps", async () => {
-    const store = createTapStore(device, identifier);
+  it("should return saved pins", async () => {
+    const store = createPinStore(device, identifier);
     const rules = [
       { type: "builtin" as const, id: "crypto" },
       {
@@ -830,7 +830,7 @@ describe("Taps API", () => {
     ];
     store.save(rules);
 
-    const r = await app.request(`/api/taps/${device}/${identifier}`);
+    const r = await app.request(`/api/pins/${device}/${identifier}`);
     assert.strictEqual(r.status, 200);
     const body = await r.json();
     assert.strictEqual(body.length, 2);
@@ -840,16 +840,16 @@ describe("Taps API", () => {
     assert.strictEqual(body[1].cls, "NSURLSession");
   });
 
-  it("should clear taps", async () => {
-    const store = createTapStore(device, identifier);
+  it("should clear pins", async () => {
+    const store = createPinStore(device, identifier);
     store.save([{ type: "builtin" as const, id: "crypto" }]);
 
-    const r = await app.request(`/api/taps/${device}/${identifier}`, {
+    const r = await app.request(`/api/pins/${device}/${identifier}`, {
       method: "DELETE",
     });
     assert.strictEqual(r.status, 204);
 
-    const r2 = await app.request(`/api/taps/${device}/${identifier}`);
+    const r2 = await app.request(`/api/pins/${device}/${identifier}`);
     const body = await r2.json();
     assert.strictEqual(body, null);
   });

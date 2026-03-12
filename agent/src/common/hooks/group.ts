@@ -41,7 +41,7 @@ export function createNative(
 }
 
 /**
- * Java hook entry with tap-style start/stop lifecycle.
+ * Java hook entry with pin-style start/stop lifecycle.
  */
 export interface JavaHookEntry {
   start(): void;

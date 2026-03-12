@@ -300,9 +300,9 @@ export function FruityXPCTab() {
     setHookLoading(true);
     try {
       if (enabled) {
-        await fruity.taps.start("xpc");
+        await fruity.pins.start("xpc");
       } else {
-        await fruity.taps.stop("xpc");
+        await fruity.pins.stop("xpc");
       }
       setHookEnabled(enabled);
     } catch (error) {

@@ -1,4 +1,4 @@
-import type { TapInfo, TapRule } from "@/common/taps.js";
+import type { PinInfo, PinRule } from "@/common/pins.js";
 
 import * as hookGroup from "./hooks/index.js";
 import * as flutter from "./hooks/flutter.js";
@@ -6,7 +6,7 @@ import * as jni from "./hooks/jni.js";
 import * as privacy from "./hooks/privacy.js";
 import * as http from "./hooks/http/common.js";
 
-interface TapEntry {
+interface PinEntry {
   start(): void;
   stop(): void;
   status(): boolean;
@@ -20,7 +20,7 @@ const BUILTIN_GROUPS = [
   "sharedpref",
 ] as const;
 
-const registry = new Map<string, TapEntry>();
+const registry = new Map<string, PinEntry>();
 
 for (const id of BUILTIN_GROUPS) {
   registry.set(id, {
@@ -36,8 +36,8 @@ registry.set("jni", jni);
 registry.set("privacy", privacy);
 registry.set("http", http);
 
-export function list(): TapInfo[] {
-  const result: TapInfo[] = [];
+export function list(): PinInfo[] {
+  const result: PinInfo[] = [];
   for (const [id, entry] of registry) {
     result.push({
       id,
@@ -48,9 +48,9 @@ export function list(): TapInfo[] {
   return result;
 }
 
-function resolve(id: string): TapEntry {
+function resolve(id: string): PinEntry {
   const entry = registry.get(id);
-  if (!entry) throw new Error(`Unknown tap: ${id}`);
+  if (!entry) throw new Error(`Unknown pin: ${id}`);
   return entry;
 }
 
@@ -70,8 +70,8 @@ export function stop(id: string): void {
   resolve(id).stop();
 }
 
-export function snapshot(): TapRule[] {
-  const rules: TapRule[] = [];
+export function snapshot(): PinRule[] {
+  const rules: PinRule[] = [];
 
   for (const [id, entry] of registry) {
     if (entry.status()) {
@@ -82,7 +82,7 @@ export function snapshot(): TapRule[] {
   return rules;
 }
 
-export function restore(rules: TapRule[]): void {
+export function restore(rules: PinRule[]): void {
   for (const rule of rules) {
     try {
       switch (rule.type) {
@@ -91,7 +91,7 @@ export function restore(rules: TapRule[]): void {
           break;
       }
     } catch (e) {
-      console.warn(`taps: failed to restore rule ${JSON.stringify(rule)}:`, e);
+      console.warn(`pins: failed to restore rule ${JSON.stringify(rule)}:`, e);
     }
   }
 }

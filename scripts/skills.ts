@@ -282,7 +282,7 @@ function extractModule(
   }
 
   // Follow imports for types referenced in function signatures but not locally defined
-  // e.g., `import type { TapInfo } from "@/common/taps.js"` used in return types
+  // e.g., `import type { PinInfo } from "@/common/pins.js"` used in return types
   const importMap = new Map<string, string>(); // typeName → resolved file path
   for (const stmt of src.statements) {
     if (
@@ -374,8 +374,8 @@ function parseRouter(
       let category: "common" | "fruity" | "droid";
       if (specifier.startsWith("@/common/")) {
         category = "common";
-      } else if (name === "taps") {
-        // taps is identical on both platforms, treat as common
+      } else if (name === "pins") {
+        // pins is identical on both platforms, treat as common
         category = "common";
       } else {
         category = platform;

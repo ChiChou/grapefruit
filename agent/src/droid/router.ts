@@ -13,7 +13,7 @@ import * as rn from "./modules/rn.js";
 import * as receivers from "./modules/receivers.js";
 import * as services from "./modules/services.js";
 
-import * as taps from "./taps.js";
+import * as pins from "./pins.js";
 
 import * as memory from "@/common/memory.js";
 import * as native from "@/common/hooks/native.js";
@@ -44,6 +44,6 @@ export default {
   sqlite,
   symbol,
   syslog,
-  taps,
+  pins,
   threads,
 };

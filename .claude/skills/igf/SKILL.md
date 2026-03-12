@@ -112,7 +112,7 @@ When the user invokes `/igf`, parse their intent and execute the appropriate API
 | `classes` | `classes.list()` (droid) / `classdump.list("__app__")` (fruity) | List loaded classes |
 | `inspect <class>` | `classes.inspect(name)` / `classdump.inspect(name)` | Inspect class methods/fields |
 
-### Hooks & Taps (RPC: `hook.*`, `taps.*`, `crypto.*`)
+### Hooks & Pins (RPC: `hook.*`, `pins.*`, `crypto.*`)
 
 | Command | RPC | Description |
 |---------|-----|-------------|
@@ -123,9 +123,9 @@ When the user invokes `/igf`, parse their intent and execute the appropriate API
 | `crypto-status` | `crypto.status()` | Crypto hook status |
 | `crypto-start <group>` | `crypto.start(group)` | Start crypto group (droid: cipher/pbkdf/keygen, fruity: cccrypt/x509/hash/hmac) |
 | `crypto-stop <group>` | `crypto.stop(group)` | Stop crypto group |
-| `taps` | `taps.list()` | List all taps with status |
-| `tap-start <id>` | `taps.start(id)` | Start a tap |
-| `tap-stop <id>` | `taps.stop(id)` | Stop a tap |
+| `pins` | `pins.list()` | List all pins with status |
+| `pin-start <id>` | `pins.start(id)` | Start a pin |
+| `pin-stop <id>` | `pins.stop(id)` | Stop a pin |
 
 ### History / Logs (REST)
 

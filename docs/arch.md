@@ -57,7 +57,7 @@ Session lifecycle:
 4. Data stores (HookStore, CryptoStore, etc.) are initialized per session
 5. The `ready` event is emitted with the PID
 6. RPC calls, logs, and hook events are proxied between client and agent
-7. Tap snapshots are persisted after changes
+7. Pin snapshots are persisted after changes
 
 ### Data Stores
 
@@ -70,7 +70,7 @@ Each store class follows a consistent pattern: `append()`, `query()`, `count()`,
 | `NSURLStore`   | SQLite + files | HTTP/HTTPS request logs with body attachments |
 | `FlutterStore` | SQLite         | Flutter method channel events                 |
 | `JNIStore`     | SQLite         | Android JNI call traces                       |
-| `TapStore`     | File system    | Hook rule snapshots for persistence           |
+| `PinStore`     | File system    | Hook rule snapshots for persistence           |
 | `LogWriter`    | File system    | Syslog and agent log streaming                |
 
 Due to the limitation of web UI, there is no project or workspace concept, all data is stored in a global directory and disambiguated by device ID and target identifier (bundle or PID).

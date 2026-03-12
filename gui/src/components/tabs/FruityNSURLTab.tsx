@@ -302,7 +302,7 @@ export function FruityNSURLTab() {
 
   const { data: initialActive } = useFruityQuery<boolean>(
     ["nsurlActive", device ?? "", identifier ?? ""],
-    (api) => api.taps.active(TAP_ID),
+    (api) => api.pins.active(TAP_ID),
   );
 
   // Seed local state from the first successful query; never override manual toggles
@@ -317,9 +317,9 @@ export function FruityNSURLTab() {
     setHookLoading(true);
     try {
       if (enabled) {
-        await fruity.taps.start(TAP_ID);
+        await fruity.pins.start(TAP_ID);
       } else {
-        await fruity.taps.stop(TAP_ID);
+        await fruity.pins.stop(TAP_ID);
       }
       setHookEnabled(enabled);
     } catch (error) {

@@ -347,7 +347,7 @@ export function DroidHttpTab() {
 
   const { data: initialActive } = useDroidQuery<boolean>(
     ["httpActive", device ?? "", identifier ?? ""],
-    (api) => api.taps.active(TAP_ID),
+    (api) => api.pins.active(TAP_ID),
   );
 
   useEffect(() => {
@@ -361,9 +361,9 @@ export function DroidHttpTab() {
     setHookLoading(true);
     try {
       if (enabled) {
-        await droid.taps.start(TAP_ID);
+        await droid.pins.start(TAP_ID);
       } else {
-        await droid.taps.stop(TAP_ID);
+        await droid.pins.stop(TAP_ID);
       }
       setHookEnabled(enabled);
     } catch (error) {

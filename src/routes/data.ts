@@ -15,7 +15,7 @@ import { JNIStore } from "../lib/store/jni.ts";
 import { XPCStore } from "../lib/store/xpc.ts";
 import { HermesStore } from "../lib/store/hermes.ts";
 import { PrivacyStore } from "../lib/store/privacy.ts";
-import { createTapStore } from "../lib/store/taps.ts";
+import { createPinStore } from "../lib/store/pins.ts";
 import { toHAR } from "../lib/har.ts";
 const LOG_TAIL_BYTES = 1024 * 1024; // 1MB
 
@@ -533,23 +533,23 @@ const routes = new Hono()
       return c.text("Failed to clear Hermes records", 500);
     }
   })
-  // Taps snapshot endpoints
-  .get("/taps/:device/:identifier", (c) => {
+  // Pins snapshot endpoints
+  .get("/pins/:device/:identifier", (c) => {
     const deviceId = c.req.param("device");
     const identifier = c.req.param("identifier");
 
-    const store = createTapStore(deviceId, identifier);
+    const store = createPinStore(deviceId, identifier);
     const snapshot = store.load();
     if (!snapshot) {
       return c.json(null);
     }
     return c.json(snapshot);
   })
-  .delete("/taps/:device/:identifier", (c) => {
+  .delete("/pins/:device/:identifier", (c) => {
     const deviceId = c.req.param("device");
     const identifier = c.req.param("identifier");
 
-    createTapStore(deviceId, identifier).clear();
+    createPinStore(deviceId, identifier).clear();
     return c.body(null, 204);
   });
 

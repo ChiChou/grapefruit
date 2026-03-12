@@ -165,7 +165,7 @@ export function FlutterMethodChannelsTab() {
   // Check if flutter is available
   const { data: flutterAvailable, isLoading: flutterLoading } = useQuery({
     queryKey: ["flutterAvailable", platform, device],
-    queryFn: () => api!.taps.available(TAP_ID),
+    queryFn: () => api!.pins.available(TAP_ID),
     enabled: status === Status.Ready && !!api,
     staleTime: Infinity,
     gcTime: 0,
@@ -190,7 +190,7 @@ export function FlutterMethodChannelsTab() {
   // Sync initial active state from agent
   const { data: initialActive } = useQuery({
     queryKey: ["flutterActive", platform, device],
-    queryFn: () => api!.taps.active(TAP_ID),
+    queryFn: () => api!.pins.active(TAP_ID),
     enabled: status === Status.Ready && !!api,
   });
 
@@ -209,9 +209,9 @@ export function FlutterMethodChannelsTab() {
     mutationFn: async (enable: boolean) => {
       if (!api) return;
       if (enable) {
-        await api.taps.start(TAP_ID);
+        await api.pins.start(TAP_ID);
       } else {
-        await api.taps.stop(TAP_ID);
+        await api.pins.stop(TAP_ID);
       }
     },
     onSuccess: (_, enable) => {

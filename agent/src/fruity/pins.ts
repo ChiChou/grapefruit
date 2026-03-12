@@ -1,4 +1,4 @@
-import type { TapInfo, TapRule } from "@/common/taps.js";
+import type { PinInfo, PinRule } from "@/common/pins.js";
 
 import * as hookGroup from "./hooks/index.js";
 import * as nsurl from "./hooks/url/index.js";
@@ -8,7 +8,7 @@ import * as privacy from "./hooks/privacy/index.js";
 import * as objc from "./hooks/objc.js";
 import * as native from "@/common/hooks/native.js";
 
-interface TapEntry {
+interface PinEntry {
   start(): void;
   stop(): void;
   status(): boolean;
@@ -23,7 +23,7 @@ const BUILTIN_GROUPS = [
   "fileops",
 ] as const;
 
-const registry = new Map<string, TapEntry>();
+const registry = new Map<string, PinEntry>();
 
 // Register built-in hook groups
 for (const id of BUILTIN_GROUPS) {
@@ -40,8 +40,8 @@ registry.set("flutter", flutter);
 registry.set("xpc", xpc);
 registry.set("privacy", privacy);
 
-export function list(): TapInfo[] {
-  const result: TapInfo[] = [];
+export function list(): PinInfo[] {
+  const result: PinInfo[] = [];
   for (const [id, entry] of registry) {
     result.push({
       id,
@@ -52,9 +52,9 @@ export function list(): TapInfo[] {
   return result;
 }
 
-function resolve(id: string): TapEntry {
+function resolve(id: string): PinEntry {
   const entry = registry.get(id);
-  if (!entry) throw new Error(`Unknown tap: ${id}`);
+  if (!entry) throw new Error(`Unknown pin: ${id}`);
   return entry;
 }
 
@@ -74,10 +74,10 @@ export function stop(id: string): void {
   resolve(id).stop();
 }
 
-export function snapshot(): TapRule[] {
-  const rules: TapRule[] = [];
+export function snapshot(): PinRule[] {
+  const rules: PinRule[] = [];
 
-  // Collect active built-in taps
+  // Collect active built-in pins
   for (const [id, entry] of registry) {
     if (entry.status()) {
       rules.push({ type: "builtin", id });
@@ -97,7 +97,7 @@ export function snapshot(): TapRule[] {
   return rules;
 }
 
-export function restore(rules: TapRule[]): void {
+export function restore(rules: PinRule[]): void {
   for (const rule of rules) {
     try {
       switch (rule.type) {
@@ -112,7 +112,7 @@ export function restore(rules: TapRule[]): void {
           break;
       }
     } catch (e) {
-      console.warn(`taps: failed to restore rule ${JSON.stringify(rule)}:`, e);
+      console.warn(`pins: failed to restore rule ${JSON.stringify(rule)}:`, e);
     }
   }
 }
