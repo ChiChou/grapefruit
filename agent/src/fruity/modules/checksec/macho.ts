@@ -17,6 +17,7 @@ export interface MachOResult {
   stripped: boolean;
   fortify: { fortified: number; fortifiable: number };
   pac: false | string;
+  secureMalloc: false | string;
 }
 
 const MH_EXECUTE = 0x2;
@@ -125,6 +126,62 @@ function getFortify(macho: MachOParsed): {
   return { fortified, fortifiable };
 }
 
+function getSecureMalloc(macho: MachOParsed): false | string {
+  // const found: string[] = [];
+
+  // Typed allocation — enables xzone secure allocator integration
+  const typedMalloc = [
+    "malloc_type_malloc",
+    "malloc_type_calloc",
+    "malloc_type_realloc",
+    "malloc_type_valloc",
+  ];
+
+  if (typedMalloc.some((n) => macho.names.has(n))) {
+    // found.push("malloc_type");
+    return "malloc_type";
+  }
+
+  return false;
+
+  // skip the following allocator check,
+  // they only apply to BlastDoor, WebContent, GPUProcess, etc.
+
+  // // XZone secure allocator — guards, randomization, zone isolation
+  // const xzone = [
+  //   "xzm_malloc",
+  //   "xzm_xzone_malloc",
+  //   "xzm_malloc_zone_malloc",
+  //   "xzm_malloc_zone_calloc",
+  //   "xzm_malloc_zone_realloc",
+  //   "xzm_malloc_zone_valloc",
+  // ];
+
+  // if (xzone.some((n) => macho.names.has(n))) {
+  //   found.push("xzone");
+  // }
+
+  // // Sanitizer — redzones, quarantine, memory poisoning
+  // const sanitizer = [
+  //   "sanitizer_malloc",
+  //   "sanitizer_calloc",
+  //   "sanitizer_realloc",
+  //   "sanitizer_valloc",
+  // ];
+
+  // if (sanitizer.some((n) => macho.names.has(n))) {
+  //   found.push("sanitizer");
+  // }
+
+  // // Probabilistic Guard Malloc — guard pages, probabilistic sampling
+  // const pgm = ["pgm_malloc", "pgm_calloc", "pgm_realloc", "pgm_valloc"];
+  // if (pgm.some((n) => macho.names.has(n))) {
+  //   found.push("pgm");
+  // }
+
+  // return found.length > 0 ? found.join(", ") : false;
+}
+
 function getPAC(macho: MachOParsed): false | string {
   if (Process.arch !== "arm64") return false;
   const authSections = new Set(["__auth_stubs", "__auth_got", "__auth_ptr"]);
@@ -155,5 +212,6 @@ export default function checksec(mod: Module): MachOResult {
     stripped: macho.symbols.length === 0,
     fortify: getFortify(macho),
     pac: getPAC(macho),
+    secureMalloc: getSecureMalloc(macho),
   };
 }
