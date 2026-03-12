@@ -1,5 +1,6 @@
 import * as activities from "./modules/activities.js";
 import * as app from "./modules/app.js";
+import * as checksec from "./modules/checksec/index.js";
 import * as classes from "./modules/classes.js";
 import * as crypto from "./crypto/index.js";
 import * as device from "./modules/device.js";
@@ -26,6 +27,7 @@ import * as threads from "@/common/threads.js";
 export default {
   activities,
   app,
+  checksec,
   classes,
   crypto,
   device,

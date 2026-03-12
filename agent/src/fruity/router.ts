@@ -1,5 +1,5 @@
 import * as assetcatalog from "./modules/assetcatalog.js";
-import * as checksec from "./modules/checksec.js";
+import * as checksec from "./modules/checksec/index.js";
 import * as classdump from "./modules/classdump.js";
 import * as cookies from "./modules/cookies.js";
 import * as crypto from "./crypto/index.js";

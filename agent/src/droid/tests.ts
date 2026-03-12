@@ -22,6 +22,7 @@ import {
   assertNonEmpty,
   summary,
 } from "@/common/test-runner.js";
+import * as checksec from "./modules/checksec/index.js";
 import * as activities from "./modules/activities.js";
 import * as services from "./modules/services.js";
 import * as receivers from "./modules/receivers.js";
@@ -368,10 +369,74 @@ async function testFs() {
   });
 }
 
+async function testChecksec() {
+  console.log("\n--- checksec ---");
+
+  await test("checksec.all returns array of ELF results", async () => {
+    const all = checksec.all();
+    assertArray(all, "all");
+    assertNonEmpty(all, "all");
+    const first = all[0];
+    assertKeys(
+      first as unknown as Record<string, unknown>,
+      [
+        "relro",
+        "nx",
+        "pie",
+        "canary",
+        "rpath",
+        "runpath",
+        "stripped",
+        "fortify",
+        "safeStack",
+        "cfi",
+      ],
+      "checksec entry",
+    );
+    assertType(first.nx, "boolean", "nx");
+    assertType(first.canary, "boolean", "canary");
+    assertType(first.rpath, "boolean", "rpath");
+    assertType(first.runpath, "boolean", "runpath");
+    assertType(first.stripped, "boolean", "stripped");
+    assertType(first.safeStack, "boolean", "safeStack");
+    assertKeys(
+      first.fortify as unknown as Record<string, unknown>,
+      ["fortified", "fortifiable"],
+      "fortify",
+    );
+    assertKeys(
+      first.cfi as unknown as Record<string, unknown>,
+      ["clang"],
+      "cfi",
+    );
+    console.log(
+      `    ${all.length} modules checked`,
+    );
+    console.log(
+      `    first: relro=${first.relro} nx=${first.nx} pie=${first.pie} canary=${first.canary}`,
+    );
+  });
+
+  await test("checksec.single returns result for named module", async () => {
+    const [main] = Process.enumerateModules();
+    const r = checksec.single(main.name);
+    assert(r !== undefined, "should find main module by name");
+    assertType(r!.nx, "boolean", "nx");
+    console.log(`    checked ${main.name}: relro=${r!.relro} pie=${r!.pie}`);
+  });
+
+  await test("checksec.single returns undefined for unknown module", async () => {
+    const r = checksec.single("__nonexistent_module_12345__");
+    assert(r === undefined, "should return undefined for unknown module");
+    console.log("    correctly returned undefined");
+  });
+}
+
 async function run() {
   console.log("=== droid module tests ===");
 
   await testDevice();
+  await testChecksec();
   await testActivities();
   await testServices();
   await testReceivers();

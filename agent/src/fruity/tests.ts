@@ -24,7 +24,7 @@ import {
 } from "@/common/test-runner.js";
 
 import * as info from "./modules/info.js";
-import * as checksec from "./modules/checksec.js";
+import * as checksec from "./modules/checksec/index.js";
 import * as entitlements from "./modules/entitlements.js";
 import * as classdump from "./modules/classdump.js";
 import * as cookies from "./modules/cookies.js";
@@ -126,20 +126,66 @@ async function testInfo() {
 async function testChecksec() {
   console.log("\n--- checksec ---");
 
-  await test("checksec.flags returns security flags", async () => {
-    const f = checksec.flags();
+  await test("checksec.main returns MachO security flags", async () => {
+    const r = checksec.main();
     assertKeys(
-      f as unknown as Record<string, unknown>,
-      ["pie", "arc", "canary", "encrypted"],
-      "checksec.flags",
+      r as unknown as Record<string, unknown>,
+      [
+        "pie",
+        "nx",
+        "canary",
+        "arc",
+        "rpath",
+        "codesign",
+        "encryption",
+        "stripped",
+        "fortify",
+        "pac",
+      ],
+      "checksec.main",
     );
-    assertType(f.pie, "boolean", "pie");
-    assertType(f.arc, "boolean", "arc");
-    assertType(f.canary, "boolean", "canary");
-    assertType(f.encrypted, "boolean", "encrypted");
+    assertType(r.pie, "boolean", "pie");
+    assertType(r.canary, "boolean", "canary");
+    assertType(r.arc, "boolean", "arc");
+    assertArray(r.rpath, "rpath");
+    assertType(r.codesign, "boolean", "codesign");
+    assertType(r.stripped, "boolean", "stripped");
+    assertKeys(
+      r.fortify as unknown as Record<string, unknown>,
+      ["fortified", "fortifiable"],
+      "fortify",
+    );
     console.log(
-      `    pie=${f.pie} arc=${f.arc} canary=${f.canary} encrypted=${f.encrypted}`,
+      `    pie=${r.pie} nx=${r.nx} canary=${r.canary} arc=${r.arc} codesign=${r.codesign}`,
     );
+    console.log(
+      `    encryption=${r.encryption} stripped=${r.stripped} pac=${r.pac}`,
+    );
+    console.log(
+      `    fortify: ${r.fortify.fortified}/${r.fortify.fortifiable}`,
+    );
+  });
+
+  await test("checksec.all returns array of results", async () => {
+    const all = checksec.all();
+    assertArray(all, "all");
+    assertNonEmpty(all, "all");
+    assertType(all[0].pie, "boolean", "first.pie");
+    console.log(`    ${all.length} modules checked`);
+  });
+
+  await test("checksec.single returns result for named module", async () => {
+    const [main] = Process.enumerateModules();
+    const r = checksec.single(main.name);
+    assert(r !== undefined, "should find main module by name");
+    assertType(r!.pie, "boolean", "pie");
+    console.log(`    checked ${main.name}: pie=${r!.pie}`);
+  });
+
+  await test("checksec.single returns undefined for unknown module", async () => {
+    const r = checksec.single("__nonexistent_module_12345__");
+    assert(r === undefined, "should return undefined for unknown module");
+    console.log("    correctly returned undefined");
   });
 }
 
@@ -581,7 +627,14 @@ async function testPlugins() {
       const first = items[0];
       assertKeys(
         first as unknown as Record<string, unknown>,
-        ["identifier", "extensionPoint", "displayName", "version", "path", "uuid"],
+        [
+          "identifier",
+          "extensionPoint",
+          "displayName",
+          "version",
+          "path",
+          "uuid",
+        ],
         "plugin entry",
       );
       assertType(first.identifier, "string", "identifier");
@@ -621,9 +674,7 @@ async function testUIDevice() {
     assertType(d.batteryLevel, "number", "batteryLevel");
     assertType(d.batteryState, "string", "batteryState");
     assertType(d.isMultitaskingSupported, "boolean", "isMultitaskingSupported");
-    console.log(
-      `    ${d.name} ${d.model} ${d.systemName} ${d.systemVersion}`,
-    );
+    console.log(`    ${d.name} ${d.model} ${d.systemName} ${d.systemVersion}`);
     console.log(
       `    battery=${d.batteryLevel} state=${d.batteryState} idiom=${d.userInterfaceIdiom}`,
     );
@@ -644,9 +695,7 @@ async function testUI() {
       );
       assertType(tree.clazz, "string", "clazz");
       assertArray(tree.children!, "children");
-      console.log(
-        `    root: ${tree.clazz} children=${tree.children!.length}`,
-      );
+      console.log(`    root: ${tree.clazz} children=${tree.children!.length}`);
     }
   });
 
@@ -745,9 +794,7 @@ async function testRn() {
         "RNInstance",
       );
       assertType(first.handle, "string", "handle");
-      console.log(
-        `    first: class=${first.className} arch=${first.arch}`,
-      );
+      console.log(`    first: class=${first.className} arch=${first.arch}`);
     }
   });
 

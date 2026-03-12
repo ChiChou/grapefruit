@@ -33,7 +33,7 @@ Returns an array of all available `namespace.method` strings:
 
 ```typescript
 script.exports.interfaces()
-// → ["checksec.flags", "classdump.hierarchy", "fs.ls", "fs.read", ...]
+// → ["checksec.all", "checksec.single", "classdump.hierarchy", "fs.ls", "fs.read", ...]
 ```
 
 ### `restore(rules)`

@@ -103,7 +103,7 @@ When the user invokes `/igf`, parse their intent and execute the appropriate API
 | `manifest` | `manifest.xml()` (droid only) | AndroidManifest.xml |
 | `entitlements` | `entitlements.plist()` (fruity only) | App entitlements |
 | `urls` | `info.urls()` (fruity only) | URL schemes |
-| `checksec` | `checksec.flags()` (fruity only) | Binary security checks |
+| `checksec` | `checksec.all()` / `checksec.single(name)` / `checksec.main()` (fruity only) | Binary security checks (PIE, NX, canary, RELRO, fortify, etc.) |
 
 ### Class Introspection (RPC)
 
