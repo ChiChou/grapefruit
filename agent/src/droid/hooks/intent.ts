@@ -1,13 +1,11 @@
 import Java from "frida-java-bridge";
 
 import type { BaseMessage } from "@/common/hooks/context.js";
-import { patch as createPatch, backtrace } from "@/common/hooks/java.js";
+import { hook, backtrace } from "@/common/hooks/java.js";
 import { toJS } from "@/droid/bridge/object.js";
 
-const restores: Array<() => void> = [];
+const hooks: InvocationListener[] = [];
 let running = false;
-
-const patch = createPatch(restores);
 
 
 function describeIntent(intent: Java.Wrapper): Record<string, unknown> {
@@ -99,7 +97,7 @@ function hookActivityStart() {
   const Activity = Java.use("android.app.Activity");
 
   // startActivity(Intent)
-  patch(
+  hooks.push(hook(
     Activity.startActivity.overload("android.content.Intent"),
     (original, self, args) => {
       const [intent] = args as [Java.Wrapper];
@@ -116,11 +114,11 @@ function hookActivityStart() {
 
       return original.call(self, intent);
     },
-  );
+  ));
 
   // startActivity(Intent, Bundle)
   try {
-    patch(
+    hooks.push(hook(
       Activity.startActivity.overload("android.content.Intent", "android.os.Bundle"),
       (original, self, args) => {
         const [intent, options] = args as [Java.Wrapper, Java.Wrapper | null];
@@ -137,12 +135,12 @@ function hookActivityStart() {
 
         return original.call(self, intent, options);
       },
-    );
+    ));
   } catch { /* overload may not exist */ }
 
   // startActivityForResult(Intent, int)
   try {
-    patch(
+    hooks.push(hook(
       Activity.startActivityForResult.overload("android.content.Intent", "int"),
       (original, self, args) => {
         const [intent, requestCode] = args as [Java.Wrapper, number];
@@ -164,12 +162,12 @@ function hookActivityStart() {
 
         return original.call(self, intent, requestCode);
       },
-    );
+    ));
   } catch { /* overload may not exist */ }
 
   // startActivityForResult(Intent, int, Bundle)
   try {
-    patch(
+    hooks.push(hook(
       Activity.startActivityForResult.overload(
         "android.content.Intent",
         "int",
@@ -195,7 +193,7 @@ function hookActivityStart() {
 
         return original.call(self, intent, requestCode, options);
       },
-    );
+    ));
   } catch { /* overload may not exist */ }
 }
 
@@ -203,7 +201,7 @@ function hookServiceStart() {
   const ContextWrapper = Java.use("android.content.ContextWrapper");
 
   // startService(Intent)
-  patch(
+  hooks.push(hook(
     ContextWrapper.startService.overload("android.content.Intent"),
     (original, self, args) => {
       const [intent] = args as [Java.Wrapper];
@@ -220,11 +218,11 @@ function hookServiceStart() {
 
       return original.call(self, intent);
     },
-  );
+  ));
 
   // stopService(Intent)
   try {
-    patch(
+    hooks.push(hook(
       ContextWrapper.stopService.overload("android.content.Intent"),
       (original, self, args) => {
         const [intent] = args as [Java.Wrapper];
@@ -241,12 +239,12 @@ function hookServiceStart() {
 
         return original.call(self, intent);
       },
-    );
+    ));
   } catch { /* overload may not exist */ }
 
   // bindService(Intent, ServiceConnection, int)
   try {
-    patch(
+    hooks.push(hook(
       ContextWrapper.bindService.overload(
         "android.content.Intent",
         "android.content.ServiceConnection",
@@ -272,12 +270,12 @@ function hookServiceStart() {
 
         return original.call(self, intent, conn, flags);
       },
-    );
+    ));
   } catch { /* overload may not exist */ }
 
   // startForegroundService(Intent)
   try {
-    patch(
+    hooks.push(hook(
       ContextWrapper.startForegroundService.overload("android.content.Intent"),
       (original, self, args) => {
         const [intent] = args as [Java.Wrapper];
@@ -294,19 +292,15 @@ function hookServiceStart() {
 
         return original.call(self, intent);
       },
-    );
+    ));
   } catch { /* may not exist on older API levels */ }
 }
 
 export function stop() {
-  Java.perform(() => {
-    for (let i = restores.length - 1; i >= 0; i--) {
-      try {
-        restores[i]();
-      } catch { /* ignore */ }
-    }
-  });
-  restores.length = 0;
+  for (const h of hooks) {
+    try { h.detach(); } catch { /* ignore */ }
+  }
+  hooks.length = 0;
   running = false;
 }
 

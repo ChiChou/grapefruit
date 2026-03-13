@@ -1,12 +1,10 @@
 import Java from "frida-java-bridge";
 
 import type { BaseMessage } from "@/common/hooks/context.js";
-import { patch as createPatch, backtrace } from "@/common/hooks/java.js";
+import { hook, backtrace } from "@/common/hooks/java.js";
 
-const restores: Array<() => void> = [];
+const hooks: InvocationListener[] = [];
 let running = false;
-
-const patch = createPatch(restores);
 
 
 export function start() {
@@ -37,7 +35,7 @@ export function start() {
 function hookGetSharedPreferences() {
   const ContextWrapper = Java.use("android.content.ContextWrapper");
 
-  patch(
+  hooks.push(hook(
     ContextWrapper.getSharedPreferences.overload("java.lang.String", "int"),
     (original, self, args) => {
       const [name, mode] = args as [Java.Wrapper, number];
@@ -55,7 +53,7 @@ function hookGetSharedPreferences() {
 
       return original.call(self, name, mode);
     },
-  );
+  ));
 }
 
 function hookSharedPreferencesRead() {
@@ -71,7 +69,7 @@ function hookSharedPreferencesRead() {
 
   for (const { name, argType, valueType } of readMethods) {
     try {
-      patch(
+      hooks.push(hook(
         SharedPreferencesImpl[name].overload("java.lang.String", argType),
         (original, self, args) => {
           const [key, defValue] = args as [Java.Wrapper, unknown];
@@ -96,13 +94,13 @@ function hookSharedPreferencesRead() {
 
           return ret;
         },
-      );
+      ));
     } catch { /* overload may not exist */ }
   }
 
   // getStringSet
   try {
-    patch(
+    hooks.push(hook(
       SharedPreferencesImpl.getStringSet.overload("java.lang.String", "java.util.Set"),
       (original, self, args) => {
         const [key, defValue] = args as [Java.Wrapper, Java.Wrapper | null];
@@ -121,12 +119,12 @@ function hookSharedPreferencesRead() {
 
         return ret;
       },
-    );
+    ));
   } catch { /* may not exist */ }
 
   // getAll
   try {
-    patch(
+    hooks.push(hook(
       SharedPreferencesImpl.getAll,
       (original, self, args) => {
         const ret = original.call(self, ...args);
@@ -143,12 +141,12 @@ function hookSharedPreferencesRead() {
 
         return ret;
       },
-    );
+    ));
   } catch { /* may not exist */ }
 
   // contains
   try {
-    patch(
+    hooks.push(hook(
       SharedPreferencesImpl.contains.overload("java.lang.String"),
       (original, self, args) => {
         const [key] = args as [Java.Wrapper];
@@ -167,7 +165,7 @@ function hookSharedPreferencesRead() {
 
         return ret;
       },
-    );
+    ));
   } catch { /* may not exist */ }
 }
 
@@ -184,7 +182,7 @@ function hookSharedPreferencesWrite() {
 
   for (const { name, argType, valueType } of writeMethods) {
     try {
-      patch(
+      hooks.push(hook(
         EditorImpl[name].overload("java.lang.String", argType),
         (original, self, args) => {
           const [key, value] = args as [Java.Wrapper, unknown];
@@ -203,13 +201,13 @@ function hookSharedPreferencesWrite() {
 
           return original.call(self, key, value);
         },
-      );
+      ));
     } catch { /* overload may not exist */ }
   }
 
   // putStringSet
   try {
-    patch(
+    hooks.push(hook(
       EditorImpl.putStringSet.overload("java.lang.String", "java.util.Set"),
       (original, self, args) => {
         const [key, values] = args as [Java.Wrapper, Java.Wrapper | null];
@@ -227,12 +225,12 @@ function hookSharedPreferencesWrite() {
 
         return original.call(self, key, values);
       },
-    );
+    ));
   } catch { /* may not exist */ }
 
   // remove
   try {
-    patch(
+    hooks.push(hook(
       EditorImpl.remove.overload("java.lang.String"),
       (original, self, args) => {
         const [key] = args as [Java.Wrapper];
@@ -250,12 +248,12 @@ function hookSharedPreferencesWrite() {
 
         return original.call(self, key);
       },
-    );
+    ));
   } catch { /* may not exist */ }
 
   // clear
   try {
-    patch(
+    hooks.push(hook(
       EditorImpl.clear,
       (original, self, args) => {
         send({
@@ -270,12 +268,12 @@ function hookSharedPreferencesWrite() {
 
         return original.call(self, ...args);
       },
-    );
+    ));
   } catch { /* may not exist */ }
 
   // commit
   try {
-    patch(
+    hooks.push(hook(
       EditorImpl.commit,
       (original, self, args) => {
         send({
@@ -290,12 +288,12 @@ function hookSharedPreferencesWrite() {
 
         return original.call(self, ...args);
       },
-    );
+    ));
   } catch { /* may not exist */ }
 
   // apply
   try {
-    patch(
+    hooks.push(hook(
       EditorImpl.apply,
       (original, self, args) => {
         send({
@@ -310,19 +308,15 @@ function hookSharedPreferencesWrite() {
 
         return original.call(self, ...args);
       },
-    );
+    ));
   } catch { /* may not exist */ }
 }
 
 export function stop() {
-  Java.perform(() => {
-    for (let i = restores.length - 1; i >= 0; i--) {
-      try {
-        restores[i]();
-      } catch { /* ignore */ }
-    }
-  });
-  restores.length = 0;
+  for (const h of hooks) {
+    try { h.detach(); } catch { /* ignore */ }
+  }
+  hooks.length = 0;
   running = false;
 }
 

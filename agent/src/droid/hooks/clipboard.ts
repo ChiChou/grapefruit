@@ -1,12 +1,10 @@
 import Java from "frida-java-bridge";
 
 import type { BaseMessage } from "@/common/hooks/context.js";
-import { patch as createPatch, backtrace } from "@/common/hooks/java.js";
+import { hook, backtrace } from "@/common/hooks/java.js";
 
-const restores: Array<() => void> = [];
+const hooks: InvocationListener[] = [];
 let running = false;
-
-const patch = createPatch(restores);
 
 
 export function start() {
@@ -26,7 +24,7 @@ function hookClipboardManager() {
   const ClipboardManager = Java.use("android.content.ClipboardManager");
 
   // getPrimaryClip
-  patch(
+  hooks.push(hook(
     ClipboardManager.getPrimaryClip,
     (original, self, args) => {
       const ret = original.call(self, ...args) as Java.Wrapper | null;
@@ -52,11 +50,11 @@ function hookClipboardManager() {
 
       return ret;
     },
-  );
+  ));
 
   // getPrimaryClipDescription
   try {
-    patch(
+    hooks.push(hook(
       ClipboardManager.getPrimaryClipDescription,
       (original, self, args) => {
         const ret = original.call(self, ...args);
@@ -73,12 +71,12 @@ function hookClipboardManager() {
 
         return ret;
       },
-    );
+    ));
   } catch { /* overload may not exist */ }
 
   // getText (deprecated but still used)
   try {
-    patch(
+    hooks.push(hook(
       ClipboardManager.getText,
       (original, self, args) => {
         const ret = original.call(self, ...args) as Java.Wrapper | null;
@@ -96,11 +94,11 @@ function hookClipboardManager() {
 
         return ret;
       },
-    );
+    ));
   } catch { /* may not exist */ }
 
   // setPrimaryClip
-  patch(
+  hooks.push(hook(
     ClipboardManager.setPrimaryClip.overload("android.content.ClipData"),
     (original, self, args) => {
       const [clip] = args as [Java.Wrapper];
@@ -128,11 +126,11 @@ function hookClipboardManager() {
 
       return original.call(self, clip);
     },
-  );
+  ));
 
   // setText (deprecated but still used)
   try {
-    patch(
+    hooks.push(hook(
       ClipboardManager.setText.overload("java.lang.CharSequence"),
       (original, self, args) => {
         const [text] = args as [Java.Wrapper];
@@ -150,12 +148,12 @@ function hookClipboardManager() {
 
         return original.call(self, text);
       },
-    );
+    ));
   } catch { /* may not exist */ }
 
   // hasPrimaryClip
   try {
-    patch(
+    hooks.push(hook(
       ClipboardManager.hasPrimaryClip,
       (original, self, args) => {
         const ret = original.call(self, ...args);
@@ -172,19 +170,15 @@ function hookClipboardManager() {
 
         return ret;
       },
-    );
+    ));
   } catch { /* may not exist */ }
 }
 
 export function stop() {
-  Java.perform(() => {
-    for (let i = restores.length - 1; i >= 0; i--) {
-      try {
-        restores[i]();
-      } catch { /* ignore */ }
-    }
-  });
-  restores.length = 0;
+  for (const h of hooks) {
+    try { h.detach(); } catch { /* ignore */ }
+  }
+  hooks.length = 0;
   running = false;
 }
 

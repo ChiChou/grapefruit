@@ -1,13 +1,13 @@
 import Java from "frida-java-bridge";
 
-import { patch as createPatch } from "@/common/hooks/java.js";
+import { hook } from "@/common/hooks/java.js";
 import { toJS } from "@/droid/bridge/object.js";
 
 type Direction = "native" | "dart";
 type ChannelType = "method" | "event" | "message";
 
 const subject = "flutter";
-const restores: Array<() => void> = [];
+const hooks: InvocationListener[] = [];
 let running = false;
 
 function safelyConvert(obj: Java.Wrapper | null): unknown {
@@ -30,15 +30,13 @@ function verifyClass(cls: Java.Wrapper, base: string): boolean {
   return cls.$className?.startsWith(prefix);
 }
 
-const patch = createPatch(restores);
-
 function wrapHandler(
   method: Java.MethodDispatcher,
   base: string,
   Proxy: Java.Wrapper,
 ) {
   const String = Java.use("java.lang.String");
-  patch(method, (original, self, args) => {
+  hooks.push(hook(method, (original, self, args) => {
     const [handler] = args as [Java.Wrapper | null];
     if (!handler || verifyClass(handler, base)) {
       return original.call(self, handler);
@@ -47,7 +45,7 @@ function wrapHandler(
       self,
       Proxy.$new(handler, String.$new(self.name.value)),
     );
-  });
+  }));
 }
 
 export function start() {
@@ -55,13 +53,13 @@ export function start() {
   running = true;
 
   Java.perform(() => {
-    const hooks = [
+    const targets = [
       ["MethodChannel", hookMethodChannel],
       ["BasicMessageChannel", hookBasicMessageChannel],
       ["EventChannel", hookEventChannel],
     ] as const;
 
-    for (const [name, fn] of hooks) {
+    for (const [name, fn] of targets) {
       try {
         fn();
       } catch (e) {
@@ -131,7 +129,7 @@ function hookMethodChannel() {
   );
 
   // invokeMethod(String, Object)
-  patch(
+  hooks.push(hook(
     MethodChannel.invokeMethod.overload("java.lang.String", "java.lang.Object"),
     (original, self, args) => {
       const [method, a] = args as [Java.Wrapper, Java.Wrapper];
@@ -141,10 +139,10 @@ function hookMethodChannel() {
       });
       return original.call(self, method, a);
     },
-  );
+  ));
 
   // invokeMethod(String, Object, Result)
-  patch(
+  hooks.push(hook(
     MethodChannel.invokeMethod.overload(
       "java.lang.String",
       "java.lang.Object",
@@ -162,7 +160,7 @@ function hookMethodChannel() {
       });
       return original.call(self, method, a, cb);
     },
-  );
+  ));
 }
 
 function hookBasicMessageChannel() {
@@ -224,17 +222,17 @@ function hookBasicMessageChannel() {
   );
 
   // send(Object)
-  patch(
+  hooks.push(hook(
     BasicMessageChannel.send.overload("java.lang.Object"),
     (original, self, args) => {
       const [msg] = args as [Java.Wrapper];
       emit("message", "native", self.name.value, { args: safelyConvert(msg) });
       return original.call(self, msg);
     },
-  );
+  ));
 
   // send(Object, Reply)
-  patch(
+  hooks.push(hook(
     BasicMessageChannel.send.overload(
       "java.lang.Object",
       "io.flutter.plugin.common.BasicMessageChannel$Reply",
@@ -244,7 +242,7 @@ function hookBasicMessageChannel() {
       emit("message", "native", self.name.value, { args: safelyConvert(msg) });
       return original.call(self, msg, reply);
     },
-  );
+  ));
 }
 
 function hookEventChannel() {
@@ -402,14 +400,10 @@ function hookEventChannel() {
 }
 
 export function stop() {
-  Java.perform(() => {
-    for (let i = restores.length - 1; i >= 0; i--) {
-      try {
-        restores[i]();
-      } catch {}
-    }
-  });
-  restores.length = 0;
+  for (const h of hooks) {
+    try { h.detach(); } catch { /* ignore */ }
+  }
+  hooks.length = 0;
   running = false;
 }
 

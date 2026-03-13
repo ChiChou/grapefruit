@@ -12,32 +12,22 @@ export function perform<T>(fn: () => T): Promise<T> {
   });
 }
 
-export function patch(restores: Array<() => void>) {
-  return function apply(
-    method: Java.MethodDispatcher,
-    fn: (original: Java.MethodDispatcher, self: Java.Wrapper, args: unknown[]) => unknown,
-  ) {
-    const orig = method.implementation;
-    method.implementation = function (this: Java.Wrapper, ...args: unknown[]) {
-      return fn(method, this, args);
-    };
-    restores.push(() => {
-      method.implementation = orig;
-    });
-  };
-}
+type AnyMethod = Java.MethodDispatcher | Java.Method;
+
+export type HookCallback =
+  (original: AnyMethod, self: Java.Wrapper, args: unknown[]) => unknown;
 
 export function hook(
-  cls: Java.Wrapper,
-  method: string,
-  overload: string[],
-  impl: Java.MethodImplementation,
+  method: AnyMethod,
+  fn: HookCallback,
 ): InvocationListener {
-  const m = cls[method].overload(...overload);
-  m.implementation = impl;
+  const orig = method.implementation;
+  method.implementation = function (this: Java.Wrapper, ...args: unknown[]) {
+    return fn(method, this, args);
+  };
   return {
     detach: () => {
-      m.implementation = null;
+      method.implementation = orig;
     },
   };
 }

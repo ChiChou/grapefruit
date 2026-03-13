@@ -1,13 +1,11 @@
 import Java from "frida-java-bridge";
 
 import type { BaseMessage } from "@/common/hooks/context.js";
-import { patch as createPatch, backtrace } from "@/common/hooks/java.js";
+import { hook, backtrace } from "@/common/hooks/java.js";
 import { toJS } from "@/droid/bridge/object.js";
 
-const restores: Array<() => void> = [];
+const hooks: InvocationListener[] = [];
 let running = false;
-
-const patch = createPatch(restores);
 
 
 function describeIntent(intent: Java.Wrapper): Record<string, unknown> {
@@ -90,7 +88,7 @@ function hookSendBroadcast() {
   const ContextWrapper = Java.use("android.content.ContextWrapper");
 
   // sendBroadcast(Intent)
-  patch(
+  hooks.push(hook(
     ContextWrapper.sendBroadcast.overload("android.content.Intent"),
     (original, self, args) => {
       const [intent] = args as [Java.Wrapper];
@@ -107,11 +105,11 @@ function hookSendBroadcast() {
 
       return original.call(self, intent);
     },
-  );
+  ));
 
   // sendBroadcast(Intent, String) - with permission
   try {
-    patch(
+    hooks.push(hook(
       ContextWrapper.sendBroadcast.overload(
         "android.content.Intent",
         "java.lang.String",
@@ -135,12 +133,12 @@ function hookSendBroadcast() {
 
         return original.call(self, intent, perm);
       },
-    );
+    ));
   } catch { /* overload may not exist */ }
 
   // sendOrderedBroadcast(Intent, String)
   try {
-    patch(
+    hooks.push(hook(
       ContextWrapper.sendOrderedBroadcast.overload(
         "android.content.Intent",
         "java.lang.String",
@@ -164,12 +162,12 @@ function hookSendBroadcast() {
 
         return original.call(self, intent, perm);
       },
-    );
+    ));
   } catch { /* overload may not exist */ }
 
   // sendStickyBroadcast(Intent)
   try {
-    patch(
+    hooks.push(hook(
       ContextWrapper.sendStickyBroadcast.overload("android.content.Intent"),
       (original, self, args) => {
         const [intent] = args as [Java.Wrapper];
@@ -186,12 +184,12 @@ function hookSendBroadcast() {
 
         return original.call(self, intent);
       },
-    );
+    ));
   } catch { /* may not exist on all API levels */ }
 
   // registerReceiver(BroadcastReceiver, IntentFilter)
   try {
-    patch(
+    hooks.push(hook(
       ContextWrapper.registerReceiver.overload(
         "android.content.BroadcastReceiver",
         "android.content.IntentFilter",
@@ -223,12 +221,12 @@ function hookSendBroadcast() {
 
         return original.call(self, receiver, filter);
       },
-    );
+    ));
   } catch { /* overload may not exist */ }
 
   // unregisterReceiver(BroadcastReceiver)
   try {
-    patch(
+    hooks.push(hook(
       ContextWrapper.unregisterReceiver.overload(
         "android.content.BroadcastReceiver",
       ),
@@ -250,19 +248,15 @@ function hookSendBroadcast() {
 
         return original.call(self, receiver);
       },
-    );
+    ));
   } catch { /* overload may not exist */ }
 }
 
 export function stop() {
-  Java.perform(() => {
-    for (let i = restores.length - 1; i >= 0; i--) {
-      try {
-        restores[i]();
-      } catch { /* ignore */ }
-    }
-  });
-  restores.length = 0;
+  for (const h of hooks) {
+    try { h.detach(); } catch { /* ignore */ }
+  }
+  hooks.length = 0;
   running = false;
 }
 
