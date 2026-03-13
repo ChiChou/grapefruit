@@ -1,7 +1,15 @@
 import { useState } from "react";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import { ShieldAlert, ShieldCheck, Info, AlertTriangle, Lock, Unlock, ChevronRight } from "lucide-react";
+import {
+  ShieldAlert,
+  ShieldCheck,
+  Info,
+  AlertTriangle,
+  Lock,
+  Unlock,
+  ChevronRight,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 type Severity = "high" | "medium" | "info" | "ok";
@@ -27,12 +35,15 @@ const DANGEROUS_PERM_DESC_KEYS: Record<string, string> = {
   "android.permission.WRITE_CONTACTS": "perm_desc_WRITE_CONTACTS",
   "android.permission.READ_CALL_LOG": "perm_desc_READ_CALL_LOG",
   "android.permission.WRITE_CALL_LOG": "perm_desc_WRITE_CALL_LOG",
-  "android.permission.PROCESS_OUTGOING_CALLS": "perm_desc_PROCESS_OUTGOING_CALLS",
+  "android.permission.PROCESS_OUTGOING_CALLS":
+    "perm_desc_PROCESS_OUTGOING_CALLS",
   "android.permission.READ_CALENDAR": "perm_desc_READ_CALENDAR",
   "android.permission.WRITE_CALENDAR": "perm_desc_WRITE_CALENDAR",
   "android.permission.ACCESS_FINE_LOCATION": "perm_desc_ACCESS_FINE_LOCATION",
-  "android.permission.ACCESS_COARSE_LOCATION": "perm_desc_ACCESS_COARSE_LOCATION",
-  "android.permission.ACCESS_BACKGROUND_LOCATION": "perm_desc_ACCESS_BACKGROUND_LOCATION",
+  "android.permission.ACCESS_COARSE_LOCATION":
+    "perm_desc_ACCESS_COARSE_LOCATION",
+  "android.permission.ACCESS_BACKGROUND_LOCATION":
+    "perm_desc_ACCESS_BACKGROUND_LOCATION",
   "android.permission.READ_PHONE_STATE": "perm_desc_READ_PHONE_STATE",
   "android.permission.READ_PHONE_NUMBERS": "perm_desc_READ_PHONE_NUMBERS",
   "android.permission.CALL_PHONE": "perm_desc_CALL_PHONE",
@@ -45,13 +56,17 @@ const DANGEROUS_PERM_DESC_KEYS: Record<string, string> = {
   "android.permission.RECEIVE_WAP_PUSH": "perm_desc_RECEIVE_WAP_PUSH",
   "android.permission.RECEIVE_MMS": "perm_desc_RECEIVE_MMS",
   "android.permission.BODY_SENSORS": "perm_desc_BODY_SENSORS",
-  "android.permission.BODY_SENSORS_BACKGROUND": "perm_desc_BODY_SENSORS_BACKGROUND",
+  "android.permission.BODY_SENSORS_BACKGROUND":
+    "perm_desc_BODY_SENSORS_BACKGROUND",
   "android.permission.READ_EXTERNAL_STORAGE": "perm_desc_READ_EXTERNAL_STORAGE",
-  "android.permission.WRITE_EXTERNAL_STORAGE": "perm_desc_WRITE_EXTERNAL_STORAGE",
-  "android.permission.MANAGE_EXTERNAL_STORAGE": "perm_desc_MANAGE_EXTERNAL_STORAGE",
+  "android.permission.WRITE_EXTERNAL_STORAGE":
+    "perm_desc_WRITE_EXTERNAL_STORAGE",
+  "android.permission.MANAGE_EXTERNAL_STORAGE":
+    "perm_desc_MANAGE_EXTERNAL_STORAGE",
   "android.permission.ACCESS_MEDIA_LOCATION": "perm_desc_ACCESS_MEDIA_LOCATION",
   "android.permission.SYSTEM_ALERT_WINDOW": "perm_desc_SYSTEM_ALERT_WINDOW",
-  "android.permission.REQUEST_INSTALL_PACKAGES": "perm_desc_REQUEST_INSTALL_PACKAGES",
+  "android.permission.REQUEST_INSTALL_PACKAGES":
+    "perm_desc_REQUEST_INSTALL_PACKAGES",
   "android.permission.GET_ACCOUNTS": "perm_desc_GET_ACCOUNTS",
   "android.permission.BLUETOOTH_SCAN": "perm_desc_BLUETOOTH_SCAN",
   "android.permission.BLUETOOTH_CONNECT": "perm_desc_BLUETOOTH_CONNECT",
@@ -62,7 +77,10 @@ const DANGEROUS_PERM_DESC_KEYS: Record<string, string> = {
 
 const ANDROID_NS = "http://schemas.android.com/apk/res/android";
 
-function getAndroidAttr(el: Element | null | undefined, name: string): string | null {
+function getAndroidAttr(
+  el: Element | null | undefined,
+  name: string,
+): string | null {
   if (!el) return null;
   return (
     el.getAttributeNS(ANDROID_NS, name) ??
@@ -82,8 +100,12 @@ function normaliseBool(value: string | null): string | null {
 
 function parseManifestInsights(
   xml: string,
-  t: TFunction
-): { insights: Insight[]; permissions: PermissionEntry[]; packageName: string | null } {
+  t: TFunction,
+): {
+  insights: Insight[];
+  permissions: PermissionEntry[];
+  packageName: string | null;
+} {
   const parser = new DOMParser();
   const doc = parser.parseFromString(xml, "application/xml");
   const insights: Insight[] = [];
@@ -115,7 +137,7 @@ function parseManifestInsights(
   if (allowBackup !== "false") {
     insights.push({
       id: "allowBackup",
-      severity: "medium",
+      severity: "info",
       title: t("manifest_allowbackup_on_title"),
       description:
         allowBackup === null
@@ -132,7 +154,9 @@ function parseManifestInsights(
   }
 
   // android:usesCleartextTraffic
-  const cleartext = normaliseBool(getAndroidAttr(application, "usesCleartextTraffic"));
+  const cleartext = normaliseBool(
+    getAndroidAttr(application, "usesCleartextTraffic"),
+  );
   if (cleartext === "true") {
     insights.push({
       id: "cleartext",
@@ -153,13 +177,44 @@ function parseManifestInsights(
     });
   }
 
+  // android:memtagMode (MTE – Memory Tagging Extension)
+  const memtagRaw = getAndroidAttr(application, "memtagMode");
+  const memtag = memtagRaw?.toLowerCase() ?? null;
+  if (memtag === "sync" || memtag === "async") {
+    insights.push({
+      id: "memtag",
+      severity: "ok",
+      title: t("manifest_memtag_enforced_title"),
+      description: t("manifest_memtag_enforced_desc", { mode: memtag }),
+    });
+  } else if (memtag === "default") {
+    insights.push({
+      id: "memtag",
+      severity: "info",
+      title: t("manifest_memtag_default_title"),
+      description: t("manifest_memtag_default_desc"),
+    });
+  } else {
+    insights.push({
+      id: "memtag",
+      severity: "info",
+      title: t("manifest_memtag_off_title"),
+      description:
+        memtag === "off"
+          ? t("manifest_memtag_off_explicit_desc")
+          : t("manifest_memtag_off_absent_desc"),
+    });
+  }
+
   // Permissions
   const permissionElements = doc.querySelectorAll("uses-permission");
-  const permissions: PermissionEntry[] = Array.from(permissionElements).map((el) => {
-    const name = getAndroidAttr(el, "name") ?? "";
-    const descKey = DANGEROUS_PERM_DESC_KEYS[name];
-    return { name, dangerous: !!descKey, descKey };
-  });
+  const permissions: PermissionEntry[] = Array.from(permissionElements).map(
+    (el) => {
+      const name = getAndroidAttr(el, "name") ?? "";
+      const descKey = DANGEROUS_PERM_DESC_KEYS[name];
+      return { name, dangerous: !!descKey, descKey };
+    },
+  );
 
   const dangerousCount = permissions.filter((p) => p.dangerous).length;
   if (dangerousCount >= 8) {
@@ -167,7 +222,9 @@ function parseManifestInsights(
       id: "permissions",
       severity: "medium",
       title: t("manifest_perms_excessive_title", { count: dangerousCount }),
-      description: t("manifest_perms_excessive_desc", { count: dangerousCount }),
+      description: t("manifest_perms_excessive_desc", {
+        count: dangerousCount,
+      }),
     });
   } else if (dangerousCount > 0) {
     insights.push({
@@ -203,7 +260,8 @@ const SEVERITY_CONFIG: Record<
   },
   medium: {
     icon: AlertTriangle,
-    badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    badge:
+      "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
     labelKey: "severity_medium",
   },
   info: {
@@ -213,7 +271,8 @@ const SEVERITY_CONFIG: Record<
   },
   ok: {
     icon: ShieldCheck,
-    badge: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+    badge:
+      "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
     labelKey: "severity_ok",
   },
 };
@@ -236,7 +295,9 @@ function InsightCard({ insight }: { insight: Insight }) {
             {t(cfg.labelKey)}
           </span>
         </div>
-        <p className="text-xs text-muted-foreground leading-relaxed">{insight.description}</p>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          {insight.description}
+        </p>
       </div>
     </div>
   );
@@ -267,9 +328,13 @@ function PermissionRow({ perm }: { perm: PermissionEntry }) {
           )}
         </div>
         {perm.descKey ? (
-          <p className="text-xs text-muted-foreground mt-0.5">{t(perm.descKey)}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {t(perm.descKey)}
+          </p>
         ) : (
-          <p className="text-xs text-muted-foreground mt-0.5 font-mono break-all">{perm.name}</p>
+          <p className="text-xs text-muted-foreground mt-0.5 font-mono break-all">
+            {perm.name}
+          </p>
         )}
       </div>
     </div>
@@ -293,22 +358,32 @@ export function ManifestInsights({ xml }: { xml: string }) {
           <div className="flex items-center gap-1.5 text-sm">
             <span className="h-2.5 w-2.5 rounded-full bg-red-500 inline-block" />
             <span className="font-medium">{highCount}</span>
-            <span className="text-muted-foreground">{t("manifest_summary_high")}</span>
+            <span className="text-muted-foreground">
+              {t("manifest_summary_high")}
+            </span>
           </div>
           <div className="flex items-center gap-1.5 text-sm">
             <span className="h-2.5 w-2.5 rounded-full bg-amber-500 inline-block" />
             <span className="font-medium">{mediumCount}</span>
-            <span className="text-muted-foreground">{t("manifest_summary_medium")}</span>
+            <span className="text-muted-foreground">
+              {t("manifest_summary_medium")}
+            </span>
           </div>
           <div className="flex items-center gap-1.5 text-sm">
             <Unlock className="h-3.5 w-3.5 text-amber-500" />
             <span className="font-medium">{dangerousPerms.length}</span>
-            <span className="text-muted-foreground">{t("manifest_summary_dangerous_perms")}</span>
+            <span className="text-muted-foreground">
+              {t("manifest_summary_dangerous_perms")}
+            </span>
           </div>
           <div className="flex items-center gap-1.5 text-sm">
             <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="font-medium">{permissions.length - dangerousPerms.length}</span>
-            <span className="text-muted-foreground">{t("manifest_summary_normal_perms")}</span>
+            <span className="font-medium">
+              {permissions.length - dangerousPerms.length}
+            </span>
+            <span className="text-muted-foreground">
+              {t("manifest_summary_normal_perms")}
+            </span>
           </div>
         </div>
 
@@ -335,12 +410,14 @@ export function ManifestInsights({ xml }: { xml: string }) {
             />
             <h2 className="text-sm font-semibold text-foreground group-hover:text-foreground/80">
               {permissions.length > 0
-                ? t("manifest_declared_permissions_count", { count: permissions.length })
+                ? t("manifest_declared_permissions_count", {
+                    count: permissions.length,
+                  })
                 : t("manifest_declared_permissions")}
             </h2>
           </button>
-          {permsOpen && (
-            permissions.length > 0 ? (
+          {permsOpen &&
+            (permissions.length > 0 ? (
               <div className="rounded-lg border px-4 divide-y-0">
                 {[...permissions]
                   .sort((a, b) => (b.dangerous ? 1 : 0) - (a.dangerous ? 1 : 0))
@@ -352,8 +429,7 @@ export function ManifestInsights({ xml }: { xml: string }) {
               <div className="rounded-lg border p-4 text-sm text-muted-foreground">
                 {t("manifest_no_permissions_desc")}
               </div>
-            )
-          )}
+            ))}
         </section>
       </div>
     </div>
