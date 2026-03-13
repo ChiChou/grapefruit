@@ -1,6 +1,6 @@
 import ObjC from "frida-objc-bridge";
 import { bt } from "@/common/hooks/context.js";
-import { privacyMsg } from "@/common/hooks/privacy.js";
+import { privacyMsg } from "./types.js";
 
 const MOTION_METHODS = [
   "startAccelerometerUpdatesToQueue:withHandler:",
@@ -8,7 +8,7 @@ const MOTION_METHODS = [
   "startDeviceMotionUpdatesToQueue:withHandler:",
 ] as const;
 
-export function hook(): InvocationListener[] {
+export default function (): InvocationListener[] {
   const hooks: InvocationListener[] = [];
 
   if (!ObjC.available) return hooks;

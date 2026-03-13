@@ -1,6 +1,6 @@
 import ObjC from "frida-objc-bridge";
 import { bt } from "@/common/hooks/context.js";
-import { privacyMsg, type PrivacyCategory } from "@/common/hooks/privacy.js";
+import { privacyMsg, type PrivacyCategory } from "./types.js";
 
 function hookSimple(
   cls: ObjC.Object,
@@ -26,7 +26,7 @@ function hookSimple(
   }
 }
 
-export function hook(): InvocationListener[] {
+export default function (): InvocationListener[] {
   const hooks: InvocationListener[] = [];
 
   if (!ObjC.available) return hooks;

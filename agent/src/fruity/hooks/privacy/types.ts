@@ -1,4 +1,4 @@
-import type { BaseMessage } from "./context.js";
+import type { BaseMessage } from "@/common/hooks/context.js";
 
 export type PrivacySeverity = "informative" | "low" | "medium" | "critical";
 
@@ -15,9 +15,7 @@ export type PrivacyCategory =
   | "game_center"
   | "homekit"
   | "safetykit"
-  | "sensorkit"
-  | "activity_recognition"
-  | "usage_stats";
+  | "sensorkit";
 
 export interface PrivacyMessage extends BaseMessage {
   subject: "privacy";
@@ -32,8 +30,6 @@ export const SEVERITY_MAP: Record<PrivacyCategory, PrivacySeverity> = {
   sensorkit: "critical",
   location: "medium",
   health: "medium",
-  usage_stats: "medium",
-  activity_recognition: "medium",
   homekit: "medium",
   photos: "low",
   motion_sensors: "low",
