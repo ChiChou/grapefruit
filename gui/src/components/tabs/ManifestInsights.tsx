@@ -93,8 +93,9 @@ function getAndroidAttr(
 function normaliseBool(value: string | null): string | null {
   if (value === null) return null;
   const v = value.toLowerCase();
-  if (v === "true" || v === "0xffffffff") return "true";
-  if (v === "false" || v === "0x00000000" || v === "0x0") return "false";
+  if (v === "true" || v === "0xffffffff" || v === "1") return "true";
+  if (v === "false" || v === "0x00000000" || v === "0x0" || v === "0")
+    return "false";
   return value;
 }
 
@@ -203,6 +204,47 @@ function parseManifestInsights(
         memtag === "off"
           ? t("manifest_memtag_off_explicit_desc")
           : t("manifest_memtag_off_absent_desc"),
+    });
+  }
+
+  // Exported components without permission protection
+  const components = doc.querySelectorAll(
+    "activity, service, receiver, provider",
+  );
+  let unprotectedExportedCount = 0;
+  components.forEach((comp) => {
+    const exported = normaliseBool(getAndroidAttr(comp, "exported"));
+    const hasIntentFilter = comp.querySelector("intent-filter") !== null;
+    const permission = getAndroidAttr(comp, "permission");
+    const isExported =
+      exported === "true" || (exported === null && hasIntentFilter);
+    if (isExported && !permission) {
+      unprotectedExportedCount++;
+    }
+  });
+  if (unprotectedExportedCount > 0) {
+    insights.push({
+      id: "exported_components",
+      severity: "high",
+      title: t("manifest_exported_components_title", {
+        count: unprotectedExportedCount,
+      }),
+      description: t("manifest_exported_components_desc", {
+        count: unprotectedExportedCount,
+      }),
+    });
+  }
+
+  // android:requestLegacyExternalStorage
+  const legacyStorage = normaliseBool(
+    getAndroidAttr(application, "requestLegacyExternalStorage"),
+  );
+  if (legacyStorage === "true") {
+    insights.push({
+      id: "legacy_storage",
+      severity: "medium",
+      title: t("manifest_legacy_storage_title"),
+      description: t("manifest_legacy_storage_desc"),
     });
   }
 
