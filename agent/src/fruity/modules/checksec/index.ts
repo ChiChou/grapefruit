@@ -3,11 +3,13 @@ import checksec, { type MachOResult } from "./macho.js";
 export type MachOModuleResult = MachOResult & { name: string; path: string };
 
 export function all(): MachOModuleResult[] {
-  return Process.enumerateModules().map((mod) => ({
-    name: mod.name,
-    path: mod.path,
-    ...checksec(mod),
-  }));
+  return Process.enumerateModules()
+    .filter((mod) => mod.path.startsWith("/private/var/"))
+    .map((mod) => ({
+      name: mod.name,
+      path: mod.path,
+      ...checksec(mod),
+    }));
 }
 
 export function single(name: string): MachOResult | undefined {
