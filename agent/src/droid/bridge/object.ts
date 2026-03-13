@@ -1,13 +1,14 @@
 import Java from "frida-java-bridge";
 
+import type { JavaHandle } from "@/droid/bridge/wrapper.js";
 import { readJavaByteArray } from "@/droid/lib/jbytes.js";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export function toJava(value: unknown): Java.Wrapper | null {
   if (value === null || value === undefined) return null;
-  if (typeof value === "string") return Java.use("java.lang.String").$new(value);
-  if (typeof value === "number") return Java.use("java.lang.Double").$new(value);
+  if (typeof value === "string")
+    return Java.use("java.lang.String").$new(value);
+  if (typeof value === "number")
+    return Java.use("java.lang.Double").$new(value);
   if (typeof value === "boolean")
     return Java.use("java.lang.Boolean").$new(value);
   if (Array.isArray(value)) {
@@ -45,7 +46,7 @@ export function toJS(obj: Java.Wrapper | null): unknown {
 
   if (cls === "[B") {
     const env = Java.vm.getEnv();
-    const handle = obj.$handle ?? obj.$h;
+    const handle = (obj as JavaHandle).$h;
     const length = env.getArrayLength(handle);
     const cap = Math.min(length, 256);
     const ab = readJavaByteArray(obj, 0, cap);

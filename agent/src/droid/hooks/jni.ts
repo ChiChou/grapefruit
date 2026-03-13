@@ -25,6 +25,8 @@ SOFTWARE.
  */
 
 import Java from "frida-java-bridge";
+
+import type { JavaVM } from "@/droid/bridge/wrapper.js";
 // bug: capturing backtrace causes crashes in some apps, skip for now
 // import { bt } from "@/common/hooks/context.js";
 import { findGlobalExport } from "@/lib/polyfill.js";
@@ -1208,7 +1210,7 @@ export function start(): void {
 
     // Hook JavaVM methods
     try {
-      const vmHandle = (Java.vm as unknown as { handle: NativePointer }).handle;
+      const vmHandle = (Java.vm as JavaVM).handle;
       const vmFnTable = vmHandle.readPointer();
       hookTable(vmFnTable, JAVA_VM, "JavaVM");
     } catch {

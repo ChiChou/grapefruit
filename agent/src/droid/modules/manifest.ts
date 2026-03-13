@@ -1,5 +1,6 @@
 import Java from "frida-java-bridge";
 
+import type { ZipFile } from "@/droid/bridge/wrapper.js";
 import { perform } from "@/common/hooks/java.js";
 import { getContext } from "@/droid/lib/context.js";
 import { drainInputStream } from "@/droid/lib/jbytes.js";
@@ -19,16 +20,16 @@ function readManifestXml(): string {
   const context = getContext();
   const sourceDir: string = context.getApplicationInfo().sourceDir.value;
 
-  const ZipFile = Java.use("java.util.zip.ZipFile");
-  const zip = ZipFile.$new(sourceDir);
+  const ZipFileCls = Java.use("java.util.zip.ZipFile");
+  const zip: ZipFile = ZipFileCls.$new(sourceDir);
 
   try {
     const entry = zip.getEntry("AndroidManifest.xml");
     if (!entry) throw new Error("AndroidManifest.xml not found in APK");
 
-    const inputStream = zip.getInputStream(entry);
-    const data = drainInputStream(inputStream);
-    inputStream.close();
+    const stream = zip.getInputStream(entry);
+    const data = drainInputStream(stream);
+    stream.close();
 
     return decodeAxml(data);
   } finally {

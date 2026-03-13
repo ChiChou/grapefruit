@@ -1,5 +1,6 @@
 import Java from "frida-java-bridge";
 
+import type { JavaFile } from "@/droid/bridge/wrapper.js";
 import { perform } from "@/common/hooks/java.js";
 import { getContext } from "@/droid/lib/context.js";
 import { allocByteBuffer } from "@/droid/lib/jbytes.js";
@@ -41,11 +42,11 @@ function initPaths() {
   if (homeDir) return;
   Java.perform(() => {
     const ctx = getContext();
-    homeDir = ctx.getFilesDir().getParentFile().getAbsolutePath() as string;
+    const filesDir: JavaFile = ctx.getFilesDir();
+    homeDir = filesDir.getParentFile()!.getAbsolutePath();
     const File = Java.use("java.io.File");
-    bundleDir = File.$new(
-      ctx.getPackageCodePath() as string,
-    ).getParent() as string;
+    const codeFile: JavaFile = File.$new(ctx.getPackageCodePath() as string);
+    bundleDir = codeFile.getParent();
   });
 }
 
@@ -58,28 +59,28 @@ export function ls(path: string) {
   return perform(() => {
     const File = Java.use("java.io.File");
     const cwd = path;
-    const dir = File.$new(cwd);
+    const dir: JavaFile = File.$new(cwd);
 
     if (!dir.exists()) throw new Error(`Path does not exist: ${cwd}`);
     if (!dir.isDirectory()) throw new Error(`Not a directory: ${cwd}`);
 
-    const writable = Boolean(dir.canWrite());
+    const writable = dir.canWrite();
     const files = dir.listFiles();
     const list: MetaData[] = [];
 
     if (files) {
       for (let i = 0; i < files.length; i++) {
         const f = files[i];
-        const absPath = f.getAbsolutePath() as string;
-        const canonPath = f.getCanonicalPath() as string;
+        const absPath = f.getAbsolutePath();
+        const canonPath = f.getCanonicalPath();
 
         list.push({
-          name: f.getName() as string,
-          dir: Boolean(f.isDirectory()),
+          name: f.getName(),
+          dir: f.isDirectory(),
           protection: null,
-          size: f.isFile() ? Number(f.length()) : null,
+          size: f.isFile() ? f.length() : null,
           alias: false,
-          created: new Date(Number(f.lastModified())),
+          created: new Date(f.lastModified()),
           symlink: absPath !== canonPath,
         });
       }
@@ -92,10 +93,10 @@ export function ls(path: string) {
 export function rm(path: string) {
   return perform(() => {
     const File = Java.use("java.io.File");
-    const target = File.$new(path);
+    const target: JavaFile = File.$new(path);
     if (!target.exists()) throw new Error(`Path does not exist: ${path}`);
 
-    function deleteRecursive(f: Java.Wrapper): boolean {
+    function deleteRecursive(f: JavaFile): boolean {
       if (f.isDirectory()) {
         const children = f.listFiles();
         if (children) {
@@ -104,7 +105,7 @@ export function rm(path: string) {
           }
         }
       }
-      return Boolean(f.delete());
+      return f.delete();
     }
 
     return deleteRecursive(target);
@@ -116,10 +117,10 @@ export function cp(src: string, dst: string) {
     const File = Java.use("java.io.File");
     const FileInputStream = Java.use("java.io.FileInputStream");
     const FileOutputStream = Java.use("java.io.FileOutputStream");
-    const srcFile = File.$new(src);
-    const dstFile = File.$new(dst);
+    const srcFile: JavaFile = File.$new(src);
+    const dstFile: JavaFile = File.$new(dst);
 
-    function copyRecursive(s: Java.Wrapper, d: Java.Wrapper) {
+    function copyRecursive(s: JavaFile, d: JavaFile) {
       if (s.isDirectory()) {
         d.mkdirs();
         const children = s.listFiles();
@@ -136,7 +137,7 @@ export function cp(src: string, dst: string) {
         const fos = FileOutputStream.$new(d);
         const buf = allocByteBuffer(8192);
         let n: number;
-        while ((n = fis.read(buf) as number) !== -1) {
+        while ((n = fis.read(buf)) !== -1) {
           fos.write(buf, 0, n);
         }
         fis.close();
@@ -156,8 +157,8 @@ export function mv(src: string, dst: string) {
 export function mkdirp(path: string) {
   return perform(() => {
     const File = Java.use("java.io.File");
-    const dir = File.$new(path);
-    return Boolean(dir.mkdirs());
+    const dir: JavaFile = File.$new(path);
+    return dir.mkdirs();
   });
 }
 

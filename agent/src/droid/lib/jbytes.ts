@@ -1,5 +1,11 @@
 import Java from "frida-java-bridge";
 
+import type {
+  ByteArrayOutputStream,
+  InputStream,
+  JavaHandle,
+} from "@/droid/bridge/wrapper.js";
+
 /**
  * Fast Java byte[] → ArrayBuffer copy using JNI GetByteArrayElements.
  * Falls back to element-by-element copy for plain JS arrays.
@@ -11,7 +17,7 @@ export function readJavaByteArray(
 ): ArrayBuffer | null {
   if (length <= 0) return null;
   const env = Java.vm.getEnv();
-  const handle = array.$handle ?? array.$h;
+  const handle = (array as JavaHandle).$h;
   const ptr = env.getByteArrayElements(handle);
   try {
     return ptr.add(offset).readByteArray(length)!;
@@ -31,7 +37,7 @@ export function readJavaCharArray(
 ): ArrayBuffer | null {
   if (length <= 0) return null;
   const env = Java.vm.getEnv();
-  const handle = array.$handle ?? array.$h;
+  const handle = (array as JavaHandle).$h;
   const ptr = env.getCharArrayElements(handle);
   try {
     return ptr.add(offset * 2).readByteArray(length * 2)!;
@@ -48,7 +54,7 @@ export function byteArrayToBuffer(
   arr: Java.Wrapper,
 ): { data: ArrayBuffer; length: number } | null {
   if (arr === null) return null;
-  const handle = arr.$handle ?? arr.$h;
+  const handle = (arr as JavaHandle).$h;
   if (handle) {
     const env = Java.vm.getEnv();
     const len = env.getArrayLength(handle);
@@ -77,12 +83,13 @@ export function allocByteBuffer(size: number) {
  * Returns the full contents.
  */
 export function drainInputStream(
-  inputStream: Java.Wrapper,
+  inputStream: InputStream,
   bufferSize = 8192,
 ): ArrayBuffer {
-  const ByteArrayOutputStream = Java.use("java.io.ByteArrayOutputStream");
-  const baos = ByteArrayOutputStream.$new();
-  const buffer = allocByteBuffer(bufferSize);
+  const BAOS = Java.use("java.io.ByteArrayOutputStream");
+  const baos: ByteArrayOutputStream = BAOS.$new();
+  // Java.array() returns a Java Wrapper at runtime despite any[] typedef
+  const buffer = allocByteBuffer(bufferSize) as unknown as Java.Wrapper;
   let len: number;
   while ((len = inputStream.read(buffer)) !== -1) {
     baos.write(buffer, 0, len);

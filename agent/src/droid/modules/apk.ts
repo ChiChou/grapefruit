@@ -1,5 +1,6 @@
 import Java from "frida-java-bridge";
 
+import type { ZipEntry, ZipFile } from "@/droid/bridge/wrapper.js";
 import { perform } from "@/common/hooks/java.js";
 import { getContext } from "@/droid/lib/context.js";
 import { drainInputStream } from "@/droid/lib/jbytes.js";
@@ -53,8 +54,8 @@ export function list(): Promise<ApkInfo[]> {
  */
 export function ls(apkPath: string, internalPath: string): Promise<ApkListing> {
   return perform(() => {
-    const ZipFile = Java.use("java.util.zip.ZipFile");
-    const zip = ZipFile.$new(apkPath);
+    const ZipFileCls = Java.use("java.util.zip.ZipFile");
+    const zip: ZipFile = ZipFileCls.$new(apkPath);
 
     try {
       const prefix = internalPath ? internalPath.replace(/\/$/, "") + "/" : "";
@@ -62,11 +63,11 @@ export function ls(apkPath: string, internalPath: string): Promise<ApkListing> {
       const dirs = new Set<string>();
       const files: ApkEntry[] = [];
 
-      const ZipEntry = Java.use("java.util.zip.ZipEntry");
+      const ZipEntryCls = Java.use("java.util.zip.ZipEntry");
       const entries = zip.entries();
       while (entries.hasMoreElements()) {
-        const entry = Java.cast(entries.nextElement(), ZipEntry);
-        const fullName: string = entry.getName() as string;
+        const entry = Java.cast(entries.nextElement(), ZipEntryCls) as ZipEntry;
+        const fullName = entry.getName() as string;
 
         // Skip if not under our prefix
         if (prefix && !fullName.startsWith(prefix)) continue;
@@ -81,8 +82,8 @@ export function ls(apkPath: string, internalPath: string): Promise<ApkListing> {
           files.push({
             name: rest,
             dir: false,
-            size: Number(entry.getSize()),
-            compressedSize: Number(entry.getCompressedSize()),
+            size: entry.getSize(),
+            compressedSize: entry.getCompressedSize(),
           });
         } else {
           // Subdirectory - extract the first component
@@ -117,16 +118,16 @@ export function ls(apkPath: string, internalPath: string): Promise<ApkListing> {
  */
 export function read(apkPath: string, entryName: string): Promise<ArrayBuffer> {
   return perform(() => {
-    const ZipFile = Java.use("java.util.zip.ZipFile");
+    const ZipFileCls = Java.use("java.util.zip.ZipFile");
 
-    const zip = ZipFile.$new(apkPath);
+    const zip: ZipFile = ZipFileCls.$new(apkPath);
     try {
       const entry = zip.getEntry(entryName);
       if (!entry) throw new Error(`Entry not found: ${entryName}`);
 
-      const inputStream = zip.getInputStream(entry);
-      const data = drainInputStream(inputStream);
-      inputStream.close();
+      const stream = zip.getInputStream(entry);
+      const data = drainInputStream(stream);
+      stream.close();
       return data;
     } finally {
       zip.close();
@@ -139,12 +140,12 @@ export function read(apkPath: string, entryName: string): Promise<ArrayBuffer> {
  */
 export function size(apkPath: string, entryName: string): Promise<number> {
   return perform(() => {
-    const ZipFile = Java.use("java.util.zip.ZipFile");
-    const zip = ZipFile.$new(apkPath);
+    const ZipFileCls = Java.use("java.util.zip.ZipFile");
+    const zip: ZipFile = ZipFileCls.$new(apkPath);
     try {
       const entry = zip.getEntry(entryName);
       if (!entry) throw new Error(`Entry not found: ${entryName}`);
-      return Number(entry.getSize());
+      return entry.getSize();
     } finally {
       zip.close();
     }

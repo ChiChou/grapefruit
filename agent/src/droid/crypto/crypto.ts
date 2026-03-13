@@ -1,5 +1,7 @@
 import Java from "frida-java-bridge";
+
 import type { BaseMessage } from "@/common/hooks/context.js";
+import { hook as javaHook } from "@/common/hooks/java.js";
 
 const CIPHER_MODES: Record<number, string> = {
   1: "ENCRYPT",
@@ -9,9 +11,7 @@ const CIPHER_MODES: Record<number, string> = {
 };
 
 function javaBt(): string[] {
-  const frames = Java.use("java.lang.Thread")
-    .currentThread()
-    .getStackTrace();
+  const frames = Java.use("java.lang.Thread").currentThread().getStackTrace();
   const result: string[] = [];
   for (let i = 2; i < Math.min(frames.length, 20); i++) {
     result.push(frames[i].toString());
@@ -21,25 +21,10 @@ function javaBt(): string[] {
 
 import { byteArrayToBuffer } from "@/droid/lib/jbytes.js";
 
-function toBuffer(byteArr: any): ArrayBuffer | null {
+function toBuffer(byteArr: Java.Wrapper | null): ArrayBuffer | null {
   if (!byteArr) return null;
   const result = byteArrayToBuffer(byteArr);
   return result ? result.data : null;
-}
-
-function javaHook(
-  cls: any,
-  method: string,
-  overload: string[],
-  impl: (this: any, ...args: any[]) => any,
-): InvocationListener {
-  const m = cls[method].overload(...overload);
-  m.implementation = impl;
-  return {
-    detach: () => {
-      m.implementation = null;
-    },
-  };
 }
 
 export function cipher() {
@@ -264,7 +249,7 @@ export function pbkdf() {
     const PBEKeySpec = Java.use("javax.crypto.spec.PBEKeySpec");
     const StringCls = Java.use("java.lang.String");
 
-    const toStr = (arr: any) =>
+    const toStr = (arr: Java.Wrapper | null) =>
       arr === null ? "(null)" : StringCls.$new(arr).toString();
 
     // PBEKeySpec(char[])

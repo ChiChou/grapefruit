@@ -27,6 +27,21 @@ export function patch(restores: Array<() => void>) {
   };
 }
 
+export function hook(
+  cls: Java.Wrapper,
+  method: string,
+  overload: string[],
+  impl: Java.MethodImplementation,
+): InvocationListener {
+  const m = cls[method].overload(...overload);
+  m.implementation = impl;
+  return {
+    detach: () => {
+      m.implementation = null;
+    },
+  };
+}
+
 export function backtrace(): string[] {
   try {
     const sw = Java.use("java.io.StringWriter").$new();

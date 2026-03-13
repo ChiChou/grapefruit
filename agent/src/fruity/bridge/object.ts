@@ -126,6 +126,6 @@ export function description(obj: ObjC.Object) {
     return `[Array of ${obj.count()} elements]`;
   if (obj.isKindOfClass_(ObjC.classes.NSDictionary))
     return `{Dictionary of ${obj.count()} entries}`;
-  if (obj.$handle === obj.$class.$handle) return `<Class ${obj.$className}>`;
+  if (obj.handle.equals(obj.$class.handle)) return `<Class ${obj.$className}>`;
   return `${obj}`;
 }

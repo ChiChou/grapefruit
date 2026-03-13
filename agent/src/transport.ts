@@ -1,6 +1,7 @@
 import ObjC from "frida-objc-bridge";
 import Java from "frida-java-bridge";
 
+import type { JavaHandle, ZipFile } from "./droid/bridge/wrapper.js";
 import { mkdirp as objcMkdirp } from "./fruity/modules/fs.js";
 import { mkdirp as javaMkdirp } from "./droid/modules/fs.js";
 import { parseMachO, readEncryptionInfo } from "./fruity/parser/macho.js";
@@ -19,12 +20,12 @@ rpc.exports.len = function (path: string) {
 rpc.exports.zipLen = function (apkPath: string, entryName: string): number {
   let result = -1;
   Java.perform(() => {
-    const ZipFile = Java.use("java.util.zip.ZipFile");
-    const zip = ZipFile.$new(apkPath);
+    const ZipFileCls = Java.use("java.util.zip.ZipFile");
+    const zip: ZipFile = ZipFileCls.$new(apkPath);
     try {
       const entry = zip.getEntry(entryName);
       if (!entry) throw new Error(`Entry not found: ${entryName}`);
-      result = Number(entry.getSize());
+      result = entry.getSize();
     } finally {
       zip.close();
     }
@@ -37,14 +38,15 @@ rpc.exports.zipLen = function (apkPath: string, entryName: string): number {
  */
 rpc.exports.pullZip = function (apkPath: string, entryName: string) {
   Java.perform(() => {
-    const ZipFile = Java.use("java.util.zip.ZipFile");
-    const zip = ZipFile.$new(apkPath);
+    const ZipFileCls = Java.use("java.util.zip.ZipFile");
+    const zip: ZipFile = ZipFileCls.$new(apkPath);
     try {
       const entry = zip.getEntry(entryName);
       if (!entry) throw new Error(`Entry not found: ${entryName}`);
 
       const inputStream = zip.getInputStream(entry);
-      const buffer = Java.array("byte", new Array(DUMP_CHUNK_SIZE).fill(0));
+      // Java.array() returns a Java Wrapper at runtime despite any[] typedef
+      const buffer = Java.array("byte", new Array(DUMP_CHUNK_SIZE).fill(0)) as unknown as Java.Wrapper;
       const label = `${Process.id}:zip:${apkPath}:${entryName}`;
       const controller = new RemoteStreamController();
 
@@ -73,8 +75,7 @@ rpc.exports.pullZip = function (apkPath: string, entryName: string) {
       const writable = controller.open(label, { meta: { type: "data" } });
 
       const env = Java.vm.getEnv();
-      const wrapper = buffer as unknown as Java.Wrapper;
-      const bufHandle = wrapper.$handle ?? wrapper.$h;
+      const bufHandle = (buffer as JavaHandle).$h;
 
       let len: number;
       while ((len = inputStream.read(buffer)) !== -1) {
