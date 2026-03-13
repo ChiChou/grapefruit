@@ -34,6 +34,7 @@ import {
 import { FruityClassDetailTab } from "../tabs/FruityClassDetailTab";
 import { FruityClassDumpTab } from "../tabs/FruityClassDumpTab";
 import { DroidClassDetailTab } from "../tabs/DroidClassDetailTab";
+import { ApkBrowserTab } from "../tabs/ApkBrowserTab";
 import { FinderTab } from "../tabs/FinderTab";
 import { ImagePreviewTab } from "../tabs/ImagePreviewTab";
 import { HexPreviewTab } from "../tabs/HexPreviewTab";
@@ -157,6 +158,7 @@ function WorkspaceContent() {
 
   const components = {
     home: HomeTab,
+    apkBrowser: ApkBrowserTab,
     handles: FruityHandlesTab,
     infoPlist: FruityInfoPlistTab,
     entitlements: FruityEntitlementsTab,

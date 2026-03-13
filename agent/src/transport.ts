@@ -13,6 +13,85 @@ rpc.exports.len = function (path: string) {
   return fs.statSync(path).size;
 };
 
+/**
+ * Get the uncompressed size of an entry inside a ZIP (APK) file.
+ */
+rpc.exports.zipLen = function (apkPath: string, entryName: string): number {
+  let result = -1;
+  Java.perform(() => {
+    const ZipFile = Java.use("java.util.zip.ZipFile");
+    const zip = ZipFile.$new(apkPath);
+    try {
+      const entry = zip.getEntry(entryName);
+      if (!entry) throw new Error(`Entry not found: ${entryName}`);
+      result = Number(entry.getSize());
+    } finally {
+      zip.close();
+    }
+  });
+  return result;
+};
+
+/**
+ * Stream a ZIP entry via frida-remote-stream.
+ */
+rpc.exports.pullZip = function (apkPath: string, entryName: string) {
+  Java.perform(() => {
+    const ZipFile = Java.use("java.util.zip.ZipFile");
+    const zip = ZipFile.$new(apkPath);
+    try {
+      const entry = zip.getEntry(entryName);
+      if (!entry) throw new Error(`Entry not found: ${entryName}`);
+
+      const inputStream = zip.getInputStream(entry);
+      const buffer = Java.array("byte", new Array(DUMP_CHUNK_SIZE).fill(0));
+      const label = `${Process.id}:zip:${apkPath}:${entryName}`;
+      const controller = new RemoteStreamController();
+
+      controller.events.on("send", ({ stanza, data }: Packet) => {
+        send(
+          {
+            name: "+stream",
+            payload: stanza,
+          },
+          data?.buffer as ArrayBuffer,
+        );
+      });
+
+      function onStreamMessage(
+        message: { payload: { [key: string]: string } },
+        data: ArrayBuffer | null,
+      ) {
+        controller.receive({
+          stanza: message.payload,
+          data: data as unknown as Buffer<ArrayBufferLike>,
+        });
+        recv("+stream", onStreamMessage);
+      }
+      recv("+stream", onStreamMessage);
+
+      const writable = controller.open(label, { meta: { type: "data" } });
+
+      const env = Java.vm.getEnv();
+      const wrapper = buffer as unknown as Java.Wrapper;
+      const bufHandle = wrapper.$handle ?? wrapper.$h;
+
+      let len: number;
+      while ((len = inputStream.read(buffer)) !== -1) {
+        // Fast JNI copy: GetByteArrayElements instead of element-by-element
+        const ptr = env.getByteArrayElements(bufHandle);
+        const chunk = ptr.readByteArray(len)!;
+        env.releaseByteArrayElements(bufHandle, ptr);
+        writable.write(Buffer.from(chunk));
+      }
+      writable.end();
+      inputStream.close();
+    } finally {
+      zip.close();
+    }
+  });
+};
+
 const LC_ENCRYPTION_INFO = 0x21;
 const LC_ENCRYPTION_INFO_64 = 0x2c;
 const DUMP_CHUNK_SIZE = 1024 * 1024; // 1MB

@@ -1,4 +1,5 @@
 import * as activities from "./modules/activities.js";
+import * as apk from "./modules/apk.js";
 import * as app from "./modules/app.js";
 import * as checksec from "./modules/checksec/index.js";
 import * as classes from "./modules/classes.js";
@@ -26,6 +27,7 @@ import * as threads from "@/common/threads.js";
 
 export default {
   activities,
+  apk,
   app,
   checksec,
   classes,

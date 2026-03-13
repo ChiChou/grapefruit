@@ -542,5 +542,9 @@
   "thread_state_stopped": "Stopped",
   "thread_state_halted": "Halted",
 
+  "apk_browser": "APK Browser",
+  "home_apk_browser_desc": "Browse contents of the application APK files",
+  "apk_list": "APK Files",
+  "compressed_size": "Compressed",
   "no_extensions": "No extensions found"
 }

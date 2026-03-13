@@ -222,6 +222,7 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
   ],
   "droid:app": [
     pf("checksec_tab", "checksec", ShieldCheck, "checksec", "home_checksec_desc"),
+    pf("apk_browser_tab", "apkBrowser", Package, "apk_browser", "home_apk_browser_desc"),
     pf("finder_tab", "finder", FolderSearch, "finder", "home_finder_desc", {
       path: "/",
     }),

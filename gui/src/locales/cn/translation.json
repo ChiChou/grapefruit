@@ -534,5 +534,9 @@
   "thread_state_stopped": "已停止",
   "thread_state_halted": "已停止",
 
+  "apk_browser": "APK 浏览器",
+  "home_apk_browser_desc": "浏览应用程序 APK 文件内容",
+  "apk_list": "APK 文件",
+  "compressed_size": "压缩大小",
   "no_extensions": "未找到扩展"
 }

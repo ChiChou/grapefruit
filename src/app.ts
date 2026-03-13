@@ -8,6 +8,7 @@ import getVersion from "./lib/version.ts";
 import env from "./lib/env.ts";
 import { asset } from "./lib/assets.ts";
 
+import apkRoutes from "./routes/apk.ts";
 import deviceRoutes from "./routes/devices.ts";
 import transferRoutes from "./routes/transfer.ts";
 import dataRoutes from "./routes/data.ts";
@@ -43,6 +44,7 @@ api.get("/d.ts/pack", async (c) => {
   }
 });
 
+api.route("/", apkRoutes);
 api.route("/", deviceRoutes);
 api.route("/", transferRoutes);
 api.route("/", dataRoutes);
