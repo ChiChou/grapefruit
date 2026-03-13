@@ -1,11 +1,10 @@
 import Java from "frida-java-bridge";
 
 import type { BaseMessage } from "@/common/hooks/context.js";
-import { hook, backtrace } from "@/common/hooks/java.js";
+import { hook, bt } from "@/common/hooks/java.js";
 
 const hooks: InvocationListener[] = [];
 let running = false;
-
 
 export function start() {
   if (running || !available()) return;
@@ -35,25 +34,27 @@ export function start() {
 function hookGetSharedPreferences() {
   const ContextWrapper = Java.use("android.content.ContextWrapper");
 
-  hooks.push(hook(
-    ContextWrapper.getSharedPreferences.overload("java.lang.String", "int"),
-    (original, self, args) => {
-      const [name, mode] = args as [Java.Wrapper, number];
-      const prefName = name?.toString() ?? "<null>";
+  hooks.push(
+    hook(
+      ContextWrapper.getSharedPreferences.overload("java.lang.String", "int"),
+      (original, self, args) => {
+        const [name, mode] = args as [Java.Wrapper, number];
+        const prefName = name?.toString() ?? "<null>";
 
-      send({
-        subject: "hook",
-        category: "sharedpref",
-        symbol: "Context.getSharedPreferences",
-        dir: "enter",
-        line: `getSharedPreferences("${prefName}", ${mode})`,
-        backtrace: backtrace(),
-        extra: { op: "open", name: prefName, mode },
-      } satisfies BaseMessage);
+        send({
+          subject: "hook",
+          category: "sharedpref",
+          symbol: "Context.getSharedPreferences",
+          dir: "enter",
+          line: `getSharedPreferences("${prefName}", ${mode})`,
+          backtrace: bt(),
+          extra: { op: "open", name: prefName, mode },
+        } satisfies BaseMessage);
 
-      return original.call(self, name, mode);
-    },
-  ));
+        return original.call(self, name, mode);
+      },
+    ),
+  );
 }
 
 function hookSharedPreferencesRead() {
@@ -69,64 +70,79 @@ function hookSharedPreferencesRead() {
 
   for (const { name, argType, valueType } of readMethods) {
     try {
-      hooks.push(hook(
-        SharedPreferencesImpl[name].overload("java.lang.String", argType),
+      hooks.push(
+        hook(
+          SharedPreferencesImpl[name].overload("java.lang.String", argType),
+          (original, self, args) => {
+            const [key, defValue] = args as [Java.Wrapper, unknown];
+            const keyStr = key?.toString() ?? "<null>";
+            const ret = original.call(self, key, defValue);
+
+            send({
+              subject: "hook",
+              category: "sharedpref",
+              symbol: `SharedPreferences.${name}`,
+              dir: "leave",
+              line: `${name}("${keyStr}") => ${ret}`,
+              backtrace: bt(),
+              extra: {
+                op: "read",
+                method: name,
+                key: keyStr,
+                value: ret?.toString() ?? null,
+                valueType,
+              },
+            } satisfies BaseMessage);
+
+            return ret;
+          },
+        ),
+      );
+    } catch {
+      /* overload may not exist */
+    }
+  }
+
+  // getStringSet
+  try {
+    hooks.push(
+      hook(
+        SharedPreferencesImpl.getStringSet.overload(
+          "java.lang.String",
+          "java.util.Set",
+        ),
         (original, self, args) => {
-          const [key, defValue] = args as [Java.Wrapper, unknown];
+          const [key, defValue] = args as [Java.Wrapper, Java.Wrapper | null];
           const keyStr = key?.toString() ?? "<null>";
           const ret = original.call(self, key, defValue);
 
           send({
             subject: "hook",
             category: "sharedpref",
-            symbol: `SharedPreferences.${name}`,
+            symbol: "SharedPreferences.getStringSet",
             dir: "leave",
-            line: `${name}("${keyStr}") => ${ret}`,
-            backtrace: backtrace(),
+            line: `getStringSet("${keyStr}")`,
+            backtrace: bt(),
             extra: {
               op: "read",
-              method: name,
+              method: "getStringSet",
               key: keyStr,
-              value: ret?.toString() ?? null,
-              valueType,
+              valueType: "stringSet",
             },
           } satisfies BaseMessage);
 
           return ret;
         },
-      ));
-    } catch { /* overload may not exist */ }
+      ),
+    );
+  } catch {
+    /* may not exist */
   }
-
-  // getStringSet
-  try {
-    hooks.push(hook(
-      SharedPreferencesImpl.getStringSet.overload("java.lang.String", "java.util.Set"),
-      (original, self, args) => {
-        const [key, defValue] = args as [Java.Wrapper, Java.Wrapper | null];
-        const keyStr = key?.toString() ?? "<null>";
-        const ret = original.call(self, key, defValue);
-
-        send({
-          subject: "hook",
-          category: "sharedpref",
-          symbol: "SharedPreferences.getStringSet",
-          dir: "leave",
-          line: `getStringSet("${keyStr}")`,
-          backtrace: backtrace(),
-          extra: { op: "read", method: "getStringSet", key: keyStr, valueType: "stringSet" },
-        } satisfies BaseMessage);
-
-        return ret;
-      },
-    ));
-  } catch { /* may not exist */ }
 
   // getAll
   try {
-    hooks.push(hook(
-      SharedPreferencesImpl.getAll,
-      (original, self, args) => {
+    hooks.push(
+      hook(SharedPreferencesImpl.getAll, (original, self, args) => {
         const ret = original.call(self, ...args);
 
         send({
@@ -135,38 +151,49 @@ function hookSharedPreferencesRead() {
           symbol: "SharedPreferences.getAll",
           dir: "leave",
           line: "getAll()",
-          backtrace: backtrace(),
+          backtrace: bt(),
           extra: { op: "read", method: "getAll" },
         } satisfies BaseMessage);
 
         return ret;
-      },
-    ));
-  } catch { /* may not exist */ }
+      }),
+    );
+  } catch {
+    /* may not exist */
+  }
 
   // contains
   try {
-    hooks.push(hook(
-      SharedPreferencesImpl.contains.overload("java.lang.String"),
-      (original, self, args) => {
-        const [key] = args as [Java.Wrapper];
-        const keyStr = key?.toString() ?? "<null>";
-        const ret = original.call(self, key);
+    hooks.push(
+      hook(
+        SharedPreferencesImpl.contains.overload("java.lang.String"),
+        (original, self, args) => {
+          const [key] = args as [Java.Wrapper];
+          const keyStr = key?.toString() ?? "<null>";
+          const ret = original.call(self, key);
 
-        send({
-          subject: "hook",
-          category: "sharedpref",
-          symbol: "SharedPreferences.contains",
-          dir: "leave",
-          line: `contains("${keyStr}") => ${ret}`,
-          backtrace: backtrace(),
-          extra: { op: "query", method: "contains", key: keyStr, result: ret },
-        } satisfies BaseMessage);
+          send({
+            subject: "hook",
+            category: "sharedpref",
+            symbol: "SharedPreferences.contains",
+            dir: "leave",
+            line: `contains("${keyStr}") => ${ret}`,
+            backtrace: bt(),
+            extra: {
+              op: "query",
+              method: "contains",
+              key: keyStr,
+              result: ret,
+            },
+          } satisfies BaseMessage);
 
-        return ret;
-      },
-    ));
-  } catch { /* may not exist */ }
+          return ret;
+        },
+      ),
+    );
+  } catch {
+    /* may not exist */
+  }
 }
 
 function hookSharedPreferencesWrite() {
@@ -182,139 +209,169 @@ function hookSharedPreferencesWrite() {
 
   for (const { name, argType, valueType } of writeMethods) {
     try {
-      hooks.push(hook(
-        EditorImpl[name].overload("java.lang.String", argType),
-        (original, self, args) => {
-          const [key, value] = args as [Java.Wrapper, unknown];
-          const keyStr = key?.toString() ?? "<null>";
-          const valStr = value?.toString() ?? "null";
+      hooks.push(
+        hook(
+          EditorImpl[name].overload("java.lang.String", argType),
+          (original, self, args) => {
+            const [key, value] = args as [Java.Wrapper, unknown];
+            const keyStr = key?.toString() ?? "<null>";
+            const valStr = value?.toString() ?? "null";
 
-          send({
-            subject: "hook",
-            category: "sharedpref",
-            symbol: `SharedPreferences.Editor.${name}`,
-            dir: "enter",
-            line: `${name}("${keyStr}", ${valStr})`,
-            backtrace: backtrace(),
-            extra: { op: "write", method: name, key: keyStr, value: valStr, valueType },
-          } satisfies BaseMessage);
+            send({
+              subject: "hook",
+              category: "sharedpref",
+              symbol: `SharedPreferences.Editor.${name}`,
+              dir: "enter",
+              line: `${name}("${keyStr}", ${valStr})`,
+              backtrace: bt(),
+              extra: {
+                op: "write",
+                method: name,
+                key: keyStr,
+                value: valStr,
+                valueType,
+              },
+            } satisfies BaseMessage);
 
-          return original.call(self, key, value);
-        },
-      ));
-    } catch { /* overload may not exist */ }
+            return original.call(self, key, value);
+          },
+        ),
+      );
+    } catch {
+      /* overload may not exist */
+    }
   }
 
   // putStringSet
   try {
-    hooks.push(hook(
-      EditorImpl.putStringSet.overload("java.lang.String", "java.util.Set"),
-      (original, self, args) => {
-        const [key, values] = args as [Java.Wrapper, Java.Wrapper | null];
-        const keyStr = key?.toString() ?? "<null>";
+    hooks.push(
+      hook(
+        EditorImpl.putStringSet.overload("java.lang.String", "java.util.Set"),
+        (original, self, args) => {
+          const [key, values] = args as [Java.Wrapper, Java.Wrapper | null];
+          const keyStr = key?.toString() ?? "<null>";
 
-        send({
-          subject: "hook",
-          category: "sharedpref",
-          symbol: "SharedPreferences.Editor.putStringSet",
-          dir: "enter",
-          line: `putStringSet("${keyStr}", ...)`,
-          backtrace: backtrace(),
-          extra: { op: "write", method: "putStringSet", key: keyStr, valueType: "stringSet" },
-        } satisfies BaseMessage);
+          send({
+            subject: "hook",
+            category: "sharedpref",
+            symbol: "SharedPreferences.Editor.putStringSet",
+            dir: "enter",
+            line: `putStringSet("${keyStr}", ...)`,
+            backtrace: bt(),
+            extra: {
+              op: "write",
+              method: "putStringSet",
+              key: keyStr,
+              valueType: "stringSet",
+            },
+          } satisfies BaseMessage);
 
-        return original.call(self, key, values);
-      },
-    ));
-  } catch { /* may not exist */ }
+          return original.call(self, key, values);
+        },
+      ),
+    );
+  } catch {
+    /* may not exist */
+  }
 
   // remove
   try {
-    hooks.push(hook(
-      EditorImpl.remove.overload("java.lang.String"),
-      (original, self, args) => {
-        const [key] = args as [Java.Wrapper];
-        const keyStr = key?.toString() ?? "<null>";
+    hooks.push(
+      hook(
+        EditorImpl.remove.overload("java.lang.String"),
+        (original, self, args) => {
+          const [key] = args as [Java.Wrapper];
+          const keyStr = key?.toString() ?? "<null>";
 
-        send({
-          subject: "hook",
-          category: "sharedpref",
-          symbol: "SharedPreferences.Editor.remove",
-          dir: "enter",
-          line: `remove("${keyStr}")`,
-          backtrace: backtrace(),
-          extra: { op: "delete", method: "remove", key: keyStr },
-        } satisfies BaseMessage);
+          send({
+            subject: "hook",
+            category: "sharedpref",
+            symbol: "SharedPreferences.Editor.remove",
+            dir: "enter",
+            line: `remove("${keyStr}")`,
+            backtrace: bt(),
+            extra: { op: "delete", method: "remove", key: keyStr },
+          } satisfies BaseMessage);
 
-        return original.call(self, key);
-      },
-    ));
-  } catch { /* may not exist */ }
+          return original.call(self, key);
+        },
+      ),
+    );
+  } catch {
+    /* may not exist */
+  }
 
   // clear
   try {
-    hooks.push(hook(
-      EditorImpl.clear,
-      (original, self, args) => {
+    hooks.push(
+      hook(EditorImpl.clear, (original, self, args) => {
         send({
           subject: "hook",
           category: "sharedpref",
           symbol: "SharedPreferences.Editor.clear",
           dir: "enter",
           line: "clear()",
-          backtrace: backtrace(),
+          backtrace: bt(),
           extra: { op: "delete", method: "clear" },
         } satisfies BaseMessage);
 
         return original.call(self, ...args);
-      },
-    ));
-  } catch { /* may not exist */ }
+      }),
+    );
+  } catch {
+    /* may not exist */
+  }
 
   // commit
   try {
-    hooks.push(hook(
-      EditorImpl.commit,
-      (original, self, args) => {
+    hooks.push(
+      hook(EditorImpl.commit, (original, self, args) => {
         send({
           subject: "hook",
           category: "sharedpref",
           symbol: "SharedPreferences.Editor.commit",
           dir: "enter",
           line: "commit() // sync write",
-          backtrace: backtrace(),
+          backtrace: bt(),
           extra: { op: "commit", method: "commit", sync: true },
         } satisfies BaseMessage);
 
         return original.call(self, ...args);
-      },
-    ));
-  } catch { /* may not exist */ }
+      }),
+    );
+  } catch {
+    /* may not exist */
+  }
 
   // apply
   try {
-    hooks.push(hook(
-      EditorImpl.apply,
-      (original, self, args) => {
+    hooks.push(
+      hook(EditorImpl.apply, (original, self, args) => {
         send({
           subject: "hook",
           category: "sharedpref",
           symbol: "SharedPreferences.Editor.apply",
           dir: "enter",
           line: "apply() // async write",
-          backtrace: backtrace(),
+          backtrace: bt(),
           extra: { op: "commit", method: "apply", sync: false },
         } satisfies BaseMessage);
 
         return original.call(self, ...args);
-      },
-    ));
-  } catch { /* may not exist */ }
+      }),
+    );
+  } catch {
+    /* may not exist */
+  }
 }
 
 export function stop() {
   for (const h of hooks) {
-    try { h.detach(); } catch { /* ignore */ }
+    try {
+      h.detach();
+    } catch {
+      /* ignore */
+    }
   }
   hooks.length = 0;
   running = false;
@@ -331,7 +388,9 @@ export function available(): boolean {
     try {
       Java.use("android.app.SharedPreferencesImpl");
       found = true;
-    } catch { /* not found */ }
+    } catch {
+      /* not found */
+    }
   });
   return found;
 }

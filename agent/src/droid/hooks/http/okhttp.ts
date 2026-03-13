@@ -9,12 +9,12 @@ import {
   tryUse,
   MAX_BODY_SIZE,
 } from "./common.js";
+import { bt as captureBacktrace } from "@/common/hooks/java.js";
 import {
   bodyRegistry,
   byteArrayToBuffer,
   tagStream,
   tagReader,
-  captureBacktrace,
 } from "./body.js";
 
 function extractHeaders(headers: Java.Wrapper): Record<string, string> {
@@ -149,8 +149,7 @@ function hookResponseBodyConsumption(): void {
       }
       return result;
     };
-  } catch {
-  }
+  } catch {}
 
   try {
     const method = ResponseBody.bytes.overload();
@@ -175,8 +174,7 @@ function hookResponseBodyConsumption(): void {
       }
       return result;
     };
-  } catch {
-  }
+  } catch {}
 
   try {
     const method = ResponseBody.byteStream.overload();
@@ -188,8 +186,7 @@ function hookResponseBodyConsumption(): void {
       }
       return stream;
     };
-  } catch {
-  }
+  } catch {}
 
   try {
     const method = ResponseBody.charStream.overload();
@@ -201,8 +198,7 @@ function hookResponseBodyConsumption(): void {
       }
       return reader;
     };
-  } catch {
-  }
+  } catch {}
 }
 
 export function hookOkHttp(): void {
@@ -283,8 +279,7 @@ export function hookOkHttp(): void {
         throw e;
       }
     };
-  } catch {
-  }
+  } catch {}
 
   hookResponseBodyConsumption();
 }

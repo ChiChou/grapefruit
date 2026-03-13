@@ -1,12 +1,11 @@
 import Java from "frida-java-bridge";
 
 import type { BaseMessage } from "@/common/hooks/context.js";
-import { hook, backtrace } from "@/common/hooks/java.js";
+import { hook, bt } from "@/common/hooks/java.js";
 import { toJS } from "@/droid/bridge/object.js";
 
 const hooks: InvocationListener[] = [];
 let running = false;
-
 
 function describeIntent(intent: Java.Wrapper): Record<string, unknown> {
   const info: Record<string, unknown> = {};
@@ -49,12 +48,16 @@ function describeIntent(intent: Java.Wrapper): Record<string, unknown> {
           count++;
         }
         info.extras = map;
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
 
     const flags = intent.getFlags();
     if (flags !== 0) info.flags = `0x${(flags >>> 0).toString(16)}`;
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   return info;
 }
@@ -62,7 +65,8 @@ function describeIntent(intent: Java.Wrapper): Record<string, unknown> {
 function intentSummary(intent: Java.Wrapper): string {
   try {
     const action = intent.getAction()?.toString() ?? "";
-    const component = intent.getComponent()?.flattenToString()?.toString() ?? "";
+    const component =
+      intent.getComponent()?.flattenToString()?.toString() ?? "";
     if (component) return component;
     if (action) return action;
     return intent.toString();
@@ -88,173 +92,201 @@ function hookSendBroadcast() {
   const ContextWrapper = Java.use("android.content.ContextWrapper");
 
   // sendBroadcast(Intent)
-  hooks.push(hook(
-    ContextWrapper.sendBroadcast.overload("android.content.Intent"),
-    (original, self, args) => {
-      const [intent] = args as [Java.Wrapper];
-
-      send({
-        subject: "hook",
-        category: "broadcast",
-        symbol: "Context.sendBroadcast",
-        dir: "enter",
-        line: `sendBroadcast(${intentSummary(intent)})`,
-        backtrace: backtrace(),
-        extra: { op: "send", ...describeIntent(intent) },
-      } satisfies BaseMessage);
-
-      return original.call(self, intent);
-    },
-  ));
-
-  // sendBroadcast(Intent, String) - with permission
-  try {
-    hooks.push(hook(
-      ContextWrapper.sendBroadcast.overload(
-        "android.content.Intent",
-        "java.lang.String",
-      ),
-      (original, self, args) => {
-        const [intent, perm] = args as [Java.Wrapper, Java.Wrapper | null];
-
-        send({
-          subject: "hook",
-          category: "broadcast",
-          symbol: "Context.sendBroadcast",
-          dir: "enter",
-          line: `sendBroadcast(${intentSummary(intent)}, ${perm?.toString() ?? "null"})`,
-          backtrace: backtrace(),
-          extra: {
-            op: "send",
-            permission: perm?.toString() ?? null,
-            ...describeIntent(intent),
-          },
-        } satisfies BaseMessage);
-
-        return original.call(self, intent, perm);
-      },
-    ));
-  } catch { /* overload may not exist */ }
-
-  // sendOrderedBroadcast(Intent, String)
-  try {
-    hooks.push(hook(
-      ContextWrapper.sendOrderedBroadcast.overload(
-        "android.content.Intent",
-        "java.lang.String",
-      ),
-      (original, self, args) => {
-        const [intent, perm] = args as [Java.Wrapper, Java.Wrapper | null];
-
-        send({
-          subject: "hook",
-          category: "broadcast",
-          symbol: "Context.sendOrderedBroadcast",
-          dir: "enter",
-          line: `sendOrderedBroadcast(${intentSummary(intent)})`,
-          backtrace: backtrace(),
-          extra: {
-            op: "sendOrdered",
-            permission: perm?.toString() ?? null,
-            ...describeIntent(intent),
-          },
-        } satisfies BaseMessage);
-
-        return original.call(self, intent, perm);
-      },
-    ));
-  } catch { /* overload may not exist */ }
-
-  // sendStickyBroadcast(Intent)
-  try {
-    hooks.push(hook(
-      ContextWrapper.sendStickyBroadcast.overload("android.content.Intent"),
+  hooks.push(
+    hook(
+      ContextWrapper.sendBroadcast.overload("android.content.Intent"),
       (original, self, args) => {
         const [intent] = args as [Java.Wrapper];
 
         send({
           subject: "hook",
           category: "broadcast",
-          symbol: "Context.sendStickyBroadcast",
+          symbol: "Context.sendBroadcast",
           dir: "enter",
-          line: `sendStickyBroadcast(${intentSummary(intent)})`,
-          backtrace: backtrace(),
-          extra: { op: "sendSticky", ...describeIntent(intent) },
+          line: `sendBroadcast(${intentSummary(intent)})`,
+          backtrace: bt(),
+          extra: { op: "send", ...describeIntent(intent) },
         } satisfies BaseMessage);
 
         return original.call(self, intent);
       },
-    ));
-  } catch { /* may not exist on all API levels */ }
+    ),
+  );
+
+  // sendBroadcast(Intent, String) - with permission
+  try {
+    hooks.push(
+      hook(
+        ContextWrapper.sendBroadcast.overload(
+          "android.content.Intent",
+          "java.lang.String",
+        ),
+        (original, self, args) => {
+          const [intent, perm] = args as [Java.Wrapper, Java.Wrapper | null];
+
+          send({
+            subject: "hook",
+            category: "broadcast",
+            symbol: "Context.sendBroadcast",
+            dir: "enter",
+            line: `sendBroadcast(${intentSummary(intent)}, ${perm?.toString() ?? "null"})`,
+            backtrace: bt(),
+            extra: {
+              op: "send",
+              permission: perm?.toString() ?? null,
+              ...describeIntent(intent),
+            },
+          } satisfies BaseMessage);
+
+          return original.call(self, intent, perm);
+        },
+      ),
+    );
+  } catch {
+    /* overload may not exist */
+  }
+
+  // sendOrderedBroadcast(Intent, String)
+  try {
+    hooks.push(
+      hook(
+        ContextWrapper.sendOrderedBroadcast.overload(
+          "android.content.Intent",
+          "java.lang.String",
+        ),
+        (original, self, args) => {
+          const [intent, perm] = args as [Java.Wrapper, Java.Wrapper | null];
+
+          send({
+            subject: "hook",
+            category: "broadcast",
+            symbol: "Context.sendOrderedBroadcast",
+            dir: "enter",
+            line: `sendOrderedBroadcast(${intentSummary(intent)})`,
+            backtrace: bt(),
+            extra: {
+              op: "sendOrdered",
+              permission: perm?.toString() ?? null,
+              ...describeIntent(intent),
+            },
+          } satisfies BaseMessage);
+
+          return original.call(self, intent, perm);
+        },
+      ),
+    );
+  } catch {
+    /* overload may not exist */
+  }
+
+  // sendStickyBroadcast(Intent)
+  try {
+    hooks.push(
+      hook(
+        ContextWrapper.sendStickyBroadcast.overload("android.content.Intent"),
+        (original, self, args) => {
+          const [intent] = args as [Java.Wrapper];
+
+          send({
+            subject: "hook",
+            category: "broadcast",
+            symbol: "Context.sendStickyBroadcast",
+            dir: "enter",
+            line: `sendStickyBroadcast(${intentSummary(intent)})`,
+            backtrace: bt(),
+            extra: { op: "sendSticky", ...describeIntent(intent) },
+          } satisfies BaseMessage);
+
+          return original.call(self, intent);
+        },
+      ),
+    );
+  } catch {
+    /* may not exist on all API levels */
+  }
 
   // registerReceiver(BroadcastReceiver, IntentFilter)
   try {
-    hooks.push(hook(
-      ContextWrapper.registerReceiver.overload(
-        "android.content.BroadcastReceiver",
-        "android.content.IntentFilter",
-      ),
-      (original, self, args) => {
-        const [receiver, filter] = args as [Java.Wrapper, Java.Wrapper];
+    hooks.push(
+      hook(
+        ContextWrapper.registerReceiver.overload(
+          "android.content.BroadcastReceiver",
+          "android.content.IntentFilter",
+        ),
+        (original, self, args) => {
+          const [receiver, filter] = args as [Java.Wrapper, Java.Wrapper];
 
-        const actions: string[] = [];
-        try {
-          const count = filter.countActions();
-          for (let i = 0; i < count && i < 32; i++) {
-            actions.push(filter.getAction(i).toString());
+          const actions: string[] = [];
+          try {
+            const count = filter.countActions();
+            for (let i = 0; i < count && i < 32; i++) {
+              actions.push(filter.getAction(i).toString());
+            }
+          } catch {
+            /* ignore */
           }
-        } catch { /* ignore */ }
 
-        send({
-          subject: "hook",
-          category: "broadcast",
-          symbol: "Context.registerReceiver",
-          dir: "enter",
-          line: `registerReceiver(${actions.join(", ") || "..."})`,
-          backtrace: backtrace(),
-          extra: {
-            op: "register",
-            receiverClass: receiver?.$className ?? null,
-            actions,
-          },
-        } satisfies BaseMessage);
+          send({
+            subject: "hook",
+            category: "broadcast",
+            symbol: "Context.registerReceiver",
+            dir: "enter",
+            line: `registerReceiver(${actions.join(", ") || "..."})`,
+            backtrace: bt(),
+            extra: {
+              op: "register",
+              receiverClass: receiver?.$className ?? null,
+              actions,
+            },
+          } satisfies BaseMessage);
 
-        return original.call(self, receiver, filter);
-      },
-    ));
-  } catch { /* overload may not exist */ }
+          return original.call(self, receiver, filter);
+        },
+      ),
+    );
+  } catch {
+    /* overload may not exist */
+  }
 
   // unregisterReceiver(BroadcastReceiver)
   try {
-    hooks.push(hook(
-      ContextWrapper.unregisterReceiver.overload(
-        "android.content.BroadcastReceiver",
+    hooks.push(
+      hook(
+        ContextWrapper.unregisterReceiver.overload(
+          "android.content.BroadcastReceiver",
+        ),
+        (original, self, args) => {
+          const [receiver] = args as [Java.Wrapper];
+
+          send({
+            subject: "hook",
+            category: "broadcast",
+            symbol: "Context.unregisterReceiver",
+            dir: "enter",
+            line: `unregisterReceiver(${receiver?.$className ?? "..."})`,
+            backtrace: bt(),
+            extra: {
+              op: "unregister",
+              receiverClass: receiver?.$className ?? null,
+            },
+          } satisfies BaseMessage);
+
+          return original.call(self, receiver);
+        },
       ),
-      (original, self, args) => {
-        const [receiver] = args as [Java.Wrapper];
-
-        send({
-          subject: "hook",
-          category: "broadcast",
-          symbol: "Context.unregisterReceiver",
-          dir: "enter",
-          line: `unregisterReceiver(${receiver?.$className ?? "..."})`,
-          backtrace: backtrace(),
-          extra: {
-            op: "unregister",
-            receiverClass: receiver?.$className ?? null,
-          },
-        } satisfies BaseMessage);
-
-        return original.call(self, receiver);
-      },
-    ));
-  } catch { /* overload may not exist */ }
+    );
+  } catch {
+    /* overload may not exist */
+  }
 }
 
 export function stop() {
   for (const h of hooks) {
-    try { h.detach(); } catch { /* ignore */ }
+    try {
+      h.detach();
+    } catch {
+      /* ignore */
+    }
   }
   hooks.length = 0;
   running = false;
@@ -271,7 +303,9 @@ export function available(): boolean {
     try {
       Java.use("android.content.ContextWrapper");
       found = true;
-    } catch { /* not found */ }
+    } catch {
+      /* not found */
+    }
   });
   return found;
 }

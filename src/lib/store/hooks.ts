@@ -10,6 +10,7 @@ export interface HookInput {
   dir: string;
   line?: string;
   extra?: Record<string, unknown>;
+  backtrace?: string[];
 }
 
 export class HookStore extends BaseLogStore<typeof hooks> {
@@ -30,6 +31,7 @@ export class HookStore extends BaseLogStore<typeof hooks> {
         direction: message.dir || "unknown",
         line: message.line || null,
         extra: message.extra ? JSON.stringify(message.extra) : null,
+        backtrace: message.backtrace?.length ? JSON.stringify(message.backtrace) : null,
       })
       .run();
   }

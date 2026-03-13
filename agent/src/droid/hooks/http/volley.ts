@@ -9,7 +9,8 @@ import {
   serializeBody,
   tryUse,
 } from "./common.js";
-import { byteArrayToBuffer, captureBacktrace } from "./body.js";
+import { bt as captureBacktrace } from "@/common/hooks/java.js";
+import { byteArrayToBuffer } from "./body.js";
 
 function methodName(method: number): string {
   switch (method) {
@@ -202,8 +203,7 @@ export function hookVolley(): void {
         }
       };
     }
-  } catch {
-  }
+  } catch {}
 
   const RequestQueue = tryUse("com.android.volley.RequestQueue");
   if (RequestQueue) {
@@ -221,7 +221,6 @@ export function hookVolley(): void {
         }
         return this.add(request);
       };
-    } catch {
-    }
+    } catch {}
   }
 }

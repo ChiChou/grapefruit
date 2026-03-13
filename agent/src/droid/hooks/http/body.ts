@@ -152,13 +152,3 @@ export function tagReader(reader: Java.Wrapper, rid: string): void {
   }
 }
 
-export function captureBacktrace(): string[] {
-  try {
-    const { frames } = Java.backtrace();
-    return frames.map(
-      (f) => `${f.className}.${f.methodName}(${f.fileName}:${f.lineNumber})`,
-    );
-  } catch {
-    return [];
-  }
-}

@@ -51,6 +51,7 @@ export const hooks = sqliteTable(
     direction: text("direction").notNull(),
     line: text("line"),
     extra: text("extra"),
+    backtrace: text("backtrace"),
     createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [

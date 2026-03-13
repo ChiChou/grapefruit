@@ -14,13 +14,13 @@ export function perform<T>(fn: () => T): Promise<T> {
 
 type AnyMethod = Java.MethodDispatcher | Java.Method;
 
-export type HookCallback =
-  (original: AnyMethod, self: Java.Wrapper, args: unknown[]) => unknown;
+export type HookCallback = (
+  original: AnyMethod,
+  self: Java.Wrapper,
+  args: unknown[],
+) => unknown;
 
-export function hook(
-  method: AnyMethod,
-  fn: HookCallback,
-): InvocationListener {
+export function hook(method: AnyMethod, fn: HookCallback): InvocationListener {
   const orig = method.implementation;
   method.implementation = function (this: Java.Wrapper, ...args: unknown[]) {
     return fn(method, this, args);
@@ -32,16 +32,12 @@ export function hook(
   };
 }
 
-export function backtrace(): string[] {
+export function bt(limit = 16): string[] {
   try {
-    const sw = Java.use("java.io.StringWriter").$new();
-    const pw = Java.use("java.io.PrintWriter").$new(sw);
-    Java.use("java.lang.Throwable").$new().printStackTrace(pw);
-    return sw
-      .toString()
-      .split("\n")
-      .slice(2, 12)
-      .map((l: string) => l.trim());
+    const { frames } = Java.backtrace({ limit });
+    return frames.map(
+      (f) => `${f.className}.${f.methodName}(${f.fileName}:${f.lineNumber})`,
+    );
   } catch {
     return [];
   }

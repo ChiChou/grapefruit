@@ -9,7 +9,8 @@ import {
   tryUse,
   identityHash,
 } from "./common.js";
-import { tagStream, captureBacktrace } from "./body.js";
+import { bt as captureBacktrace } from "@/common/hooks/java.js";
+import { tagStream } from "./body.js";
 
 const connRequestIds = new Map<number, string>();
 const connStarted = new Set<number>();
@@ -174,16 +175,14 @@ export function hookHttpURLConnection(): void {
           throw e;
         }
       };
-    } catch {
-    }
+    } catch {}
 
     try {
       Impl.getOutputStream.implementation = function (this: Java.Wrapper) {
         emitCallStartIfNeeded(this);
         return this.getOutputStream();
       };
-    } catch {
-    }
+    } catch {}
 
     try {
       Impl.disconnect.implementation = function (this: Java.Wrapper) {
@@ -201,7 +200,6 @@ export function hookHttpURLConnection(): void {
           cleanupConn(this);
         }
       };
-    } catch {
-    }
+    } catch {}
   }
 }
