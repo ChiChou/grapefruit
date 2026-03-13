@@ -2,6 +2,7 @@ import Java from "frida-java-bridge";
 
 import { perform } from "@/common/hooks/java.js";
 import { getContext } from "@/droid/lib/context.js";
+import { drainInputStream } from "@/droid/lib/jbytes.js";
 
 let cached: string | null = null;
 
@@ -19,8 +20,6 @@ function readManifestXml(): string {
   const sourceDir: string = context.getApplicationInfo().sourceDir.value;
 
   const ZipFile = Java.use("java.util.zip.ZipFile");
-  const ByteArrayOutputStream = Java.use("java.io.ByteArrayOutputStream");
-
   const zip = ZipFile.$new(sourceDir);
 
   try {
@@ -28,24 +27,10 @@ function readManifestXml(): string {
     if (!entry) throw new Error("AndroidManifest.xml not found in APK");
 
     const inputStream = zip.getInputStream(entry);
-    const outputStream = ByteArrayOutputStream.$new();
-    const buffer = Java.array("byte", new Array(4096).fill(0));
-    let len: number;
-
-    while ((len = inputStream.read(buffer)) !== -1) {
-      outputStream.write(buffer, 0, len);
-    }
+    const data = drainInputStream(inputStream);
     inputStream.close();
 
-    const manifestBytes = outputStream.toByteArray();
-
-    const ByteBuffer = Java.use("java.nio.ByteBuffer");
-    const ByteOrder = Java.use("java.nio.ByteOrder");
-    const buf = ByteBuffer.wrap(manifestBytes).order(
-      ByteOrder.LITTLE_ENDIAN.value,
-    );
-
-    return decodeAxml(buf, manifestBytes, manifestBytes.length);
+    return decodeAxml(data);
   } finally {
     zip.close();
   }
@@ -53,17 +38,15 @@ function readManifestXml(): string {
 
 /**
  * Decodes a binary AndroidManifest.xml (AXML) into plain text XML.
- * Uses Java ByteBuffer for bulk reads to avoid slow element-by-element
- * Java-to-JS bridge copies.
+ * Pure JS implementation using DataView — no Java bridge calls during parsing.
  */
-function decodeAxml(
-  buf: Java.Wrapper,
-  bytes: Java.Wrapper,
-  length: number,
-): string {
-  const JavaString = Java.use("java.lang.String");
+function decodeAxml(data: ArrayBuffer): string {
+  const dv = new DataView(data);
+  const u8 = new Uint8Array(data);
+  const length = data.byteLength;
 
-  const readInt = (offset: number): number => buf.getInt(offset);
+  const readInt = (offset: number): number => dv.getInt32(offset, true);
+  const readShort = (offset: number): number => dv.getUint16(offset, true);
 
   const END_DOC_TAG = 0x00100101;
   const START_TAG = 0x00100102;
@@ -79,15 +62,23 @@ function decodeAxml(
     const indexOffset = stringIndexTableOffset + strIndex * 4;
     const offsetInData = readInt(indexOffset);
     const strAbsOffset = stringDataTableOffset + offsetInData;
-    const strLen = buf.getShort(strAbsOffset) & 0xffff;
+    const strLen = readShort(strAbsOffset);
 
     if (strLen === 0) return "";
-    return JavaString.$new(
-      bytes,
-      strAbsOffset + 2,
-      strLen * 2,
-      "UTF-16LE",
-    ).toString() as string;
+
+    // Decode UTF-16LE in pure JS
+    const start = strAbsOffset + 2;
+    const byteOff = u8.byteOffset + start;
+    if (byteOff % 2 === 0) {
+      const codes = new Uint16Array(u8.buffer, byteOff, strLen);
+      return String.fromCharCode(...codes);
+    }
+    // Unaligned fallback: read code units via DataView
+    const chars: number[] = new Array(strLen);
+    for (let i = 0; i < strLen; i++) {
+      chars[i] = readShort(start + i * 2);
+    }
+    return String.fromCharCode(...chars);
   };
 
   let xmlTagOffset = readInt(12);
