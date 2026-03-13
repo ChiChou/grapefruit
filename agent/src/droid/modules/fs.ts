@@ -2,6 +2,7 @@ import Java from "frida-java-bridge";
 
 import { perform } from "@/common/hooks/java.js";
 import { getContext } from "@/droid/lib/context.js";
+import { allocByteBuffer } from "@/droid/lib/jbytes.js";
 import * as posix from "@/lib/posix.js";
 import type { Roots } from "@/common/fs.js";
 
@@ -133,7 +134,7 @@ export function cp(src: string, dst: string) {
 
         const fis = FileInputStream.$new(s);
         const fos = FileOutputStream.$new(d);
-        const buf = Java.array("byte", new Array(8192).fill(0));
+        const buf = allocByteBuffer(8192);
         let n: number;
         while ((n = fis.read(buf) as number) !== -1) {
           fos.write(buf, 0, n);

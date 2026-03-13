@@ -19,13 +19,12 @@ function javaBt(): string[] {
   return result;
 }
 
+import { byteArrayToBuffer } from "@/droid/lib/jbytes.js";
+
 function toBuffer(byteArr: any): ArrayBuffer | null {
   if (!byteArr) return null;
-  const len = byteArr.length;
-  const buf = new ArrayBuffer(len);
-  const u8 = new Uint8Array(buf);
-  for (let i = 0; i < len; i++) u8[i] = byteArr[i] & 0xff;
-  return buf;
+  const result = byteArrayToBuffer(byteArr);
+  return result ? result.data : null;
 }
 
 function javaHook(

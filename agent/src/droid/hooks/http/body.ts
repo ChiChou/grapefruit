@@ -1,5 +1,13 @@
 import Java from "frida-java-bridge";
 
+import {
+  readJavaByteArray,
+  readJavaCharArray,
+  byteArrayToBuffer,
+} from "@/droid/lib/jbytes.js";
+
+export { readJavaByteArray, byteArrayToBuffer };
+
 export class Registry {
   private map: Java.Wrapper;
 
@@ -21,59 +29,6 @@ export class Registry {
 
 export const bodyRegistry = new Registry();
 export const streamRegistry = new Registry();
-
-export function readJavaByteArray(
-  array: Java.Wrapper,
-  offset: number,
-  length: number,
-): ArrayBuffer | null {
-  if (length <= 0) return null;
-  const env = Java.vm.getEnv();
-  const handle = array.$handle ?? array.$h;
-  const ptr = env.getByteArrayElements(handle);
-  try {
-    return ptr.add(offset).readByteArray(length)!;
-  } finally {
-    env.releaseByteArrayElements(handle, ptr);
-  }
-}
-
-function readJavaCharArray(
-  array: Java.Wrapper,
-  offset: number,
-  length: number,
-): ArrayBuffer | null {
-  if (length <= 0) return null;
-  const env = Java.vm.getEnv();
-  const handle = array.$handle ?? array.$h;
-  const ptr = env.getCharArrayElements(handle);
-  try {
-    return ptr.add(offset * 2).readByteArray(length * 2)!;
-  } finally {
-    env.releaseCharArrayElements(handle, ptr);
-  }
-}
-
-export function byteArrayToBuffer(
-  arr: Java.Wrapper,
-): { data: ArrayBuffer; length: number } | null {
-  if (arr === null) return null;
-  const handle = arr.$handle ?? arr.$h;
-  if (handle) {
-    const env = Java.vm.getEnv();
-    const len = env.getArrayLength(handle);
-    const data = readJavaByteArray(arr, 0, len);
-    return data ? { data, length: len } : null;
-  }
-  if (typeof arr.length === "number" && arr.length > 0) {
-    const len = arr.length;
-    const buf = new ArrayBuffer(len);
-    const view = new Uint8Array(buf);
-    for (let i = 0; i < len; i++) view[i] = arr[i] & 0xff;
-    return { data: buf, length: len };
-  }
-  return null;
-}
 
 const hookedInputStreamClasses = new Set<string>();
 const hookedReaderClasses = new Set<string>();

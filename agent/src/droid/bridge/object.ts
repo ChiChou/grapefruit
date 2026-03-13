@@ -1,5 +1,7 @@
 import Java from "frida-java-bridge";
 
+import { readJavaByteArray } from "@/droid/lib/jbytes.js";
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export function toJava(value: unknown): Java.Wrapper | null {
@@ -42,14 +44,14 @@ export function toJS(obj: Java.Wrapper | null): unknown {
   }
 
   if (cls === "[B") {
-    const ReflectArray = Java.use("java.lang.reflect.Array");
-    const length = ReflectArray.getLength(obj);
+    const env = Java.vm.getEnv();
+    const handle = obj.$handle ?? obj.$h;
+    const length = env.getArrayLength(handle);
     const cap = Math.min(length, 256);
-    const bytes: number[] = [];
-    for (let i = 0; i < cap; i++) {
-      bytes.push(Number(ReflectArray.get(obj, i)) & 0xff);
-    }
-    return bytes.map((b) => b.toString(16).padStart(2, "0")).join("");
+    const ab = readJavaByteArray(obj, 0, cap);
+    if (!ab) return "";
+    const view = new Uint8Array(ab);
+    return Array.from(view, (b) => b.toString(16).padStart(2, "0")).join("");
   }
 
   if (Java.use("java.util.Map").class.isInstance(obj)) {
