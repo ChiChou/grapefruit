@@ -521,6 +521,8 @@
   "rn_js_expression": "JavaScript expression...",
   "clear_all": "Clear all",
   "privacy_monitor": "Privacy API Monitor",
+  "checksec": "checksec",
+  "home_checksec_desc": "Binary security checks for all loaded modules",
   "home_privacy_desc": "Monitor access to sensitive APIs and data flows",
 
   "thread_state_waiting": "Waiting",

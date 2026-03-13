@@ -28,6 +28,7 @@ import {
   Blocks,
   Puzzle,
   ShieldAlert,
+  ShieldCheck,
   Layers,
 } from "lucide-react";
 
@@ -114,6 +115,7 @@ const routeFeatures: Record<FeatureKey, RouteFeature[]> = {
 
 const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
   "fruity:app": [
+    pf("checksec_tab", "checksec", ShieldCheck, "checksec", "home_checksec_desc"),
     pf("finder_tab", "finder", FolderSearch, "finder", "home_finder_desc", {
       path: "~",
     }),
@@ -196,6 +198,7 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
     ),
   ],
   "fruity:daemon": [
+    pf("checksec_tab", "checksec", ShieldCheck, "checksec", "home_checksec_desc"),
     pf("finder_tab", "finder", FolderSearch, "finder", "home_finder_desc", {
       path: "/",
     }),
@@ -218,6 +221,7 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
     ),
   ],
   "droid:app": [
+    pf("checksec_tab", "checksec", ShieldCheck, "checksec", "home_checksec_desc"),
     pf("finder_tab", "finder", FolderSearch, "finder", "home_finder_desc", {
       path: "/",
     }),
@@ -268,6 +272,7 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
     pf("droid_http_tab", "droidHttp", Network, "HTTP", "home_http_desc"),
   ],
   "droid:daemon": [
+    pf("checksec_tab", "checksec", ShieldCheck, "checksec", "home_checksec_desc"),
     pf("finder_tab", "finder", FolderSearch, "finder", "home_finder_desc", {
       path: "/",
     }),

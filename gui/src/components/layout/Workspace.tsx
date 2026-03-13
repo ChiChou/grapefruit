@@ -65,6 +65,7 @@ import { PrivacyTab } from "../tabs/PrivacyTab";
 import { XCPrivacyTab } from "../tabs/XCPrivacyTab";
 import { DroidHttpTab } from "../tabs/DroidHttpTab";
 import { AssetCatalogTab } from "../tabs/AssetCatalogTab";
+import { ChecksecTab } from "../tabs/ChecksecTab";
 import { NoCloseTabHeader } from "../tabs/NoCloseTabHeader";
 
 import { DockContext, useDockActions } from "@/context/DockContext";
@@ -198,6 +199,7 @@ function WorkspaceContent() {
     xcprivacy: XCPrivacyTab,
     droidHttp: DroidHttpTab,
     assetCatalog: AssetCatalogTab,
+    checksec: ChecksecTab,
   };
 
   const tabComponents = {

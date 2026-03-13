@@ -513,6 +513,8 @@
   "rn_js_expression": "JavaScript 表达式...",
   "clear_all": "清空全部",
   "privacy_monitor": "720 隐私卫士",
+  "checksec": "安全检查",
+  "home_checksec_desc": "检查所有已加载模块的二进制安全属性",
   "home_privacy_desc": "监控敏感 API 调用，检测潜在隐私泄露",
 
   "thread_state_waiting": "等待中",
