@@ -3,8 +3,13 @@ import Java from "frida-java-bridge";
 import { perform } from "@/common/hooks/java.js";
 import { getContext } from "../lib/context.js";
 
+export interface ResourceEntry {
+  name: string;
+  id: string; // hex e.g. "0x7f010001"
+}
+
 export interface ResourceTree {
-  [category: string]: string[];
+  [category: string]: ResourceEntry[];
 }
 
 const SUPPORTED_TYPES = new Set(["string", "xml", "raw", "array"]);
@@ -27,16 +32,24 @@ export function list(): Promise<ResourceTree> {
       if (!SUPPORTED_TYPES.has(typeName.toLowerCase())) continue;
 
       const fields = clazz.getDeclaredFields();
-      const names: string[] = [];
+      const entries: ResourceEntry[] = [];
 
       for (let j = 0; j < fields.length; j++) {
         const field = fields[j];
         if (!Modifier.isStatic(field.getModifiers())) continue;
-        names.push(field.getName());
+        field.setAccessible(true);
+        try {
+          const resId: number = field.getInt(null);
+          const hex = "0x" + (resId >>> 0).toString(16).padStart(8, "0");
+          entries.push({ name: field.getName(), id: hex });
+        } catch {
+          // skip non-int fields
+        }
       }
 
-      if (names.length > 0) {
-        result[typeName] = names.sort();
+      if (entries.length > 0) {
+        entries.sort((a, b) => a.name.localeCompare(b.name));
+        result[typeName] = entries;
       }
     }
 

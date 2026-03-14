@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Search, Loader2, Download, FolderOpen, FileText } from "lucide-react";
+import { Search, Loader2, Download, FolderOpen, FileText, PackageOpen } from "lucide-react";
 import Editor from "@monaco-editor/react";
 import { List, type RowComponentProps } from "react-window";
 
@@ -15,9 +15,9 @@ import { useDroidQuery } from "@/lib/queries";
 import { useSession } from "@/context/SessionContext";
 import { useTheme } from "@/components/providers/ThemeProvider";
 
-import type { ResourceTree } from "@agent/droid/modules/resources";
+import type { ResourceEntry, ResourceTree } from "@agent/droid/modules/resources";
 
-const ITEM_HEIGHT = 36;
+const ITEM_HEIGHT = 42;
 
 function CategoryRow({
   index,
@@ -60,34 +60,48 @@ function ResourceNameRow({
   selected,
   onClick,
 }: RowComponentProps<{
-  items: string[];
+  items: ResourceEntry[];
   selected: string | null;
   onClick: (name: string) => void;
 }>) {
   const item = items[index];
-  const isSelected = item === selected;
+  const isSelected = item.name === selected;
 
   return (
     <button
       type="button"
       className={`w-full text-left px-4 py-2 border-b border-border hover:bg-accent ${isSelected ? "bg-accent" : ""}`}
       style={style}
-      onClick={() => onClick(item)}
+      onClick={() => onClick(item.name)}
     >
       <div className="flex items-center gap-2 min-w-0">
         <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-        <span className="text-sm font-mono truncate">{item}</span>
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-mono truncate">{item.name}</div>
+          <div className="text-[10px] text-muted-foreground font-mono">{item.id}</div>
+        </div>
       </div>
     </button>
+  );
+}
+
+function ResourceHeader({ name, hexId }: { name: string; hexId: string }) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-2 border-b border-border bg-muted/30">
+      <span className="text-sm font-mono truncate">{name}</span>
+      <span className="text-xs font-mono text-muted-foreground">{hexId}</span>
+    </div>
   );
 }
 
 function ResourceContent({
   category,
   name,
+  hexId,
 }: {
   category: string;
   name: string;
+  hexId: string;
 }) {
   const { t } = useTranslation();
   const { device, pid } = useSession();
@@ -112,15 +126,14 @@ function ResourceContent({
       <div className="h-full flex flex-col items-center justify-center gap-4 p-4">
         <Download className="h-10 w-10 text-muted-foreground" />
         <p className="text-sm text-muted-foreground">
-          Raw resources cannot be displayed inline.
+          Raw resource <span className="font-mono">{name}</span> cannot be displayed inline.
         </p>
         <a
           href={downloadUrl}
           download={name}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
+          className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
         >
-          <Download className="h-4 w-4" />
-          {t("download")} {name}
+          {t("download")}
         </a>
       </div>
     );
@@ -147,39 +160,47 @@ function ResourceContent({
 
   if (isXml && value) {
     return (
-      <Editor
-        height="100%"
-        language="xml"
-        value={value}
-        theme={theme === "dark" ? "vs-dark" : "light"}
-        options={{
-          readOnly: true,
-          domReadOnly: true,
-          minimap: { enabled: false },
-          scrollBeyondLastLine: false,
-          wordWrap: "on",
-          fontSize: 13,
-          lineNumbers: "off",
-          folding: true,
-          automaticLayout: true,
-          renderLineHighlight: "none",
-          overviewRulerLanes: 0,
-          hideCursorInOverviewRuler: true,
-          overviewRulerBorder: false,
-          scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 },
-          glyphMargin: false,
-          lineDecorationsWidth: 0,
-          lineNumbersMinChars: 0,
-        }}
-      />
+      <div className="h-full flex flex-col">
+        <ResourceHeader name={name} hexId={hexId} />
+        <div className="flex-1 min-h-0">
+          <Editor
+            height="100%"
+            language="xml"
+            value={value}
+            theme={theme === "dark" ? "vs-dark" : "light"}
+            options={{
+              readOnly: true,
+              domReadOnly: true,
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              wordWrap: "on",
+              fontSize: 13,
+              lineNumbers: "off",
+              folding: true,
+              automaticLayout: true,
+              renderLineHighlight: "none",
+              overviewRulerLanes: 0,
+              hideCursorInOverviewRuler: true,
+              overviewRulerBorder: false,
+              scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 },
+              glyphMargin: false,
+              lineDecorationsWidth: 0,
+              lineNumbersMinChars: 0,
+            }}
+          />
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="h-full overflow-auto">
-      <pre className="p-4 text-sm font-mono whitespace-pre-wrap break-all">
-        {value}
-      </pre>
+    <div className="h-full flex flex-col">
+      <ResourceHeader name={name} hexId={hexId} />
+      <div className="flex-1 overflow-auto">
+        <pre className="p-4 text-sm font-mono whitespace-pre-wrap break-all">
+          {value}
+        </pre>
+      </div>
     </div>
   );
 }
@@ -191,7 +212,11 @@ export function DroidResourcesTab() {
   const [categorySearch, setCategorySearch] = useState("");
   const [nameSearch, setNameSearch] = useState("");
 
-  const { data: tree, isLoading } = useDroidQuery<ResourceTree>(
+  const {
+    data: tree,
+    isLoading,
+    error,
+  } = useDroidQuery<ResourceTree>(
     ["resourceList"],
     (api) => api.resources.list(),
   );
@@ -199,7 +224,7 @@ export function DroidResourcesTab() {
   const categories = useMemo(() => {
     if (!tree) return [];
     return Object.entries(tree)
-      .map(([name, ids]) => ({ name, count: ids.length }))
+      .map(([name, entries]) => ({ name, count: entries.length }))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [tree]);
 
@@ -209,22 +234,60 @@ export function DroidResourcesTab() {
     return categories.filter((c) => c.name.toLowerCase().includes(q));
   }, [categories, categorySearch]);
 
-  const names = useMemo(() => {
+  const entries = useMemo(() => {
     if (!tree || !selectedCategory) return [];
     return tree[selectedCategory] ?? [];
   }, [tree, selectedCategory]);
 
-  const filteredNames = useMemo(() => {
-    if (!nameSearch.trim()) return names;
+  const filteredEntries = useMemo(() => {
+    if (!nameSearch.trim()) return entries;
     const q = nameSearch.toLowerCase();
-    return names.filter((n) => n.toLowerCase().includes(q));
-  }, [names, nameSearch]);
+    return entries.filter(
+      (e) => e.name.toLowerCase().includes(q) || e.id.toLowerCase().includes(q),
+    );
+  }, [entries, nameSearch]);
+
+  // Auto-select first entry when category changes
+  useEffect(() => {
+    if (entries.length > 0) {
+      setSelectedName(entries[0].name);
+    }
+  }, [entries]);
 
   const handleSelectCategory = (name: string) => {
     setSelectedCategory(name);
     setSelectedName(null);
     setNameSearch("");
   };
+
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+        {t("loading")}...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center gap-3 p-8 text-center">
+        <PackageOpen className="h-10 w-10 text-muted-foreground" />
+        <p className="text-sm text-destructive max-w-lg">
+          {(error as Error).message}
+        </p>
+      </div>
+    );
+  }
+
+  if (categories.length === 0) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center gap-3 p-8">
+        <PackageOpen className="h-10 w-10 text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">No resources found</p>
+      </div>
+    );
+  }
 
   return (
     <ResizablePanelGroup
@@ -250,14 +313,9 @@ export function DroidResourcesTab() {
             </div>
           </div>
           <div className="flex-1 min-h-0">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-full text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                {t("loading")}...
-              </div>
-            ) : filteredCategories.length === 0 ? (
+            {filteredCategories.length === 0 ? (
               <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-                No categories
+                No match
               </div>
             ) : (
               <div className="flex h-full">
@@ -295,11 +353,11 @@ export function DroidResourcesTab() {
                   />
                 </div>
                 <div className="text-[10px] text-muted-foreground px-1">
-                  {filteredNames.length} / {names.length}
+                  {filteredEntries.length} / {entries.length}
                 </div>
               </div>
               <div className="flex-1 min-h-0">
-                {filteredNames.length === 0 ? (
+                {filteredEntries.length === 0 ? (
                   <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
                     No resources
                   </div>
@@ -307,10 +365,10 @@ export function DroidResourcesTab() {
                   <div className="flex h-full">
                     <List
                       rowComponent={ResourceNameRow}
-                      rowCount={filteredNames.length}
+                      rowCount={filteredEntries.length}
                       rowHeight={ITEM_HEIGHT}
                       rowProps={{
-                        items: filteredNames,
+                        items: filteredEntries,
                         selected: selectedName,
                         onClick: setSelectedName,
                       }}
@@ -332,7 +390,11 @@ export function DroidResourcesTab() {
       {/* Content panel */}
       <ResizablePanel minSize="20%">
         {selectedCategory && selectedName ? (
-          <ResourceContent category={selectedCategory} name={selectedName} />
+          <ResourceContent
+            category={selectedCategory}
+            name={selectedName}
+            hexId={entries.find((e) => e.name === selectedName)?.id ?? ""}
+          />
         ) : (
           <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
             Select a resource to view
