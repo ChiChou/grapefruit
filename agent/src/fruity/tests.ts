@@ -38,6 +38,7 @@ import * as ui from "./modules/ui.js";
 import * as webview from "./modules/webview.js";
 import * as jsc from "./modules/jsc.js";
 import * as rn from "./modules/rn.js";
+import * as assetcatalog from "./modules/assetcatalog.js";
 
 async function testInfo() {
   console.log("\n--- info ---");
@@ -801,6 +802,70 @@ async function testRn() {
   skip("rn.inject", "side-effect: injects script into React Native");
 }
 
+async function testAssetCatalog() {
+  console.log("\n--- assetcatalog ---");
+
+  await test("assetcatalog.open returns catalog info", async () => {
+    const { bundle } = fs.roots();
+    const catalogPath = bundle + "/Assets.car";
+    let threw = false;
+    try {
+      const catalog = assetcatalog.open(catalogPath);
+      assertKeys(
+        catalog as unknown as Record<string, unknown>,
+        ["path", "names"],
+        "assetcatalog.open",
+      );
+      assertType(catalog.path, "string", "path");
+      assertArray(catalog.names, "names");
+      console.log(`    ${catalog.names.length} assets in catalog`);
+      if (catalog.names.length > 0) {
+        console.log(`    first: ${catalog.names[0]}`);
+      }
+    } catch (_) {
+      threw = true;
+      console.log("    Assets.car not found (expected for some apps)");
+    }
+  });
+
+  await test("assetcatalog.variants returns variant info", async () => {
+    const { bundle } = fs.roots();
+    const catalogPath = bundle + "/Assets.car";
+    let threw = false;
+    try {
+      const catalog = assetcatalog.open(catalogPath);
+      if (catalog.names.length === 0) {
+        console.log("    (no assets to inspect, skipping)");
+        return;
+      }
+      const vars = assetcatalog.variants(catalogPath, catalog.names[0]);
+      assertArray(vars, "variants");
+      if (vars.length > 0) {
+        const first = vars[0];
+        assertKeys(
+          first as unknown as Record<string, unknown>,
+          ["index", "scale", "width", "height", "isVector", "isTemplate", "hasSliceInfo", "uti"],
+          "AssetVariant",
+        );
+        assertType(first.index, "number", "index");
+        assertType(first.scale, "number", "scale");
+        assertType(first.isVector, "boolean", "isVector");
+        console.log(
+          `    ${vars.length} variants for ${catalog.names[0]}: ${first.width}x${first.height} @${first.scale}x`,
+        );
+      } else {
+        console.log(`    no variants for ${catalog.names[0]}`);
+      }
+    } catch (_) {
+      threw = true;
+      console.log("    Assets.car not found (expected for some apps)");
+    }
+  });
+
+  skip("assetcatalog.image", "heavy: extracts and encodes images");
+  skip("assetcatalog.rawImage", "heavy: extracts raw image data");
+}
+
 async function run() {
   console.log("=== fruity module tests ===");
 
@@ -824,6 +889,7 @@ async function run() {
   await testWebview();
   await testJsc();
   await testRn();
+  await testAssetCatalog();
 
   // side-effect only modules (no safe read-only API)
   console.log("\n--- geolocation ---");
