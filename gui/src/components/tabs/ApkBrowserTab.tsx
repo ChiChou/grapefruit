@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { IDockviewPanelProps } from "dockview";
 import {
   ChevronRight,
   ChevronDown,
@@ -26,7 +25,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import { Status, useSession } from "@/context/SessionContext";
 import { useDroidQuery } from "@/lib/queries";
 import { formatSize } from "@/lib/explorer";
@@ -36,48 +34,78 @@ interface ApkInfo {
   name: string;
 }
 
-interface ApkEntry {
-  name: string;
-  dir: boolean;
-  size: number | null;
-  compressedSize: number | null;
-}
+/** [name, size] */
+type ApkEntry = [string, number];
+
+// ── Tree building from flat entry list ───────────────────────────────
 
 interface TreeNode {
   name: string;
-  children: TreeNode[] | null;
-  isLoading: boolean;
-  isExpanded: boolean;
+  fullPath: string;
+  children: TreeNode[];
 }
 
-function buildTreeNodes(entries: ApkEntry[]): TreeNode[] {
-  return entries
-    .filter((e) => e.dir)
-    .map((e) => ({
-      name: e.name,
-      children: null,
-      isLoading: false,
-      isExpanded: false,
-    }));
-}
+/** Build a directory tree from flat APK entry paths. */
+function buildTree(entries: ApkEntry[]): TreeNode[] {
+  const root: TreeNode[] = [];
 
-function updateNodeAtPath(
-  nodes: TreeNode[],
-  path: string[],
-  idx: number,
-  updater: (n: TreeNode) => TreeNode,
-): TreeNode[] {
-  return nodes.map((node) => {
-    if (node.name !== path[idx]) return node;
-    if (idx === path.length - 1) return updater(node);
-    if (node.children) {
-      return {
-        ...node,
-        children: updateNodeAtPath(node.children, path, idx + 1, updater),
-      };
+  for (const [name] of entries) {
+    const parts = name.split("/");
+    let level = root;
+    let pathSoFar = "";
+
+    // Walk/create intermediate directories
+    for (let i = 0; i < parts.length - 1; i++) {
+      pathSoFar = pathSoFar ? `${pathSoFar}/${parts[i]}` : parts[i];
+      let existing = level.find((n) => n.name === parts[i]);
+      if (!existing) {
+        existing = { name: parts[i], fullPath: pathSoFar, children: [] };
+        level.push(existing);
+      }
+      level = existing.children;
     }
-    return node;
+  }
+
+  // Sort recursively: alphabetical
+  const sortTree = (nodes: TreeNode[]) => {
+    nodes.sort((a, b) => a.name.localeCompare(b.name));
+    for (const n of nodes) sortTree(n.children);
+  };
+  sortTree(root);
+  return root;
+}
+
+/** Get direct children (files + dirs) at a given path prefix. */
+function getChildren(
+  entries: ApkEntry[],
+  dirPath: string,
+): { dirs: string[]; files: ApkEntry[] } {
+  const prefix = dirPath ? dirPath + "/" : "";
+  const prefixLen = prefix.length;
+  const dirSet = new Set<string>();
+  const files: ApkEntry[] = [];
+
+  for (const entry of entries) {
+    if (prefix && !entry[0].startsWith(prefix)) continue;
+    if (entry[0] === prefix) continue;
+
+    const rest = entry[0].slice(prefixLen);
+    const slashIdx = rest.indexOf("/");
+
+    if (slashIdx === -1) {
+      files.push(entry);
+    } else {
+      dirSet.add(rest.slice(0, slashIdx));
+    }
+  }
+
+  const dirs = [...dirSet].sort((a, b) => a.localeCompare(b));
+  files.sort((a, b) => {
+    const aName = a[0].split("/").pop()!;
+    const bName = b[0].split("/").pop()!;
+    return aName.localeCompare(bName);
   });
+  return { dirs, files };
 }
 
 // ── APK Selector (left panel) ────────────────────────────────────────
@@ -117,48 +145,47 @@ function ApkSelector({
 function ZipTree({
   nodes,
   activePath,
+  expanded,
   onNodeClick,
 }: {
   nodes: TreeNode[];
-  activePath: string | null;
-  onNodeClick: (path: string[]) => void;
+  activePath: string;
+  expanded: Set<string>;
+  onNodeClick: (fullPath: string) => void;
 }) {
-  const renderNode = (node: TreeNode, parentPath: string[], depth: number) => {
-    const currentPath = [...parentPath, node.name];
-    const pathStr = currentPath.join("/");
-    const isActive = activePath === pathStr;
+  const renderNode = (node: TreeNode, depth: number) => {
+    const isActive = activePath === node.fullPath;
+    const isExpanded = expanded.has(node.fullPath);
 
     return (
-      <div key={node.name}>
+      <div key={node.fullPath}>
         <button
           type="button"
           className={`flex items-center w-full py-1 px-2 text-left ${
             isActive ? "bg-amber-100 dark:bg-amber-900" : "hover:bg-accent"
           }`}
           style={{ paddingLeft: `${depth * 16 + 8}px` }}
-          onClick={() => onNodeClick(currentPath)}
+          onClick={() => onNodeClick(node.fullPath)}
         >
           <span className="w-4 h-4 mr-1 shrink-0 flex items-center justify-center">
-            {node.isLoading ? (
-              <Spinner className="size-3" />
-            ) : node.isExpanded ? (
-              <ChevronDown className="w-3 h-3" />
-            ) : (
-              <ChevronRight className="w-3 h-3" />
-            )}
+            {node.children.length > 0 ? (
+              isExpanded ? (
+                <ChevronDown className="w-3 h-3" />
+              ) : (
+                <ChevronRight className="w-3 h-3" />
+              )
+            ) : null}
           </span>
-          {node.isExpanded ? (
+          {isExpanded ? (
             <FolderOpen className="w-4 h-4 mr-2 shrink-0 text-yellow-500" />
           ) : (
             <Folder className="w-4 h-4 mr-2 shrink-0 text-yellow-500" />
           )}
           <span className="text-sm truncate">{node.name}</span>
         </button>
-        {node.isExpanded && node.children && (
+        {isExpanded && (
           <div>
-            {node.children.map((child) =>
-              renderNode(child, currentPath, depth + 1),
-            )}
+            {node.children.map((child) => renderNode(child, depth + 1))}
           </div>
         )}
       </div>
@@ -167,22 +194,28 @@ function ZipTree({
 
   return (
     <div className="overflow-auto h-full">
-      {nodes.map((node) => renderNode(node, [], 0))}
+      {nodes.map((node) => renderNode(node, 0))}
     </div>
   );
 }
 
 // ── File List (right panel) ──────────────────────────────────────────
 
+interface DirEntry {
+  name: string;
+  dir: boolean;
+  size: number | null;
+}
+
 function ZipFileTable({
-  entries,
+  items,
   isLoading,
   currentPath,
   onNavigate,
   onDownload,
   onRefresh,
 }: {
-  entries: ApkEntry[];
+  items: DirEntry[];
   isLoading: boolean;
   currentPath: string;
   onNavigate: (name: string) => void;
@@ -207,7 +240,7 @@ function ZipFileTable({
     );
   }
 
-  if (entries.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="flex flex-col h-full">
         {onRefresh && (
@@ -256,13 +289,10 @@ function ZipFileTable({
               <TableHead>{t("name")}</TableHead>
               <TableHead className="w-12"></TableHead>
               <TableHead className="w-24 text-right">{t("size")}</TableHead>
-              <TableHead className="w-32 text-right">
-                {t("compressed_size")}
-              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {entries.map((entry) => (
+            {items.map((entry) => (
               <TableRow key={entry.name} className="group">
                 <TableCell>
                   {entry.dir ? (
@@ -300,9 +330,6 @@ function ZipFileTable({
                 <TableCell className="text-right text-sm">
                   {entry.dir ? "-" : formatSize(entry.size)}
                 </TableCell>
-                <TableCell className="text-right text-sm text-muted-foreground">
-                  {entry.dir ? "-" : formatSize(entry.compressedSize)}
-                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -317,7 +344,7 @@ function ZipFileTable({
 
 // ── Main Tab ─────────────────────────────────────────────────────────
 
-export function ApkBrowserTab(_props: IDockviewPanelProps) {
+export function ApkBrowserTab() {
   const { droid, status, pid, device } = useSession();
   const { t } = useTranslation();
   const apiReady = status === Status.Ready && !!droid;
@@ -331,185 +358,91 @@ export function ApkBrowserTab(_props: IDockviewPanelProps) {
 
   const [selectedApk, setSelectedApk] = useState<string | null>(null);
   const [currentPath, setCurrentPath] = useState("");
-  const [entries, setEntries] = useState<ApkEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [treeNodes, setTreeNodes] = useState<TreeNode[]>([]);
-  const [activeTreePath, setActiveTreePath] = useState<string | null>(null);
-  const nodesRef = useRef(treeNodes);
-  nodesRef.current = treeNodes;
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   // Auto-select first APK
-  useEffect(() => {
-    if (apks && apks.length > 0 && !selectedApk) {
-      setSelectedApk(apks[0].path);
+  const effectiveApk =
+    selectedApk ?? (apks && apks.length > 0 ? apks[0].path : null);
+
+  // Fetch all entries for selected APK in one shot
+  const {
+    data: allEntries,
+    isLoading,
+    refetch,
+  } = useDroidQuery(
+    ["apk", "entries", effectiveApk],
+    (api) => api.apk.entries(effectiveApk!),
+    { enabled: apiReady && !!effectiveApk },
+  );
+
+  // Build tree from flat entries
+  const treeNodes = useMemo(
+    () => (allEntries ? buildTree(allEntries) : []),
+    [allEntries],
+  );
+
+  // Compute current directory listing from flat entries
+  const dirItems: DirEntry[] = useMemo(() => {
+    if (!allEntries) return [];
+    const { dirs, files } = getChildren(allEntries, currentPath);
+    const result: DirEntry[] = [];
+    for (const d of dirs) {
+      result.push({ name: d, dir: true, size: null });
     }
-  }, [apks, selectedApk]);
-
-  const loadEntries = useCallback(
-    async (apkPath: string, internalPath: string) => {
-      if (!droid) return { entries: [] as ApkEntry[] };
-      const result = await droid.apk.ls(apkPath, internalPath);
-      return result;
-    },
-    [droid],
-  );
-
-  // Load root when APK is selected
-  useEffect(() => {
-    if (!selectedApk || !apiReady) return;
-    setIsLoading(true);
-    setCurrentPath("");
-    setActiveTreePath(null);
-    loadEntries(selectedApk, "")
-      .then((result) => {
-        setEntries(result.entries);
-        setTreeNodes(buildTreeNodes(result.entries));
-      })
-      .catch(() => {
-        setEntries([]);
-        setTreeNodes([]);
-      })
-      .finally(() => setIsLoading(false));
-  }, [selectedApk, apiReady, loadEntries]);
-
-  const navigateTo = useCallback(
-    (internalPath: string) => {
-      if (!selectedApk) return;
-      setIsLoading(true);
-      setCurrentPath(internalPath);
-      loadEntries(selectedApk, internalPath)
-        .then((result) => {
-          setEntries(result.entries);
-        })
-        .catch(() => setEntries([]))
-        .finally(() => setIsLoading(false));
-    },
-    [selectedApk, loadEntries],
-  );
+    for (const [fullName, size] of files) {
+      const fileName = fullName.split("/").pop()!;
+      result.push({ name: fileName, dir: false, size });
+    }
+    return result;
+  }, [allEntries, currentPath]);
 
   const handleNavigate = useCallback(
     (folderName: string) => {
-      const newPath = currentPath ? `${currentPath}/${folderName}` : folderName;
-      navigateTo(newPath);
-
-      // Update tree: expand and sync
-      const segments = newPath.split("/");
-      setActiveTreePath(segments.join("/"));
-
-      // Ensure parent nodes are expanded and load children
-      (async () => {
-        for (let i = 0; i < segments.length; i++) {
-          const pathSoFar = segments.slice(0, i + 1);
-          const node = getNodeAtPath(nodesRef.current, pathSoFar, 0);
-          if (!node) break;
-
-          if (node.children === null && selectedApk) {
-            const internalPath = pathSoFar.join("/");
-            try {
-              const result = await loadEntries(selectedApk, internalPath);
-              setTreeNodes((prev) =>
-                updateNodeAtPath(prev, pathSoFar, 0, (n) => ({
-                  ...n,
-                  children: buildTreeNodes(result.entries),
-                  isLoading: false,
-                  isExpanded: true,
-                })),
-              );
-            } catch {
-              break;
-            }
-          } else {
-            setTreeNodes((prev) =>
-              updateNodeAtPath(prev, pathSoFar, 0, (n) => ({
-                ...n,
-                isExpanded: true,
-              })),
-            );
-          }
-          // Allow state to settle
-          await new Promise((r) => setTimeout(r, 0));
+      const newPath = currentPath
+        ? `${currentPath}/${folderName}`
+        : folderName;
+      setCurrentPath(newPath);
+      setExpanded((prev) => {
+        const next = new Set(prev);
+        // Expand all ancestors + the target
+        const parts = newPath.split("/");
+        for (let i = 1; i <= parts.length; i++) {
+          next.add(parts.slice(0, i).join("/"));
         }
-      })();
+        return next;
+      });
     },
-    [currentPath, selectedApk, loadEntries, navigateTo],
+    [currentPath],
   );
 
-  const handleTreeNodeClick = useCallback(
-    (path: string[]) => {
-      const pathStr = path.join("/");
-      setActiveTreePath(pathStr);
-
-      const internalPath = path.join("/");
-      navigateTo(internalPath);
-
-      const node = getNodeAtPath(nodesRef.current, path, 0);
-      if (!node) return;
-
-      if (node.isExpanded) {
-        setTreeNodes((prev) =>
-          updateNodeAtPath(prev, path, 0, (n) => ({
-            ...n,
-            isExpanded: false,
-          })),
-        );
-        return;
+  const handleTreeNodeClick = useCallback((fullPath: string) => {
+    setCurrentPath(fullPath);
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(fullPath)) {
+        next.delete(fullPath);
+      } else {
+        // Expand all ancestors + target
+        const parts = fullPath.split("/");
+        for (let i = 1; i <= parts.length; i++) {
+          next.add(parts.slice(0, i).join("/"));
+        }
       }
-
-      if (node.children !== null) {
-        setTreeNodes((prev) =>
-          updateNodeAtPath(prev, path, 0, (n) => ({
-            ...n,
-            isExpanded: true,
-          })),
-        );
-        return;
-      }
-
-      // Load children
-      if (!selectedApk) return;
-      setTreeNodes((prev) =>
-        updateNodeAtPath(prev, path, 0, (n) => ({
-          ...n,
-          isLoading: true,
-        })),
-      );
-
-      loadEntries(selectedApk, internalPath)
-        .then((result) => {
-          setTreeNodes((prev) =>
-            updateNodeAtPath(prev, path, 0, (n) => ({
-              ...n,
-              children: buildTreeNodes(result.entries),
-              isLoading: false,
-              isExpanded: true,
-            })),
-          );
-        })
-        .catch(() => {
-          setTreeNodes((prev) =>
-            updateNodeAtPath(prev, path, 0, (n) => ({
-              ...n,
-              children: [],
-              isLoading: false,
-              isExpanded: true,
-            })),
-          );
-        });
-    },
-    [selectedApk, loadEntries, navigateTo],
-  );
+      return next;
+    });
+  }, []);
 
   const handleDownload = useCallback(
     (fileName: string) => {
-      if (pid === undefined || !selectedApk) return;
+      if (pid === undefined || !effectiveApk) return;
       const entryPath = currentPath ? `${currentPath}/${fileName}` : fileName;
       const url = new URL(window.location.href);
       url.pathname = `/api/apk-entry/${device}/${pid}`;
-      url.searchParams.set("apk", selectedApk);
+      url.searchParams.set("apk", effectiveApk);
       url.searchParams.set("entry", entryPath);
       location.replace(url.toString());
     },
-    [pid, device, selectedApk, currentPath],
+    [pid, device, effectiveApk, currentPath],
   );
 
   const hasMultipleApks = apks && apks.length > 1;
@@ -528,13 +461,11 @@ export function ApkBrowserTab(_props: IDockviewPanelProps) {
               </div>
               <ApkSelector
                 apks={apks}
-                selected={selectedApk || ""}
+                selected={effectiveApk || ""}
                 onSelect={(path) => {
                   setSelectedApk(path);
                   setCurrentPath("");
-                  setEntries([]);
-                  setTreeNodes([]);
-                  setActiveTreePath(null);
+                  setExpanded(new Set());
                 }}
               />
             </div>
@@ -551,18 +482,16 @@ export function ApkBrowserTab(_props: IDockviewPanelProps) {
           <div className="px-3 py-2 text-xs font-medium text-muted-foreground border-b">
             {t("directories")}
           </div>
-          {/* Root entry */}
           <div className="overflow-auto flex-1">
             <button
               type="button"
               className={`flex items-center w-full py-1 px-2 text-left ${
-                activeTreePath === null && currentPath === ""
+                currentPath === ""
                   ? "bg-amber-100 dark:bg-amber-900"
                   : "hover:bg-accent"
               }`}
               onClick={() => {
-                setActiveTreePath(null);
-                navigateTo("");
+                setCurrentPath("");
               }}
             >
               <Package className="w-4 h-4 mr-2 shrink-0 text-amber-600" />
@@ -570,7 +499,8 @@ export function ApkBrowserTab(_props: IDockviewPanelProps) {
             </button>
             <ZipTree
               nodes={treeNodes}
-              activePath={activeTreePath}
+              activePath={currentPath}
+              expanded={expanded}
               onNodeClick={handleTreeNodeClick}
             />
           </div>
@@ -579,28 +509,14 @@ export function ApkBrowserTab(_props: IDockviewPanelProps) {
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize={hasMultipleApks ? "60%" : "80%"}>
         <ZipFileTable
-          entries={entries}
+          items={dirItems}
           isLoading={isLoading}
           currentPath={currentPath}
           onNavigate={handleNavigate}
           onDownload={handleDownload}
-          onRefresh={
-            selectedApk ? () => navigateTo(currentPath) : undefined
-          }
+          onRefresh={effectiveApk ? () => refetch() : undefined}
         />
       </ResizablePanel>
     </ResizablePanelGroup>
   );
-}
-
-function getNodeAtPath(
-  nodes: TreeNode[],
-  path: string[],
-  idx: number,
-): TreeNode | null {
-  const node = nodes.find((n) => n.name === path[idx]);
-  if (!node) return null;
-  if (idx === path.length - 1) return node;
-  if (!node.children) return null;
-  return getNodeAtPath(node.children, path, idx + 1);
 }

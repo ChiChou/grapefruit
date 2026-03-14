@@ -5,22 +5,12 @@ import { perform } from "@/common/hooks/java.js";
 import { getContext } from "@/droid/lib/context.js";
 import { drainInputStream } from "@/droid/lib/jbytes.js";
 
-export interface ApkEntry {
-  name: string;
-  dir: boolean;
-  size: number | null;
-  compressedSize: number | null;
-}
+/** [name, size] */
+export type ApkEntry = [string, number];
 
 export interface ApkInfo {
   path: string;
   name: string;
-}
-
-export interface ApkListing {
-  apk: string;
-  path: string;
-  entries: ApkEntry[];
 }
 
 /**
@@ -48,65 +38,27 @@ export function list(): Promise<ApkInfo[]> {
 }
 
 /**
- * List entries inside an APK zip at the given internal directory path.
- * `internalPath` should be "" for root, or "lib/arm64-v8a" etc.
- * Returns only direct children (not recursive).
+ * List all file entries inside an APK zip (flat list, no directories).
+ * The frontend builds the tree from the full path names.
  */
-export function ls(apkPath: string, internalPath: string): Promise<ApkListing> {
+export function entries(apkPath: string): Promise<ApkEntry[]> {
   return perform(() => {
     const ZipFileCls = Java.use("java.util.zip.ZipFile");
     const zip: ZipFile = ZipFileCls.$new(apkPath);
 
     try {
-      const prefix = internalPath ? internalPath.replace(/\/$/, "") + "/" : "";
-      const prefixLen = prefix.length;
-      const dirs = new Set<string>();
-      const files: ApkEntry[] = [];
-
+      const result: ApkEntry[] = [];
       const ZipEntryCls = Java.use("java.util.zip.ZipEntry");
-      const entries = zip.entries();
-      while (entries.hasMoreElements()) {
-        const entry = Java.cast(entries.nextElement(), ZipEntryCls) as ZipEntry;
-        const fullName = entry.getName() as string;
-
-        // Skip if not under our prefix
-        if (prefix && !fullName.startsWith(prefix)) continue;
-        // Skip the prefix directory entry itself
-        if (fullName === prefix) continue;
-
-        const rest = fullName.slice(prefixLen);
-        const slashIdx = rest.indexOf("/");
-
-        if (slashIdx === -1) {
-          // Direct file child
-          files.push({
-            name: rest,
-            dir: false,
-            size: entry.getSize(),
-            compressedSize: entry.getCompressedSize(),
-          });
-        } else {
-          // Subdirectory - extract the first component
-          const dirName = rest.slice(0, slashIdx);
-          if (!dirs.has(dirName)) {
-            dirs.add(dirName);
-            files.push({
-              name: dirName,
-              dir: true,
-              size: null,
-              compressedSize: null,
-            });
-          }
-        }
+      const it = zip.entries();
+      while (it.hasMoreElements()) {
+        const entry = Java.cast(it.nextElement(), ZipEntryCls) as ZipEntry;
+        const name = entry.getName() as string;
+        // Skip directory entries — they carry no data
+        if (name.endsWith("/")) continue;
+        result.push([name, entry.getSize()]);
       }
-
-      // Sort: directories first, then alphabetically
-      files.sort((a, b) => {
-        if (a.dir !== b.dir) return a.dir ? -1 : 1;
-        return a.name.localeCompare(b.name);
-      });
-
-      return { apk: apkPath, path: internalPath, entries: files } as ApkListing;
+      result.sort((a, b) => a[0].localeCompare(b[0]));
+      return result;
     } finally {
       zip.close();
     }

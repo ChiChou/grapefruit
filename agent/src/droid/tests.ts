@@ -539,7 +539,7 @@ async function testApk() {
   console.log("\n--- apk ---");
 
   skip("apk.list", "requires file-system access to APK on device");
-  skip("apk.ls", "requires file-system access to APK on device");
+  skip("apk.entries", "requires file-system access to APK on device");
   skip("apk.size", "requires file-system access to APK on device");
   skip("apk.read", "requires file-system access to APK on device");
 }
