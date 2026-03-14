@@ -24,16 +24,16 @@
     "type": "bun run type:fruity && bun run type:droid && bun run type:monaco"
   },
   "devDependencies": {
-    "@types/frida-gum": "^19.0.1",
-    "@types/node": "^18.14.0",
-    "@typescript-eslint/eslint-plugin": "^8.48.0",
-    "@typescript-eslint/parser": "^8.48.0",
+    "@types/frida-gum": "^19.0.2",
+    "@types/node": "^18.19.130",
+    "@typescript-eslint/eslint-plugin": "^8.57.0",
+    "@typescript-eslint/parser": "^8.57.0",
     "@typescript/native-preview": "7.0.0-dev.20251108.1",
-    "eslint": "^9.39.1",
-    "frida-compile": "^19.0.4"
+    "eslint": "^9.39.4",
+    "frida-compile": "^19.0.5"
   },
   "dependencies": {
-    "frida-java-bridge": "^7.0.10",
+    "frida-java-bridge": "^7.0.12",
     "frida-objc-bridge": "^8.0.5",
     "frida-remote-stream": "^6.0.3",
     "frida-swift-bridge": "^3.0.2"
@@ -42,6 +42,7 @@
     "frida"
   ],
   "patchedDependencies": {
-    "frida-compile@19.0.4": "patches/frida-compile@19.0.4.patch"
+    "frida-compile@19.0.4": "patches/frida-compile@19.0.4.patch",
+    "frida-compile@19.0.5": "patches/frida-compile@19.0.5.patch"
   }
 }

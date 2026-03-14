@@ -1,0 +1,17 @@
+diff --git a/dist/cli.js b/dist/cli.js
+index 9243bf60d8a125d006ac03d60eaa4d4c7cf84ac0..a9568d733adf2280cc194f1ed847eb9d01a0df9d 100644
+--- a/dist/cli.js
++++ b/dist/cli.js
+@@ -46,9 +46,9 @@ async function main() {
+         outputFormat: opts.outputFormat,
+         bundleFormat: opts.bundleFormat,
+         typeCheck: opts.typeCheck,
+-        sourceMaps: opts.sourceMaps
+-            ? frida.SourceMaps.Included
+-            : frida.SourceMaps.Omitted,
++        sourceMaps: opts.noSourceMaps
++            ? frida.SourceMaps.Omitted
++            : frida.SourceMaps.Included,
+         compression: opts.compress
+             ? frida.JsCompression.Terser
+             : frida.JsCompression.None,
