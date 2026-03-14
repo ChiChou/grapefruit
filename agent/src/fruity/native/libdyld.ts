@@ -1,5 +1,4 @@
 import ObjC from "frida-objc-bridge";
-import { getGlobalExport } from "@/lib/polyfill.js";
 import getLibSystemApi from "@/fruity/native/libsystem.js";
 
 // struct nlist_64 {
@@ -33,45 +32,39 @@ function api() {
 
   const libdyld = Module.load("/usr/lib/system/libdyld.dylib");
 
-  function requireExport(name: string) {
-    const addr = libdyld.findExportByName(name);
-    if (!addr) throw new Error(`${name} not found`);
-    return addr;
-  }
-
   cached = {
     dyldForEachInstalledSharedCache: new NativeFunction(
-      requireExport("dyld_for_each_installed_shared_cache"),
+      libdyld.getExportByName("dyld_for_each_installed_shared_cache"),
       "void",
       ["pointer"],
     ),
     dyldSharedCacheForEachImage: new NativeFunction(
-      requireExport("dyld_shared_cache_for_each_image"),
+      libdyld.getExportByName("dyld_shared_cache_for_each_image"),
       "void",
       ["pointer", "pointer"],
     ),
     dyldImageGetInstallname: new NativeFunction(
-      requireExport("dyld_image_get_installname"),
+      libdyld.getExportByName("dyld_image_get_installname"),
       "pointer",
       ["pointer"],
     ),
     dyldImageLocalNlistContent4Symbolication: new NativeFunction(
-      requireExport("dyld_image_local_nlist_content_4Symbolication"),
+      libdyld.getExportByName("dyld_image_local_nlist_content_4Symbolication"),
       "bool",
       ["pointer", "pointer"],
     ),
     _dyld_image_count: new NativeFunction(
-      getGlobalExport("_dyld_image_count"),
+      libdyld.getExportByName("_dyld_image_count"),
       "uint32",
       [],
     ),
     _dyld_get_image_header: new NativeFunction(
-      getGlobalExport("_dyld_get_image_header"),
+      libdyld.getExportByName("_dyld_get_image_header"),
       "pointer",
       ["uint32"],
     ),
     _dyld_get_image_vmaddr_slide: new NativeFunction(
-      getGlobalExport("_dyld_get_image_vmaddr_slide"),
+      libdyld.getExportByName("_dyld_get_image_vmaddr_slide"),
       "int64",
       ["uint32"],
     ),
@@ -208,6 +201,15 @@ export function symbolFromName(module: string, symbol: string): NativePointer {
   try {
     return findSymbolInDyld(module, symbol);
   } catch (e) {
+    const m = Process.findModuleByName(module);
+    if (m) {
+      for (const s of m.enumerateSymbols()) {
+        if (s.name === symbol) {
+          return s.address;
+        }
+      }
+    }
+
     console.warn("libdyld: error finding symbol in dyld cache:", e);
     return DebugSymbol.getFunctionByName(symbol);
   }

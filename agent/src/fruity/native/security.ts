@@ -47,74 +47,71 @@ export default function api() {
   }
 
   const Security = Process.getModuleByName("Security");
+  const e = (name: string) => Security.getExportByName(name);
 
   const SecItemCopyMatching = new NativeFunction(
-    Security.getExportByName("SecItemCopyMatching"),
+    e("SecItemCopyMatching"),
     "int",
     ["pointer", "pointer"],
   );
 
-  const SecItemAdd = new NativeFunction(
-    Security.getExportByName("SecItemAdd"),
-    "int",
-    ["pointer", "pointer"],
-  );
+  const SecItemAdd = new NativeFunction(e("SecItemAdd"), "int", [
+    "pointer",
+    "pointer",
+  ]);
 
-  const SecItemUpdate = new NativeFunction(
-    Security.getExportByName("SecItemUpdate"),
-    "int",
-    ["pointer", "pointer"],
-  );
+  const SecItemUpdate = new NativeFunction(e("SecItemUpdate"), "int", [
+    "pointer",
+    "pointer",
+  ]);
 
-  const SecItemDelete = new NativeFunction(
-    Security.getExportByName("SecItemDelete"),
-    "int",
-    ["pointer"],
-  );
+  const SecItemDelete = new NativeFunction(e("SecItemDelete"), "int", [
+    "pointer",
+  ]);
 
   const SecAccessControlCreateWithFlags = new NativeFunction(
-    Security.getExportByName("SecAccessControlCreateWithFlags"),
+    e("SecAccessControlCreateWithFlags"),
     "pointer",
     ["pointer", "pointer", "int", "pointer"],
   );
 
   const SecAccessControlGetProtection = new NativeFunction(
-    Security.getExportByName("SecAccessControlGetProtection"),
+    e("SecAccessControlGetProtection"),
     "pointer",
     ["pointer"],
   );
 
   const SecAccessControlGetRequirePassword = new NativeFunction(
-    Security.getExportByName("SecAccessControlGetRequirePassword"),
+    e("SecAccessControlGetRequirePassword"),
     "bool",
     ["pointer"],
   );
 
   const SecAccessControlGetConstraint = new NativeFunction(
-    Security.getExportByName("SecAccessControlGetConstraint"),
+    e("SecAccessControlGetConstraint"),
     "pointer",
     ["pointer", "pointer"],
   );
 
   const SecAccessControlGetConstraints = new NativeFunction(
-    Security.getExportByName("SecAccessControlGetConstraints"),
+    e("SecAccessControlGetConstraints"),
     "pointer",
     ["pointer"],
   );
 
   const SecStaticCodeCreateWithPath = new NativeFunction(
-    Security.getExportByName("SecStaticCodeCreateWithPath"),
+    e("SecStaticCodeCreateWithPath"),
     "int",
     ["pointer", "uint32", "pointer"],
   );
 
   const SecCodeCopySigningInformation = new NativeFunction(
-    Security.getExportByName("SecCodeCopySigningInformation"),
+    e("SecCodeCopySigningInformation"),
     "int",
     ["pointer", "uint32", "pointer"],
   );
 
-  const kSecCodeInfoEntitlementsDict = Security.getExportByName(
+  const kSecCodeInfoEntitlementsDict = e(
     "kSecCodeInfoEntitlementsDict",
   ).readPointer();
 

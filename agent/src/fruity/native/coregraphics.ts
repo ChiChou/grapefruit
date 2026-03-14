@@ -7,18 +7,15 @@ export default function api() {
   if (cached) return cached;
 
   const CoreGraphics = Process.getModuleByName("CoreGraphics");
+  const e = (name: string) => CoreGraphics.getExportByName(name);
 
-  const CGImageGetWidth = new NativeFunction(
-    CoreGraphics.getExportByName("CGImageGetWidth"),
-    "uint",
-    ["pointer"],
-  );
+  const CGImageGetWidth = new NativeFunction(e("CGImageGetWidth"), "uint", [
+    "pointer",
+  ]);
 
-  const CGImageGetHeight = new NativeFunction(
-    CoreGraphics.getExportByName("CGImageGetHeight"),
-    "uint",
-    ["pointer"],
-  );
+  const CGImageGetHeight = new NativeFunction(e("CGImageGetHeight"), "uint", [
+    "pointer",
+  ]);
 
   cached = {
     CGImageGetWidth,

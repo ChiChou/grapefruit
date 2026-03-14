@@ -8,30 +8,21 @@ let cached: {
 export default function api() {
   if (cached) return cached;
 
+  const e = (name: string) => CoreFoundation.getExportByName(name);
+
   const CoreFoundation = Process.getModuleByName("CoreFoundation");
-  const CFDataGetLength = new NativeFunction(
-    CoreFoundation.getExportByName("CFDataGetLength"),
-    "long",
-    ["pointer"],
-  );
+  const CFDataGetLength = new NativeFunction(e("CFDataGetLength"), "long", [
+    "pointer",
+  ]);
 
   const CFDataGetBytePtr = new NativeFunction(
-    CoreFoundation.getExportByName("CFDataGetBytePtr"),
+    e("CFDataGetBytePtr"),
     "pointer",
     ["pointer"],
   );
 
-  const CFRelease = new NativeFunction(
-    CoreFoundation.findExportByName("CFRelease")!,
-    "void",
-    ["pointer"],
-  );
-
-  const CFRetain = new NativeFunction(
-    CoreFoundation.findExportByName("CFRetain")!,
-    "pointer",
-    ["pointer"],
-  );
+  const CFRelease = new NativeFunction(e("CFRelease"), "void", ["pointer"]);
+  const CFRetain = new NativeFunction(e("CFRetain"), "pointer", ["pointer"]);
 
   cached = {
     CFDataGetLength,
