@@ -12,7 +12,7 @@ export interface TreeNode {
 
 export type RootType = "!" | "~";
 
-export interface FinderTabParams {
+export interface FilesTabParams {
   path: string;
 }
 

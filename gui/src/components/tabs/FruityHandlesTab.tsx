@@ -257,9 +257,9 @@ export function FruityHandlesTab() {
                           onClick={() => {
                             const dir = handle.path.substring(0, handle.path.lastIndexOf("/")) || "/";
                             openSingletonPanel({
-                              id: "finder_tab",
-                              component: "finder",
-                              title: "Finder",
+                              id: "files_tab",
+                              component: "files",
+                              title: t("files"),
                               params: { path: dir },
                             });
                           }}

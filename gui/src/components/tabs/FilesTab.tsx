@@ -21,9 +21,9 @@ import { useDock } from "@/context/DockContext";
 import { useFruityMutation, useDroidMutation } from "@/lib/queries";
 import { DirectoryTree } from "./DirectoryTree";
 import { FileTable } from "./FileTable";
-import type { FinderTabParams, UploadFile } from "@/lib/explorer.ts";
+import type { FilesTabParams, UploadFile } from "@/lib/explorer.ts";
 
-export type { FinderTabParams };
+export type { FilesTabParams };
 
 // Recursively read all files from a FileSystemDirectoryEntry
 function readAllEntries(
@@ -66,7 +66,7 @@ function readAllEntries(
   });
 }
 
-export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
+export function FilesTab({ params }: IDockviewPanelProps<FilesTabParams>) {
   const { fruity, droid, status, pid, device, platform, mode, identifier } =
     useSession();
   const { t } = useTranslation();
@@ -75,7 +75,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
   const isDaemon = mode === Mode.Daemon;
 
   const storageKey =
-    device && identifier ? `finder-state:${device}:${identifier}` : null;
+    device && identifier ? `files-state:${device}:${identifier}` : null;
 
   const initialPath = params?.path || "~";
   const defaultTab = initialPath === "!" ? "bundle" : "home";
@@ -436,7 +436,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
     handleDirectorySelect(params.path);
   }, [apiReady, roots, params?.path, handleDirectorySelect]);
 
-  // Persist finder state to localStorage
+  // Persist files state to localStorage
   useEffect(() => {
     if (!storageKey || !fullCwd) return;
     try {
@@ -457,7 +457,7 @@ export function FinderTab({ params }: IDockviewPanelProps<FinderTabParams>) {
         className="hidden"
         onChange={handleFileInputChange}
       />
-      <ResizablePanelGroup orientation="horizontal" autoSaveId="finder-split">
+      <ResizablePanelGroup orientation="horizontal" autoSaveId="files-split">
         <ResizablePanel defaultSize="15%" minSize="5%" maxSize="80%">
           <Tabs
             value={activeTab}

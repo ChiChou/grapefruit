@@ -117,7 +117,7 @@ const routeFeatures: Record<FeatureKey, RouteFeature[]> = {
 const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
   "fruity:app": [
     pf("checksec_tab", "checksec", ShieldCheck, "checksec", "home_checksec_desc"),
-    pf("finder_tab", "finder", FolderSearch, "finder", "home_finder_desc", {
+    pf("files_tab", "files", FolderSearch, "files", "home_files_desc", {
       path: "~",
     }),
     pf(
@@ -200,7 +200,7 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
   ],
   "fruity:daemon": [
     pf("checksec_tab", "checksec", ShieldCheck, "checksec", "home_checksec_desc"),
-    pf("finder_tab", "finder", FolderSearch, "finder", "home_finder_desc", {
+    pf("files_tab", "files", FolderSearch, "files", "home_files_desc", {
       path: "/",
     }),
     pf("handles_tab", "handles", FolderOpen, "lsof", "home_lsof_desc"),
@@ -224,7 +224,7 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
   "droid:app": [
     pf("checksec_tab", "checksec", ShieldCheck, "checksec", "home_checksec_desc"),
     pf("apk_browser_tab", "apkBrowser", Package, "apk_browser", "home_apk_browser_desc"),
-    pf("finder_tab", "finder", FolderSearch, "finder", "home_finder_desc", {
+    pf("files_tab", "files", FolderSearch, "files", "home_files_desc", {
       path: "/",
     }),
     pf(
@@ -282,7 +282,7 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
   ],
   "droid:daemon": [
     pf("checksec_tab", "checksec", ShieldCheck, "checksec", "home_checksec_desc"),
-    pf("finder_tab", "finder", FolderSearch, "finder", "home_finder_desc", {
+    pf("files_tab", "files", FolderSearch, "files", "home_files_desc", {
       path: "/",
     }),
     pf(

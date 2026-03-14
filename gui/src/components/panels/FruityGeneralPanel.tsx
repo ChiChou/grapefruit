@@ -60,11 +60,11 @@ export function FruityGeneralPanel() {
     error,
   } = useFruityQuery<BasicInfo>(["appInfo"], (api) => api.info.basics());
 
-  const openFinderTab = (path: string) => {
+  const openFilesTab = (path: string) => {
     openSingletonPanel({
-      id: "finder_tab",
-      component: "finder",
-      title: t("finder"),
+      id: "files_tab",
+      component: "files",
+      title: t("files"),
       params: { path },
     });
   };
@@ -164,7 +164,7 @@ export function FruityGeneralPanel() {
             <div className="flex items-start">
               <PathDisplay
                 path={basicInfo.path}
-                onClick={() => openFinderTab(basicInfo.path)}
+                onClick={() => openFilesTab(basicInfo.path)}
               />
               <CopyButton text={basicInfo.path} />
             </div>
@@ -198,7 +198,7 @@ export function FruityGeneralPanel() {
             <div className="flex items-start">
               <PathDisplay
                 path={basicInfo.home}
-                onClick={() => openFinderTab(basicInfo.home)}
+                onClick={() => openFilesTab(basicInfo.home)}
               />
               <CopyButton text={basicInfo.home} />
             </div>

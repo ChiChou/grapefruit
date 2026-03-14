@@ -90,11 +90,11 @@ export function DroidGeneralPanel() {
     error,
   } = useDroidQuery<ApplicationInfoResult>(["appInfo"], (api) => api.app.info());
 
-  const openFinderTab = (path: string) => {
+  const openFilesTab = (path: string) => {
     openSingletonPanel({
-      id: "finder_tab",
-      component: "finder",
-      title: t("finder"),
+      id: "files_tab",
+      component: "files",
+      title: t("files"),
       params: { path },
     });
   };
@@ -187,7 +187,7 @@ export function DroidGeneralPanel() {
 
         <InfoRow label={t("data_dir")}>
           <div className="flex items-start">
-            <PathDisplay path={appInfo.dataDir} onClick={() => openFinderTab(appInfo.dataDir)} />
+            <PathDisplay path={appInfo.dataDir} onClick={() => openFilesTab(appInfo.dataDir)} />
             <CopyButton text={appInfo.dataDir} />
           </div>
         </InfoRow>
@@ -203,7 +203,7 @@ export function DroidGeneralPanel() {
 
         <InfoRow label={t("native_library_dir")}>
           <div className="flex items-start">
-            <PathDisplay path={appInfo.nativeLibraryDir} onClick={() => openFinderTab(appInfo.nativeLibraryDir)} />
+            <PathDisplay path={appInfo.nativeLibraryDir} onClick={() => openFilesTab(appInfo.nativeLibraryDir)} />
             <CopyButton text={appInfo.nativeLibraryDir} />
           </div>
         </InfoRow>

@@ -35,7 +35,7 @@ import { FruityClassDetailTab } from "../tabs/FruityClassDetailTab";
 import { FruityClassDumpTab } from "../tabs/FruityClassDumpTab";
 import { DroidClassDetailTab } from "../tabs/DroidClassDetailTab";
 import { ApkBrowserTab } from "../tabs/ApkBrowserTab";
-import { FinderTab } from "../tabs/FinderTab";
+import { FilesTab } from "../tabs/FilesTab";
 import { ImagePreviewTab } from "../tabs/ImagePreviewTab";
 import { HexPreviewTab } from "../tabs/HexPreviewTab";
 import { TextEditorTab } from "../tabs/TextEditorTab";
@@ -172,7 +172,7 @@ function WorkspaceContent() {
     classDetail: FruityClassDetailTab,
     classDump: FruityClassDumpTab,
     javaClassDetail: DroidClassDetailTab,
-    finder: FinderTab,
+    files: FilesTab,
     imagePreview: ImagePreviewTab,
     hexPreview: HexPreviewTab,
     textEditor: TextEditorTab,
