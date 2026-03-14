@@ -10,12 +10,8 @@ import {
   MAX_BODY_SIZE,
 } from "./common.js";
 import { bt as captureBacktrace } from "@/common/hooks/java.js";
-import {
-  bodyRegistry,
-  byteArrayToBuffer,
-  tagStream,
-  tagReader,
-} from "./body.js";
+import { bodyRegistry, tagStream, tagReader } from "./body.js";
+import { byteArrayToBuffer } from "@/droid/lib/jbytes.js";
 
 function extractHeaders(headers: Java.Wrapper): Record<string, string> {
   const result: Record<string, string> = {};

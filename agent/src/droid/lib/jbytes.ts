@@ -10,7 +10,7 @@ import type {
  * Fast Java byte[] → ArrayBuffer copy using JNI GetByteArrayElements.
  * Falls back to element-by-element copy for plain JS arrays.
  */
-export function readJavaByteArray(
+export function readByteArray(
   array: Java.Wrapper,
   offset: number,
   length: number,
@@ -30,7 +30,7 @@ export function readJavaByteArray(
  * Fast Java char[] → ArrayBuffer copy using JNI GetCharArrayElements.
  * Returns UTF-16LE bytes (2 bytes per char).
  */
-export function readJavaCharArray(
+export function readCharArray(
   array: Java.Wrapper,
   offset: number,
   length: number,
@@ -58,7 +58,7 @@ export function byteArrayToBuffer(
   if (handle) {
     const env = Java.vm.getEnv();
     const len = env.getArrayLength(handle);
-    const data = readJavaByteArray(arr, 0, len);
+    const data = readByteArray(arr, 0, len);
     return data ? { data, length: len } : null;
   }
   if (typeof arr.length === "number" && arr.length > 0) {
@@ -107,6 +107,6 @@ export function readChunkFromBuffer(
   buffer: Java.Wrapper,
   len: number,
 ): Uint8Array {
-  const ab = readJavaByteArray(buffer, 0, len);
+  const ab = readByteArray(buffer, 0, len);
   return ab ? new Uint8Array(ab) : new Uint8Array(0);
 }

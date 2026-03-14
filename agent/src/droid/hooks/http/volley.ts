@@ -10,7 +10,7 @@ import {
   tryUse,
 } from "./common.js";
 import { bt as captureBacktrace } from "@/common/hooks/java.js";
-import { byteArrayToBuffer } from "./body.js";
+import { byteArrayToBuffer } from "@/droid/lib/jbytes.js";
 
 function methodName(method: number): string {
   switch (method) {

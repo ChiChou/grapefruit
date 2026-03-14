@@ -1,7 +1,7 @@
 import Java from "frida-java-bridge";
 
 import type { JavaHandle } from "@/droid/bridge/wrapper.js";
-import { readJavaByteArray } from "@/droid/lib/jbytes.js";
+import { readByteArray } from "@/droid/lib/jbytes.js";
 
 export function toJava(value: unknown): Java.Wrapper | null {
   if (value === null || value === undefined) return null;
@@ -49,7 +49,7 @@ export function toJS(obj: Java.Wrapper | null): unknown {
     const handle = (obj as JavaHandle).$h;
     const length = env.getArrayLength(handle);
     const cap = Math.min(length, 256);
-    const ab = readJavaByteArray(obj, 0, cap);
+    const ab = readByteArray(obj, 0, cap);
     if (!ab) return "";
     const view = new Uint8Array(ab);
     return Array.from(view, (b) => b.toString(16).padStart(2, "0")).join("");

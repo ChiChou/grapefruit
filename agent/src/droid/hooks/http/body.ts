@@ -1,12 +1,12 @@
 import Java from "frida-java-bridge";
 
 import {
-  readJavaByteArray,
-  readJavaCharArray,
+  readByteArray,
+  readCharArray,
   byteArrayToBuffer,
 } from "@/droid/lib/jbytes.js";
 
-export { readJavaByteArray, byteArrayToBuffer };
+// export { readByteArray as readJavaByteArray, byteArrayToBuffer };
 
 export class Registry {
   private map: Java.Wrapper;
@@ -48,7 +48,7 @@ function hookInputStreamClass(className: string): void {
       const jrid = streamRegistry.get(this);
       if (jrid !== null && n > 0) {
         const rid = jrid.toString();
-        const data = readJavaByteArray(buf, off, n);
+        const data = readByteArray(buf, off, n);
         if (data) {
           send(
             {
@@ -78,9 +78,7 @@ function hookInputStreamClass(className: string): void {
       }
       return closeMethod.call(this);
     };
-
-  } catch {
-  }
+  } catch {}
 }
 
 function hookReaderClass(className: string): void {
@@ -98,7 +96,7 @@ function hookReaderClass(className: string): void {
       const jrid = streamRegistry.get(this);
       if (jrid !== null && n > 0) {
         const rid = jrid.toString();
-        const data = readJavaCharArray(cbuf, off, n);
+        const data = readCharArray(cbuf, off, n);
         if (data) {
           send(
             {
@@ -129,9 +127,7 @@ function hookReaderClass(className: string): void {
       }
       return closeMethod.call(this);
     };
-
-  } catch {
-  }
+  } catch {}
 }
 
 export function tagStream(stream: Java.Wrapper, rid: string): void {
@@ -151,4 +147,3 @@ export function tagReader(reader: Java.Wrapper, rid: string): void {
     hookReaderClass(cls);
   }
 }
-
