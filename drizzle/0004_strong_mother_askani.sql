@@ -1,1 +1,0 @@
-ALTER TABLE `hooks` ADD `backtrace` text;
