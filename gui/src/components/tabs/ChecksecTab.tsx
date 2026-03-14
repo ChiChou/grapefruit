@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Loader2, ShieldCheck, ShieldX, ShieldAlert } from "lucide-react";
+import { Loader2, ShieldCheck, ShieldX, ShieldAlert, Save } from "lucide-react";
 
 import {
   Table,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Platform, useSession } from "@/context/SessionContext";
 import { useFruityQuery, useDroidQuery } from "@/lib/queries";
 
@@ -141,7 +142,13 @@ function NaBadge() {
 }
 
 /** For symbol-dependent checks: show green when detected, N/A when not */
-function SymbolBadge({ value, label }: { value: boolean | string; label?: string }) {
+function SymbolBadge({
+  value,
+  label,
+}: {
+  value: boolean | string;
+  label?: string;
+}) {
   if (!value) return <NaBadge />;
   const text = typeof value === "string" ? value : (label ?? "Yes");
   return <SecureBadge secure={true} label={text} />;
@@ -475,7 +482,7 @@ function EntitlementsPanel({ data }: { data: EntitlementsPlistResult }) {
 
 export function ChecksecTab() {
   const { t } = useTranslation();
-  const { platform } = useSession();
+  const { platform, bundle } = useSession();
   const isFruity = platform === Platform.Fruity;
   const [filter, setFilter] = useState("");
 
@@ -499,6 +506,24 @@ export function ChecksecTab() {
 
   const { data, isLoading } = isFruity ? fruityResult : droidResult;
 
+  const handleDownload = () => {
+    const exportData = isFruity
+      ? {
+          modules: data,
+          entitlements: entitlementsResult.data,
+        }
+      : { modules: data };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${bundle ?? "checksec"}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
@@ -518,6 +543,15 @@ export function ChecksecTab() {
           placeholder={t("search")}
           className="h-8 max-w-xs"
         />
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8"
+          onClick={handleDownload}
+          disabled={!data}
+        >
+          <Save className="h-4 w-4 mr-1" />
+        </Button>
         <span className="text-xs text-muted-foreground ml-auto">
           {(data as unknown[])?.length ?? 0} modules
         </span>
