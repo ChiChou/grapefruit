@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Search, Loader2, Download, FolderOpen, FileText } from "lucide-react";
+import Editor from "@monaco-editor/react";
 import { List, type RowComponentProps } from "react-window";
 
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/resizable";
 import { useDroidQuery } from "@/lib/queries";
 import { useSession } from "@/context/SessionContext";
+import { useTheme } from "@/components/providers/ThemeProvider";
 
 import type { ResourceTree } from "@agent/droid/modules/resources";
 
@@ -89,8 +91,10 @@ function ResourceContent({
 }) {
   const { t } = useTranslation();
   const { device, pid } = useSession();
+  const { theme } = useTheme();
 
   const isRaw = category === "raw";
+  const isXml = category === "xml";
 
   const {
     data: value,
@@ -138,6 +142,36 @@ function ResourceContent({
           {(error as Error).message}
         </div>
       </div>
+    );
+  }
+
+  if (isXml && value) {
+    return (
+      <Editor
+        height="100%"
+        language="xml"
+        value={value}
+        theme={theme === "dark" ? "vs-dark" : "light"}
+        options={{
+          readOnly: true,
+          domReadOnly: true,
+          minimap: { enabled: false },
+          scrollBeyondLastLine: false,
+          wordWrap: "on",
+          fontSize: 13,
+          lineNumbers: "off",
+          folding: true,
+          automaticLayout: true,
+          renderLineHighlight: "none",
+          overviewRulerLanes: 0,
+          hideCursorInOverviewRuler: true,
+          overviewRulerBorder: false,
+          scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 },
+          glyphMargin: false,
+          lineDecorationsWidth: 0,
+          lineNumbersMinChars: 0,
+        }}
+      />
     );
   }
 
