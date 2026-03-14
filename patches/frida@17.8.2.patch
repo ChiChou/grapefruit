@@ -1,0 +1,21 @@
+diff --git a/build/src/frida.js b/build/src/frida.js
+index 7eebcaf985d7725e8e655674d963114bdd56f7dd..aa2323aa4cc0a1a8b18a7818bb1dd22a81281bab 100644
+--- a/build/src/frida.js
++++ b/build/src/frida.js
+@@ -1,15 +1,8 @@
+-import bindings from "bindings";
+ import util from "util";
+ import { Minimatch } from "minimatch";
+ import { Duplex } from "stream";
+ const { inspect } = util;
+-const binding = bindings({
+-    bindings: "frida_binding",
+-    try: [
+-        ["module_root", "build", "bindings"],
+-        [process.cwd(), "bindings"],
+-    ]
+-});
++const binding = require('../../build/frida_binding.node');
+ var MessageTypeImpl;
+ (function (MessageTypeImpl) {
+     MessageTypeImpl["Send"] = "send";

@@ -65,7 +65,8 @@
   },
   "patchedDependencies": {
     "frida@17.6.2": "patches/frida@17.6.2.patch",
-    "frida@16.7.19": "patches/frida@16.7.19.patch"
+    "frida@16.7.19": "patches/frida@16.7.19.patch",
+    "frida@17.8.2": "patches/frida@17.8.2.patch"
   },
   "trustedDependencies": [
     "better-sqlite3",
