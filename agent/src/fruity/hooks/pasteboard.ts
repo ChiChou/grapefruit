@@ -57,7 +57,12 @@ export function monitor() {
               dir: "leave",
               line: `[${shortName} string] // read`,
               backtrace: bt(this.context),
-              extra: { op: "read", pasteboardName: name, isGeneral, contentType: "string" },
+              extra: {
+                op: "read",
+                pasteboardName: name,
+                isGeneral,
+                contentType: "string",
+              },
             },
             content,
           );
@@ -84,7 +89,12 @@ export function monitor() {
             dir: "leave",
             line: `[${shortName} strings] // read`,
             backtrace: bt(this.context),
-            extra: { op: "read", pasteboardName: name, isGeneral, contentType: "strings" },
+            extra: {
+              op: "read",
+              pasteboardName: name,
+              isGeneral,
+              contentType: "strings",
+            },
           });
         },
       }),
@@ -123,7 +133,12 @@ export function monitor() {
               dir: "leave",
               line: `[${shortName} setString:...] // write`,
               backtrace: bt(this.context),
-              extra: { op: "write", pasteboardName: name, isGeneral, contentType: "string" },
+              extra: {
+                op: "write",
+                pasteboardName: name,
+                isGeneral,
+                contentType: "string",
+              },
             },
             this.content,
           );
@@ -162,7 +177,12 @@ export function monitor() {
               dir: "leave",
               line: `[${shortName} dataForPasteboardType:"${this.pbType}"] // read`,
               backtrace: bt(this.context),
-              extra: { op: "read", pasteboardName: name, isGeneral, contentType: this.pbType },
+              extra: {
+                op: "read",
+                pasteboardName: name,
+                isGeneral,
+                contentType: this.pbType,
+              },
             },
             content,
           );
@@ -201,7 +221,12 @@ export function monitor() {
               dir: "leave",
               line: `[${shortName} setData:... forPasteboardType:"${this.pbType}"] // write`,
               backtrace: bt(this.context),
-              extra: { op: "write", pasteboardName: name, isGeneral, contentType: this.pbType },
+              extra: {
+                op: "write",
+                pasteboardName: name,
+                isGeneral,
+                contentType: this.pbType,
+              },
             },
             this.content,
           );
@@ -228,7 +253,12 @@ export function monitor() {
             dir: "leave",
             line: `[${shortName} setItems:...] // write`,
             backtrace: bt(this.context),
-            extra: { op: "write", pasteboardName: name, isGeneral, contentType: "items" },
+            extra: {
+              op: "write",
+              pasteboardName: name,
+              isGeneral,
+              contentType: "items",
+            },
           });
         },
       }),
@@ -270,7 +300,12 @@ export function monitor() {
               dir: "leave",
               line: `[${shortName} URL] // read`,
               backtrace: bt(this.context),
-              extra: { op: "read", pasteboardName: name, isGeneral, contentType: "URL" },
+              extra: {
+                op: "read",
+                pasteboardName: name,
+                isGeneral,
+                contentType: "URL",
+              },
             },
             content,
           );
@@ -297,7 +332,12 @@ export function monitor() {
             dir: "leave",
             line: `[${shortName} image] // read`,
             backtrace: bt(this.context),
-            extra: { op: "read", pasteboardName: name, isGeneral, contentType: "image" },
+            extra: {
+              op: "read",
+              pasteboardName: name,
+              isGeneral,
+              contentType: "image",
+            },
           });
         },
       }),

@@ -16,14 +16,23 @@ export default function (): InvocationListener[] {
         hooks.push(
           Interceptor.attach(m.implementation, {
             onEnter() {
-              send(privacyMsg("microphone", "-[AVAudioRecorder record]", "enter",
-                "AVAudioRecorder.record()", bt(this.context)));
+              send(
+                privacyMsg(
+                  "microphone",
+                  "-[AVAudioRecorder record]",
+                  "enter",
+                  "AVAudioRecorder.record()",
+                  bt(this.context),
+                ),
+              );
             },
           }),
         );
       }
     }
-  } catch { /* class unavailable */ }
+  } catch {
+    /* class unavailable */
+  }
 
   // AVCaptureDevice requestAccessForMediaType: (audio)
   try {
@@ -36,19 +45,25 @@ export default function (): InvocationListener[] {
             onEnter(args) {
               const mediaType = new ObjC.Object(args[2]).toString();
               if (mediaType === "soun") {
-                send(privacyMsg("microphone",
-                  "+[AVCaptureDevice requestAccessForMediaType:completionHandler:]",
-                  "enter",
-                  `requestAccessForMediaType: audio`,
-                  bt(this.context),
-                  { mediaType }));
+                send(
+                  privacyMsg(
+                    "microphone",
+                    "+[AVCaptureDevice requestAccessForMediaType:completionHandler:]",
+                    "enter",
+                    `requestAccessForMediaType: audio`,
+                    bt(this.context),
+                    { mediaType },
+                  ),
+                );
               }
             },
           }),
         );
       }
     }
-  } catch { /* class unavailable */ }
+  } catch {
+    /* class unavailable */
+  }
 
   // AVAudioEngine startAndReturnError:
   try {
@@ -59,14 +74,23 @@ export default function (): InvocationListener[] {
         hooks.push(
           Interceptor.attach(m.implementation, {
             onEnter() {
-              send(privacyMsg("microphone", "-[AVAudioEngine startAndReturnError:]", "enter",
-                "AVAudioEngine.start()", bt(this.context)));
+              send(
+                privacyMsg(
+                  "microphone",
+                  "-[AVAudioEngine startAndReturnError:]",
+                  "enter",
+                  "AVAudioEngine.start()",
+                  bt(this.context),
+                ),
+              );
             },
           }),
         );
       }
     }
-  } catch { /* class unavailable */ }
+  } catch {
+    /* class unavailable */
+  }
 
   // AudioOutputUnitStart (C function)
   try {
@@ -76,13 +100,22 @@ export default function (): InvocationListener[] {
       hooks.push(
         Interceptor.attach(addr, {
           onEnter() {
-            send(privacyMsg("microphone", "AudioOutputUnitStart", "enter",
-              "AudioOutputUnitStart()", bt(this.context)));
+            send(
+              privacyMsg(
+                "microphone",
+                "AudioOutputUnitStart",
+                "enter",
+                "AudioOutputUnitStart()",
+                bt(this.context),
+              ),
+            );
           },
         }),
       );
     }
-  } catch { /* symbol unavailable */ }
+  } catch {
+    /* symbol unavailable */
+  }
 
   return hooks;
 }

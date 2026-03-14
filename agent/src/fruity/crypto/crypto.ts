@@ -164,7 +164,7 @@ export function hash() {
 
             // workaround: MobileGestalt uses MD5 to obfuscate strings, abvoid
             // todo: limit all hooks to app binaries only
-            if (backtrace.at(0)?.startsWith('libMobileGestalt.dylib')) return;
+            if (backtrace.at(0)?.startsWith("libMobileGestalt.dylib")) return;
 
             send(
               {

@@ -16,14 +16,23 @@ export default function (): InvocationListener[] {
         hooks.push(
           Interceptor.attach(m.implementation, {
             onEnter() {
-              send(privacyMsg("camera", "-[AVCaptureSession startRunning]", "enter",
-                "AVCaptureSession.startRunning()", bt(this.context)));
+              send(
+                privacyMsg(
+                  "camera",
+                  "-[AVCaptureSession startRunning]",
+                  "enter",
+                  "AVCaptureSession.startRunning()",
+                  bt(this.context),
+                ),
+              );
             },
           }),
         );
       }
     }
-  } catch { /* class unavailable */ }
+  } catch {
+    /* class unavailable */
+  }
 
   // AVCaptureDevice requestAccessForMediaType: (video)
   try {
@@ -36,19 +45,25 @@ export default function (): InvocationListener[] {
             onEnter(args) {
               const mediaType = new ObjC.Object(args[2]).toString();
               if (mediaType === "vide") {
-                send(privacyMsg("camera",
-                  "+[AVCaptureDevice requestAccessForMediaType:completionHandler:]",
-                  "enter",
-                  `requestAccessForMediaType: video`,
-                  bt(this.context),
-                  { mediaType }));
+                send(
+                  privacyMsg(
+                    "camera",
+                    "+[AVCaptureDevice requestAccessForMediaType:completionHandler:]",
+                    "enter",
+                    `requestAccessForMediaType: video`,
+                    bt(this.context),
+                    { mediaType },
+                  ),
+                );
               }
             },
           }),
         );
       }
     }
-  } catch { /* class unavailable */ }
+  } catch {
+    /* class unavailable */
+  }
 
   // UIImagePickerController takePicture
   try {
@@ -59,14 +74,23 @@ export default function (): InvocationListener[] {
         hooks.push(
           Interceptor.attach(m.implementation, {
             onEnter() {
-              send(privacyMsg("camera", "-[UIImagePickerController takePicture]", "enter",
-                "UIImagePickerController.takePicture()", bt(this.context)));
+              send(
+                privacyMsg(
+                  "camera",
+                  "-[UIImagePickerController takePicture]",
+                  "enter",
+                  "UIImagePickerController.takePicture()",
+                  bt(this.context),
+                ),
+              );
             },
           }),
         );
       }
     }
-  } catch { /* class unavailable */ }
+  } catch {
+    /* class unavailable */
+  }
 
   // UIImagePickerController startVideoCapture
   try {
@@ -77,14 +101,23 @@ export default function (): InvocationListener[] {
         hooks.push(
           Interceptor.attach(m.implementation, {
             onEnter() {
-              send(privacyMsg("camera", "-[UIImagePickerController startVideoCapture]", "enter",
-                "UIImagePickerController.startVideoCapture()", bt(this.context)));
+              send(
+                privacyMsg(
+                  "camera",
+                  "-[UIImagePickerController startVideoCapture]",
+                  "enter",
+                  "UIImagePickerController.startVideoCapture()",
+                  bt(this.context),
+                ),
+              );
             },
           }),
         );
       }
     }
-  } catch { /* class unavailable */ }
+  } catch {
+    /* class unavailable */
+  }
 
   return hooks;
 }
