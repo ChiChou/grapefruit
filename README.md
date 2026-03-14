@@ -24,6 +24,11 @@ Now it supports both iOS and Android!
 - **Syslog Streaming** - Real-time system and agent log monitoring
 - **Process Crash Reporting** - Exception handler with register dump and backtrace
 - **Flutter Support** - Monitor platform method channel communication on both platforms
+- **React Native Support** - Bridge inspector and JavaScript injection REPL
+- **Memory Scanner** - Search and inspect process memory
+- **Privacy Monitor** - Track sensitive API access (camera, microphone, location, sensors, etc.)
+- **Thread Inspector** - View and manage process threads
+- **Module/Symbol Browser** - Inspect loaded modules and exported symbols
 
 ### iOS
 
@@ -36,9 +41,13 @@ Now it supports both iOS and Android!
 - UserDefaults browser
 - Pasteboard and file operation monitoring
 - Geolocation spoofing
+- Device ID spoofing
 - Objective-C class and method inspection
 - Open file handles and network connections (lsof)
 - Security analysis (PIE, ARC, stack canaries, encryption)
+- Asset catalog viewer (Assets.car)
+- XPC/NSXPC message inspection
+- Firebase/Firestore monitoring
 
 ### Android
 
@@ -49,6 +58,10 @@ Now it supports both iOS and Android!
 - Java class inspection (methods, fields, interfaces)
 - Intent building and launching
 - Open file handles and network connections (lsof)
+- HTTP traffic capture (OkHttp, Volley, URLConnection)
+- Resources browser
+- Clipboard and SharedPreferences monitoring
+- Broadcast receiver monitoring
 
 ## Documentation
 
