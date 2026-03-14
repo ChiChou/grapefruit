@@ -73,7 +73,15 @@ const routes = new Hono()
   })
   .get("/device/:device/info", getDeviceMiddleware, async (c) => {
     const device = c.get("device");
-    return c.json(await device.querySystemParameters());
+    const params = await device.querySystemParameters();
+    return c.text(
+      // 17.8.2 returns 'api-level' as bigint, causing JSON.stringify to throw
+      JSON.stringify(params, (_, value) =>
+        typeof value === "bigint" ? Number(value) : value,
+      ),
+      200,
+      { "Content-Type": "application/json" },
+    );
   })
   .post("/device/:device/kill/:pid", getDeviceMiddleware, async (c) => {
     const device = c.get("device");

@@ -106,6 +106,47 @@ const routes = new Hono()
       }).finally(() => transport.close());
     });
   })
+  .get("/resource/:device/:pid", getDeviceMiddleware, async (c) => {
+    const type = c.req.query("type");
+    const name = c.req.query("name");
+    if (typeof type !== "string" || typeof name !== "string")
+      return c.text("invalid params", 400);
+
+    const device = c.get("device");
+    const pid = parseInt(c.req.param("pid"), 10);
+    const transport = await createTransport(device, pid);
+    const { script, controller } = transport;
+
+    let size: number;
+    try {
+      size = await script.exports.resourceLen(type, name);
+    } catch (e) {
+      console.error(e);
+      await transport.close();
+      return c.text("resource not found", 404);
+    }
+
+    c.header("Content-Length", size.toString());
+    c.header(
+      "Content-Disposition",
+      `attachment; filename="${name}"`,
+    );
+
+    return stream(c, async (streamer) => {
+      await Promise.all([
+        new Promise<void>((resolve) => {
+          controller.events.on("stream", async (incomingStream: Readable) => {
+            for await (const chunk of incomingStream) {
+              await streamer.write(chunk);
+            }
+            await transport.close();
+            resolve();
+          });
+        }),
+        script.exports.pullResource(type, name),
+      ]);
+    });
+  })
   .post("/upload/:device/:pid", getDeviceMiddleware, async (c) => {
     const formBody = await c.req.parseBody();
     const path = formBody["path"];

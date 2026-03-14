@@ -93,6 +93,90 @@ rpc.exports.pullZip = function (apkPath: string, entryName: string) {
   });
 };
 
+/**
+ * Get the size of a raw Android resource.
+ */
+rpc.exports.resourceLen = function (type: string, name: string): number {
+  let result = -1;
+  Java.perform(() => {
+    const ActivityThread = Java.use("android.app.ActivityThread");
+    const appContext = ActivityThread.currentApplication().getApplicationContext();
+    const resources = appContext.getResources();
+    const packageName = appContext.getPackageName();
+
+    const resId: number = resources.getIdentifier(name, type, packageName);
+    if (resId === 0) throw new Error(`Resource not found: ${type}/${name}`);
+
+    const inputStream = resources.openRawResource(resId);
+    try {
+      result = inputStream.available();
+    } finally {
+      inputStream.close();
+    }
+  });
+  return result;
+};
+
+/**
+ * Stream a raw Android resource via frida-remote-stream.
+ */
+rpc.exports.pullResource = function (type: string, name: string) {
+  Java.perform(() => {
+    const ActivityThread = Java.use("android.app.ActivityThread");
+    const appContext = ActivityThread.currentApplication().getApplicationContext();
+    const resources = appContext.getResources();
+    const packageName = appContext.getPackageName();
+
+    const resId: number = resources.getIdentifier(name, type, packageName);
+    if (resId === 0) throw new Error(`Resource not found: ${type}/${name}`);
+
+    const inputStream = resources.openRawResource(resId);
+    const buffer = Java.array(
+      "byte",
+      new Array(DUMP_CHUNK_SIZE).fill(0),
+    ) as unknown as Java.Wrapper;
+    const label = `${Process.id}:resource:${type}:${name}`;
+    const controller = new RemoteStreamController();
+
+    controller.events.on("send", ({ stanza, data }: Packet) => {
+      send(
+        {
+          name: "+stream",
+          payload: stanza,
+        },
+        data?.buffer as ArrayBuffer,
+      );
+    });
+
+    function onStreamMessage(
+      message: { payload: { [key: string]: string } },
+      data: ArrayBuffer | null,
+    ) {
+      controller.receive({
+        stanza: message.payload,
+        data: data as unknown as Buffer<ArrayBufferLike>,
+      });
+      recv("+stream", onStreamMessage);
+    }
+    recv("+stream", onStreamMessage);
+
+    const writable = controller.open(label, { meta: { type: "data" } });
+
+    const env = Java.vm.getEnv();
+    const bufHandle = (buffer as JavaHandle).$h;
+
+    let len: number;
+    while ((len = inputStream.read(buffer)) !== -1) {
+      const ptr = env.getByteArrayElements(bufHandle);
+      const chunk = ptr.readByteArray(len)!;
+      env.releaseByteArrayElements(bufHandle, ptr);
+      writable.write(Buffer.from(chunk));
+    }
+    writable.end();
+    inputStream.close();
+  });
+};
+
 const LC_ENCRYPTION_INFO = 0x21;
 const LC_ENCRYPTION_INFO_64 = 0x2c;
 const DUMP_CHUNK_SIZE = 1024 * 1024; // 1MB

@@ -11,6 +11,7 @@ import * as keystore from "./modules/keystore.js";
 import * as lsof from "./modules/lsof.js";
 import * as manifest from "./modules/manifest.js";
 import * as provider from "./modules/provider.js";
+import * as resources from "./modules/resources.js";
 import * as rn from "./modules/rn.js";
 import * as receivers from "./modules/receivers.js";
 import * as services from "./modules/services.js";
@@ -41,6 +42,7 @@ export default {
   memory,
   native,
   provider,
+  resources,
   receivers,
   rn,
   script,

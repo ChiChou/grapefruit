@@ -30,6 +30,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   Layers,
+  Archive,
 } from "lucide-react";
 
 import type { PlatformType, ModeType } from "@/context/SessionContext";
@@ -271,6 +272,13 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
       "home_privacy_desc",
     ),
     pf("droid_http_tab", "droidHttp", Network, "HTTP", "home_http_desc"),
+    pf(
+      "droid_resources_tab",
+      "droidResources",
+      Archive,
+      "Resources",
+      "Browse Android app resources",
+    ),
   ],
   "droid:daemon": [
     pf("checksec_tab", "checksec", ShieldCheck, "checksec", "home_checksec_desc"),
