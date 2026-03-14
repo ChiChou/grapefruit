@@ -38,10 +38,19 @@ import { useLogStream } from "@/hooks/useLogStream";
 import { toTime } from "@/lib/format";
 
 import type {
-  PrivacyMessage,
-  PrivacySeverity,
-  PrivacyCategory,
-} from "@agent/common/hooks/privacy";
+  PrivacyMessage as DroidPrivacyMessage,
+  PrivacySeverity as DroidPrivacySeverity,
+  PrivacyCategory as DroidPrivacyCategory,
+} from "@agent/droid/hooks/privacy/types";
+import type {
+  PrivacyMessage as FruityPrivacyMessage,
+  PrivacySeverity as FruityPrivacySeverity,
+  PrivacyCategory as FruityPrivacyCategory,
+} from "@agent/fruity/hooks/privacy/types";
+
+type PrivacyMessage = DroidPrivacyMessage | FruityPrivacyMessage;
+type PrivacySeverity = DroidPrivacySeverity | FruityPrivacySeverity;
+type PrivacyCategory = DroidPrivacyCategory | FruityPrivacyCategory;
 
 const TAP_ID = "privacy";
 
