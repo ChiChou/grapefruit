@@ -370,7 +370,7 @@ export function ApkBrowserTab() {
     isLoading,
     refetch,
   } = useDroidQuery(
-    ["apk", "entries", effectiveApk],
+    ["apk", "entries", effectiveApk!],
     (api) => api.apk.entries(effectiveApk!),
     { enabled: apiReady && !!effectiveApk },
   );
