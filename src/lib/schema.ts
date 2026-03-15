@@ -206,6 +206,7 @@ export const crypto = sqliteTable(
     deviceId: text("device_id").notNull(),
     identifier: text("identifier").notNull(),
     timestamp: text("timestamp").notNull(),
+    category: text("category"),
     symbol: text("symbol").notNull(),
     direction: text("direction").notNull(),
     line: text("line"),
@@ -217,5 +218,6 @@ export const crypto = sqliteTable(
   (table) => [
     index("idx_crypto_device_identifier").on(table.deviceId, table.identifier),
     index("idx_crypto_timestamp").on(table.timestamp),
+    index("idx_crypto_category").on(table.category),
   ],
 );

@@ -129,6 +129,7 @@ const cryptoRoutes = createHistoryRoutes({
   mapRecord: (r) => ({
     id: r.id,
     timestamp: r.timestamp,
+    category: r.category,
     symbol: r.symbol,
     direction: r.direction,
     line: r.line,

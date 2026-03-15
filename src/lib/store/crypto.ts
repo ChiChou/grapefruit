@@ -5,6 +5,7 @@ import { BaseLogStore } from "./base.ts";
 export type CryptoRecord = typeof crypto.$inferSelect;
 
 export interface CryptoInput {
+  category?: string;
   symbol: string;
   dir: string;
   line?: string;
@@ -23,6 +24,7 @@ export class CryptoStore extends BaseLogStore<typeof crypto> {
         deviceId: this.deviceId,
         identifier: this.identifier,
         timestamp: new Date().toISOString(),
+        category: message.category || null,
         symbol: message.symbol || "unknown",
         direction: message.dir || "unknown",
         line: message.line || null,

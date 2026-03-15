@@ -300,7 +300,7 @@ const mapHistory = (record: Record<string, unknown>, id: number): CryptoEntry =>
   timestamp: new Date(record.timestamp as string),
   message: {
     subject: "crypto",
-    category: "crypto",
+    category: (record.category as string) || "unknown",
     symbol: record.symbol as string,
     dir: record.direction as "enter" | "leave",
     line: (record.line as string) ?? undefined,
@@ -350,6 +350,7 @@ export function CryptoTab() {
   const [hookEnabled, setHookEnabled] = useState<boolean | null>(null);
   const [hookLoading, setHookLoading] = useState(false);
   const [filter, setFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<Set<string>>(new Set());
 
   // Fetch crypto pin status (platform-aware)
   const { data: fruityInitActive } = useFruityQuery<boolean>(
@@ -393,20 +394,44 @@ export function CryptoTab() {
     }
   };
 
-  const filteredEntries = useMemo(() => {
-    if (!filter) return entries;
-    const lower = filter.toLowerCase();
-    return entries.filter((e) => {
-      const extra = e.message.extra as Record<string, unknown> | undefined;
-      return (
-        e.message.symbol?.toLowerCase().includes(lower) ||
-        e.message.line?.toLowerCase().includes(lower) ||
-        (extra?.op as string)?.toLowerCase().includes(lower) ||
-        (extra?.algo as string)?.toLowerCase().includes(lower) ||
-        (extra?.detailType as string)?.toLowerCase().includes(lower)
-      );
+  // Collect unique categories from all entries
+  const categories = useMemo(() => {
+    const cats = new Set<string>();
+    for (const e of entries) {
+      if (e.message.category) cats.add(e.message.category);
+    }
+    return Array.from(cats).sort();
+  }, [entries]);
+
+  const toggleCategory = useCallback((cat: string) => {
+    setCategoryFilter((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
+      return next;
     });
-  }, [entries, filter]);
+  }, []);
+
+  const filteredEntries = useMemo(() => {
+    let result = entries;
+    if (categoryFilter.size > 0) {
+      result = result.filter((e) => categoryFilter.has(e.message.category));
+    }
+    if (filter) {
+      const lower = filter.toLowerCase();
+      result = result.filter((e) => {
+        const extra = e.message.extra as Record<string, unknown> | undefined;
+        return (
+          e.message.symbol?.toLowerCase().includes(lower) ||
+          e.message.line?.toLowerCase().includes(lower) ||
+          (extra?.op as string)?.toLowerCase().includes(lower) ||
+          (extra?.algo as string)?.toLowerCase().includes(lower) ||
+          (extra?.detailType as string)?.toLowerCase().includes(lower)
+        );
+      });
+    }
+    return result;
+  }, [entries, filter, categoryFilter]);
 
   // Resize observer
   useEffect(() => {
@@ -498,9 +523,21 @@ export function CryptoTab() {
           onChange={(e) => setFilter(e.target.value)}
           className="h-8 text-xs max-w-xs"
         />
+        {categories.length > 0 &&
+          categories.map((cat) => (
+            <Button
+              key={cat}
+              variant={categoryFilter.has(cat) ? "default" : "outline"}
+              size="sm"
+              className="h-6 px-2 text-[11px]"
+              onClick={() => toggleCategory(cat)}
+            >
+              {cat}
+            </Button>
+          ))}
         <div className="flex items-center gap-2 ml-auto">
           <span className="text-xs text-muted-foreground">
-            {filter
+            {filter || categoryFilter.size > 0
               ? `${filteredEntries.length.toLocaleString()} / ${entries.length.toLocaleString()}`
               : entries.length.toLocaleString()}
           </span>
