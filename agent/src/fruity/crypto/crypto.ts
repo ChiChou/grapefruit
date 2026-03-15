@@ -1,3 +1,4 @@
+import ObjC from "frida-objc-bridge";
 import cf from "@/fruity/native/corefoundation.js";
 import { BaseMessage, bt } from "@/common/hooks/context.js";
 
@@ -32,6 +33,48 @@ export function x509() {
         },
       },
     ),
+  ];
+}
+
+export function pkcs12() {
+  const Security = Process.findModuleByName("Security");
+  if (!Security) return [];
+
+  const addr = Security.getExportByName("SecPKCS12Import");
+  if (!addr) return [];
+
+  return [
+    Interceptor.attach(addr, {
+      onEnter(args) {
+        const { CFDataGetLength, CFDataGetBytePtr } = cf();
+        const len = CFDataGetLength(args[0]);
+        const ptr = CFDataGetBytePtr(args[0]);
+        const p12 = ptr.readByteArray(len);
+
+        // args[1] is CFDictionaryRef options; extract passphrase via ObjC bridge
+        let password: string | undefined;
+        try {
+          const opts = new ObjC.Object(args[1]);
+          const phrase = opts.objectForKey_("passphrase");
+          if (phrase && !phrase.isNull()) password = phrase.toString();
+        } catch {
+          // options may not contain a passphrase
+        }
+
+        send(
+          {
+            subject: "crypto",
+            category: "pkcs12",
+            symbol: "SecPKCS12Import",
+            dir: "enter",
+            line: `SecPKCS12Import(data[${len}]${password ? ", password=***" : ""})`,
+            backtrace: bt(this.context),
+            extra: { detailType: "input", len, password },
+          } satisfies BaseMessage,
+          p12,
+        );
+      },
+    }),
   ];
 }
 

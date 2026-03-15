@@ -1,6 +1,6 @@
 import * as crypto from "./crypto.js";
 
-const CRYPTO_GROUPS = ["cccrypt", "x509", "hash", "hmac"] as const;
+const CRYPTO_GROUPS = ["cccrypt", "x509", "pkcs12", "hash", "hmac"] as const;
 
 let active = false;
 let listeners: InvocationListener[] = [];
@@ -12,6 +12,8 @@ export function start(): void {
       listeners.push(...crypto.cccrypt());
     } else if (group === "x509") {
       listeners.push(...crypto.x509());
+    } else if (group === "pkcs12") {
+      listeners.push(...crypto.pkcs12());
     } else if (group === "hash") {
       listeners.push(...crypto.hash());
     } else if (group === "hmac") {
