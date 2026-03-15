@@ -312,7 +312,7 @@ const mapSocket = (id: number, ...args: unknown[]): CryptoEntry => ({
   data: args[1] as ArrayBuffer | undefined,
 });
 
-export function CryptoResultsView() {
+export function CryptoTab() {
   const { t } = useTranslation();
   const { fruity, droid, status, device, identifier, platform } = useSession();
   const isDroid = platform === Platform.Droid;

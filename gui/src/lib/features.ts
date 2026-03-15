@@ -31,6 +31,7 @@ import {
   ShieldCheck,
   Layers,
   Archive,
+  Lock,
 } from "lucide-react";
 
 import type { PlatformType, ModeType } from "@/context/SessionContext";
@@ -197,6 +198,7 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
       "privacy_monitor",
       "home_privacy_desc",
     ),
+    pf("crypto_tab", "crypto", Lock, "crypto", "home_crypto_desc"),
   ],
   "fruity:daemon": [
     pf("checksec_tab", "checksec", ShieldCheck, "checksec", "home_checksec_desc"),
@@ -271,6 +273,7 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
       "privacy_monitor",
       "home_privacy_desc",
     ),
+    pf("crypto_tab", "crypto", Lock, "crypto", "home_crypto_desc"),
     pf("droid_http_tab", "droidHttp", Network, "HTTP", "home_http_desc"),
     pf(
       "droid_resources_tab",

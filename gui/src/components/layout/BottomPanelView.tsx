@@ -6,7 +6,6 @@ import {
   Activity,
   Anchor,
   Terminal,
-  Lock,
 } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,7 +13,6 @@ import { Status, Platform, useSession } from "@/context/SessionContext";
 
 import { LogPanel, type LogViewerHandle } from "../shared/LogPanel";
 import { HookResultsView } from "../shared/HookResultsView";
-import { CryptoResultsView } from "../shared/CryptoResultsView";
 import { CodeScratchPadTab } from "../tabs/CodeScratchPadTab";
 
 const BOTTOM_PANEL_TAB_STATE = "BOTTOM_PANEL_TAB_STATE";
@@ -142,13 +140,6 @@ export function BottomPanelView() {
           {t("hook_logs")}
         </TabsTrigger>
         <TabsTrigger
-          value="crypto"
-          className="rounded-none border-b-2 border-transparent data-active:border-primary flex items-center gap-2"
-        >
-          <Lock className="h-4 w-4" />
-          {t("crypto_results")}
-        </TabsTrigger>
-        <TabsTrigger
           value="agent-logs"
           className="rounded-none border-b-2 border-transparent data-active:border-primary flex items-center gap-2"
         >
@@ -182,14 +173,6 @@ export function BottomPanelView() {
         hidden={activeTab !== "hooks"}
       >
         <HookResultsView />
-      </TabsContent>
-      <TabsContent
-        value="crypto"
-        className="flex-1 overflow-hidden mt-0"
-        keepMounted
-        hidden={activeTab !== "crypto"}
-      >
-        <CryptoResultsView />
       </TabsContent>
       <TabsContent
         value="agent-logs"

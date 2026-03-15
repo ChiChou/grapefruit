@@ -68,6 +68,7 @@ import { DroidHttpTab } from "../tabs/DroidHttpTab";
 import { DroidResourcesTab } from "../tabs/DroidResourcesTab";
 import { AssetCatalogTab } from "../tabs/AssetCatalogTab";
 import { ChecksecTab } from "../tabs/ChecksecTab";
+import { CryptoTab } from "../tabs/CryptoTab";
 import { NoCloseTabHeader } from "../tabs/NoCloseTabHeader";
 
 import { DockContext, useDockActions } from "@/context/DockContext";
@@ -204,6 +205,7 @@ function WorkspaceContent() {
     droidResources: DroidResourcesTab,
     assetCatalog: AssetCatalogTab,
     checksec: ChecksecTab,
+    crypto: CryptoTab,
   };
 
   const tabComponents = {
