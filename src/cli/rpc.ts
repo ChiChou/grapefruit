@@ -148,6 +148,8 @@ export const agent = {
     tables: (p: SessionParams, path: string, opts?: ClientOptions) => rpc(p, "sqlite", "tables", [path], opts),
     dump: (p: SessionParams, path: string, table: string, opts?: ClientOptions) =>
       rpc(p, "sqlite", "dump", [path, table], opts),
+    query: (p: SessionParams, path: string, sql: string, opts?: ClientOptions) =>
+      rpc(p, "sqlite", "query", [path, sql], opts),
   },
   android: {
     activities: (p: SessionParams, opts?: ClientOptions) => rpc(p, "activities", "list", [], opts),

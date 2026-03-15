@@ -93,6 +93,13 @@ export interface DumpResult {
   data: any[];
 }
 
+export interface QueryResult {
+  columns: string[];
+  types: string[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: any[];
+}
+
 export function dump(path: string, table: string) {
   const db = new Database(path);
   const sql = `select * from ${quote(table)} limit 500`;
@@ -103,6 +110,30 @@ export function dump(path: string, table: string) {
 
   db.close();
   return result;
+}
+
+export function query(path: string, sql: string) {
+  const db = new Database(path);
+  const statement = db.prepare(sql);
+
+  const rows = [...all(statement)];
+
+  // Use new columnNames/columnTypes APIs with typeof fallback
+  const firstRow = rows[0];
+  const fallbackLen = firstRow ? firstRow.length : 0;
+
+  const columns: string[] =
+    typeof statement.columnNames !== "undefined"
+      ? [...statement.columnNames]
+      : Array.from({ length: fallbackLen }, (_, i) => `col${i}`);
+
+  const types: string[] =
+    typeof statement.declaredTypes !== "undefined"
+      ? statement.declaredTypes.map((t) => t ?? "")
+      : Array.from({ length: fallbackLen }, () => "");
+
+  db.close();
+  return { columns, types, data: rows } satisfies QueryResult;
 }
 
 export function tables(path: string) {
