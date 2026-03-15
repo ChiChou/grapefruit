@@ -32,6 +32,8 @@ Now it supports both iOS and Android!
 
 ### iOS
 
+<img src="docs/img/fruity.png" alt="iOS Screenshot">
+
 - Keychain access and modification
 - NSURL session traffic capture (HTTP/HTTPS/WebSocket)
 - WebView and JSContext inspection with JavaScript execution
@@ -50,6 +52,8 @@ Now it supports both iOS and Android!
 - Firebase/Firestore monitoring
 
 ### Android
+
+<img src="docs/img/droid.png" alt="Android Screenshot">
 
 - AndroidManifest.xml decoder and component browser (activities, services, receivers, providers)
 - Android Keystore inspection with key attributes
