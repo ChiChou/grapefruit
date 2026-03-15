@@ -38,7 +38,7 @@ async function bunBuild(target?: string) {
     targetArgs.push(target);
   }
 
-  await $`${process.execPath} build ${targetArgs} ${path.join(root, "src", "index.ts")} ${path.join(root, "assets.tgz")} --compile --outfile ${path.join(root, "build", "Release", name)}`;
+  await $`${process.execPath} build ${targetArgs} ${path.join(root, "src", "bin.ts")} ${path.join(root, "assets.tgz")} --compile --outfile ${path.join(root, "build", "Release", name)}`;
 }
 
 async function main() {
