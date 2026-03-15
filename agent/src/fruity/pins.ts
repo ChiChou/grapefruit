@@ -1,6 +1,7 @@
 import type { PinInfo, PinRule } from "@/common/pins.js";
 
 import * as hookGroup from "./hooks/index.js";
+import * as crypto from "./crypto/index.js";
 import * as nsurl from "./hooks/url/index.js";
 import * as flutter from "./hooks/flutter.js";
 import * as xpc from "./hooks/xpc/index.js";
@@ -35,6 +36,7 @@ for (const id of BUILTIN_GROUPS) {
   });
 }
 
+registry.set("crypto", crypto);
 registry.set("nsurl", nsurl);
 registry.set("flutter", flutter);
 registry.set("xpc", xpc);

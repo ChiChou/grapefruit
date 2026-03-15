@@ -258,7 +258,8 @@
   "hook_results": "Hook Results",
   "hook_no_results": "No hook results yet. Enable a hook group to start capturing.",
   "crypto_results": "Crypto",
-  "crypto_no_results": "No crypto results yet. Enable crypto hooks to start capturing.",
+  "crypto_monitor": "Crypto Monitor",
+  "crypto_no_results": "No crypto logs yet.",
   "crypto_hash": "Hash",
   "crypto_detail_tab": "Detail",
   "crypto_hexdump_tab": "Hex Dump",
@@ -542,6 +543,7 @@
   "clear_all": "Clear all",
   "privacy_monitor": "Privacy API Monitor",
   "checksec": "checksec",
+  "mitigations": "Mitigations",
   "home_checksec_desc": "Binary security checks for all loaded modules",
   "home_privacy_desc": "Monitor access to sensitive APIs and data flows",
 

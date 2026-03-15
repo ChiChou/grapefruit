@@ -3,7 +3,6 @@ import * as apk from "./modules/apk.js";
 import * as app from "./modules/app.js";
 import * as checksec from "./modules/checksec/index.js";
 import * as classes from "./modules/classes.js";
-import * as crypto from "./crypto/index.js";
 import * as device from "./modules/device.js";
 import * as fs from "./modules/fs.js";
 import * as hook from "./hooks/index.js";
@@ -32,7 +31,6 @@ export default {
   app,
   checksec,
   classes,
-  crypto,
   device,
   fs,
   hook,

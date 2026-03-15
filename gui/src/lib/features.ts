@@ -117,7 +117,7 @@ const routeFeatures: Record<FeatureKey, RouteFeature[]> = {
 
 const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
   "fruity:app": [
-    pf("checksec_tab", "checksec", ShieldCheck, "checksec", "home_checksec_desc"),
+    pf("checksec_tab", "checksec", ShieldCheck, "mitigations", "home_checksec_desc"),
     pf("files_tab", "files", FolderSearch, "files", "home_files_desc", {
       path: "~",
     }),
@@ -198,10 +198,10 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
       "privacy_monitor",
       "home_privacy_desc",
     ),
-    pf("crypto_tab", "crypto", Lock, "crypto", "home_crypto_desc"),
+    pf("crypto_tab", "crypto", Lock, "crypto_monitor", "home_crypto_desc"),
   ],
   "fruity:daemon": [
-    pf("checksec_tab", "checksec", ShieldCheck, "checksec", "home_checksec_desc"),
+    pf("checksec_tab", "checksec", ShieldCheck, "mitigations", "home_checksec_desc"),
     pf("files_tab", "files", FolderSearch, "files", "home_files_desc", {
       path: "/",
     }),
@@ -224,7 +224,7 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
     ),
   ],
   "droid:app": [
-    pf("checksec_tab", "checksec", ShieldCheck, "checksec", "home_checksec_desc"),
+    pf("checksec_tab", "checksec", ShieldCheck, "mitigations", "home_checksec_desc"),
     pf("apk_browser_tab", "apkBrowser", Package, "apk_browser", "home_apk_browser_desc"),
     pf("files_tab", "files", FolderSearch, "files", "home_files_desc", {
       path: "/",
@@ -273,7 +273,7 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
       "privacy_monitor",
       "home_privacy_desc",
     ),
-    pf("crypto_tab", "crypto", Lock, "crypto", "home_crypto_desc"),
+    pf("crypto_tab", "crypto", Lock, "crypto_monitor", "home_crypto_desc"),
     pf("droid_http_tab", "droidHttp", Network, "HTTP", "home_http_desc"),
     pf(
       "droid_resources_tab",
@@ -284,7 +284,7 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
     ),
   ],
   "droid:daemon": [
-    pf("checksec_tab", "checksec", ShieldCheck, "checksec", "home_checksec_desc"),
+    pf("checksec_tab", "checksec", ShieldCheck, "mitigations", "home_checksec_desc"),
     pf("files_tab", "files", FolderSearch, "files", "home_files_desc", {
       path: "/",
     }),

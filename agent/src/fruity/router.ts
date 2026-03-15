@@ -2,7 +2,6 @@ import * as assetcatalog from "./modules/assetcatalog.js";
 import * as checksec from "./modules/checksec/index.js";
 import * as classdump from "./modules/classdump.js";
 import * as cookies from "./modules/cookies.js";
-import * as crypto from "./crypto/index.js";
 import * as entitlements from "./modules/entitlements.js";
 import * as fs from "./modules/fs.js";
 import * as geolocation from "./modules/geolocation.js";
@@ -39,7 +38,6 @@ export default {
   checksec,
   classdump,
   cookies,
-  crypto,
   entitlements,
   fs,
   geolocation,

@@ -250,7 +250,8 @@
   "hook_results": "钩子结果",
   "hook_no_results": "暂无结果。启用钩子组以开始捕获。",
   "crypto_results": "加密",
-  "crypto_no_results": "暂无加密结果。启用加密钩子以开始捕获。",
+  "crypto_monitor": "加密监控",
+  "crypto_no_results": "暂无加密日志。",
   "crypto_hash": "哈希",
   "crypto_detail_tab": "详情",
   "crypto_hexdump_tab": "十六进制",
@@ -534,6 +535,7 @@
   "clear_all": "清空全部",
   "privacy_monitor": "720 隐私卫士",
   "checksec": "安全检查",
+  "mitigations": "安全缓解",
   "home_checksec_desc": "检查所有已加载模块的二进制安全属性",
   "home_privacy_desc": "监控敏感 API 调用，检测潜在隐私泄露",
 

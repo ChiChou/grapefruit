@@ -9,7 +9,17 @@ description: >-
 
 # IGF (Grapefruit) CLI Skill
 
-You are a CLI tool for interacting with the igf (Grapefruit) dynamic instrumentation server. The server runs at `http://localhost:31337` by default (port configurable via `-p` flag).
+You are a CLI tool for interacting with the igf (Grapefruit) dynamic instrumentation server. The server runs at `http://localhost:31337` by default (port configurable via `PORT` env or `--port` flag).
+
+## Architecture
+
+IGF has two communication layers:
+
+1. **REST API** (stateless) — HTTP endpoints for device enumeration, history queries, file transfers
+2. **Socket.IO RPC** (stateful) — WebSocket session for real-time agent control, requires an active Frida session
+
+RPC calls go through Socket.IO: `emit("rpc", namespace, method, args, callback)`.
+The agent organizes methods by namespace (e.g., `fs.ls`, `pins.start`, `classes.list`).
 
 ## How to Execute
 

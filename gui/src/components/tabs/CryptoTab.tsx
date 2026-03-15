@@ -8,13 +8,19 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { List, type ListImperativeAPI } from "react-window";
-import { ChevronRight, Trash2, ChevronsDown } from "lucide-react";
+import {
+  ChevronRight,
+  Trash2,
+  ChevronsDown,
+  Loader2,
+  Play,
+  Square,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ResizableHandle,
@@ -72,8 +78,7 @@ function formatHexDump(buffer: ArrayBuffer): string {
   return lines.join("\n");
 }
 
-const FRUITY_CRYPTO_GROUPS = ["cccrypt", "x509", "hash", "hmac"] as const;
-const DROID_CRYPTO_GROUPS = ["cipher", "pbkdf", "keygen"] as const;
+const CRYPTO_PIN_ID = "crypto";
 
 interface CryptoRowProps {
   entries: CryptoEntry[];
@@ -316,7 +321,6 @@ export function CryptoTab() {
   const { t } = useTranslation();
   const { fruity, droid, status, device, identifier, platform } = useSession();
   const isDroid = platform === Platform.Droid;
-  const cryptoGroups = isDroid ? DROID_CRYPTO_GROUPS : FRUITY_CRYPTO_GROUPS;
 
   const listRef = useRef<ListImperativeAPI>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -342,52 +346,67 @@ export function CryptoTab() {
     setSelectedId(selectedId === id ? null : id);
   }, [selectedId, setSelectedId]);
 
-  // Crypto sub-group toggle state
-  const [cryptoStatus, setCryptoStatus] = useState<Record<string, boolean>>({});
-  const [loading, setLoading] = useState<Record<string, boolean>>({});
+  // Single toggle state for all crypto hooks
+  const [hookEnabled, setHookEnabled] = useState<boolean | null>(null);
+  const [hookLoading, setHookLoading] = useState(false);
+  const [filter, setFilter] = useState("");
 
-  // Fetch crypto sub-group status (platform-aware)
-  const { data: fruityInitStatus } = useFruityQuery<Record<string, boolean>>(
-    ["cryptoStatus", device ?? "", identifier ?? ""],
-    (api) => api.crypto.status(),
+  // Fetch crypto pin status (platform-aware)
+  const { data: fruityInitActive } = useFruityQuery<boolean>(
+    ["cryptoActive", device ?? "", identifier ?? ""],
+    (api) => api.pins.active(CRYPTO_PIN_ID),
     { enabled: !isDroid },
   );
-  const { data: droidInitStatus } = useDroidQuery<Record<string, boolean>>(
-    ["cryptoStatus", device ?? "", identifier ?? ""],
-    (api) => api.crypto.status(),
+  const { data: droidInitActive } = useDroidQuery<boolean>(
+    ["cryptoActive", device ?? "", identifier ?? ""],
+    (api) => api.pins.active(CRYPTO_PIN_ID),
     { enabled: isDroid },
   );
 
-  const initialStatus = isDroid ? droidInitStatus : fruityInitStatus;
+  const initialActive = isDroid ? droidInitActive : fruityInitActive;
 
   useEffect(() => {
-    if (initialStatus) {
-      setCryptoStatus(initialStatus);
+    if (initialActive !== undefined && hookEnabled === null) {
+      setHookEnabled(initialActive);
     }
-  }, [initialStatus]);
+  }, [initialActive, hookEnabled]);
 
-  const handleToggle = async (groupId: string, enabled: boolean) => {
+  const handleToggleHook = async (enabled: boolean) => {
     const api = isDroid ? droid : fruity;
     if (!api) return;
 
-    setLoading((prev) => ({ ...prev, [groupId]: true }));
-
+    setHookLoading(true);
     try {
       if (enabled) {
-        await api.crypto.start(groupId);
+        await api.pins.start(CRYPTO_PIN_ID);
       } else {
-        await api.crypto.stop(groupId);
+        await api.pins.stop(CRYPTO_PIN_ID);
       }
-      setCryptoStatus((prev) => ({ ...prev, [groupId]: enabled }));
+      setHookEnabled(enabled);
     } catch (error) {
       console.error(
-        `Failed to ${enabled ? "start" : "stop"} crypto group ${groupId}:`,
+        `Failed to ${enabled ? "start" : "stop"} crypto hooks:`,
         error,
       );
     } finally {
-      setLoading((prev) => ({ ...prev, [groupId]: false }));
+      setHookLoading(false);
     }
   };
+
+  const filteredEntries = useMemo(() => {
+    if (!filter) return entries;
+    const lower = filter.toLowerCase();
+    return entries.filter((e) => {
+      const extra = e.message.extra as Record<string, unknown> | undefined;
+      return (
+        e.message.symbol?.toLowerCase().includes(lower) ||
+        e.message.line?.toLowerCase().includes(lower) ||
+        (extra?.op as string)?.toLowerCase().includes(lower) ||
+        (extra?.algo as string)?.toLowerCase().includes(lower) ||
+        (extra?.detailType as string)?.toLowerCase().includes(lower)
+      );
+    });
+  }, [entries, filter]);
 
   // Resize observer
   useEffect(() => {
@@ -405,34 +424,34 @@ export function CryptoTab() {
 
   // Auto-scroll when new entries arrive
   useEffect(() => {
-    if (autoScroll && listRef.current && entries.length > 0) {
+    if (autoScroll && listRef.current && filteredEntries.length > 0) {
       requestAnimationFrame(() => {
         listRef.current?.scrollToRow({
-          index: entries.length - 1,
+          index: filteredEntries.length - 1,
           align: "end",
         });
       });
     }
-  }, [entries.length, autoScroll]);
+  }, [filteredEntries.length, autoScroll]);
 
   const handleRowsRendered = useCallback(
     (visibleRows: { startIndex: number; stopIndex: number }) => {
-      const isNearBottom = visibleRows.stopIndex >= entries.length - 3;
+      const isNearBottom = visibleRows.stopIndex >= filteredEntries.length - 3;
       setAutoScroll((prev) => (prev === isNearBottom ? prev : isNearBottom));
     },
-    [entries.length],
+    [filteredEntries.length],
   );
 
   const scrollToLatest = useCallback(() => {
-    if (listRef.current && entries.length > 0) {
-      listRef.current.scrollToRow({ index: entries.length - 1, align: "end" });
+    if (listRef.current && filteredEntries.length > 0) {
+      listRef.current.scrollToRow({ index: filteredEntries.length - 1, align: "end" });
       setAutoScroll(true);
     }
-  }, [entries.length]);
+  }, [filteredEntries.length]);
 
   const rowProps: CryptoRowProps = useMemo(
-    () => ({ entries, selectedId, onSelect: handleSelect }),
-    [entries, selectedId, handleSelect],
+    () => ({ entries: filteredEntries, selectedId, onSelect: handleSelect }),
+    [filteredEntries, selectedId, handleSelect],
   );
   const listStyle = useMemo(() => ({ height: listHeight, width: "100%" as const }), [listHeight]);
 
@@ -440,30 +459,50 @@ export function CryptoTab() {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header with toggles */}
-      <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
-        <div className="flex items-center gap-4">
-          {cryptoGroups.map((group) => (
-            <div key={group} className="flex items-center gap-1.5">
-              <Switch
-                id={`crypto-${group}`}
-                checked={cryptoStatus[group] || false}
-                onCheckedChange={(checked) => handleToggle(group, checked)}
-                disabled={isDisabled || loading[group]}
-                className="scale-75"
-              />
-              <Label
-                htmlFor={`crypto-${group}`}
-                className={`text-xs cursor-pointer ${loading[group] ? "animate-pulse" : ""}`}
-              >
-                {group}
-              </Label>
-            </div>
-          ))}
-        </div>
-        <div className="flex items-center gap-2">
+      {/* Header with single toggle + filter */}
+      <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/30">
+        {hookEnabled ? (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 px-2.5 text-xs text-red-500 hover:text-red-600"
+            onClick={() => handleToggleHook(false)}
+            disabled={hookLoading || isDisabled}
+          >
+            {hookLoading ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Square className="w-3.5 h-3.5" />
+            )}
+            Stop
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 px-2.5 text-xs text-green-600 hover:text-green-700"
+            onClick={() => handleToggleHook(true)}
+            disabled={hookLoading || isDisabled}
+          >
+            {hookLoading ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Play className="w-3.5 h-3.5" />
+            )}
+            Start
+          </Button>
+        )}
+        <Input
+          placeholder={t("filter")}
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="h-8 text-xs max-w-xs"
+        />
+        <div className="flex items-center gap-2 ml-auto">
           <span className="text-xs text-muted-foreground">
-            {entries.length.toLocaleString()}
+            {filter
+              ? `${filteredEntries.length.toLocaleString()} / ${entries.length.toLocaleString()}`
+              : entries.length.toLocaleString()}
           </span>
           {!autoScroll && (
             <Button
@@ -498,15 +537,15 @@ export function CryptoTab() {
           minSize="30%"
         >
           <div ref={containerRef} className="h-full">
-            {entries.length === 0 ? (
+            {filteredEntries.length === 0 ? (
               <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                {t("crypto_no_results")}
+                <span>{entries.length === 0 ? t("crypto_no_results") : t("no_matching_entries")}</span>
               </div>
             ) : (
               <List
                 listRef={listRef}
                 style={listStyle}
-                rowCount={entries.length}
+                rowCount={filteredEntries.length}
                 rowHeight={ROW_HEIGHT}
                 rowProps={rowProps}
                 rowComponent={CryptoRow}

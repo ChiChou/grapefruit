@@ -1,19 +1,39 @@
-import { createNative } from "@/common/hooks/group.js";
 import * as crypto from "./crypto.js";
 
 const CRYPTO_GROUPS = ["cccrypt", "x509", "hash", "hmac"] as const;
 
-function get(group: string) {
-  if (group === "cccrypt") {
-    return [...crypto.cccrypt()];
-  } else if (group === "x509") {
-    return [...crypto.x509()];
-  } else if (group === "hash") {
-    return [...crypto.hash()];
-  } else if (group === "hmac") {
-    return [...crypto.hmac()];
+let active = false;
+let listeners: InvocationListener[] = [];
+
+export function start(): void {
+  if (active) return;
+  for (const group of CRYPTO_GROUPS) {
+    if (group === "cccrypt") {
+      listeners.push(...crypto.cccrypt());
+    } else if (group === "x509") {
+      listeners.push(...crypto.x509());
+    } else if (group === "hash") {
+      listeners.push(...crypto.hash());
+    } else if (group === "hmac") {
+      listeners.push(...crypto.hmac());
+    }
   }
+  active = true;
 }
 
-const { list, status, start, stop } = createNative(CRYPTO_GROUPS, get);
-export { list, status, start, stop };
+export function stop(): void {
+  if (!active) return;
+  for (const hook of listeners) {
+    hook.detach();
+  }
+  listeners = [];
+  active = false;
+}
+
+export function status(): boolean {
+  return active;
+}
+
+export function available(): boolean {
+  return true;
+}
