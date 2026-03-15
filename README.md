@@ -63,6 +63,30 @@ Now it supports both iOS and Android!
 - Clipboard and SharedPreferences monitoring
 - Broadcast receiver monitoring
 
+## Scope and Non-Goals
+
+This project does not include built-in bypasses for anti-tampering protections:
+
+- Frida detection bypass
+- SSL/TLS certificate pinning bypass
+- Jailbreak or root detection bypass
+
+**Rationale:** RASP (Runtime Application Self-Protection) solutions evolve continuously to detect instrumentation frameworks. Maintaining effective bypasses requires ongoing effort to keep pace with new detection methods, introducing significant maintenance burden and potential stability issues. These bypasses are also highly application-specific, making general-purpose solutions fragile.
+
+Rather than shipping brittle built-in bypasses, Grapefruit focuses on instrumentation and inspection capabilities that compose well with dedicated bypass tooling.
+
+**Recommended approaches** for authorized assessments where RASP bypass is required:
+
+1. **Frida Syscall Tracer** — Use `frida-strace` (Frida 17.8.0+) to trace system calls in the target process. This helps identify detection artifacts and determine what patches are needed before attaching Grapefruit:
+
+   ```sh
+   frida-strace -U -f com.example.app
+   ```
+
+   See the [Frida 17.8.0 release notes](https://frida.re/news/2026/03/09/frida-17-8-0-released/) for details.
+
+2. **Multi-session Architecture** — Frida supports multiple sessions attached to the same process. Spawn a separate session with your RASP bypass scripts first, then launch Grapefruit. When Grapefruit detects that the target app is already running, it attaches to the existing process rather than respawning it, preserving any bypasses already in effect.
+
 ## Documentation
 
 - [Development](docs/dev.md)
