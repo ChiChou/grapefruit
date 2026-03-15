@@ -14,7 +14,18 @@ import {
 } from "@/components/ui/resizable";
 import { useDroidQuery } from "@/lib/queries";
 
-import type { KeystoreAlias, KeyInfo } from "@agent/droid/modules/keystore";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+
+import type {
+  KeystoreAlias,
+  KeyInfo,
+  CertificateInfo,
+} from "@agent/droid/modules/keystore";
 
 const ITEM_HEIGHT = 56;
 
@@ -94,6 +105,177 @@ function ArrayDisplay({ items }: { items: string[] }) {
   );
 }
 
+function KeyMetadata({
+  keyInfo,
+  entryType,
+}: {
+  keyInfo: KeyInfo;
+  entryType: string;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="max-w-2xl space-y-1">
+      <SectionLabel>{t("key_properties")}</SectionLabel>
+      <InfoRow label={t("alias")}>{keyInfo.alias}</InfoRow>
+      <InfoRow label={t("hook_algorithm")}>{keyInfo.algorithm}</InfoRow>
+      <InfoRow label={t("key_size")}>{keyInfo.keySize} bits</InfoRow>
+      <InfoRow label={t("entry_type")}>
+        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+          {entryType}
+        </Badge>
+      </InfoRow>
+      <InfoRow label={t("origin")}>{decodeOrigin(keyInfo.origin)}</InfoRow>
+      <InfoRow label={t("purposes")}>
+        <ArrayDisplay items={decodePurposes(keyInfo.purposes)} />
+      </InfoRow>
+
+      <SectionLabel>{t("crypto_config")}</SectionLabel>
+      <InfoRow label={t("block_modes")}>
+        <ArrayDisplay items={keyInfo.blockModes} />
+      </InfoRow>
+      <InfoRow label={t("digests")}>
+        <ArrayDisplay items={keyInfo.digests} />
+      </InfoRow>
+      <InfoRow label={t("encryption_paddings")}>
+        <ArrayDisplay items={keyInfo.encryptionPaddings} />
+      </InfoRow>
+      <InfoRow label={t("signature_paddings")}>
+        <ArrayDisplay items={keyInfo.signaturePaddings} />
+      </InfoRow>
+
+      <SectionLabel>{t("security_properties")}</SectionLabel>
+      <InfoRow label={t("inside_secure_hardware")}>
+        <BoolBadge value={keyInfo.isInsideSecureHardware} />
+      </InfoRow>
+      <InfoRow label={t("user_auth_required")}>
+        <BoolBadge value={keyInfo.isUserAuthenticationRequired} />
+      </InfoRow>
+      <InfoRow label={t("auth_validity_seconds")}>
+        {keyInfo.userAuthenticationValidityDurationSeconds}
+      </InfoRow>
+      <InfoRow label={t("auth_enforced_by_hardware")}>
+        <BoolBadge
+          value={
+            keyInfo.isUserAuthenticationRequirementEnforcedBySecureHardware
+          }
+        />
+      </InfoRow>
+      <InfoRow label={t("biometric_invalidation")}>
+        <BoolBadge value={keyInfo.isInvalidatedByBiometricEnrollment} />
+      </InfoRow>
+      <InfoRow label={t("trusted_presence_required")}>
+        <BoolBadge value={keyInfo.isTrustedUserPresenceRequired} />
+      </InfoRow>
+      <InfoRow label={t("user_confirmation_required")}>
+        <BoolBadge value={keyInfo.isUserConfirmationRequired} />
+      </InfoRow>
+      <InfoRow label={t("auth_valid_on_body")}>
+        <BoolBadge value={keyInfo.isUserAuthenticationValidWhileOnBody} />
+      </InfoRow>
+
+      {(keyInfo.keyValidityStart ||
+        keyInfo.keyValidityForOriginationEnd ||
+        keyInfo.keyValidityForConsumptionEnd) && (
+        <>
+          <SectionLabel>{t("validity")}</SectionLabel>
+          {keyInfo.keyValidityStart && (
+            <InfoRow label={t("validity_start")}>
+              {keyInfo.keyValidityStart}
+            </InfoRow>
+          )}
+          {keyInfo.keyValidityForOriginationEnd && (
+            <InfoRow label={t("validity_origination_end")}>
+              {keyInfo.keyValidityForOriginationEnd}
+            </InfoRow>
+          )}
+          {keyInfo.keyValidityForConsumptionEnd && (
+            <InfoRow label={t("validity_consumption_end")}>
+              {keyInfo.keyValidityForConsumptionEnd}
+            </InfoRow>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function CertificateDisplay({ cert }: { cert: CertificateInfo }) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="space-y-1">
+      <InfoRow label={t("subject")}>{cert.subject}</InfoRow>
+      <InfoRow label={t("issuer")}>{cert.issuer}</InfoRow>
+      <InfoRow label={t("serial_number")}>
+        <span className="font-mono text-xs">{cert.serial}</span>
+      </InfoRow>
+      <InfoRow label={t("not_before")}>{cert.notBefore}</InfoRow>
+      <InfoRow label={t("not_after")}>{cert.notAfter}</InfoRow>
+      <InfoRow label={t("signature_algorithm")}>{cert.sigAlgName}</InfoRow>
+      <InfoRow label={t("type")}>{cert.type}</InfoRow>
+      <SectionLabel>PEM</SectionLabel>
+      <pre className="text-xs font-mono bg-muted p-3 rounded-md overflow-x-auto whitespace-pre-wrap break-all select-all">
+        {cert.pem}
+      </pre>
+    </div>
+  );
+}
+
+function KeyCertificates({ alias }: { alias: string }) {
+  const { t } = useTranslation();
+
+  const {
+    data: certs = [],
+    isLoading,
+    error,
+  } = useDroidQuery<CertificateInfo[]>(["keystoreCert", alias], (api) =>
+    api.keystore.cert(alias),
+  );
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>{t("error")}</AlertTitle>
+        <AlertDescription>{(error as Error)?.message}</AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        <Skeleton className="h-4 w-48" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-3/4" />
+      </div>
+    );
+  }
+
+  if (certs.length === 0) {
+    return (
+      <div className="text-sm text-muted-foreground">
+        {t("no_certificates")}
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-2xl space-y-6">
+      {certs.map((cert, i) => (
+        <div key={cert.serial}>
+          {certs.length > 1 && (
+            <SectionLabel>
+              {t("certificate")} {i + 1} / {certs.length}
+            </SectionLabel>
+          )}
+          <CertificateDisplay cert={cert} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function KeyDetail({ alias, entryType }: { alias: string; entryType: string }) {
   const { t } = useTranslation();
 
@@ -138,90 +320,23 @@ function KeyDetail({ alias, entryType }: { alias: string; entryType: string }) {
   }
 
   return (
-    <div className="h-full p-4 overflow-auto">
-      <div className="max-w-2xl space-y-1">
-        <SectionLabel>{t("key_properties")}</SectionLabel>
-        <InfoRow label={t("alias")}>{keyInfo.alias}</InfoRow>
-        <InfoRow label={t("hook_algorithm")}>{keyInfo.algorithm}</InfoRow>
-        <InfoRow label={t("key_size")}>{keyInfo.keySize} bits</InfoRow>
-        <InfoRow label={t("entry_type")}>
-          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-            {entryType}
-          </Badge>
-        </InfoRow>
-        <InfoRow label={t("origin")}>{decodeOrigin(keyInfo.origin)}</InfoRow>
-        <InfoRow label={t("purposes")}>
-          <ArrayDisplay items={decodePurposes(keyInfo.purposes)} />
-        </InfoRow>
-
-        <SectionLabel>{t("crypto_config")}</SectionLabel>
-        <InfoRow label={t("block_modes")}>
-          <ArrayDisplay items={keyInfo.blockModes} />
-        </InfoRow>
-        <InfoRow label={t("digests")}>
-          <ArrayDisplay items={keyInfo.digests} />
-        </InfoRow>
-        <InfoRow label={t("encryption_paddings")}>
-          <ArrayDisplay items={keyInfo.encryptionPaddings} />
-        </InfoRow>
-        <InfoRow label={t("signature_paddings")}>
-          <ArrayDisplay items={keyInfo.signaturePaddings} />
-        </InfoRow>
-
-        <SectionLabel>{t("security_properties")}</SectionLabel>
-        <InfoRow label={t("inside_secure_hardware")}>
-          <BoolBadge value={keyInfo.isInsideSecureHardware} />
-        </InfoRow>
-        <InfoRow label={t("user_auth_required")}>
-          <BoolBadge value={keyInfo.isUserAuthenticationRequired} />
-        </InfoRow>
-        <InfoRow label={t("auth_validity_seconds")}>
-          {keyInfo.userAuthenticationValidityDurationSeconds}
-        </InfoRow>
-        <InfoRow label={t("auth_enforced_by_hardware")}>
-          <BoolBadge
-            value={
-              keyInfo.isUserAuthenticationRequirementEnforcedBySecureHardware
-            }
-          />
-        </InfoRow>
-        <InfoRow label={t("biometric_invalidation")}>
-          <BoolBadge value={keyInfo.isInvalidatedByBiometricEnrollment} />
-        </InfoRow>
-        <InfoRow label={t("trusted_presence_required")}>
-          <BoolBadge value={keyInfo.isTrustedUserPresenceRequired} />
-        </InfoRow>
-        <InfoRow label={t("user_confirmation_required")}>
-          <BoolBadge value={keyInfo.isUserConfirmationRequired} />
-        </InfoRow>
-        <InfoRow label={t("auth_valid_on_body")}>
-          <BoolBadge value={keyInfo.isUserAuthenticationValidWhileOnBody} />
-        </InfoRow>
-
-        {(keyInfo.keyValidityStart ||
-          keyInfo.keyValidityForOriginationEnd ||
-          keyInfo.keyValidityForConsumptionEnd) && (
-          <>
-            <SectionLabel>{t("validity")}</SectionLabel>
-            {keyInfo.keyValidityStart && (
-              <InfoRow label={t("validity_start")}>
-                {keyInfo.keyValidityStart}
-              </InfoRow>
-            )}
-            {keyInfo.keyValidityForOriginationEnd && (
-              <InfoRow label={t("validity_origination_end")}>
-                {keyInfo.keyValidityForOriginationEnd}
-              </InfoRow>
-            )}
-            {keyInfo.keyValidityForConsumptionEnd && (
-              <InfoRow label={t("validity_consumption_end")}>
-                {keyInfo.keyValidityForConsumptionEnd}
-              </InfoRow>
-            )}
-          </>
-        )}
+    <Tabs defaultValue="metadata" className="h-full flex flex-col">
+      <div className="px-4 pt-3">
+        <TabsList>
+          <TabsTrigger value="metadata">{t("metadata")}</TabsTrigger>
+          <TabsTrigger value="certificate">{t("certificate")}</TabsTrigger>
+        </TabsList>
       </div>
-    </div>
+      <TabsContent value="metadata" className="flex-1 overflow-auto p-4 mt-0">
+        <KeyMetadata keyInfo={keyInfo} entryType={entryType} />
+      </TabsContent>
+      <TabsContent
+        value="certificate"
+        className="flex-1 overflow-auto p-4 mt-0"
+      >
+        <KeyCertificates alias={alias} />
+      </TabsContent>
+    </Tabs>
   );
 }
 

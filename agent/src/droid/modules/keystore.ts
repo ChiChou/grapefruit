@@ -8,6 +8,17 @@ export interface KeystoreAlias {
   entryType: string;
 }
 
+export interface CertificateInfo {
+  subject: string;
+  issuer: string;
+  serial: string;
+  notBefore: string;
+  notAfter: string;
+  sigAlgName: string;
+  type: string;
+  pem: string;
+}
+
 export interface KeyInfo {
   alias: string;
   algorithm: string;
@@ -166,4 +177,52 @@ export function info(alias: string) {
         : null,
     } as KeyInfo;
   });
+}
+
+export function cert(alias: string) {
+  return perform(() => {
+    const KeyStore = Java.use("java.security.KeyStore");
+    const X509Certificate = Java.use("java.security.cert.X509Certificate");
+    const Base64 = Java.use("android.util.Base64");
+
+    const ks = KeyStore.getInstance("AndroidKeyStore");
+    ks.load(null);
+
+    const result: CertificateInfo[] = [];
+
+    const chain = ks.getCertificateChain(alias);
+    if (chain !== null) {
+      for (let i = 0; i < chain.length; i++) {
+        const c = Java.cast(chain[i], X509Certificate);
+        result.push(extractCert(c, Base64));
+      }
+    } else {
+      const c = ks.getCertificate(alias);
+      if (c !== null) {
+        result.push(extractCert(Java.cast(c, X509Certificate), Base64));
+      }
+    }
+
+    return result;
+  });
+}
+
+function extractCert(
+  c: Java.Wrapper,
+  Base64: Java.Wrapper,
+): CertificateInfo {
+  const encoded = c.getEncoded();
+  const b64 = Base64.encodeToString(encoded, 0).toString();
+  const pem = `-----BEGIN CERTIFICATE-----\n${b64.trim()}\n-----END CERTIFICATE-----`;
+
+  return {
+    subject: c.getSubjectDN().toString(),
+    issuer: c.getIssuerDN().toString(),
+    serial: c.getSerialNumber().toString(),
+    notBefore: c.getNotBefore().toString(),
+    notAfter: c.getNotAfter().toString(),
+    sigAlgName: c.getSigAlgName(),
+    type: c.getType(),
+    pem,
+  };
 }
