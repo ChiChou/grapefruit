@@ -1,7 +1,7 @@
 import type { PinInfo, PinRule } from "@/common/pins.js";
 
 import * as hookGroup from "./hooks/index.js";
-import * as crypto from "./crypto/index.js";
+import * as crypto from "./hooks/crypto/index.js";
 import * as flutter from "./hooks/flutter.js";
 import * as jni from "./hooks/jni.js";
 import * as privacy from "./hooks/privacy/index.js";
