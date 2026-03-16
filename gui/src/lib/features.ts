@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import type React from "react";
 import {
   FileText,
   FileCode,
@@ -33,13 +33,16 @@ import {
   Archive,
   Lock,
 } from "lucide-react";
+import { SiFlutter, SiReact } from "@icons-pack/react-simple-icons";
 
 import type { PlatformType, ModeType } from "@/context/SessionContext";
+
+export type FeatureIcon = React.ComponentType<{ className?: string }>;
 
 export interface RouteFeature {
   kind: "route";
   route: string;
-  icon: LucideIcon;
+  icon: FeatureIcon;
   label: string;
 }
 
@@ -47,7 +50,7 @@ export interface PanelFeature {
   kind: "panel";
   id: string;
   component: string;
-  icon: LucideIcon;
+  icon: FeatureIcon;
   label: string;
   desc: string;
   params?: Record<string, string>;
@@ -55,7 +58,7 @@ export interface PanelFeature {
 
 type FeatureKey = `${PlatformType}:${ModeType}`;
 
-const rf = (route: string, icon: LucideIcon, label: string): RouteFeature => ({
+const rf = (route: string, icon: FeatureIcon, label: string): RouteFeature => ({
   kind: "route",
   route,
   icon,
@@ -65,7 +68,7 @@ const rf = (route: string, icon: LucideIcon, label: string): RouteFeature => ({
 const pf = (
   id: string,
   component: string,
-  icon: LucideIcon,
+  icon: FeatureIcon,
   label: string,
   desc: string,
   params?: Record<string, string>,
@@ -179,7 +182,7 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
     pf(
       "flutter_channels_tab",
       "flutterChannels",
-      Smartphone,
+      SiFlutter,
       "flutter_channels",
       "flutter_channels_desc",
     ),
@@ -187,7 +190,7 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
     pf(
       "rn_tab",
       "reactNative",
-      Smartphone,
+      SiReact,
       "React Native",
       "RN bridge inspector, JS injection REPL",
     ),
@@ -255,14 +258,14 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
     pf(
       "flutter_channels_tab",
       "flutterChannels",
-      Smartphone,
+      SiFlutter,
       "flutter_channels",
       "flutter_channels_desc",
     ),
     pf(
       "rn_tab",
       "reactNative",
-      Smartphone,
+      SiReact,
       "React Native",
       "RN bridge inspector, JS injection REPL",
     ),
