@@ -15,6 +15,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { LogTable } from "@/components/shared/LogTable";
+import { Spinner } from "@/components/ui/spinner";
 import { Status, Platform, useSession } from "@/context/SessionContext";
 import { useLogStream } from "@/hooks/useLogStream";
 import { toTime } from "@/lib/format";
@@ -240,8 +241,24 @@ export function FlutterMethodChannelsTab() {
     [filteredEntries, selectedId],
   );
 
-  const notReady =
-    status !== Status.Ready || flutterLoading || !flutterAvailable;
+  if (flutterLoading) {
+    return (
+      <div className="h-full flex items-center justify-center text-muted-foreground">
+        <Spinner className="mr-2" />
+        {t("loading")}
+      </div>
+    );
+  }
+
+  if (!flutterAvailable) {
+    return (
+      <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+        {t("flutter_not_detected")}
+      </div>
+    );
+  }
+
+  const notReady = status !== Status.Ready || !api;
 
   return (
     <ResizablePanelGroup

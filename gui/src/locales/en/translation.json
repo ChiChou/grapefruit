@@ -291,6 +291,7 @@
   "flutter_channels": "Flutter Channels",
   "flutter_channels_desc": "Capture Dart \u2194 native platform channel traffic",
   "flutter_channel": "Channel",
+  "flutter_not_detected": "Flutter engine not detected.",
   "flutter_select_event": "Select an event to inspect args/result JSON.",
   "args": "Args",
   "execute": "Execute",

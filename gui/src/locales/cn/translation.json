@@ -283,6 +283,7 @@
   "flutter_channels": "Flutter 平台通道",
   "flutter_channels_desc": "捕获 Dart \u2194 Native 平台通道消息",
   "flutter_channel": "通道",
+  "flutter_not_detected": "未检测到 Flutter 引擎。",
   "flutter_select_event": "选择一条事件以查看 args/result JSON。",
   "args": "参数",
   "execute": "执行",
