@@ -215,6 +215,7 @@
   "home_files_desc": "浏览应用主目录和文件",
   "home_lsof_desc": "列出打开的文件描述符和套接字",
   "home_infoplist_desc": "查看应用配置信息",
+  "home_assetcatalog_desc": "浏览编译后的资源目录图片和数据",
   "home_entitlements_desc": "检查应用权限和能力",
   "home_cookies_desc": "浏览和编辑 HTTP Cookies",
   "home_keychain_desc": "访问钥匙串项目和密钥",

@@ -215,6 +215,7 @@
   "home_files_desc": "Browse app home directory and files",
   "home_lsof_desc": "List open file descriptors and sockets",
   "home_infoplist_desc": "View application configuration",
+  "home_assetcatalog_desc": "Browse compiled asset catalog images and data",
   "home_entitlements_desc": "Inspect app capabilities and permissions",
   "home_cookies_desc": "Browse and edit HTTP cookies",
   "home_keychain_desc": "Access keychain items and secrets",

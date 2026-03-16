@@ -23,15 +23,17 @@ function LauncherItem({ feature }: { feature: PanelFeature }) {
           params: feature.params,
         })
       }
-      className="w-56 flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
-      title={t(feature.desc)}
+      className="w-64 flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
     >
-      <div className="w-14 h-14 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-        <Icon className="w-8 h-8" />
+      <div className="w-12 h-12 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+        <Icon className="w-7 h-7" />
       </div>
-      <span className="text-base font-medium truncate">
-        {title}
-      </span>
+      <div className="min-w-0 text-left space-y-1">
+        <div className="text-[0.9rem] font-medium truncate">{title}</div>
+        <div className="text-xs text-muted-foreground line-clamp-2 leading-snug">
+          {t(feature.desc)}
+        </div>
+      </div>
     </button>
   );
 }
@@ -42,7 +44,7 @@ export function HomeTab() {
 
   return (
     <div className="h-full flex flex-col p-4 overflow-auto">
-      <div className="flex flex-wrap content-start gap-1 flex-1">
+      <div className="flex flex-wrap content-start gap-2 flex-1">
         {features.map((feature) => (
           <LauncherItem key={feature.id} feature={feature} />
         ))}
