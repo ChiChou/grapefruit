@@ -96,6 +96,7 @@ Rather than shipping brittle built-in bypasses, Grapefruit focuses on instrument
 - [Development](docs/dev.md)
 - [Architecture](docs/arch.md)
 - [RPC](docs/rpc.md)
+- [Acknowledgements](docs/oss.md)
 
 ## License
 
