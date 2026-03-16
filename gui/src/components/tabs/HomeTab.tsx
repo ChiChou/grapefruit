@@ -10,7 +10,6 @@ function LauncherItem({ feature }: { feature: PanelFeature }) {
   const { openSingletonPanel } = useDock();
 
   const title = t(feature.label);
-  const desc = t(feature.desc);
   const Icon = feature.icon;
 
   return (
@@ -24,15 +23,15 @@ function LauncherItem({ feature }: { feature: PanelFeature }) {
           params: feature.params,
         })
       }
-      className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors text-left"
+      className="w-56 flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
+      title={t(feature.desc)}
     >
-      <div className="w-12 h-12 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-        <Icon className="w-6 h-6" />
+      <div className="w-14 h-14 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+        <Icon className="w-8 h-8" />
       </div>
-      <div className="min-w-0">
-        <h3 className="font-medium text-base">{title}</h3>
-        <p className="text-sm text-muted-foreground truncate">{desc}</p>
-      </div>
+      <span className="text-base font-medium truncate">
+        {title}
+      </span>
     </button>
   );
 }
@@ -42,16 +41,14 @@ export function HomeTab() {
   const features = getPanelFeatures(platform, mode);
 
   return (
-    <div className="h-full flex flex-col items-center p-8 overflow-auto">
-      <div className="max-w-5xl w-full space-y-6">
-        <div className="flex justify-center">
-          <img src={logo} alt="logo" className="h-10 w-40" />
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-1">
-          {features.map((feature) => (
-            <LauncherItem key={feature.id} feature={feature} />
-          ))}
-        </div>
+    <div className="h-full flex flex-col p-4 overflow-auto">
+      <div className="flex flex-wrap content-start gap-1 flex-1">
+        {features.map((feature) => (
+          <LauncherItem key={feature.id} feature={feature} />
+        ))}
+      </div>
+      <div className="flex justify-end mt-4">
+        <img src={logo} alt="logo" className="h-6 w-24" />
       </div>
     </div>
   );
