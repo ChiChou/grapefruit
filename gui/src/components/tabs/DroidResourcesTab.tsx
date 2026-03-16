@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Search, Loader2, Download, FolderOpen, FileText, PackageOpen } from "lucide-react";
 import Editor from "@monaco-editor/react";
-import { List, type RowComponentProps } from "react-window";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -15,75 +15,9 @@ import { useDroidQuery } from "@/lib/queries";
 import { useSession } from "@/context/SessionContext";
 import { useTheme } from "@/components/providers/ThemeProvider";
 
-import type { ResourceEntry, ResourceTree } from "@agent/droid/modules/resources";
+import type { ResourceTree } from "@agent/droid/modules/resources";
 
 const ITEM_HEIGHT = 42;
-
-function CategoryRow({
-  index,
-  style,
-  items,
-  selected,
-  onClick,
-}: RowComponentProps<{
-  items: { name: string; count: number }[];
-  selected: string | null;
-  onClick: (name: string) => void;
-}>) {
-  const item = items[index];
-  const isSelected = item.name === selected;
-
-  return (
-    <button
-      type="button"
-      className={`w-full text-left px-4 py-2 border-b border-border hover:bg-accent ${isSelected ? "bg-accent" : ""}`}
-      style={style}
-      onClick={() => onClick(item.name)}
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 min-w-0">
-          <FolderOpen className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-          <span className="text-sm font-mono truncate">{item.name}</span>
-        </div>
-        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0 ml-2">
-          {item.count}
-        </Badge>
-      </div>
-    </button>
-  );
-}
-
-function ResourceNameRow({
-  index,
-  style,
-  items,
-  selected,
-  onClick,
-}: RowComponentProps<{
-  items: ResourceEntry[];
-  selected: string | null;
-  onClick: (name: string) => void;
-}>) {
-  const item = items[index];
-  const isSelected = item.name === selected;
-
-  return (
-    <button
-      type="button"
-      className={`w-full text-left px-4 py-2 border-b border-border hover:bg-accent ${isSelected ? "bg-accent" : ""}`}
-      style={style}
-      onClick={() => onClick(item.name)}
-    >
-      <div className="flex items-center gap-2 min-w-0">
-        <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-        <div className="min-w-0 flex-1">
-          <div className="text-sm font-mono truncate">{item.name}</div>
-          <div className="text-[10px] text-muted-foreground font-mono">{item.id}</div>
-        </div>
-      </div>
-    </button>
-  );
-}
 
 function ResourceHeader({ name, hexId }: { name: string; hexId: string }) {
   return (
@@ -211,6 +145,8 @@ export function DroidResourcesTab() {
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [categorySearch, setCategorySearch] = useState("");
   const [nameSearch, setNameSearch] = useState("");
+  const catScrollRef = useRef<HTMLDivElement>(null);
+  const nameScrollRef = useRef<HTMLDivElement>(null);
 
   const {
     data: tree,
@@ -253,6 +189,18 @@ export function DroidResourcesTab() {
       setSelectedName(entries[0].name);
     }
   }, [entries]);
+
+  const catVirtualizer = useVirtualizer({
+    count: filteredCategories.length,
+    getScrollElement: () => catScrollRef.current,
+    estimateSize: () => ITEM_HEIGHT,
+  });
+
+  const nameVirtualizer = useVirtualizer({
+    count: filteredEntries.length,
+    getScrollElement: () => nameScrollRef.current,
+    estimateSize: () => ITEM_HEIGHT,
+  });
 
   const handleSelectCategory = (name: string) => {
     setSelectedCategory(name);
@@ -312,23 +260,36 @@ export function DroidResourcesTab() {
               {filteredCategories.length} / {categories.length}
             </div>
           </div>
-          <div className="flex-1 min-h-0">
+          <div ref={catScrollRef} className="flex-1 min-h-0 overflow-auto">
             {filteredCategories.length === 0 ? (
               <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
                 No match
               </div>
             ) : (
-              <div className="flex h-full">
-                <List
-                  rowComponent={CategoryRow}
-                  rowCount={filteredCategories.length}
-                  rowHeight={ITEM_HEIGHT}
-                  rowProps={{
-                    items: filteredCategories,
-                    selected: selectedCategory,
-                    onClick: handleSelectCategory,
-                  }}
-                />
+              <div style={{ height: catVirtualizer.getTotalSize(), position: "relative" }}>
+                {catVirtualizer.getVirtualItems().map((vItem) => {
+                  const item = filteredCategories[vItem.index];
+                  const isSelected = item.name === selectedCategory;
+                  return (
+                    <button
+                      key={vItem.key}
+                      type="button"
+                      className={`absolute left-0 right-0 w-full text-left px-4 py-2 border-b border-border hover:bg-accent ${isSelected ? "bg-accent" : ""}`}
+                      style={{ height: vItem.size, transform: `translateY(${vItem.start}px)` }}
+                      onClick={() => handleSelectCategory(item.name)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FolderOpen className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          <span className="text-sm font-mono truncate">{item.name}</span>
+                        </div>
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0 ml-2">
+                          {item.count}
+                        </Badge>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -356,23 +317,34 @@ export function DroidResourcesTab() {
                   {filteredEntries.length} / {entries.length}
                 </div>
               </div>
-              <div className="flex-1 min-h-0">
+              <div ref={nameScrollRef} className="flex-1 min-h-0 overflow-auto">
                 {filteredEntries.length === 0 ? (
                   <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
                     No resources
                   </div>
                 ) : (
-                  <div className="flex h-full">
-                    <List
-                      rowComponent={ResourceNameRow}
-                      rowCount={filteredEntries.length}
-                      rowHeight={ITEM_HEIGHT}
-                      rowProps={{
-                        items: filteredEntries,
-                        selected: selectedName,
-                        onClick: setSelectedName,
-                      }}
-                    />
+                  <div style={{ height: nameVirtualizer.getTotalSize(), position: "relative" }}>
+                    {nameVirtualizer.getVirtualItems().map((vItem) => {
+                      const item = filteredEntries[vItem.index];
+                      const isSelected = item.name === selectedName;
+                      return (
+                        <button
+                          key={vItem.key}
+                          type="button"
+                          className={`absolute left-0 right-0 w-full text-left px-4 py-2 border-b border-border hover:bg-accent ${isSelected ? "bg-accent" : ""}`}
+                          style={{ height: vItem.size, transform: `translateY(${vItem.start}px)` }}
+                          onClick={() => setSelectedName(item.name)}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-mono truncate">{item.name}</div>
+                              <div className="text-[10px] text-muted-foreground font-mono">{item.id}</div>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>

@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Search, FileCode } from "lucide-react";
-import { List, type RowComponentProps } from "react-window";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,6 +22,7 @@ export function FruityClassesPanel() {
   const isDaemon = mode === "daemon";
   const [scope, setScope] = useState<ScopeType>(isDaemon ? "__main__" : "__app__");
   const [search, setSearch] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const { data: classes = [], isLoading } = useFruityQuery(
     ["classes", scope],
@@ -33,6 +34,12 @@ export function FruityClassesPanel() {
     const query = search.toLowerCase();
     return classes.filter((c) => c.toLowerCase().includes(query));
   }, [classes, search]);
+
+  const virtualizer = useVirtualizer({
+    count: filteredClasses.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => ITEM_HEIGHT,
+  });
 
   const handleScopeChange = (value: string) => {
     if (value) setScope(value as ScopeType);
@@ -74,7 +81,7 @@ export function FruityClassesPanel() {
           </>
         )}
       </div>
-      <div className="flex-1 min-h-0 h-full overflow-hidden">
+      <div ref={scrollRef} className="flex-1 min-h-0 h-full overflow-auto">
         {isLoading ? (
           <div className="px-3 py-1.5 space-y-2">
             {Array.from({ length: 16 }).map((_, i) => (
@@ -86,69 +93,51 @@ export function FruityClassesPanel() {
             {t("no_results")}
           </div>
         ) : (
-          <List
-            rowComponent={ClassRow}
-            rowCount={filteredClasses.length}
-            rowHeight={ITEM_HEIGHT}
-            rowProps={{ classes: filteredClasses, openFilePanel }}
-          />
+          <div style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
+            {virtualizer.getVirtualItems().map((vItem) => {
+              const className = filteredClasses[vItem.index];
+              return (
+                <div
+                  key={vItem.key}
+                  className="absolute left-0 right-0 px-3 py-1.5 border-b border-border/50 hover:bg-accent/50 transition-colors group flex items-center"
+                  style={{ height: vItem.size, transform: `translateY(${vItem.start}px)` }}
+                >
+                  <button
+                    type="button"
+                    className="text-sm font-mono truncate text-foreground/80 hover:text-primary transition-colors flex-1 text-left cursor-pointer"
+                    onClick={() =>
+                      openFilePanel({
+                        id: `class_${className}`,
+                        component: "classDetail",
+                        title: className,
+                        params: { className },
+                      })
+                    }
+                  >
+                    {className}
+                  </button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 shrink-0 text-muted-foreground"
+                    title="classdump"
+                    onClick={() =>
+                      openFilePanel({
+                        id: `classdump_${className}`,
+                        component: "classDump",
+                        title: `Classdump - ${className}`,
+                        params: { className },
+                      })
+                    }
+                  >
+                    <FileCode className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
-    </div>
-  );
-}
-
-function ClassRow({
-  index,
-  style,
-  classes,
-  openFilePanel,
-}: RowComponentProps<{
-  classes: string[];
-  openFilePanel: (panel: {
-    id: string;
-    component: string;
-    title: string;
-    params: { className: string };
-  }) => void;
-}>) {
-  const className = classes[index];
-
-  return (
-    <div
-      className="px-3 py-1.5 border-b border-border/50 hover:bg-accent/50 transition-colors group flex items-center"
-      style={style}
-    >
-      <button
-        type="button"
-        className="text-sm font-mono truncate text-foreground/80 hover:text-primary transition-colors flex-1 text-left cursor-pointer"
-        onClick={() =>
-          openFilePanel({
-            id: `class_${className}`,
-            component: "classDetail",
-            title: className,
-            params: { className },
-          })
-        }
-      >
-        {className}
-      </button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-6 w-6 shrink-0 text-muted-foreground"
-        title="classdump"
-        onClick={() =>
-          openFilePanel({
-            id: `classdump_${className}`,
-            component: "classDump",
-            title: `Classdump - ${className}`,
-            params: { className },
-          })
-        }
-      >
-        <FileCode className="h-3.5 w-3.5" />
-      </Button>
     </div>
   );
 }

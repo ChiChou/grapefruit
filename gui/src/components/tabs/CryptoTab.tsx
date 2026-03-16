@@ -4,10 +4,9 @@ import {
   useState,
   useCallback,
   useMemo,
-  type CSSProperties,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { List, type ListImperativeAPI } from "react-window";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   ChevronRight,
   Trash2,
@@ -80,25 +79,17 @@ function formatHexDump(buffer: ArrayBuffer): string {
 
 const CRYPTO_PIN_ID = "crypto";
 
-interface CryptoRowProps {
-  entries: CryptoEntry[];
+function CryptoRow({
+  entry,
+  style,
+  selectedId,
+  onSelect,
+}: {
+  entry: CryptoEntry;
+  style: React.CSSProperties;
   selectedId: number | null;
   onSelect: (id: number) => void;
-}
-
-function CryptoRow(
-  props: {
-    ariaAttributes: {
-      "aria-posinset": number;
-      "aria-setsize": number;
-      role: "listitem";
-    };
-    index: number;
-    style: CSSProperties;
-  } & CryptoRowProps,
-) {
-  const { index, style, entries, selectedId, onSelect } = props;
-  const entry = entries[index];
+}) {
 
   if (!entry) return null;
 
@@ -322,9 +313,7 @@ export function CryptoTab() {
   const { fruity, droid, status, device, identifier, platform } = useSession();
   const isDroid = platform === Platform.Droid;
 
-  const listRef = useRef<ListImperativeAPI>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [listHeight, setListHeight] = useState(300);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
 
   const {
@@ -433,52 +422,40 @@ export function CryptoTab() {
     return result;
   }, [entries, filter, categoryFilter]);
 
-  // Resize observer
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setListHeight(entry.contentRect.height);
-      }
-    });
-
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
+  const virtualizer = useVirtualizer({
+    count: filteredEntries.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => ROW_HEIGHT,
+    overscan: 20,
+  });
 
   // Auto-scroll when new entries arrive
   useEffect(() => {
-    if (autoScroll && listRef.current && filteredEntries.length > 0) {
+    if (autoScroll && filteredEntries.length > 0) {
       requestAnimationFrame(() => {
-        listRef.current?.scrollToRow({
-          index: filteredEntries.length - 1,
-          align: "end",
-        });
+        virtualizer.scrollToIndex(filteredEntries.length - 1, { align: "end" });
       });
     }
-  }, [filteredEntries.length, autoScroll]);
+  }, [filteredEntries.length, autoScroll, virtualizer]);
 
-  const handleRowsRendered = useCallback(
-    (visibleRows: { startIndex: number; stopIndex: number }) => {
-      const isNearBottom = visibleRows.stopIndex >= filteredEntries.length - 3;
+  // Track scroll position to detect near-bottom for auto-scroll
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const isNearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - ROW_HEIGHT * 3;
       setAutoScroll((prev) => (prev === isNearBottom ? prev : isNearBottom));
-    },
-    [filteredEntries.length],
-  );
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
 
   const scrollToLatest = useCallback(() => {
-    if (listRef.current && filteredEntries.length > 0) {
-      listRef.current.scrollToRow({ index: filteredEntries.length - 1, align: "end" });
+    if (filteredEntries.length > 0) {
+      virtualizer.scrollToIndex(filteredEntries.length - 1, { align: "end" });
       setAutoScroll(true);
     }
-  }, [filteredEntries.length]);
-
-  const rowProps: CryptoRowProps = useMemo(
-    () => ({ entries: filteredEntries, selectedId, onSelect: handleSelect }),
-    [filteredEntries, selectedId, handleSelect],
-  );
-  const listStyle = useMemo(() => ({ height: listHeight, width: "100%" as const }), [listHeight]);
+  }, [filteredEntries.length, virtualizer]);
 
   const isDisabled = status !== Status.Ready;
 
@@ -573,22 +550,26 @@ export function CryptoTab() {
           defaultSize={selectedEntry ? "60%" : "100%"}
           minSize="30%"
         >
-          <div ref={containerRef} className="h-full">
+          <div ref={scrollRef} className="h-full overflow-auto">
             {filteredEntries.length === 0 ? (
               <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
                 <span>{entries.length === 0 ? t("crypto_no_results") : t("no_matching_entries")}</span>
               </div>
             ) : (
-              <List
-                listRef={listRef}
-                style={listStyle}
-                rowCount={filteredEntries.length}
-                rowHeight={ROW_HEIGHT}
-                rowProps={rowProps}
-                rowComponent={CryptoRow}
-                onRowsRendered={handleRowsRendered}
-                overscanCount={20}
-              />
+              <div style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
+                {virtualizer.getVirtualItems().map((vItem) => {
+                  const entry = filteredEntries[vItem.index];
+                  return (
+                    <CryptoRow
+                      key={vItem.key}
+                      entry={entry}
+                      style={{ height: vItem.size, transform: `translateY(${vItem.start}px)`, position: "absolute", left: 0, right: 0 }}
+                      selectedId={selectedId}
+                      onSelect={handleSelect}
+                    />
+                  );
+                })}
+              </div>
             )}
           </div>
         </ResizablePanel>

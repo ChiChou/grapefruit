@@ -37,8 +37,7 @@
     "react-i18next": "^16.5.8",
     "react-resizable-panels": "^4.7.3",
     "react-router": "^7.13.1",
-    "react-window": "^2.2.7",
-    "socket.io-client": "^4.8.3",
+"socket.io-client": "^4.8.3",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.1"

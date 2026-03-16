@@ -1,10 +1,10 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useRef, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import type { IDockviewPanelProps } from "dockview";
 import { Anchor, Code, Loader2, Search } from "lucide-react";
-import { List, type RowComponentProps } from "react-window";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 import { useDock } from "@/context/DockContext";
 import { useSession, Status, Mode } from "@/context/SessionContext";
@@ -36,86 +36,6 @@ export interface ClassDetailParams {
 
 const METHOD_ROW_HEIGHT = 32;
 
-interface MethodRowProps {
-  methods: ClassDetail["methods"];
-  selectedMethods: Set<string>;
-  onSelect: (name: string, checked: boolean) => void;
-  onHook: (name: string) => void;
-  onGenerate: (name: string) => void;
-  onDisasm: (address: string, name: string) => void;
-  hookDisabled: boolean;
-  hookAddLabel: string;
-  generateLabel: string;
-}
-
-function MethodRow({
-  index,
-  style,
-  methods,
-  selectedMethods,
-  onSelect,
-  onHook,
-  onGenerate,
-  onDisasm,
-  hookDisabled,
-  hookAddLabel,
-  generateLabel,
-}: RowComponentProps<MethodRowProps>) {
-  const { name: method, types, impl } = methods[index];
-
-  return (
-    <div
-      className="px-2 hover:bg-muted/50 group flex items-center gap-2"
-      style={style}
-    >
-      <Checkbox
-        checked={selectedMethods.has(method)}
-        onCheckedChange={(checked) => onSelect(method, !!checked)}
-        aria-label={`Select ${method}`}
-      />
-      <div className="min-w-0 flex-1 flex items-center gap-2">
-        <span className="font-mono text-sm truncate ml-1" title={method}>
-          {method}
-        </span>
-        <span
-          className="font-mono text-muted-foreground truncate text-xs shrink-0"
-          title={types}
-        >
-          {types}
-        </span>
-      </div>
-      <div className="flex items-center gap-0.5 shrink-0">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={() => onHook(method)}
-          disabled={hookDisabled}
-          title={hookAddLabel}
-        >
-          <Anchor className="h-3.5 w-3.5" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={() => onGenerate(method)}
-          title={generateLabel}
-        >
-          <Code className="h-3.5 w-3.5" />
-        </Button>
-      </div>
-      <button
-        type="button"
-        className="font-mono text-xs text-primary hover:underline cursor-pointer shrink-0"
-        onClick={() => onDisasm(impl, method)}
-      >
-        {impl}
-      </button>
-    </div>
-  );
-}
-
 export function FruityClassDetailTab({
   params,
 }: IDockviewPanelProps<ClassDetailParams>) {
@@ -132,6 +52,7 @@ export function FruityClassDetailTab({
     new Set(),
   );
   const [isHooking, setIsHooking] = useState(false);
+  const methodScrollRef = useRef<HTMLDivElement>(null);
 
   const { data: classInfo, isLoading } = useFruityQuery<ClassDetail>(
     ["classDetail", params.className],
@@ -180,6 +101,12 @@ export function FruityClassDetailTab({
     }
     return allMethods;
   }, [classInfo, showInherited, ownMethodsSet, methodSearch]);
+
+  const methodVirtualizer = useVirtualizer({
+    count: displayedMethods.length,
+    getScrollElement: () => methodScrollRef.current,
+    estimateSize: () => METHOD_ROW_HEIGHT,
+  });
 
   const handleHookMethod = useCallback(
     async (methodName: string) => {
@@ -387,23 +314,64 @@ export function FruityClassDetailTab({
           </div>
 
           {displayedMethods.length > 0 ? (
-            <div className="flex-1 min-h-0">
-              <List
-                rowComponent={MethodRow}
-                rowCount={displayedMethods.length}
-                rowHeight={METHOD_ROW_HEIGHT}
-                rowProps={{
-                  methods: displayedMethods,
-                  selectedMethods,
-                  onSelect: handleSelectMethod,
-                  onHook: handleHookMethod,
-                  onGenerate: handleGenerateCode,
-                  onDisasm: openDisassemblyTab,
-                  hookDisabled: status !== Status.Ready,
-                  hookAddLabel: t("hook_add"),
-                  generateLabel: t("hook_generate_code"),
-                }}
-              />
+            <div ref={methodScrollRef} className="flex-1 min-h-0 overflow-auto">
+              <div style={{ height: methodVirtualizer.getTotalSize(), position: "relative" }}>
+                {methodVirtualizer.getVirtualItems().map((vItem) => {
+                  const { name: method, types, impl } = displayedMethods[vItem.index];
+                  return (
+                    <div
+                      key={vItem.key}
+                      className="absolute left-0 right-0 px-2 hover:bg-muted/50 group flex items-center gap-2"
+                      style={{ height: vItem.size, transform: `translateY(${vItem.start}px)` }}
+                    >
+                      <Checkbox
+                        checked={selectedMethods.has(method)}
+                        onCheckedChange={(checked) => handleSelectMethod(method, !!checked)}
+                        aria-label={`Select ${method}`}
+                      />
+                      <div className="min-w-0 flex-1 flex items-center gap-2">
+                        <span className="font-mono text-sm truncate ml-1" title={method}>
+                          {method}
+                        </span>
+                        <span
+                          className="font-mono text-muted-foreground truncate text-xs shrink-0"
+                          title={types}
+                        >
+                          {types}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleHookMethod(method)}
+                          disabled={status !== Status.Ready}
+                          title={t("hook_add")}
+                        >
+                          <Anchor className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleGenerateCode(method)}
+                          title={t("hook_generate_code")}
+                        >
+                          <Code className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                      <button
+                        type="button"
+                        className="font-mono text-xs text-primary hover:underline cursor-pointer shrink-0"
+                        onClick={() => openDisassemblyTab(impl, method)}
+                      >
+                        {impl}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           ) : (
             <div className="text-sm text-muted-foreground py-4 text-center">

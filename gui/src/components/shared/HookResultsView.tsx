@@ -1,13 +1,6 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  useCallback,
-  useMemo,
-  type CSSProperties,
-} from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { List, type ListImperativeAPI } from "react-window";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   ChevronRight,
   Layers,
@@ -83,13 +76,18 @@ function SummaryPopover({ summary }: { summary: string }) {
 
   return (
     <Popover>
-      <PopoverTrigger nativeButton={false} render={<span
-          className="font-mono text-muted-foreground truncate flex-1 min-w-0 cursor-pointer hover:text-foreground"
-          title={summary}
-        />}>
-          {summary}
+      <PopoverTrigger
+        nativeButton={false}
+        render={
+          <span
+            className="font-mono text-muted-foreground truncate flex-1 min-w-0 cursor-pointer hover:text-foreground"
+            title={summary}
+          />
+        }
+      >
+        {summary}
       </PopoverTrigger>
-      <PopoverContent className="w-[500px] p-0" align="start">
+      <PopoverContent className="w-125 p-0" align="start">
         <div className="flex items-center justify-end p-2 border-b">
           <Button
             variant="ghost"
@@ -110,7 +108,7 @@ function SummaryPopover({ summary }: { summary: string }) {
             )}
           </Button>
         </div>
-        <ScrollArea className="max-h-[300px]">
+        <ScrollArea className="max-h-75">
           <div className="p-3 font-mono text-xs whitespace-pre-wrap break-all">
             {summary}
           </div>
@@ -133,14 +131,16 @@ function StackTracePopover({
 
   return (
     <Popover>
-      <PopoverTrigger render={<Button variant="outline" size="sm" className="h-6 px-1.5" />}>
-          <Layers className="h-3 w-3" />
+      <PopoverTrigger
+        render={<Button variant="outline" size="sm" className="h-6 px-1.5" />}
+      >
+        <Layers className="h-3 w-3" />
       </PopoverTrigger>
-      <PopoverContent className="w-[600px] p-0" align="end">
+      <PopoverContent className="w-150 p-0" align="end">
         <div className="p-3 border-b">
           <h4 className="font-medium text-sm">{t("hook_stack_trace")}</h4>
         </div>
-        <ScrollArea className="h-[400px]">
+        <ScrollArea className="h-100">
           <div className="p-2 font-mono text-xs space-y-1">
             {bt.map((frame, index) => (
               <div
@@ -158,27 +158,15 @@ function StackTracePopover({
   );
 }
 
-interface HookRowProps {
-  entries: HookEntry[];
+function HookRow({
+  entry,
+  style,
+  t,
+}: {
+  entry: HookEntry;
+  style: React.CSSProperties;
   t: (key: string) => string;
-}
-
-function HookRow(
-  props: {
-    ariaAttributes: {
-      "aria-posinset": number;
-      "aria-setsize": number;
-      role: "listitem";
-    };
-    index: number;
-    style: CSSProperties;
-  } & HookRowProps,
-) {
-  const { index, style, entries, t } = props;
-  const entry = entries[index];
-
-  if (!entry) return null;
-
+}) {
   const { message, timestamp } = entry;
 
   return (
@@ -218,7 +206,10 @@ function HookRow(
   );
 }
 
-const mapHistory = (record: Record<string, unknown>, id: number): HookEntry | null => {
+const mapHistory = (
+  record: Record<string, unknown>,
+  id: number,
+): HookEntry | null => {
   if (record.category === "crypto") return null;
   return {
     id,
@@ -234,8 +225,10 @@ const mapHistory = (record: Record<string, unknown>, id: number): HookEntry | nu
   };
 };
 
-const mapHistoryNonNull = (record: Record<string, unknown>, id: number): HookEntry =>
-  mapHistory(record, id)!;
+const mapHistoryNonNull = (
+  record: Record<string, unknown>,
+  id: number,
+): HookEntry => mapHistory(record, id)!;
 
 const mapSocket = (id: number, ...args: unknown[]): HookEntry | null => {
   const message = args[0] as BaseHookMessage;
@@ -245,15 +238,10 @@ const mapSocket = (id: number, ...args: unknown[]): HookEntry | null => {
 
 export function HookResultsView() {
   const { t } = useTranslation();
-  const listRef = useRef<ListImperativeAPI>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [listHeight, setListHeight] = useState(300);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
 
-  const {
-    entries,
-    clear,
-  } = useLogStream<HookEntry>({
+  const { entries, clear } = useLogStream<HookEntry>({
     event: "hook",
     path: "hooks",
     key: "hooks",
@@ -268,49 +256,41 @@ export function HookResultsView() {
     [entries],
   );
 
-  // Resize observer for container
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setListHeight(entry.contentRect.height);
-      }
-    });
-
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
+  const virtualizer = useVirtualizer({
+    count: filteredEntries.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => ROW_HEIGHT,
+    overscan: 20,
+  });
 
   // Auto-scroll when new entries arrive
   useEffect(() => {
-    if (autoScroll && listRef.current && filteredEntries.length > 0) {
+    if (autoScroll && filteredEntries.length > 0) {
       requestAnimationFrame(() => {
-        listRef.current?.scrollToRow({
-          index: filteredEntries.length - 1,
-          align: "end",
-        });
+        virtualizer.scrollToIndex(filteredEntries.length - 1, { align: "end" });
       });
     }
-  }, [filteredEntries.length, autoScroll]);
+  }, [filteredEntries.length, autoScroll, virtualizer]);
 
-  const handleRowsRendered = useCallback(
-    (visibleRows: { startIndex: number; stopIndex: number }) => {
-      const isNearBottom = visibleRows.stopIndex >= filteredEntries.length - 3;
+  // Track scroll position to detect near-bottom for auto-scroll
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const isNearBottom =
+        el.scrollTop + el.clientHeight >= el.scrollHeight - ROW_HEIGHT * 3;
       setAutoScroll((prev) => (prev === isNearBottom ? prev : isNearBottom));
-    },
-    [filteredEntries.length],
-  );
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
 
   const scrollToLatest = useCallback(() => {
-    if (listRef.current && filteredEntries.length > 0) {
-      listRef.current.scrollToRow({ index: filteredEntries.length - 1, align: "end" });
+    if (filteredEntries.length > 0) {
+      virtualizer.scrollToIndex(filteredEntries.length - 1, { align: "end" });
       setAutoScroll(true);
     }
-  }, [filteredEntries.length]);
-
-  const rowProps: HookRowProps = useMemo(() => ({ entries: filteredEntries, t }), [filteredEntries, t]);
-  const listStyle = useMemo(() => ({ height: listHeight, width: "100%" as const }), [listHeight]);
+  }, [filteredEntries.length, virtualizer]);
 
   return (
     <div className="h-full flex flex-col">
@@ -318,7 +298,8 @@ export function HookResultsView() {
       <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>
-            {filteredEntries.length.toLocaleString()} {t("hook_results").toLowerCase()}
+            {filteredEntries.length.toLocaleString()}{" "}
+            {t("hook_results").toLowerCase()}
           </span>
           {!autoScroll && (
             <Button
@@ -332,33 +313,39 @@ export function HookResultsView() {
             </Button>
           )}
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={clear}
-          className="h-7 px-2"
-        >
+        <Button variant="ghost" size="sm" onClick={clear} className="h-7 px-2">
           <Trash2 className="h-3.5 w-3.5 mr-1" />
         </Button>
       </div>
 
       {/* Content */}
-      <div ref={containerRef} className="flex-1 min-h-0">
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-auto">
         {filteredEntries.length === 0 ? (
           <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
             {t("hook_no_results")}
           </div>
         ) : (
-          <List
-            listRef={listRef}
-            style={listStyle}
-            rowCount={filteredEntries.length}
-            rowHeight={ROW_HEIGHT}
-            rowProps={rowProps}
-            rowComponent={HookRow}
-            onRowsRendered={handleRowsRendered}
-            overscanCount={20}
-          />
+          <div
+            style={{ height: virtualizer.getTotalSize(), position: "relative" }}
+          >
+            {virtualizer.getVirtualItems().map((vItem) => {
+              const entry = filteredEntries[vItem.index];
+              return (
+                <HookRow
+                  key={vItem.key}
+                  entry={entry}
+                  style={{
+                    height: vItem.size,
+                    transform: `translateY(${vItem.start}px)`,
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                  }}
+                  t={t}
+                />
+              );
+            })}
+          </div>
         )}
       </div>
     </div>

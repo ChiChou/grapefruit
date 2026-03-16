@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Search, Loader2 } from "lucide-react";
-import { List, type RowComponentProps } from "react-window";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -340,48 +340,11 @@ function KeyDetail({ alias, entryType }: { alias: string; entryType: string }) {
   );
 }
 
-function AliasRow({
-  index,
-  style,
-  items,
-  selected,
-  onClick,
-}: RowComponentProps<{
-  items: KeystoreAlias[];
-  selected: string | null;
-  onClick: (alias: string) => void;
-}>) {
-  const item = items[index];
-  const isSelected = item.alias === selected;
-
-  return (
-    <button
-      type="button"
-      className={`w-full text-left px-4 py-2 border-b border-border hover:bg-accent ${isSelected ? "bg-accent" : ""}`}
-      style={style}
-      onClick={() => onClick(item.alias)}
-    >
-      <div className="flex items-center justify-between">
-        <div className="min-w-0 flex-1">
-          <div className="text-sm font-medium truncate">{item.alias}</div>
-          <div className="text-xs text-muted-foreground font-mono truncate">
-            {item.algorithm ?? "N/A"}
-          </div>
-        </div>
-        <div className="flex items-center gap-1 shrink-0 ml-2">
-          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-            {item.entryType}
-          </Badge>
-        </div>
-      </div>
-    </button>
-  );
-}
-
 export function DroidKeystoreTab() {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const { data: keys = [], isLoading } = useDroidQuery<KeystoreAlias[]>(
     ["keystoreAliases"],
@@ -398,6 +361,12 @@ export function DroidKeystoreTab() {
         k.entryType.toLowerCase().includes(query),
     );
   }, [keys, search]);
+
+  const virtualizer = useVirtualizer({
+    count: filtered.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => ITEM_HEIGHT,
+  });
 
   const selectedEntry = keys.find((k) => k.alias === selected);
 
@@ -417,7 +386,7 @@ export function DroidKeystoreTab() {
           {filtered.length} / {keys.length}
         </div>
       </div>
-      <div className="flex-1 min-h-0">
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-auto">
         {isLoading ? (
           <div className="flex items-center justify-center h-full text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -428,17 +397,34 @@ export function DroidKeystoreTab() {
             {t("no_keystore_aliases")}
           </div>
         ) : (
-          <div className="flex h-full">
-            <List
-              rowComponent={AliasRow}
-              rowCount={filtered.length}
-              rowHeight={ITEM_HEIGHT}
-              rowProps={{
-                items: filtered,
-                selected,
-                onClick: setSelected,
-              }}
-            />
+          <div style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
+            {virtualizer.getVirtualItems().map((vItem) => {
+              const item = filtered[vItem.index];
+              const isSelected = item.alias === selected;
+              return (
+                <button
+                  key={vItem.key}
+                  type="button"
+                  className={`absolute left-0 right-0 w-full text-left px-4 py-2 border-b border-border hover:bg-accent ${isSelected ? "bg-accent" : ""}`}
+                  style={{ height: vItem.size, transform: `translateY(${vItem.start}px)` }}
+                  onClick={() => setSelected(item.alias)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium truncate">{item.alias}</div>
+                      <div className="text-xs text-muted-foreground font-mono truncate">
+                        {item.algorithm ?? "N/A"}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0 ml-2">
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                        {item.entryType}
+                      </Badge>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>

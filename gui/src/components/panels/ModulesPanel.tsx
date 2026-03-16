@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Search, EllipsisVertical, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
-import { List, type RowComponentProps } from "react-window";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 import { useDock } from "@/context/DockContext";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,7 @@ export function ModulesPanel() {
   const { platform, device, pid } = useSession();
   const isDroid = platform === Platform.Droid;
   const [search, setSearch] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const { data: modules = [], isLoading } = usePlatformQuery(
     ["modules"],
@@ -42,6 +43,12 @@ export function ModulesPanel() {
         m.path.toLowerCase().includes(query),
     );
   }, [modules, search]);
+
+  const virtualizer = useVirtualizer({
+    count: filteredModules.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => ITEM_HEIGHT,
+  });
 
   return (
     <div className="h-full flex flex-col">
@@ -59,7 +66,7 @@ export function ModulesPanel() {
           {filteredModules.length} / {modules.length}
         </div>
       </div>
-      <div className="flex-1 min-h-0 h-full">
+      <div ref={scrollRef} className="flex-1 min-h-0 h-full overflow-auto">
         {isLoading ? (
           <div className="px-4 space-y-3">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -71,13 +78,21 @@ export function ModulesPanel() {
             ))}
           </div>
         ) : (
-          <div className="flex h-full">
-            <List
-              rowComponent={ModuleRow}
-              rowCount={filteredModules.length}
-              rowHeight={ITEM_HEIGHT}
-              rowProps={{ modules: filteredModules, openFilePanel, isDroid, device, pid }}
-            />
+          <div style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
+            {virtualizer.getVirtualItems().map((vItem) => {
+              const mod = filteredModules[vItem.index];
+              return (
+                <ModuleRow
+                  key={vItem.key}
+                  mod={mod}
+                  style={{ height: vItem.size, transform: `translateY(${vItem.start}px)` }}
+                  openFilePanel={openFilePanel}
+                  isDroid={isDroid}
+                  device={device}
+                  pid={pid}
+                />
+              );
+            })}
           </div>
         )}
       </div>
@@ -86,15 +101,15 @@ export function ModulesPanel() {
 }
 
 function ModuleRow({
-  index,
+  mod,
   style,
-  modules,
   openFilePanel,
   isDroid,
   device,
   pid,
-}: RowComponentProps<{
-  modules: ModuleInfo[];
+}: {
+  mod: ModuleInfo;
+  style: React.CSSProperties;
   isDroid: boolean;
   device: string | undefined;
   pid: number | undefined;
@@ -104,9 +119,8 @@ function ModuleRow({
     title: string;
     params: { path: string };
   }) => void;
-}>) {
+}) {
   const { t } = useTranslation();
-  const mod = modules[index];
 
   const openModuleView = (component: string, suffix: string) => {
     openFilePanel({
@@ -119,7 +133,7 @@ function ModuleRow({
 
   return (
     <div
-      className="group px-4 py-2 border-b border-border hover:bg-accent relative"
+      className="absolute left-0 right-0 group px-4 py-2 border-b border-border hover:bg-accent"
       style={style}
     >
       <div className="flex items-start justify-between">

@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Search } from "lucide-react";
-import { List, type RowComponentProps } from "react-window";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,6 +14,7 @@ export function DroidClassesPanel() {
   const { t } = useTranslation();
   const { openFilePanel } = useDock();
   const [search, setSearch] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const { data: classes = [], isLoading } = useDroidQuery(
     ["classes"],
@@ -25,6 +26,12 @@ export function DroidClassesPanel() {
     const query = search.toLowerCase();
     return classes.filter((c) => c.toLowerCase().includes(query));
   }, [classes, search]);
+
+  const virtualizer = useVirtualizer({
+    count: filteredClasses.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => ITEM_HEIGHT,
+  });
 
   return (
     <div className="h-full flex flex-col">
@@ -46,7 +53,7 @@ export function DroidClassesPanel() {
           </>
         )}
       </div>
-      <div className="flex-1 min-h-0 h-full overflow-hidden">
+      <div ref={scrollRef} className="flex-1 min-h-0 h-full overflow-auto">
         {isLoading ? (
           <div className="px-3 py-1.5 space-y-2">
             {Array.from({ length: 16 }).map((_, i) => (
@@ -58,53 +65,35 @@ export function DroidClassesPanel() {
             {t("no_results")}
           </div>
         ) : (
-          <List
-            rowComponent={ClassRow}
-            rowCount={filteredClasses.length}
-            rowHeight={ITEM_HEIGHT}
-            rowProps={{ classes: filteredClasses, openFilePanel }}
-          />
+          <div style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
+            {virtualizer.getVirtualItems().map((vItem) => {
+              const className = filteredClasses[vItem.index];
+              return (
+                <div
+                  key={vItem.key}
+                  className="absolute left-0 right-0 px-3 py-1.5 border-b border-border/50 hover:bg-accent/50 transition-colors"
+                  style={{ height: vItem.size, transform: `translateY(${vItem.start}px)` }}
+                >
+                  <button
+                    type="button"
+                    className="text-sm font-mono truncate text-foreground hover:text-primary transition-colors w-full text-left cursor-pointer"
+                    onClick={() =>
+                      openFilePanel({
+                        id: `javaclass_${className}`,
+                        component: "javaClassDetail",
+                        title: className,
+                        params: { className },
+                      })
+                    }
+                  >
+                    {className}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
-    </div>
-  );
-}
-
-function ClassRow({
-  index,
-  style,
-  classes,
-  openFilePanel,
-}: RowComponentProps<{
-  classes: string[];
-  openFilePanel: (panel: {
-    id: string;
-    component: string;
-    title: string;
-    params: { className: string };
-  }) => void;
-}>) {
-  const className = classes[index];
-
-  return (
-    <div
-      className="px-3 py-1.5 border-b border-border/50 hover:bg-accent/50 transition-colors"
-      style={style}
-    >
-      <button
-        type="button"
-        className="text-sm font-mono truncate text-foreground hover:text-primary transition-colors w-full text-left cursor-pointer"
-        onClick={() =>
-          openFilePanel({
-            id: `javaclass_${className}`,
-            component: "javaClassDetail",
-            title: className,
-            params: { className },
-          })
-        }
-      >
-        {className}
-      </button>
     </div>
   );
 }

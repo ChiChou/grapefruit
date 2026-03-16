@@ -1,7 +1,7 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Play, Radio, Search, ShieldCheck, Globe } from "lucide-react";
-import { List, type RowComponentProps } from "react-window";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { toast } from "sonner";
 
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,7 @@ export function DroidComponentsPanel() {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("activities");
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const { data: activities = [], isLoading: activitiesLoading } =
     useDroidQuery<ActivityEntry[]>(["activities"], (api) =>
@@ -55,11 +56,6 @@ export function DroidComponentsPanel() {
   const startServiceMutation = useDroidMutation<void, { component: string }>(
     (api, { component }) => api.services.start({ component }),
   );
-
-  const stopServiceMutation = useDroidMutation<
-    boolean,
-    { component: string }
-  >((api, { component }) => api.services.stop({ component }));
 
   const sendBroadcastMutation = useDroidMutation<
     void,
@@ -106,6 +102,12 @@ export function DroidComponentsPanel() {
         ? servicesLoading
         : receiversLoading;
 
+  const virtualizer = useVirtualizer({
+    count: currentItems.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => ITEM_HEIGHT,
+  });
+
   const handleAction = async (name: string) => {
     try {
       if (activeTab === "activities") {
@@ -118,15 +120,6 @@ export function DroidComponentsPanel() {
         await sendBroadcastMutation.mutateAsync({ component: name });
         toast.success(t("send_broadcast"), { description: name });
       }
-    } catch (err) {
-      toast.error((err as Error).message);
-    }
-  };
-
-  const handleStopService = async (name: string) => {
-    try {
-      await stopServiceMutation.mutateAsync({ component: name });
-      toast.success(t("stop_service"));
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -161,7 +154,7 @@ export function DroidComponentsPanel() {
           {currentItems.length} / {totalItems.length}
         </div>
       </div>
-      <div className="flex-1 min-h-0 h-full">
+      <div ref={scrollRef} className="flex-1 min-h-0 h-full overflow-auto">
         {isLoading ? (
           <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
             <Spinner />
@@ -172,112 +165,86 @@ export function DroidComponentsPanel() {
             {t("no_components")}
           </div>
         ) : (
-          <div className="flex h-full">
-            <List
-              rowComponent={ComponentRow}
-              rowCount={currentItems.length}
-              rowHeight={ITEM_HEIGHT}
-              rowProps={{
-                items: currentItems,
-                activeTab,
-                onAction: handleAction,
-                onStopService: handleStopService,
-                t,
-              }}
-            />
+          <div style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
+            {virtualizer.getVirtualItems().map((vItem) => {
+              const item = currentItems[vItem.index];
+              return (
+                <div
+                  key={vItem.key}
+                  className="absolute left-0 right-0 px-4 py-2 border-b border-border hover:bg-accent group"
+                  style={{ height: vItem.size, transform: `translateY(${vItem.start}px)` }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium truncate">
+                        {shortName(item.name)}
+                      </div>
+                      <div className="text-xs text-muted-foreground font-mono truncate">
+                        {item.name}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0 ml-2">
+                      {item.exported && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={
+                                <span className="text-muted-foreground shrink-0" />
+                              }
+                            >
+                              <Globe className="h-3.5 w-3.5" />
+                            </TooltipTrigger>
+                            <TooltipContent>{t("exported")}</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      {item.permission && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={
+                                <span className="text-muted-foreground shrink-0" />
+                              }
+                            >
+                              <ShieldCheck className="h-3.5 w-3.5" />
+                            </TooltipTrigger>
+                            <TooltipContent>{item.permission}</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      {activeTab !== "services" && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={
+                                <button
+                                  type="button"
+                                  className="p-1 rounded text-amber-700 dark:text-amber-400 opacity-0 group-hover:opacity-100 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-opacity"
+                                  onClick={() => handleAction(item.name)}
+                                />
+                              }
+                            >
+                              {activeTab === "receivers" ? (
+                                <Radio className="h-3.5 w-3.5" />
+                              ) : (
+                                <Play className="h-3.5 w-3.5" />
+                              )}
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {activeTab === "activities"
+                                ? t("start_activity")
+                                : t("send_broadcast")}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-function ComponentRow({
-  index,
-  style,
-  items,
-  activeTab,
-  onAction,
-  t,
-}: RowComponentProps<{
-  items: ComponentEntry[];
-  activeTab: string;
-  onAction: (name: string) => void;
-  onStopService: (name: string) => void;
-  t: (key: string) => string;
-}>) {
-  const item = items[index];
-
-  return (
-    <div
-      className="px-4 py-2 border-b border-border hover:bg-accent group"
-      style={style}
-    >
-      <div className="flex items-center justify-between">
-        <div className="min-w-0 flex-1">
-          <div className="text-sm font-medium truncate">
-            {shortName(item.name)}
-          </div>
-          <div className="text-xs text-muted-foreground font-mono truncate">
-            {item.name}
-          </div>
-        </div>
-        <div className="flex items-center gap-1 shrink-0 ml-2">
-          {item.exported && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <span className="text-muted-foreground shrink-0" />
-                  }
-                >
-                  <Globe className="h-3.5 w-3.5" />
-                </TooltipTrigger>
-                <TooltipContent>{t("exported")}</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-          {item.permission && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <span className="text-muted-foreground shrink-0" />
-                  }
-                >
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                </TooltipTrigger>
-                <TooltipContent>{item.permission}</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-          {activeTab !== "services" && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <button
-                      type="button"
-                      className="p-1 rounded text-amber-700 dark:text-amber-400 opacity-0 group-hover:opacity-100 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-opacity"
-                      onClick={() => onAction(item.name)}
-                    />
-                  }
-                >
-                  {activeTab === "receivers" ? (
-                    <Radio className="h-3.5 w-3.5" />
-                  ) : (
-                    <Play className="h-3.5 w-3.5" />
-                  )}
-                </TooltipTrigger>
-                <TooltipContent>
-                  {activeTab === "activities"
-                    ? t("start_activity")
-                    : t("send_broadcast")}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </div>
       </div>
     </div>
   );

@@ -1,13 +1,12 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Search, RefreshCw } from "lucide-react";
-import { List, type RowComponentProps } from "react-window";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePlatformQuery } from "@/lib/queries";
-import type { ThreadInfo } from "@agent/common/threads";
 
 const ITEM_HEIGHT = 52;
 
@@ -22,6 +21,7 @@ const STATE_COLORS: Record<string, string> = {
 export function ThreadsPanel() {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const { data: threads = [], isLoading, refetch, isFetching } = usePlatformQuery(
     ["threads"],
@@ -39,6 +39,12 @@ export function ThreadsPanel() {
         (t.moduleName?.toLowerCase().includes(q) ?? false),
     );
   }, [threads, search]);
+
+  const virtualizer = useVirtualizer({
+    count: filtered.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => ITEM_HEIGHT,
+  });
 
   return (
     <div className="h-full flex flex-col">
@@ -66,7 +72,7 @@ export function ThreadsPanel() {
           {filtered.length} / {threads.length}
         </div>
       </div>
-      <div className="flex-1 min-h-0 h-full">
+      <div ref={scrollRef} className="flex-1 min-h-0 h-full overflow-auto">
         {isLoading ? (
           <div className="px-4 space-y-3">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -77,55 +83,41 @@ export function ThreadsPanel() {
             ))}
           </div>
         ) : (
-          <div className="flex h-full">
-            <List
-              rowComponent={ThreadRow}
-              rowCount={filtered.length}
-              rowHeight={ITEM_HEIGHT}
-              rowProps={{ threads: filtered }}
-            />
+          <div style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
+            {virtualizer.getVirtualItems().map((vItem) => {
+              const thread = filtered[vItem.index];
+              const stateClass = STATE_COLORS[thread.state] ?? "bg-muted text-muted-foreground";
+              return (
+                <div
+                  key={vItem.key}
+                  className="absolute left-0 right-0 px-4 py-2.5 border-b border-border hover:bg-accent"
+                  style={{ height: vItem.size, transform: `translateY(${vItem.start}px)` }}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-sm font-mono font-medium shrink-0">
+                      {thread.id}
+                    </span>
+                    {thread.name && (
+                      <span className="text-sm truncate text-muted-foreground">
+                        {thread.name}
+                      </span>
+                    )}
+                    <span
+                      className={`ml-auto inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0 ${stateClass}`}
+                    >
+                      {t(`thread_state_${thread.state}`, thread.state)}
+                    </span>
+                  </div>
+                  <div className="text-xs text-muted-foreground font-mono truncate mt-0.5">
+                    {thread.symbol
+                      ? `${thread.symbol}${thread.moduleName ? ` (${thread.moduleName})` : ""}`
+                      : thread.pc}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-function ThreadRow({
-  index,
-  style,
-  threads,
-}: RowComponentProps<{
-  threads: ThreadInfo[];
-}>) {
-  const { t } = useTranslation();
-  const thread = threads[index];
-  const stateClass = STATE_COLORS[thread.state] ?? "bg-muted text-muted-foreground";
-
-  return (
-    <div
-      className="px-4 py-2.5 border-b border-border hover:bg-accent"
-      style={style}
-    >
-      <div className="flex items-center gap-2 min-w-0">
-        <span className="text-sm font-mono font-medium shrink-0">
-          {thread.id}
-        </span>
-        {thread.name && (
-          <span className="text-sm truncate text-muted-foreground">
-            {thread.name}
-          </span>
-        )}
-        <span
-          className={`ml-auto inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0 ${stateClass}`}
-        >
-          {t(`thread_state_${thread.state}`, thread.state)}
-        </span>
-      </div>
-      <div className="text-xs text-muted-foreground font-mono truncate mt-0.5">
-        {thread.symbol
-          ? `${thread.symbol}${thread.moduleName ? ` (${thread.moduleName})` : ""}`
-          : thread.pc}
       </div>
     </div>
   );
