@@ -26,6 +26,7 @@ export function ThreadsPanel() {
   const { data: threads = [], isLoading, refetch, isFetching } = usePlatformQuery(
     ["threads"],
     (api) => api.threads.list(),
+    { refetchInterval: 1000 },
   );
 
   const filtered = useMemo(() => {
