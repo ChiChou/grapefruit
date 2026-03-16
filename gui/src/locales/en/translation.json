@@ -289,6 +289,7 @@
   "hook_added": "Hook added",
   "hook_added_count": "{{count}} hooks added",
   "hook_failed": "Failed to add hook",
+  "class_dump": "Class Dump",
   "flutter_channels": "Flutter Channels",
   "flutter_channels_desc": "Capture Dart \u2194 native platform channel traffic",
   "flutter_channel": "Channel",

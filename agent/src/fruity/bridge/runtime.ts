@@ -1,10 +1,10 @@
 import ObjC from "frida-objc-bridge";
 
 type Ptr = NativePointerValue;
-type Fn<R extends NativeFunctionReturnValue, A extends Ptr[]> = NativeFunction<
-  R,
-  A
->;
+type Fn<
+  R extends NativeFunctionReturnValue,
+  A extends NativeFunctionArgumentValue[] | [],
+> = NativeFunction<R, A>;
 
 interface ObjCApi {
   // libsystem_malloc
@@ -78,7 +78,7 @@ interface ObjCApi {
 
 export const api = ObjC.api as unknown as ObjCApi;
 
-function libobjcFn<R extends NativeFunctionReturnValue, A extends Ptr[]>(
+function libobjcFn<R extends NativeFunctionReturnValue, A extends NativeFunctionArgumentValue[] | []>(
   name: string,
   ret: NativeFunctionReturnType,
   args: NativeFunctionArgumentType[],
@@ -93,6 +93,7 @@ function libobjcFn<R extends NativeFunctionReturnValue, A extends Ptr[]>(
 let extras: {
   class_copyPropertyList: Fn<NativePointer, [Ptr, Ptr]>;
   property_copyAttributeValue: Fn<NativePointer, [Ptr, Ptr]>;
+  _protocol_getMethodTypeEncoding: Fn<NativePointer, [Ptr, Ptr, number, number]>;
 };
 
 function extraApi() {
@@ -106,6 +107,11 @@ function extraApi() {
       "property_copyAttributeValue",
       "pointer",
       ["pointer", "pointer"],
+    ),
+    _protocol_getMethodTypeEncoding: libobjcFn(
+      "_protocol_getMethodTypeEncoding",
+      "pointer",
+      ["pointer", "pointer", "bool", "bool"],
     ),
   });
 }
@@ -170,6 +176,53 @@ export function copyIvars(clazz: ObjC.Object): Ivar[] {
     }
   } finally {
     api.free(ivarHandles);
+  }
+
+  return result;
+}
+
+/**
+ * Get extended type encoding for a protocol method (includes class names like @"NSString").
+ * Returns null if the method is not found in the protocol.
+ */
+export function getProtocolMethodExtendedTypes(
+  protoHandle: NativePointer,
+  selector: string,
+  isRequired: boolean,
+  isInstance: boolean,
+): string | null {
+  const { _protocol_getMethodTypeEncoding } = extraApi();
+  const sel = ObjC.selector(selector);
+  const p = _protocol_getMethodTypeEncoding(
+    protoHandle,
+    sel,
+    isRequired ? 1 : 0,
+    isInstance ? 1 : 0,
+  );
+  if (!p.isNull()) {
+    const s = p.readUtf8String();
+    if (s) return s;
+  }
+  return null;
+}
+
+export function copyProtocols(clazz: ObjC.Object): string[] {
+  const { pointerSize } = Process;
+  const countBuf = Memory.alloc(pointerSize);
+  const list = api.class_copyProtocolList(clazz.handle, countBuf);
+  const result: string[] = [];
+
+  if (list.isNull()) return result;
+
+  try {
+    const count = countBuf.readUInt();
+    for (let i = 0; i < count; i++) {
+      const handle = list.add(i * pointerSize).readPointer();
+      const name = api.protocol_getName(handle).readUtf8String() as string;
+      result.push(name);
+    }
+  } finally {
+    api.free(list);
   }
 
   return result;

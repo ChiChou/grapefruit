@@ -2,7 +2,9 @@ import ObjC from "frida-objc-bridge";
 import {
   copyIvars,
   copyProperties,
+  copyProtocols,
   copySuperClasses,
+  getProtocolMethodExtendedTypes,
   resolveMethod,
   type Ivar,
   type Property,
@@ -75,7 +77,31 @@ export function inspect(name: string): ClassDetail {
     return { name: sel, impl, types };
   });
 
-  const protocols = Object.keys(clazz.$protocols);
+  const protocols = copyProtocols(clazz);
+
+  // Enrich method type encodings from adopted protocols.
+  // Protocol extended types preserve class names (e.g. @"NSString") while
+  // class method_getTypeEncoding only has generic id (@).
+  if (protocols.length > 0) {
+    const protoHandles = protocols
+      .map((p) => ObjC.protocols[p])
+      .filter((p) => p != null);
+
+    for (const method of methods) {
+      const isInstance = method.name.startsWith("- ");
+      const bareSel = method.name.substring(2);
+      for (const proto of protoHandles) {
+        const extTypes =
+          getProtocolMethodExtendedTypes(proto.handle, bareSel, true, isInstance) ??
+          getProtocolMethodExtendedTypes(proto.handle, bareSel, false, isInstance);
+        if (extTypes) {
+          method.types = extTypes;
+          break;
+        }
+      }
+    }
+  }
+
   const module = clazz.$moduleName;
   const ivars = copyIvars(clazz);
   const proto = copySuperClasses(clazz);

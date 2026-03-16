@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import type { IDockviewPanelProps } from "dockview";
-import { Anchor, Code, Loader2, Search } from "lucide-react";
+import { Anchor, Code, FileCode, Loader2, Search } from "lucide-react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
 import { useDock } from "@/context/DockContext";
@@ -75,6 +75,18 @@ export function FruityClassDetailTab({
         component: "disassembly",
         title: methodName,
         params: { address, name: methodName },
+      });
+    },
+    [openFilePanel],
+  );
+
+  const openClassDumpTab = useCallback(
+    (className: string) => {
+      openFilePanel({
+        id: `classDump_${className}`,
+        component: "classDump",
+        title: `${className}.h`,
+        params: { className },
       });
     },
     [openFilePanel],
@@ -268,40 +280,6 @@ export function FruityClassDetailTab({
                 {selectedCount} {t("selected")}
               </span>
             )}
-            <div className="flex-1" />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleBatchHook}
-              disabled={
-                status !== Status.Ready || selectedCount === 0 || isHooking
-              }
-              className="gap-1.5 h-7"
-            >
-              {isHooking ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Anchor className="h-3.5 w-3.5" />
-              )}
-              {t("hook_add")}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleBatchGenerateCode}
-              disabled={selectedCount === 0}
-              className="gap-1.5 h-7"
-            >
-              <Code className="h-3.5 w-3.5" />
-              {t("hook_generate_code")}
-            </Button>
-            <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-              <Switch
-                checked={showInherited}
-                onCheckedChange={setShowInherited}
-              />
-              {t("show_inherited")}
-            </label>
             <div className="relative w-48 shrink-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -311,6 +289,40 @@ export function FruityClassDetailTab({
                 className="pl-9 h-8 text-sm"
               />
             </div>
+            <div className="flex-1" />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleBatchHook}
+              disabled={
+                status !== Status.Ready || selectedCount === 0 || isHooking
+              }
+              className="h-7 w-7"
+              title={t("hook_add")}
+            >
+              {isHooking ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Anchor className="h-3.5 w-3.5" />
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleBatchGenerateCode}
+              disabled={selectedCount === 0}
+              className="h-7 w-7"
+              title={t("hook_generate_code")}
+            >
+              <Code className="h-3.5 w-3.5" />
+            </Button>
+            <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+              <Switch
+                checked={showInherited}
+                onCheckedChange={setShowInherited}
+              />
+              {t("show_inherited")}
+            </label>
           </div>
 
           {displayedMethods.length > 0 ? (
@@ -378,6 +390,17 @@ export function FruityClassDetailTab({
               {t("no_results")}
             </div>
           )}
+          <div className="flex items-center gap-2 px-2 py-1.5 border-t">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => openClassDumpTab(classInfo.name)}
+              className="gap-1.5 h-7"
+            >
+              <FileCode className="h-3.5 w-3.5" />
+              {t("class_dump")}
+            </Button>
+          </div>
         </section>
 
         {/* Right: Protocols & Ivars */}

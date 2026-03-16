@@ -281,6 +281,7 @@
   "hook_added": "钩子已添加",
   "hook_added_count": "已添加 {{count}} 个钩子",
   "hook_failed": "添加钩子失败",
+  "class_dump": "Class Dump",
   "flutter_channels": "Flutter 平台通道",
   "flutter_channels_desc": "捕获 Dart \u2194 Native 平台通道消息",
   "flutter_channel": "通道",
