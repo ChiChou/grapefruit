@@ -20,6 +20,7 @@ const BUILTIN_GROUPS = [
   "intent",
   "sharedpref",
   "pendingintent",
+  "sslpinning",
 ] as const;
 
 const registry = new Map<string, PinEntry>();
