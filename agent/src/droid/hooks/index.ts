@@ -8,6 +8,7 @@ import * as intent from "./intent.js";
 import * as sharedpref from "./sharedpref.js";
 import * as pendingintent from "./pendingintent.js";
 import * as sslpinning from "./sslpinning.js";
+import * as webview from "./webview.js";
 
 const registry = new Map<string, JavaHookEntry>();
 
@@ -18,6 +19,7 @@ registry.set("intent", intent);
 registry.set("sharedpref", sharedpref);
 registry.set("pendingintent", pendingintent);
 registry.set("sslpinning", sslpinning);
+registry.set("webview", webview);
 
 const { list, status, start, stop } = createJava(registry);
 export { list, status, start, stop };
