@@ -14,6 +14,7 @@ import * as resources from "./modules/resources.js";
 import * as rn from "./modules/rn.js";
 import * as receivers from "./modules/receivers.js";
 import * as services from "./modules/services.js";
+import * as webview from "./modules/webview.js";
 
 import * as pins from "./pins.js";
 
@@ -50,4 +51,5 @@ export default {
   syslog,
   pins,
   threads,
+  webview,
 };

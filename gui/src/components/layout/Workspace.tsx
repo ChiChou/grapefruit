@@ -66,6 +66,7 @@ import { PrivacyTab } from "../tabs/PrivacyTab";
 import { XCPrivacyTab } from "../tabs/XCPrivacyTab";
 import { DroidHttpTab } from "../tabs/DroidHttpTab";
 import { DroidResourcesTab } from "../tabs/DroidResourcesTab";
+import { DroidWebViewTab } from "../tabs/DroidWebViewTab";
 import { AssetCatalogTab } from "../tabs/AssetCatalogTab";
 import { ChecksecTab } from "../tabs/ChecksecTab";
 import { CryptoTab } from "../tabs/CryptoTab";
@@ -203,6 +204,7 @@ function WorkspaceContent() {
     xcprivacy: XCPrivacyTab,
     droidHttp: DroidHttpTab,
     droidResources: DroidResourcesTab,
+    droidWebview: DroidWebViewTab,
     assetCatalog: AssetCatalogTab,
     checksec: ChecksecTab,
     crypto: CryptoTab,
