@@ -5,6 +5,7 @@ import * as clipboard from "./clipboard.js";
 import * as broadcast from "./broadcast.js";
 import * as intent from "./intent.js";
 import * as sharedpref from "./sharedpref.js";
+import * as webview from "./webview.js";
 
 const registry = new Map<string, JavaHookEntry>();
 
@@ -12,6 +13,7 @@ registry.set("clipboard", clipboard);
 registry.set("broadcast", broadcast);
 registry.set("intent", intent);
 registry.set("sharedpref", sharedpref);
+registry.set("webview", webview);
 
 const { list, status, start, stop } = createJava(registry);
 export { list, status, start, stop };
