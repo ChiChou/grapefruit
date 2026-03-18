@@ -39,22 +39,33 @@ export function FontPreviewTab({
     "The quick brown fox jumps over the lazy dog";
 
   useEffect(() => {
+    let cancelled = false;
+    let loadedFace: FontFace | null = null;
+
     const loadFont = async () => {
       setHasError(false);
       setIsLoading(true);
       try {
         const fontFace = new FontFace("PreviewFont", `url('${fontUrl}')`);
         await fontFace.load();
+        if (cancelled) return;
         document.fonts.add(fontFace);
+        loadedFace = fontFace;
       } catch (e) {
+        if (cancelled) return;
         console.error("Failed to load font preview", e);
         setHasError(true);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
 
     loadFont();
+
+    return () => {
+      cancelled = true;
+      if (loadedFace) document.fonts.delete(loadedFace);
+    };
   }, [fontUrl]);
 
   useEffect(() => {

@@ -76,10 +76,6 @@ export function SQLiteEditorTab({
     mutationFn: ({ sql }) => sqlite!.query(fullPath, sql),
   });
 
-  useEffect(() => {
-    setFilteredTables(tables);
-  }, [tables]);
-
   const loadTableData = async (tableName: string) => {
     const sql = `SELECT * FROM "${tableName.replace(/"/g, '""')}" LIMIT 500`;
     setSqlCode(sql);
