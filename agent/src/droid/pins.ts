@@ -15,6 +15,7 @@ interface PinEntry {
 }
 
 const BUILTIN_GROUPS = [
+  "classloader",
   "clipboard",
   "broadcast",
   "intent",

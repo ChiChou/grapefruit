@@ -1,6 +1,7 @@
 import { createJava, type JavaHookEntry } from "@/common/hooks/group.js";
 import * as native from "@/common/hooks/native.js";
 
+import * as classloader from "./classloader.js";
 import * as clipboard from "./clipboard.js";
 import * as broadcast from "./broadcast.js";
 import * as intent from "./intent.js";
@@ -10,6 +11,7 @@ import * as sslpinning from "./sslpinning.js";
 
 const registry = new Map<string, JavaHookEntry>();
 
+registry.set("classloader", classloader);
 registry.set("clipboard", clipboard);
 registry.set("broadcast", broadcast);
 registry.set("intent", intent);
