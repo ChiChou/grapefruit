@@ -175,7 +175,7 @@ export function imports(path: string, belongs: string): Imported[] {
 
       return {
         name,
-        addr: address?.toString() || "",
+        addr: address?.strip().toString() || "",
         demangled,
         type: t,
       };
@@ -199,7 +199,7 @@ export function sections(path: string): Section[] {
     .enumerateSections()
     .map((sec) => {
       const { name, address, size } = sec;
-      return { name, addr: address.toString(), size };
+      return { name, addr: address.strip().toString(), size };
     });
 }
 
@@ -222,7 +222,7 @@ export function symbols(path: string): Symbol[] {
 
       return {
         name,
-        addr: address.toString(),
+        addr: address.strip().toString(),
         demangled,
       };
     });
@@ -236,7 +236,7 @@ export function exports(path: string): Exported[] {
       const demangled = tryDemangle(name);
       return {
         name,
-        addr: address.toString(),
+        addr: address.strip().toString(),
         demangled,
         type: type === "function" ? "f" : "v",
       };
@@ -269,7 +269,7 @@ export function importsGrouped(path: string): ImportGroup[] {
 
     grouped.get(moduleName)!.push({
       name: imp.name,
-      addr: imp.address?.toString() || "",
+      addr: imp.address?.strip().toString() || "",
       demangled: tryDemangle(imp.name),
       type: t,
     });
