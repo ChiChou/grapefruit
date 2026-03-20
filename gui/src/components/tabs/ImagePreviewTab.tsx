@@ -11,6 +11,7 @@ export interface ImagePreviewTabParams {
 export function ImagePreviewTab({ params }: IDockviewPanelProps<ImagePreviewTabParams>) {
   const { pid, device } = useSession();
   const [zoom, setZoom] = useState(100);
+  const [loadError, setLoadError] = useState(false);
 
   const fullPath = params?.path || "";
 
@@ -60,22 +61,21 @@ export function ImagePreviewTab({ params }: IDockviewPanelProps<ImagePreviewTabP
       </div>
       <div className="flex-1 overflow-auto p-4 bg-background">
         <div className="flex items-center justify-center min-h-full">
-          <img
-            src={imageUrl}
-            alt={fullPath}
-            style={{ transform: `scale(${zoom / 100})` }}
-            className="max-w-none transition-transform duration-75"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-              e.currentTarget.parentElement!.innerHTML = `
-                <div class="text-foreground text-center">
-                  <div class="text-4xl mb-2">🖼️</div>
-                  <div>Failed to load image</div>
-                  <div class="text-sm text-muted-foreground mt-2">${fullPath}</div>
-                </div>
-              `;
-            }}
-          />
+          {loadError ? (
+            <div className="text-foreground text-center">
+              <div className="text-4xl mb-2">🖼️</div>
+              <div>Failed to load image</div>
+              <div className="text-sm text-muted-foreground mt-2">{fullPath}</div>
+            </div>
+          ) : (
+            <img
+              src={imageUrl}
+              alt={fullPath}
+              style={{ transform: `scale(${zoom / 100})` }}
+              className="max-w-none transition-transform duration-75"
+              onError={() => setLoadError(true)}
+            />
+          )}
         </div>
       </div>
     </div>
