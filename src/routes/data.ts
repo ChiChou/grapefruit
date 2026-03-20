@@ -19,6 +19,11 @@ import { createPinStore } from "../lib/store/pins.ts";
 import { toHAR } from "../lib/har.ts";
 const LOG_TAIL_BYTES = 1024 * 1024; // 1MB
 
+/** Reject path segments that escape the data directory */
+function isSafeSegment(s: string): boolean {
+  return s !== "" && s !== "." && s !== ".." && !s.includes("/") && !s.includes("\\");
+}
+
 interface QueryOptions {
   limit?: number;
   offset?: number;
@@ -227,6 +232,10 @@ const routes = new Hono()
       return c.text("invalid log type", 400);
     }
 
+    if (!isSafeSegment(deviceId) || !isSafeSegment(identifier)) {
+      return c.text("invalid parameters", 400);
+    }
+
     const filename = `${type}.log`;
     const logPath = nodePath.join(
       nodePath.join(env.workdir, "data"),
@@ -271,6 +280,10 @@ const routes = new Hono()
   .delete("/logs/:device/:identifier", async (c) => {
     const deviceId = c.req.param("device");
     const identifier = c.req.param("identifier");
+
+    if (!isSafeSegment(deviceId) || !isSafeSegment(identifier)) {
+      return c.text("invalid parameters", 400);
+    }
 
     const logsDir = nodePath.join(nodePath.join(env.workdir, "data"), "logs", deviceId, identifier);
     await fs.rm(logsDir, { recursive: true, force: true });
