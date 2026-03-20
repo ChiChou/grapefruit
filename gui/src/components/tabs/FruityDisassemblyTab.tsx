@@ -87,6 +87,7 @@ export function FruityDisassemblyTab({
         <span className="text-xs font-mono">{params?.name || address}</span>
       </div>
       <div className="disassembly-view flex-1 overflow-auto p-3">
+        {/* r2 WASM output — trusted local source, not user input */}
         <div dangerouslySetInnerHTML={{ __html: html }} />
       </div>
     </div>
