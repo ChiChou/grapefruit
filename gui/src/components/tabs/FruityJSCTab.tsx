@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -35,6 +36,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { useFruityQuery, useFruityMutation } from "@/lib/queries";
 
+import type { JSContextInfo } from "@agent/fruity/modules/jsc";
+
 // Configure Monaco for JSC JavaScript (no DOM, just ESNext)
 function handleEditorWillMount(monaco: Monaco) {
   monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
@@ -49,10 +52,7 @@ function handleEditorWillMount(monaco: Monaco) {
   });
 }
 
-interface JSCEntry {
-  handle: string;
-  description: string;
-}
+type JSCEntry = JSContextInfo;
 
 function ValueIcon({ value }: { value: unknown }) {
   if (value === null || value === undefined) {
@@ -281,10 +281,10 @@ export function FruityJSCTab() {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
   const {
-    data: contexts,
+    data: entries = [],
     isLoading,
     refetch,
-  } = useFruityQuery<Record<string, string>>(["jsc"], (api) => api.jsc.list());
+  } = useFruityQuery<JSCEntry[]>(["jsc"], (api) => api.jsc.list());
 
   const runMutation = useFruityMutation<string, { handle: string; js: string }>(
     (api, { handle, js }) => api.jsc.run(handle, js),
@@ -295,12 +295,10 @@ export function FruityJSCTab() {
     { handle: string }
   >((api, { handle }) => api.jsc.dump(handle));
 
-  const entries: JSCEntry[] = [];
-  if (contexts) {
-    for (const [handle, description] of Object.entries(contexts)) {
-      entries.push({ handle, description });
-    }
-  }
+  const inspectableMutation = useFruityMutation(
+    (api, { handle, enabled }: { handle: string; enabled: boolean }) =>
+      api.jsc.setInspectable(handle, enabled),
+  );
 
   const selectedEntry =
     entries.find((e) => e.handle === selectedHandle) ?? null;
@@ -390,7 +388,7 @@ export function FruityJSCTab() {
                           {entry.handle}
                         </TableCell>
                         <TableCell
-                          className="font-mono text-sm truncate max-w-[200px]"
+                          className="font-mono text-sm truncate max-w-50"
                           title={entry.description}
                         >
                           {entry.description}
@@ -424,6 +422,25 @@ export function FruityJSCTab() {
                           REPL
                         </TabsTrigger>
                       </TabsList>
+                      {selectedEntry.inspectable !== undefined && (
+                        <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                          Inspectable
+                          <Switch
+                            size="sm"
+                            checked={selectedEntry.inspectable}
+                            onCheckedChange={(checked) => {
+                              inspectableMutation.mutate(
+                                {
+                                  handle: selectedEntry.handle,
+                                  enabled: checked,
+                                },
+                                { onSuccess: () => refetch() },
+                              );
+                            }}
+                            disabled={inspectableMutation.isPending}
+                          />
+                        </label>
+                      )}
                     </div>
 
                     <TabsContent value="dump" className="flex-1 min-h-0">

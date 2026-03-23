@@ -6,7 +6,6 @@ import {
   RefreshCw,
   Play,
   Globe,
-  ExternalLink,
   Check,
   X,
   Navigation,
@@ -15,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -104,7 +104,7 @@ export function FruityWebViewTab() {
 
 document.title`);
   const [jsResult, setJsResult] = useState<string | null>(null);
-  const [navigateUrl, setNavigateUrl] = useState("");
+  const [urlBar, setUrlBar] = useState("");
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
   const {
@@ -135,6 +135,13 @@ document.title`);
     ) => api.webview.navigate(kind, handle, url),
   );
 
+  const inspectableMutation = useFruityMutation(
+    (
+      api,
+      { handle, enabled }: { handle: string; enabled: boolean },
+    ) => api.webview.setInspectable(handle, enabled),
+  );
+
   const entries: WebViewEntry[] = [...wkWebviews, ...uiWebviews];
   const selectedEntry =
     entries.find((e) => e.handle === selectedHandle) ?? null;
@@ -151,6 +158,8 @@ document.title`);
     } else {
       setSelectedHandle(handle);
       setJsResult(null);
+      const entry = entries.find((e) => e.handle === handle);
+      setUrlBar(entry?.url || "");
     }
   };
 
@@ -168,14 +177,13 @@ document.title`);
   };
 
   const doNavigate = async (entry: WebViewEntry) => {
-    if (!navigateUrl) return;
+    if (!urlBar || urlBar === entry.url) return;
     try {
       await navigateMutation.mutateAsync({
         kind: entry.kind,
         handle: entry.handle,
-        url: navigateUrl,
+        url: urlBar,
       });
-      setNavigateUrl("");
       refetch();
     } catch (e) {
       console.error("Failed to navigate:", e);
@@ -288,6 +296,26 @@ document.title`);
                       <span className="font-mono text-xs text-muted-foreground">
                         {selectedEntry.handle}
                       </span>
+                      {isWKWebView(selectedEntry) &&
+                        selectedEntry.inspectable !== undefined && (
+                          <label className="flex items-center gap-1.5 ml-auto text-xs text-muted-foreground cursor-pointer">
+                            Inspectable
+                            <Switch
+                              size="sm"
+                              checked={selectedEntry.inspectable}
+                              onCheckedChange={(checked) => {
+                                inspectableMutation.mutate(
+                                  {
+                                    handle: selectedEntry.handle,
+                                    enabled: checked,
+                                  },
+                                  { onSuccess: () => refetch() },
+                                );
+                              }}
+                              disabled={inspectableMutation.isPending}
+                            />
+                          </label>
+                        )}
                     </div>
 
                     {/* WKWebView-specific properties */}
@@ -331,58 +359,35 @@ document.title`);
                       </div>
                     )}
 
-                    {/* Current URL */}
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Globe className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm font-medium">
-                          {t("current_url")}
-                        </span>
-                      </div>
-                      <div className="font-mono text-sm bg-muted p-2 rounded flex items-center gap-2">
-                        <span className="truncate flex-1">
-                          {selectedEntry.url || "about:blank"}
-                        </span>
-                        {selectedEntry.url && (
-                          <a
-                            href={selectedEntry.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-amber-500 hover:text-amber-600 shrink-0"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Navigate */}
-                    <div>
-                      <div className="text-sm font-medium mb-2">
-                        {t("navigate_to_url")}
-                      </div>
-                      <ButtonGroup className="w-full">
-                        <Input
-                          placeholder="https://example.com"
-                          value={navigateUrl}
-                          onChange={(e) => setNavigateUrl(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && navigateUrl) {
-                              doNavigate(selectedEntry);
-                            }
-                          }}
-                          className="flex-1"
-                        />
-                        <Button
-                          variant="outline"
-                          onClick={() => doNavigate(selectedEntry)}
-                          disabled={!navigateUrl || navigateMutation.isPending}
-                          title={t("navigate")}
-                        >
-                          <Navigation className="w-4 h-4" />
-                        </Button>
-                      </ButtonGroup>
-                    </div>
+                    {/* URL Bar */}
+                    <ButtonGroup className="w-full">
+                      <span className="inline-flex items-center px-2 border border-r-0 rounded-l-md bg-muted text-muted-foreground">
+                        <Globe className="w-4 h-4" />
+                      </span>
+                      <Input
+                        placeholder="about:blank"
+                        value={urlBar}
+                        onChange={(e) => setUrlBar(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            doNavigate(selectedEntry);
+                          }
+                        }}
+                        className="flex-1 font-mono text-sm rounded-l-none"
+                      />
+                      <Button
+                        variant="outline"
+                        onClick={() => doNavigate(selectedEntry)}
+                        disabled={
+                          !urlBar ||
+                          urlBar === selectedEntry.url ||
+                          navigateMutation.isPending
+                        }
+                        title={t("navigate")}
+                      >
+                        <Navigation className="w-4 h-4" />
+                      </Button>
+                    </ButtonGroup>
 
                     {/* Execute JavaScript - fills remaining space */}
                     <div className="flex flex-col flex-1 min-h-0">
