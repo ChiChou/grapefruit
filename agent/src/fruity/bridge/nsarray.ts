@@ -1,10 +1,10 @@
 import ObjC from "frida-objc-bridge";
 import type { NSArray, NSObject } from "@/fruity/typings.js";
 
-export function* iterateNSArray(arr: NSArray<NSObject>) {
+export function* iterateNSArray<T = NSObject>(arr: NSArray<NSObject>) {
   if (!arr.isKindOfClass_(ObjC.classes.NSArray))
     throw new Error(`Unexpected class ${arr.$className}`);
 
   const count = arr.count();
-  for (let i = 0; i < count; i++) yield arr.objectAtIndex_(i);
+  for (let i = 0; i < count; i++) yield arr.objectAtIndex_(i) as T;
 }

@@ -1,6 +1,6 @@
 import ObjC from "frida-objc-bridge";
 
-export function performOnMainThread<T>(action: () => T): Promise<T> {
+export function performOnMainThread<T>(action: () => T): Promise<Awaited<T>> {
   const { NSThread } = ObjC.classes;
 
   return new Promise((resolve, reject) => {

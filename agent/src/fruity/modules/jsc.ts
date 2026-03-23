@@ -14,17 +14,47 @@ import { getTracker } from "@/fruity/lib/weak.js";
 interface JSContext extends NSObject {
   evaluateScript_(script: StringLike): NSObject;
   objectForKeyedSubscript_(key: StringLike): NSObject;
+  isInspectable(): boolean;
+  setInspectable_(value: boolean): void;
 }
 
-export function list() {
+function supportsInspector() {
+  return typeof ObjC.classes.JSContext?.["- isInspectable"] === "function";
+}
+
+export interface JSContextInfo {
+  handle: string;
+  description: string;
+  inspectable?: boolean;
+}
+
+export function list(): JSContextInfo[] {
   const t = getTracker();
-  const result = new Map<string, string>();
+  const canInspect = supportsInspector();
+  const results: JSContextInfo[] = [];
   for (const instance of ObjC.chooseSync(ObjC.classes.JSContext)) {
     const handle = instance.handle.toString();
     t.put(handle, instance);
-    result.set(handle, instance.toString());
+    const ctx = instance as JSContext;
+    const info: JSContextInfo = {
+      handle,
+      description: instance.toString(),
+    };
+
+    if (canInspect) {
+      info.inspectable = ctx.isInspectable();
+    }
+    results.push(info);
   }
-  return Object.fromEntries(result);
+  return results;
+}
+
+export function setInspectable(handle: string, enabled: boolean): void {
+  if (!supportsInspector()) {
+    throw new Error("JSContext.inspectable requires iOS 16.4+");
+  }
+  const ctx = get(handle);
+  ctx.setInspectable_(enabled);
 }
 
 function get(handle: string): JSContext {
@@ -144,16 +174,21 @@ export function dump(handle: string) {
   const funcClass = jsc.evaluateScript_("Function");
 
   const result = new Map<string, DumpValue>();
-  for (const key of iterateNSArray(topKeys)) {
-    const val = jsc.objectForKeyedSubscript_(key as NSString);
+  for (const key of iterateNSArray<NSString>(topKeys)) {
+    const val = jsc.objectForKeyedSubscript_(key);
     if (!val.isObject()) continue;
     const obj = val.toObject();
     if (val.isInstanceOf_(funcClass)) {
       if (obj.isKindOfClass_(ObjC.classes.NSBlock)) {
-        const p = obj.handle.add(Process.pointerSize * 2).readPointer();
-        const { moduleName, name } = DebugSymbol.fromAddress(p);
-        const fallback = name ?? `0x${p.toString(16)}`;
-        const invoke = moduleName ? `${moduleName}!${fallback}` : fallback;
+        let invoke: string;
+        try {
+          const p = obj.handle.add(Process.pointerSize * 2).readPointer();
+          const { moduleName, name } = DebugSymbol.fromAddress(p);
+          const fallback = name ?? `0x${p.toString(16)}`;
+          invoke = moduleName ? `${moduleName}!${fallback}` : fallback;
+        } catch {
+          invoke = "<unreadable>";
+        }
 
         result.set(`${key}`, {
           type: "block",
@@ -166,15 +201,9 @@ export function dump(handle: string) {
           source: val.toString(),
         });
       }
-
-      if (val.toString().includes("[native code]")) {
-        console.log(obj.$className);
-      }
-
       continue;
     }
     result.set(`${key}`, serialize(obj));
-    console.log(key, Dictionary.description(obj));
   }
   return Object.fromEntries(result);
 }

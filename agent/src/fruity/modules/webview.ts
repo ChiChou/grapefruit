@@ -44,6 +44,8 @@ interface WKWebView extends NSObject {
   ): void;
   URL(): NSURL;
   loadRequest_(req: NSURLRequest): void;
+  isInspectable(): boolean;
+  setInspectable_(value: number): void;
 }
 
 interface WebScriptObject extends NSObject {
@@ -76,33 +78,27 @@ export interface WKWebViewInfo extends WebViewInfo {
   universalFileAccess?: boolean; // allowUniversalAccessFromFileURLs
   secure?: boolean; // iOS 16.4+ contentBlockersEnabled
   jsAutoOpenWindow: boolean; // javaScriptCanOpenWindowsAutomatically
+  inspectable?: boolean; // iOS 16.4+ isInspectable
 }
 
 export type UIWebViewInfo = WebViewInfo;
 
-function choose(clazz: ObjC.Object): Promise<ObjC.Object[]> {
-  return new Promise((resolve) => {
-    const instances: ObjC.Object[] = [];
-    ObjC.choose(clazz, {
-      onMatch(instance) {
-        instances.push(instance);
-      },
-      onComplete() {
-        resolve(instances);
-      },
-    });
-  });
+function supportsInspector() {
+  return typeof ObjC.classes.WKWebView?.["- isInspectable"] === "function";
 }
 
-export async function listWK(): Promise<WKWebViewInfo[]> {
+export function listWK(): Promise<WKWebViewInfo[]> {
   const { WKWebView } = ObjC.classes;
-  if (!WKWebView) return [];
+  if (!WKWebView) return Promise.resolve([]);
 
   const kind = "WK";
-  const instances = await choose(WKWebView);
+  const canInspect = supportsInspector();
 
-  return Promise.all(
-    instances.map((instance) => {
+  return performOnMainThread(async () => {
+    const instances = ObjC.chooseSync({ class: WKWebView, subclasses: true });
+    const results: WKWebViewInfo[] = [];
+
+    for (const instance of instances) {
       const webview = instance as WKWebView;
       const handle = instance.handle.toString();
       getTracker().put(handle, instance);
@@ -111,51 +107,54 @@ export async function listWK(): Promise<WKWebViewInfo[]> {
       const pref = conf.preferences();
       const webpagePref = conf.defaultWebpagePreferences();
 
-      return performOnMainThread(async () => {
-        const url = webview.URL()?.toString() ?? "";
-        const title = await WKGetTitle(webview);
+      const url = webview.URL()?.toString() ?? "";
+      const title = await WKGetTitle(webview);
 
-        return {
-          handle,
-          kind,
-          url,
-          title,
-          js: pref.javaScriptEnabled(),
-          contentJs: webpagePref.allowsContentJavaScript(),
-          jsAutoOpenWindow: pref.javaScriptCanOpenWindowsAutomatically(),
-        } as WKWebViewInfo;
-      });
-    }),
-  );
+      const info: WKWebViewInfo = {
+        handle,
+        kind,
+        url,
+        title,
+        js: pref.javaScriptEnabled(),
+        contentJs: webpagePref.allowsContentJavaScript(),
+        jsAutoOpenWindow: pref.javaScriptCanOpenWindowsAutomatically(),
+      };
+
+      if (canInspect) {
+        info.inspectable = webview.isInspectable();
+      }
+
+      results.push(info);
+    }
+
+    return results;
+  });
 }
 
-export async function listUI(): Promise<UIWebViewInfo[]> {
+export function listUI(): Promise<UIWebViewInfo[]> {
   const { UIWebView } = ObjC.classes;
-  if (!UIWebView) return [];
+  if (!UIWebView) return Promise.resolve([]);
 
   const kind = "UI";
-  const instances = await choose(UIWebView);
 
-  return Promise.all(
-    instances.map((instance) => {
+  return performOnMainThread(() => {
+    const instances = ObjC.chooseSync(UIWebView);
+    const results: UIWebViewInfo[] = [];
+
+    for (const instance of instances) {
       const webview = instance as UIWebView;
       const handle = instance.handle.toString();
       getTracker().put(handle, instance);
 
-      return performOnMainThread(() => {
-        const req = webview.request();
-        const url = req?.mainDocumentURL()?.toString() ?? "";
-        const title = UIGetTitle(webview);
+      const req = webview.request();
+      const url = req?.mainDocumentURL()?.toString() ?? "";
+      const title = UIGetTitle(webview);
 
-        return {
-          handle,
-          kind,
-          url,
-          title,
-        } as UIWebViewInfo;
-      });
-    }),
-  );
+      results.push({ handle, kind, url, title });
+    }
+
+    return results;
+  });
 }
 
 function WKGetTitle(webview: WKWebView) {
@@ -240,6 +239,22 @@ export async function navigate(
     const u = ObjC.classes.NSURL.URLWithString_(url);
     const req = ObjC.classes.NSURLRequest.requestWithURL_(u);
     webview.loadRequest_(req);
+  });
+}
+
+export async function setInspectable(
+  handle: string,
+  enabled: boolean,
+): Promise<void> {
+  const canInspect = supportsInspector();
+  if (!canInspect) {
+    throw new Error("setInspectable requires iOS 16.4+");
+  }
+
+  const instance = getTracker().get(handle);
+  return performOnMainThread(() => {
+    const webview = instance as WKWebView;
+    webview.setInspectable_(enabled ? 1 : 0);
   });
 }
 
