@@ -267,6 +267,7 @@ function WorkspaceContent() {
           autoSaveId="workspace-left-split"
         >
           <ResizablePanel
+            id="left"
             defaultSize="20%"
             minSize="15%"
             className="flex flex-col"
@@ -274,7 +275,7 @@ function WorkspaceContent() {
             <LeftPanelView />
           </ResizablePanel>
           <ResizableHandle withHandle />
-          <ResizablePanel>
+          <ResizablePanel id="main">
             <ResizablePanelGroup
               orientation="vertical"
               className="h-full"
