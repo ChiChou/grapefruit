@@ -1,4 +1,6 @@
 import RemoteStreamController from "frida-remote-stream";
+import { Readable } from "node:stream";
+import type { StreamingApi } from "hono/utils/stream";
 import type { Device, ScriptExports, ScriptMessageHandler } from "./xvii.ts";
 import { agent } from "./assets.ts";
 
@@ -17,6 +19,22 @@ export class Transport {
   async close(): Promise<void> {
     await this.script.unload();
     await this.session.detach();
+  }
+
+  /** Pull a remote stream and pipe it into a Hono streaming response. */
+  async pipe(streamer: StreamingApi, pull: () => Promise<void>): Promise<void> {
+    await Promise.all([
+      new Promise<void>((resolve) => {
+        this.controller.events.on("stream", async (incoming: Readable) => {
+          for await (const chunk of incoming) {
+            await streamer.write(chunk);
+          }
+          await this.close();
+          resolve();
+        });
+      }),
+      pull(),
+    ]);
   }
 }
 

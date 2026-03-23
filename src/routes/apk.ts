@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
-import { Readable } from "node:stream";
 import { create as createTransport } from "../lib/transport.ts";
 import { getDeviceMiddleware } from "../lib/middleware.ts";
 
@@ -32,20 +31,9 @@ const routes = new Hono()
       `attachment; filename="${fileName}"`,
     );
 
-    return stream(c, async (streamer) => {
-      await Promise.all([
-        new Promise<void>((resolve) => {
-          controller.events.on("stream", async (incomingStream: Readable) => {
-            for await (const chunk of incomingStream) {
-              await streamer.write(chunk);
-            }
-            await transport.close();
-            resolve();
-          });
-        }),
-        script.exports.pullZip(apkPath, entry),
-      ]);
-    });
+    return stream(c, (streamer) =>
+      transport.pipe(streamer, () => script.exports.pullZip(apkPath, entry)),
+    );
   });
 
 export default routes;

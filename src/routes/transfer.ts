@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
-import { Readable } from "node:stream";
 import { create as createTransport } from "../lib/transport.ts";
 import { getDeviceMiddleware } from "../lib/middleware.ts";
 
@@ -33,20 +32,9 @@ const routes = new Hono()
       `attachment; filename="${path.split("/").pop()}"`,
     );
 
-    return stream(c, async (streamer) => {
-      await Promise.all([
-        new Promise<void>((resolve) => {
-          controller.events.on("stream", async (incomingStream: Readable) => {
-            for await (const chunk of incomingStream) {
-              await streamer.write(chunk);
-            }
-            await transport.close();
-            resolve();
-          });
-        }),
-        script.exports.pull(path),
-      ]);
-    });
+    return stream(c, (streamer) =>
+      transport.pipe(streamer, () => script.exports.pull(path)),
+    );
   })
   .on(["HEAD", "GET"], "/dump/:device/:pid", getDeviceMiddleware, async (c) => {
     const path = c.req.query("path");
@@ -132,20 +120,9 @@ const routes = new Hono()
       `attachment; filename="${name}"`,
     );
 
-    return stream(c, async (streamer) => {
-      await Promise.all([
-        new Promise<void>((resolve) => {
-          controller.events.on("stream", async (incomingStream: Readable) => {
-            for await (const chunk of incomingStream) {
-              await streamer.write(chunk);
-            }
-            await transport.close();
-            resolve();
-          });
-        }),
-        script.exports.pullResource(type, name),
-      ]);
-    });
+    return stream(c, (streamer) =>
+      transport.pipe(streamer, () => script.exports.pullResource(type, name)),
+    );
   })
   .post("/upload/:device/:pid", getDeviceMiddleware, async (c) => {
     const formBody = await c.req.parseBody();
