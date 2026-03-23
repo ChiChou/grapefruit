@@ -54,9 +54,9 @@ function createHistoryRoutes<TRecord>(config: {
     const deviceId = c.req.param("device");
     const identifier = c.req.param("identifier");
 
-    const limit = parseInt(
-      c.req.query("limit") || String(config.defaultLimit),
-      10,
+    const limit = Math.min(
+      parseInt(c.req.query("limit") || String(config.defaultLimit), 10),
+      10000,
     );
     const offset = parseInt(c.req.query("offset") || "0", 10);
     const since = c.req.query("since");
@@ -319,7 +319,7 @@ const routes = new Hono()
     const deviceId = c.req.param("device");
     const identifier = c.req.param("identifier");
 
-    const limit = parseInt(c.req.query("limit") || "5000", 10);
+    const limit = Math.min(parseInt(c.req.query("limit") || "5000", 10), 10000);
     const offset = parseInt(c.req.query("offset") || "0", 10);
 
     try {
@@ -407,7 +407,7 @@ const routes = new Hono()
     const deviceId = c.req.param("device");
     const identifier = c.req.param("identifier");
 
-    const limit = parseInt(c.req.query("limit") || "5000", 10);
+    const limit = Math.min(parseInt(c.req.query("limit") || "5000", 10), 10000);
     const offset = parseInt(c.req.query("offset") || "0", 10);
 
     try {
