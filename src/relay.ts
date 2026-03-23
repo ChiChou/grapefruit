@@ -3,7 +3,7 @@ import fs from "node:fs";
 import { styleText } from "node:util";
 
 import { asset } from "./lib/assets.ts";
-import type { LogWriter } from "./lib/log-writer.ts";
+import type { Writer } from "./lib/log.ts";
 import type { NSURLEvent } from "./lib/store/nsurl.ts";
 import type { XPCEvent } from "./lib/store/xpc.ts";
 import type { BaseMessage } from "@agent/common/hooks/context";
@@ -33,7 +33,7 @@ export function setup(
   script: Awaited<
     ReturnType<typeof import("frida").Session.prototype.createScript>
   >,
-  logger: LogWriter,
+  logger: Writer,
   stores: SessionStores,
 ) {
   const requestsWithBody = new Set<string>();

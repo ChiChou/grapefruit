@@ -3,7 +3,7 @@ import path from "node:path";
 
 import env from "./env.ts";
 
-export class LogWriter {
+export class Writer {
   private syslog: fs.FileHandle;
   private agentLog: fs.FileHandle;
 
@@ -12,22 +12,28 @@ export class LogWriter {
     this.agentLog = agentLog;
   }
 
-  static async open(deviceId: string, identifier: string): Promise<LogWriter> {
-    const logsDir = path.join(env.workdir, "data", "logs", deviceId, identifier);
+  static async open(deviceId: string, identifier: string): Promise<Writer> {
+    const logsDir = path.join(
+      env.workdir,
+      "data",
+      "logs",
+      deviceId,
+      identifier,
+    );
     await fs.mkdir(logsDir, { recursive: true });
     const [syslog, agentLog] = await Promise.all([
       fs.open(path.join(logsDir, "syslog.log"), "a"),
       fs.open(path.join(logsDir, "agent.log"), "a"),
     ]);
-    return new LogWriter(syslog, agentLog);
+    return new Writer(syslog, agentLog);
   }
 
   appendSyslog(text: string) {
-    this.syslog.appendFile(text + "\n");
+    this.syslog.appendFile(text + "\n").catch(() => {});
   }
 
   appendAgentLog(level: string, text: string) {
-    this.agentLog.appendFile(`[${level}] ${text}\n`);
+    this.agentLog.appendFile(`[${level}] ${text}\n`).catch(() => {});
   }
 
   async empty(type: "syslog" | "agent") {

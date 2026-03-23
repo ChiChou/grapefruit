@@ -4,7 +4,7 @@ import frida from "./lib/xvii.ts";
 import env from "./lib/env.ts";
 import { agent } from "./lib/assets.ts";
 import { check as isRestrictedBundle } from "./lib/regulation.ts";
-import { LogWriter } from "./lib/log-writer.ts";
+import { Writer } from "./lib/log.ts";
 import { fnv1a } from "./lib/hash.ts";
 import { NSURLStore } from "./lib/store/nsurl.ts";
 import { HttpStore } from "./lib/store/http.ts";
@@ -68,7 +68,7 @@ function setupSocketHandlers(
     ReturnType<typeof import("frida").Session.prototype.createScript>
   >,
   session: Awaited<ReturnType<typeof import("frida").Device.prototype.attach>>,
-  logger: LogWriter,
+  logger: Writer,
 ) {
   session.detached.connect((reason, crash) => {
     console.error("session detached:", reason, crash);
@@ -125,9 +125,7 @@ function setupSocketHandlers(
       logger
         .empty(type)
         .then(() => ack(null, true))
-        .catch((err) =>
-          ack(rpcErrorMessage("log", "clearLog", err), null),
-        );
+        .catch((err) => ack(rpcErrorMessage("log", "clearLog", err), null));
     })
     .on("disconnect", () => {
       console.info("socket disconnected");
@@ -213,7 +211,7 @@ export async function connect(socket: SessionSocket, params: SessionParams) {
     privacy: new PrivacyStore(deviceId, identifier),
   };
 
-  const logHandles = await LogWriter.open(deviceId, identifier);
+  const logHandles = await Writer.open(deviceId, identifier);
   const script = await session.createScript(await agent(platform));
 
   setupRelay(socket, script, logHandles, stores);
