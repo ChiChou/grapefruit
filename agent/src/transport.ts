@@ -46,7 +46,10 @@ rpc.exports.pullZip = function (apkPath: string, entryName: string) {
 
       const inputStream = zip.getInputStream(entry);
       // Java.array() returns a Java Wrapper at runtime despite any[] typedef
-      const buffer = Java.array("byte", new Array(DUMP_CHUNK_SIZE).fill(0)) as unknown as Java.Wrapper;
+      const buffer = Java.array(
+        "byte",
+        new Array(DUMP_CHUNK_SIZE).fill(0),
+      ) as unknown as Java.Wrapper;
       const label = `${Process.id}:zip:${apkPath}:${entryName}`;
       const controller = new RemoteStreamController();
 
@@ -100,7 +103,8 @@ rpc.exports.resourceLen = function (type: string, name: string): number {
   let result = -1;
   Java.perform(() => {
     const ActivityThread = Java.use("android.app.ActivityThread");
-    const appContext = ActivityThread.currentApplication().getApplicationContext();
+    const appContext =
+      ActivityThread.currentApplication().getApplicationContext();
     const resources = appContext.getResources();
     const packageName = appContext.getPackageName();
 
@@ -123,7 +127,8 @@ rpc.exports.resourceLen = function (type: string, name: string): number {
 rpc.exports.pullResource = function (type: string, name: string) {
   Java.perform(() => {
     const ActivityThread = Java.use("android.app.ActivityThread");
-    const appContext = ActivityThread.currentApplication().getApplicationContext();
+    const appContext =
+      ActivityThread.currentApplication().getApplicationContext();
     const resources = appContext.getResources();
     const packageName = appContext.getPackageName();
 
@@ -253,10 +258,10 @@ rpc.exports.dump = function (filePath: string): void {
 
   const mod = Module.load(filePath);
   const macho = parseMachO(mod);
-  const encLC = macho.loadCommands.find(
+  const loadCommand = macho.loadCommands.find(
     (lc) => lc.cmd === LC_ENCRYPTION_INFO_64 || lc.cmd === LC_ENCRYPTION_INFO,
   );
-  const encInfo = encLC ? readEncryptionInfo(encLC) : null;
+  const encInfo = loadCommand ? readEncryptionInfo(loadCommand) : null;
 
   if (!encInfo || encInfo.cryptid === 0) {
     send({ event: "info", size: fileSize });
@@ -267,8 +272,15 @@ rpc.exports.dump = function (filePath: string): void {
   }
 
   const range = Process.findRangeByAddress(mod.base);
-  const fatOffset = range!.file!.offset;
-  const encCmdOffset = encLC!.ptr.sub(mod.base).toInt32();
+  if (!range?.file || !loadCommand) {
+    send({
+      event: "error",
+      message: "failed to resolve memory range or encryption command",
+    });
+    return;
+  }
+  const fatOffset = range.file.offset;
+  const encCmdOffset = loadCommand.ptr.sub(mod.base).toInt32();
 
   send({ event: "info", size: fileSize });
   waitForAck();
