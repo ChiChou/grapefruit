@@ -39,7 +39,6 @@ describe("socket.io tests", () => {
 
         socket.on("change", () => {
           receivedChange = true;
-          console.debug("Received device change event");
           socket.disconnect();
         });
 
@@ -63,6 +62,36 @@ describe("socket.io tests", () => {
   );
 
   it(
+    "should reject session with missing params",
+    async () => {
+      const { server, io } = createTestServer();
+      await new Promise<void>((resolve) => server.listen(() => resolve()));
+
+      const { port } = server.address() as AddressInfo;
+      const socket = ioc(`http://localhost:${port}/session`, {
+        query: { device: "fake" },
+      });
+
+      try {
+        let receivedInvalid = false;
+
+        socket.on("invalid", () => {
+          receivedInvalid = true;
+          socket.disconnect();
+        });
+
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        expect(receivedInvalid).toBe(true);
+      } finally {
+        socket.disconnect();
+        await closeTestServer(server, io);
+      }
+    },
+    { timeout: 5000 },
+  );
+
+  it(
     "should run rpc tests",
     async () => {
       const deviceId = process.env.UDID;
@@ -77,27 +106,27 @@ describe("socket.io tests", () => {
       await new Promise<void>((resolve) => server.listen(() => resolve()));
 
       const { port } = server.address() as AddressInfo;
-      const query = new URLSearchParams({
-        device: deviceId,
-        bundle: "com.apple.mobilesafari",
+      const socket = ioc(`http://localhost:${port}/session`, {
+        query: {
+          device: deviceId,
+          platform: "fruity",
+          mode: "app",
+          bundle: "com.apple.mobilesafari",
+        },
       });
-      const socket = ioc(
-        `http://localhost:${port}/session?${query.toString()}`,
-      );
 
       try {
         let receivedReady = false;
 
         socket.on("ready", () => {
           receivedReady = true;
-          console.debug("Session ready, connection established");
           socket.emit("rpc", "invalid");
           socket.emit(
             "rpc",
             "fs",
             "ls",
             ["bundle"],
-            (err: Error | null, result: any) => {
+            (err: Error | null, result: unknown) => {
               console.log("rpc result:", result);
               socket.disconnect();
             },
