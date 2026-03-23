@@ -276,6 +276,13 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
       "privacy_monitor",
       "home_privacy_desc",
     ),
+    pf(
+      "droid_webview_tab",
+      "droidWebview",
+      Globe,
+      "WebViews",
+      "home_webview_desc",
+    ),
     pf("crypto_tab", "crypto", Lock, "crypto_monitor", "home_crypto_desc"),
     pf("droid_http_tab", "droidHttp", Network, "HTTP", "home_http_desc"),
     pf(

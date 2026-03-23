@@ -6,16 +6,16 @@ import {
   RefreshCw,
   Play,
   Globe,
-  ExternalLink,
-  Check,
-  X,
   Navigation,
-  AlertTriangle,
+  ShieldAlert,
+  Shield,
+  ShieldOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -25,11 +25,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
   ResizablePanelGroup,
   ResizablePanel,
   ResizableHandle,
@@ -38,6 +33,38 @@ import { useTheme } from "@/components/providers/ThemeProvider";
 import { useDroidQuery, useDroidMutation } from "@/lib/queries";
 
 import type { AndroidWebViewInfo } from "@agent/droid/modules/webview";
+
+const MIXED_CONTENT_LABELS: Record<number, string> = {
+  0: "ALWAYS_ALLOW",
+  1: "NEVER_ALLOW",
+  2: "COMPATIBILITY_MODE",
+};
+
+const RISKY_WHEN_TRUE = new Set([
+  "jsEnabled",
+  "allowFileAccess",
+  "allowContentAccess",
+  "allowFileAccessFromFileURLs",
+  "allowUniversalAccessFromFileURLs",
+  "databaseEnabled",
+  "domStorageEnabled",
+]);
+
+const RISKY_WHEN_FALSE = new Set(["safeBrowsingEnabled"]);
+
+function settingColor(key: string, value: boolean): string {
+  if (RISKY_WHEN_TRUE.has(key)) {
+    return value
+      ? "text-red-600 dark:text-red-400"
+      : "text-green-600 dark:text-green-400";
+  }
+  if (RISKY_WHEN_FALSE.has(key)) {
+    return value
+      ? "text-green-600 dark:text-green-400"
+      : "text-red-600 dark:text-red-400";
+  }
+  return "text-muted-foreground";
+}
 
 function handleEditorWillMount(monaco: Monaco) {
   monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
@@ -52,41 +79,6 @@ function handleEditorWillMount(monaco: Monaco) {
   });
 }
 
-function BooleanBadge({
-  value,
-  label,
-  danger,
-  t,
-}: {
-  value: boolean;
-  label: string;
-  danger?: boolean;
-  t: (key: string) => string;
-}) {
-  const isDanger = danger ?? value;
-  return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <span
-            className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded ${
-              isDanger
-                ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-            }`}
-          />
-        }
-      >
-        {value ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
-        {label}
-      </TooltipTrigger>
-      <TooltipContent>
-        {label}: {value ? t("enabled") : t("disabled")}
-      </TooltipContent>
-    </Tooltip>
-  );
-}
-
 export function DroidWebViewTab() {
   const { t } = useTranslation();
   const { theme } = useTheme();
@@ -96,27 +88,31 @@ export function DroidWebViewTab() {
 
 document.title`);
   const [jsResult, setJsResult] = useState<string | null>(null);
-  const [navigateUrl, setNavigateUrl] = useState("");
+  const [urlBar, setUrlBar] = useState("");
+  const [debugEnabled, setDebugEnabled] = useState(false);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
   const {
     data: webviews = [],
     isLoading,
     refetch,
-  } = useDroidQuery(["webviews"], (api) => api.webview.list());
+  } = useDroidQuery(["webviews"], (api) => api.webview.list(), {
+    refetchInterval: 3000,
+  });
 
   const evaluateMutation = useDroidMutation(
-    (
-      api,
-      { handle, js }: { handle: string; js: string },
-    ) => api.webview.evaluate(handle, js),
+    (api, { handle, js }: { handle: string; js: string }) =>
+      api.webview.evaluate(handle, js),
   );
 
   const navigateMutation = useDroidMutation(
-    (
-      api,
-      { handle, url }: { handle: string; url: string },
-    ) => api.webview.navigate(handle, url),
+    (api, { handle, url }: { handle: string; url: string }) =>
+      api.webview.navigate(handle, url),
+  );
+
+  const debugMutation = useDroidMutation(
+    (api, { handle, enabled }: { handle: string; enabled: boolean }) =>
+      api.webview.setDebugging(handle, enabled),
   );
 
   const selectedEntry =
@@ -129,6 +125,8 @@ document.title`);
     } else {
       setSelectedHandle(handle);
       setJsResult(null);
+      const entry = webviews.find((e) => e.handle === handle);
+      setUrlBar(entry?.url || "");
     }
   };
 
@@ -145,13 +143,12 @@ document.title`);
   };
 
   const doNavigate = async (entry: AndroidWebViewInfo) => {
-    if (!navigateUrl) return;
+    if (!urlBar || urlBar === entry.url) return;
     try {
       await navigateMutation.mutateAsync({
         handle: entry.handle,
-        url: navigateUrl,
+        url: urlBar,
       });
-      setNavigateUrl("");
       refetch();
     } catch (e) {
       console.error("Failed to navigate:", e);
@@ -160,6 +157,19 @@ document.title`);
 
   const handleEditorDidMount = (editor: editor.IStandaloneCodeEditor) => {
     editorRef.current = editor;
+  };
+
+  const riskCount = (entry: AndroidWebViewInfo) => {
+    const s = entry.settings;
+    let count = 0;
+    if (s.jsEnabled) count++;
+    if (s.allowFileAccess) count++;
+    if (s.allowContentAccess) count++;
+    if (s.allowFileAccessFromFileURLs) count++;
+    if (s.allowUniversalAccessFromFileURLs) count++;
+    if (!s.safeBrowsingEnabled) count++;
+    if (s.mixedContentMode !== 1) count++;
+    return count;
   };
 
   return (
@@ -190,48 +200,63 @@ document.title`);
           </div>
         ) : (
           <ResizablePanelGroup orientation="horizontal">
-            {/* Left Panel - WebView List */}
             <ResizablePanel defaultSize="40%" minSize="25%">
               <div className="h-full overflow-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-24">{t("handle")}</TableHead>
-                      <TableHead>
-                        {t("title")} / URL
-                      </TableHead>
+                      <TableHead className="w-20">Risk</TableHead>
+                      <TableHead>{t("title")} / URL</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {webviews.map((entry) => (
-                      <TableRow
-                        key={entry.handle}
-                        className={`cursor-pointer ${
-                          selectedHandle === entry.handle ? "bg-accent" : ""
-                        }`}
-                        onClick={() => selectEntry(entry.handle)}
-                      >
-                        <TableCell>
-                          <span className="px-2 py-1 text-xs rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
-                            WebView
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div
-                            className="truncate font-medium"
-                            title={entry.title}
-                          >
-                            {entry.title || "-"}
-                          </div>
-                          <div
-                            className="truncate text-xs text-muted-foreground font-mono"
-                            title={entry.url}
-                          >
-                            {entry.url || "-"}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {webviews.map((entry) => {
+                      const risks = riskCount(entry);
+                      return (
+                        <TableRow
+                          key={entry.handle}
+                          className={`cursor-pointer ${
+                            selectedHandle === entry.handle ? "bg-accent" : ""
+                          }`}
+                          onClick={() => selectEntry(entry.handle)}
+                        >
+                          <TableCell>
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded ${
+                                risks >= 3
+                                  ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                                  : risks >= 1
+                                    ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
+                                    : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                              }`}
+                            >
+                              {risks >= 3 ? (
+                                <ShieldAlert className="w-3 h-3" />
+                              ) : risks >= 1 ? (
+                                <ShieldOff className="w-3 h-3" />
+                              ) : (
+                                <Shield className="w-3 h-3" />
+                              )}
+                              {risks}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div
+                              className="truncate font-medium"
+                              title={entry.title}
+                            >
+                              {entry.title || "-"}
+                            </div>
+                            <div
+                              className="truncate text-xs text-muted-foreground font-mono"
+                              title={entry.url}
+                            >
+                              {entry.url || "-"}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
@@ -239,12 +264,10 @@ document.title`);
 
             <ResizableHandle withHandle />
 
-            {/* Right Panel - Detail View */}
             <ResizablePanel defaultSize="60%" minSize="30%">
               <div className="h-full overflow-auto">
                 {selectedEntry ? (
                   <div className="flex flex-col h-full p-4 gap-4">
-                    {/* Header */}
                     <div className="flex items-center gap-2">
                       <span className="px-2 py-1 text-xs rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
                         WebView
@@ -252,90 +275,78 @@ document.title`);
                       <span className="font-mono text-xs text-muted-foreground">
                         {selectedEntry.handle}
                       </span>
+                      <label className="flex items-center gap-1.5 ml-auto text-xs text-muted-foreground cursor-pointer">
+                        Remote Debugging
+                        <Switch
+                          size="sm"
+                          checked={debugEnabled}
+                          onCheckedChange={(checked) => {
+                            setDebugEnabled(checked);
+                            debugMutation.mutate({
+                              handle: selectedEntry.handle,
+                              enabled: checked,
+                            });
+                          }}
+                          disabled={debugMutation.isPending}
+                        />
+                      </label>
                     </div>
 
-                    {/* Security Configuration */}
                     <div>
                       <div className="text-sm font-medium mb-2">
-                        {t("configuration")}
+                        WebSettings
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        <BooleanBadge
-                          value={selectedEntry.javaScriptEnabled}
-                          label="JavaScript"
-                          t={t}
-                        />
-                        <BooleanBadge
-                          value={selectedEntry.allowFileAccess}
-                          label={t("file_url_access")}
-                          t={t}
-                        />
-                        <BooleanBadge
-                          value={selectedEntry.allowContentAccess}
-                          label="Content Access"
-                          t={t}
-                        />
-                        <BooleanBadge
-                          value={selectedEntry.allowFileAccessFromFileURLs}
-                          label="File Access From File URLs"
-                          t={t}
-                        />
-                        <BooleanBadge
-                          value={selectedEntry.allowUniversalAccessFromFileURLs}
-                          label={t("universal_file_access")}
-                          t={t}
-                        />
-                        <BooleanBadge
-                          value={selectedEntry.domStorageEnabled}
-                          label="DOM Storage"
-                          danger={false}
-                          t={t}
-                        />
-                        <BooleanBadge
-                          value={selectedEntry.databaseEnabled}
-                          label="Database"
-                          danger={false}
-                          t={t}
-                        />
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
-                              <span
-                                className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded ${
-                                  selectedEntry.mixedContentMode === 0
-                                    ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                                    : selectedEntry.mixedContentMode === 1
-                                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                                      : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                                }`}
-                              />
-                            }
-                          >
-                            {selectedEntry.mixedContentMode === 0 && (
-                              <AlertTriangle className="w-3 h-3" />
-                            )}
-                            Mixed: {selectedEntry.mixedContentModeName}
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            Mixed content mode: {selectedEntry.mixedContentModeName}
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
+                      <Table>
+                        <TableBody>
+                          {(
+                            Object.entries(selectedEntry.settings) as [
+                              string,
+                              boolean | number,
+                            ][]
+                          ).map(([key, value]) => (
+                            <TableRow key={key}>
+                              <TableCell className="py-1 font-mono text-xs">
+                                {key}
+                              </TableCell>
+                              <TableCell className="py-1 text-xs text-right">
+                                {typeof value === "boolean" ? (
+                                  <span className={settingColor(key, value)}>
+                                    {String(value)}
+                                  </span>
+                                ) : key === "mixedContentMode" ? (
+                                  <span
+                                    className={`font-mono ${
+                                      value !== 1
+                                        ? "text-red-600 dark:text-red-400"
+                                        : "text-green-600 dark:text-green-400"
+                                    }`}
+                                  >
+                                    {MIXED_CONTENT_LABELS[value] ??
+                                      String(value)}
+                                  </span>
+                                ) : (
+                                  <span className="font-mono">
+                                    {String(value)}
+                                  </span>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
                     </div>
 
-                    {/* JS Interfaces */}
-                    {selectedEntry.jsInterfaceNames.length > 0 && (
+                    {selectedEntry.interfaces.length > 0 && (
                       <div>
                         <div className="text-sm font-medium mb-2">
                           JavaScript Interfaces
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          {selectedEntry.jsInterfaceNames.map((name) => (
+                          {selectedEntry.interfaces.map((name) => (
                             <span
                               key={name}
-                              className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+                              className="inline-flex items-center px-2 py-0.5 text-xs rounded bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200 font-mono"
                             >
-                              <AlertTriangle className="w-3 h-3" />
                               {name}
                             </span>
                           ))}
@@ -343,72 +354,35 @@ document.title`);
                       </div>
                     )}
 
-                    {/* User Agent */}
-                    {selectedEntry.userAgent && (
-                      <div>
-                        <div className="text-sm font-medium mb-1">
-                          User Agent
-                        </div>
-                        <div className="font-mono text-xs bg-muted p-2 rounded break-all">
-                          {selectedEntry.userAgent}
-                        </div>
-                      </div>
-                    )}
+                    <ButtonGroup className="w-full">
+                      <span className="inline-flex items-center px-2 border border-r-0 rounded-l-md bg-muted text-muted-foreground">
+                        <Globe className="w-4 h-4" />
+                      </span>
+                      <Input
+                        placeholder="about:blank"
+                        value={urlBar}
+                        onChange={(e) => setUrlBar(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            doNavigate(selectedEntry);
+                          }
+                        }}
+                        className="flex-1 font-mono text-sm rounded-l-none"
+                      />
+                      <Button
+                        variant="outline"
+                        onClick={() => doNavigate(selectedEntry)}
+                        disabled={
+                          !urlBar ||
+                          urlBar === selectedEntry.url ||
+                          navigateMutation.isPending
+                        }
+                        title={t("navigate")}
+                      >
+                        <Navigation className="w-4 h-4" />
+                      </Button>
+                    </ButtonGroup>
 
-                    {/* Current URL */}
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Globe className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm font-medium">
-                          {t("current_url")}
-                        </span>
-                      </div>
-                      <div className="font-mono text-sm bg-muted p-2 rounded flex items-center gap-2">
-                        <span className="truncate flex-1">
-                          {selectedEntry.url || "about:blank"}
-                        </span>
-                        {selectedEntry.url && (
-                          <a
-                            href={selectedEntry.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-emerald-500 hover:text-emerald-600 shrink-0"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Navigate */}
-                    <div>
-                      <div className="text-sm font-medium mb-2">
-                        {t("navigate_to_url")}
-                      </div>
-                      <ButtonGroup className="w-full">
-                        <Input
-                          placeholder="https://example.com"
-                          value={navigateUrl}
-                          onChange={(e) => setNavigateUrl(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && navigateUrl) {
-                              doNavigate(selectedEntry);
-                            }
-                          }}
-                          className="flex-1"
-                        />
-                        <Button
-                          variant="outline"
-                          onClick={() => doNavigate(selectedEntry)}
-                          disabled={!navigateUrl || navigateMutation.isPending}
-                          title={t("navigate")}
-                        >
-                          <Navigation className="w-4 h-4" />
-                        </Button>
-                      </ButtonGroup>
-                    </div>
-
-                    {/* Execute JavaScript - fills remaining space */}
                     <div className="flex flex-col flex-1 min-h-0">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium">

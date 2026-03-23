@@ -36,6 +36,7 @@ import * as keystore from "./modules/keystore.js";
 import * as lsof from "./modules/lsof.js";
 import * as manifest from "./modules/manifest.js";
 import * as rn from "./modules/rn.js";
+import * as webview from "./modules/webview.js";
 
 async function testDevice() {
   console.log("\n--- device ---");
@@ -711,6 +712,30 @@ async function testRn() {
   skip("rn.inject", "side-effect: injects script into React Native");
 }
 
+async function testWebview() {
+  console.log("\n--- webview ---");
+
+  await test("webview.list returns array of AndroidWebViewInfo", async () => {
+    const views = await webview.list();
+    assertArray(views, "list");
+    console.log(`    ${views.length} WebView instances`);
+    if (views.length > 0) {
+      const first = views[0];
+      assertKeys(
+        first as unknown as Record<string, unknown>,
+        ["handle", "url", "title", "settings", "interfaces"],
+        "AndroidWebViewInfo",
+      );
+      assertType(first.handle, "string", "handle");
+      console.log(`    first: title=${first.title} url=${first.url}`);
+      console.log(`    interfaces: ${first.interfaces.join(", ")}`);
+    }
+  });
+
+  skip("webview.setDebugging", "side-effect: enables remote debugging");
+  skip("webview.evaluate", "side-effect: executes script in WebView");
+}
+
 async function run() {
   console.log("=== droid module tests ===");
 
@@ -728,6 +753,7 @@ async function run() {
   await testLsof();
   await testFs();
   await testRn();
+  await testWebview();
 
   summary();
 }

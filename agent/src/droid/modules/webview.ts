@@ -1,123 +1,148 @@
 import Java from "frida-java-bridge";
-
+import { perform } from "@/common/hooks/java.js";
 import { getTracker } from "@/droid/lib/weak.js";
 
 export interface AndroidWebViewInfo {
   handle: string;
-  title?: string;
-  url?: string;
-  javaScriptEnabled: boolean;
-  allowFileAccess: boolean;
-  allowContentAccess: boolean;
-  allowFileAccessFromFileURLs: boolean;
-  allowUniversalAccessFromFileURLs: boolean;
-  mixedContentMode: number;
-  mixedContentModeName: string;
-  domStorageEnabled: boolean;
-  databaseEnabled: boolean;
-  userAgent: string;
-  jsInterfaceNames: string[];
+  url: string;
+  title: string;
+  settings: {
+    jsEnabled: boolean;
+    allowFileAccess: boolean;
+    allowContentAccess: boolean;
+    allowFileAccessFromFileURLs: boolean;
+    allowUniversalAccessFromFileURLs: boolean;
+    safeBrowsingEnabled: boolean;
+    mixedContentMode: number;
+    databaseEnabled: boolean;
+    domStorageEnabled: boolean;
+  };
+  interfaces: string[];
 }
 
-const MIXED_CONTENT_MODES: Record<number, string> = {
-  0: "ALWAYS_ALLOW",
-  1: "NEVER_ALLOW",
-  2: "COMPATIBILITY_MODE",
-};
-
-function collectInterfaces(webview: Java.Wrapper): string[] {
-  // There's no public API to list JS interfaces, but we can try
-  // reading the internal mJavascriptInterfaces map via reflection
-  try {
-    const field = webview.getClass().getDeclaredField("mJavascriptInterfaces");
-    field.setAccessible(true);
-    const map = Java.cast(field.get(webview), Java.use("java.util.Map"));
-    const keySet = map.keySet();
-    const iter = keySet.iterator();
-    const names: string[] = [];
-    while (iter.hasNext()) {
-      names.push(iter.next().toString());
-    }
-    return names;
-  } catch {
-    return [];
-  }
+function hashcode(instance: Java.Wrapper): string {
+  return String(Java.use("java.lang.System").identityHashCode(instance));
 }
 
-export function list(): AndroidWebViewInfo[] {
-  if (!Java.available) return [];
-
-  const results: AndroidWebViewInfo[] = [];
-
-  Java.performNow(() => {
-    const WebView = Java.use("android.webkit.WebView");
-
-    Java.choose("android.webkit.WebView", {
-      onMatch(instance) {
-        try {
-          const wv = Java.cast(instance, WebView);
-          const handle = `${instance.$handle}`;
-          getTracker().put(handle, wv);
-
-          const settings = wv.getSettings();
-
-          results.push({
-            handle,
-            title: wv.getTitle()?.toString() ?? "",
-            url: wv.getUrl()?.toString() ?? "",
-            javaScriptEnabled: settings.getJavaScriptEnabled(),
-            allowFileAccess: settings.getAllowFileAccess(),
-            allowContentAccess: settings.getAllowContentAccess(),
-            allowFileAccessFromFileURLs: settings.getAllowFileAccessFromFileURLs(),
-            allowUniversalAccessFromFileURLs: settings.getAllowUniversalAccessFromFileURLs(),
-            mixedContentMode: settings.getMixedContentMode(),
-            mixedContentModeName:
-              MIXED_CONTENT_MODES[settings.getMixedContentMode()] ??
-              `unknown(${settings.getMixedContentMode()})`,
-            domStorageEnabled: settings.getDomStorageEnabled(),
-            databaseEnabled: settings.getDatabaseEnabled(),
-            userAgent: settings.getUserAgentString()?.toString() ?? "",
-            jsInterfaceNames: collectInterfaces(wv),
-          });
-        } catch (e) {
-          console.warn("webview: failed to inspect instance:", e);
-        }
-      },
-      onComplete() {},
-    });
-  });
-
-  return results;
-}
-
-export function evaluate(handle: string, js: string): Promise<string> {
-  const wv = getTracker().get(handle);
-
-  return new Promise((resolve, reject) => {
+function runOnMainThread<T>(fn: () => T): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
     Java.scheduleOnMainThread(() => {
       try {
-        const ValueCallback = Java.use("android.webkit.ValueCallback");
-        const callback = Java.registerClass({
-          name: "com.igf.grape.WebViewEvalCallback" + Date.now(),
-          implements: [ValueCallback],
-          methods: {
-            onReceiveValue(value: Java.Wrapper) {
-              resolve(value === null ? "null" : value.toString());
-            },
-          },
-        });
-
-        wv.evaluateJavascript(js, callback.$new());
+        resolve(fn());
       } catch (e) {
-        reject(new Error(`evaluateJavascript failed: ${e}`));
+        reject(e);
       }
     });
   });
 }
 
-export function navigate(handle: string, url: string): void {
-  const wv = getTracker().get(handle);
-  Java.scheduleOnMainThread(() => {
-    wv.loadUrl(url);
+function extractInterfaces(webview: Java.Wrapper): string[] {
+  const interfaces: string[] = [];
+  try {
+    const provider = webview.mProvider.value;
+    if (provider) {
+      const awContents = provider.mAwContents.value;
+      if (awContents) {
+        const javascriptInterfaces = awContents.mJavascriptInterfaces.value;
+        if (javascriptInterfaces) {
+          const iterator = javascriptInterfaces.keySet().iterator();
+          while (iterator.hasNext()) {
+            interfaces.push(iterator.next().toString());
+          }
+        }
+      }
+    }
+  } catch {
+    // Ignore reflection errors — internal fields vary across OEMs
+  }
+  return interfaces;
+}
+
+export function list(): Promise<AndroidWebViewInfo[]> {
+  return perform(() => {
+    const handles: { handle: string; instance: Java.Wrapper }[] = [];
+    Java.choose("android.webkit.WebView", {
+      onMatch(instance) {
+        const handle = hashcode(instance);
+        getTracker().put(handle, instance);
+        handles.push({ handle, instance });
+      },
+      onComplete() {},
+    });
+    return handles;
+  }).then((handles) => {
+    if (handles.length === 0) return [];
+
+    return runOnMainThread(() => {
+      const WebView = Java.use("android.webkit.WebView");
+      return handles.map(({ handle, instance }) => {
+        const webview = Java.cast(instance, WebView);
+        const settings = webview.getSettings();
+        return {
+          handle,
+          url: webview.getUrl()?.toString() || "",
+          title: webview.getTitle()?.toString() || "",
+          settings: {
+            jsEnabled: settings.getJavaScriptEnabled(),
+            allowFileAccess: settings.getAllowFileAccess(),
+            allowContentAccess: settings.getAllowContentAccess(),
+            allowFileAccessFromFileURLs:
+              settings.getAllowFileAccessFromFileURLs(),
+            allowUniversalAccessFromFileURLs:
+              settings.getAllowUniversalAccessFromFileURLs(),
+            safeBrowsingEnabled: settings.getSafeBrowsingEnabled(),
+            mixedContentMode: settings.getMixedContentMode(),
+            databaseEnabled: settings.getDatabaseEnabled(),
+            domStorageEnabled: settings.getDomStorageEnabled(),
+          },
+          interfaces: extractInterfaces(webview),
+        };
+      });
+    });
+  });
+}
+
+export function setDebugging(handle: string, enabled: boolean) {
+  return runOnMainThread(() => {
+    const instance = getTracker().get(handle);
+    const webview = Java.cast(instance, Java.use("android.webkit.WebView"));
+    webview.setWebContentsDebuggingEnabled(enabled);
+  });
+}
+
+export function evaluate(handle: string, js: string): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    Java.scheduleOnMainThread(() => {
+      try {
+        const instance = getTracker().get(handle);
+        const webview = Java.cast(
+          instance,
+          Java.use("android.webkit.WebView"),
+        );
+
+        const ValueCallback = Java.use("android.webkit.ValueCallback");
+        const callback = Java.registerClass({
+          name: `com.igf.webview.EvalCb_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
+          implements: [ValueCallback],
+          methods: {
+            onReceiveValue(value: Java.Wrapper) {
+              resolve(value ? value.toString() : "");
+            },
+          },
+        });
+
+        webview.evaluateJavascript(js, callback.$new());
+      } catch (e) {
+        reject(e);
+      }
+    });
+  });
+}
+
+export function navigate(handle: string, url: string): Promise<void> {
+  return runOnMainThread(() => {
+    const instance = getTracker().get(handle);
+    const webview = Java.cast(instance, Java.use("android.webkit.WebView"));
+    webview.loadUrl(url);
   });
 }
