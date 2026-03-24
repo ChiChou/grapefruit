@@ -59,45 +59,45 @@ function extractInterfaces(webview: Java.Wrapper): string[] {
 }
 
 export function list(): Promise<AndroidWebViewInfo[]> {
-  return perform(() => {
-    const handles: { handle: string; instance: Java.Wrapper }[] = [];
+  const handles = perform(() => {
+    const found: { handle: string; instance: Java.Wrapper }[] = [];
     Java.choose("android.webkit.WebView", {
       onMatch(instance) {
         const handle = hashcode(instance);
         getTracker().put(handle, instance);
-        handles.push({ handle, instance });
+        found.push({ handle, instance });
       },
       onComplete() {},
     });
-    return handles;
-  }).then((handles) => {
-    if (handles.length === 0) return [];
+    return found;
+  });
 
-    return runOnMainThread(() => {
-      const WebView = Java.use("android.webkit.WebView");
-      return handles.map(({ handle, instance }) => {
-        const webview = Java.cast(instance, WebView);
-        const settings = webview.getSettings();
-        return {
-          handle,
-          url: webview.getUrl()?.toString() || "",
-          title: webview.getTitle()?.toString() || "",
-          settings: {
-            jsEnabled: settings.getJavaScriptEnabled(),
-            allowFileAccess: settings.getAllowFileAccess(),
-            allowContentAccess: settings.getAllowContentAccess(),
-            allowFileAccessFromFileURLs:
-              settings.getAllowFileAccessFromFileURLs(),
-            allowUniversalAccessFromFileURLs:
-              settings.getAllowUniversalAccessFromFileURLs(),
-            safeBrowsingEnabled: settings.getSafeBrowsingEnabled(),
-            mixedContentMode: settings.getMixedContentMode(),
-            databaseEnabled: settings.getDatabaseEnabled(),
-            domStorageEnabled: settings.getDomStorageEnabled(),
-          },
-          interfaces: extractInterfaces(webview),
-        };
-      });
+  if (handles.length === 0) return Promise.resolve([]);
+
+  return runOnMainThread(() => {
+    const WebView = Java.use("android.webkit.WebView");
+    return handles.map(({ handle, instance }) => {
+      const webview = Java.cast(instance, WebView);
+      const settings = webview.getSettings();
+      return {
+        handle,
+        url: webview.getUrl()?.toString() || "",
+        title: webview.getTitle()?.toString() || "",
+        settings: {
+          jsEnabled: settings.getJavaScriptEnabled(),
+          allowFileAccess: settings.getAllowFileAccess(),
+          allowContentAccess: settings.getAllowContentAccess(),
+          allowFileAccessFromFileURLs:
+            settings.getAllowFileAccessFromFileURLs(),
+          allowUniversalAccessFromFileURLs:
+            settings.getAllowUniversalAccessFromFileURLs(),
+          safeBrowsingEnabled: settings.getSafeBrowsingEnabled(),
+          mixedContentMode: settings.getMixedContentMode(),
+          databaseEnabled: settings.getDatabaseEnabled(),
+          domStorageEnabled: settings.getDomStorageEnabled(),
+        },
+        interfaces: extractInterfaces(webview),
+      };
     });
   });
 }

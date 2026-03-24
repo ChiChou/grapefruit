@@ -16,7 +16,7 @@ export interface ApkInfo {
 /**
  * List all APK files (base + splits) for the current application.
  */
-export function list(): Promise<ApkInfo[]> {
+export function list() {
   return perform(() => {
     const ai = getContext().getApplicationInfo();
     const result: ApkInfo[] = [];
@@ -41,7 +41,7 @@ export function list(): Promise<ApkInfo[]> {
  * List all file entries inside an APK zip (flat list, no directories).
  * The frontend builds the tree from the full path names.
  */
-export function entries(apkPath: string): Promise<ApkEntry[]> {
+export function entries(apkPath: string) {
   return perform(() => {
     const ZipFileCls = Java.use("java.util.zip.ZipFile");
     const zip: ZipFile = ZipFileCls.$new(apkPath);
@@ -68,7 +68,7 @@ export function entries(apkPath: string): Promise<ApkEntry[]> {
 /**
  * Read a single entry from an APK zip. Returns the raw bytes as an ArrayBuffer.
  */
-export function read(apkPath: string, entryName: string): Promise<ArrayBuffer> {
+export function read(apkPath: string, entryName: string) {
   return perform(() => {
     const ZipFileCls = Java.use("java.util.zip.ZipFile");
 
@@ -90,7 +90,7 @@ export function read(apkPath: string, entryName: string): Promise<ArrayBuffer> {
 /**
  * Get the uncompressed size of an entry inside an APK zip.
  */
-export function size(apkPath: string, entryName: string): Promise<number> {
+export function size(apkPath: string, entryName: string) {
   return perform(() => {
     const ZipFileCls = Java.use("java.util.zip.ZipFile");
     const zip: ZipFile = ZipFileCls.$new(apkPath);

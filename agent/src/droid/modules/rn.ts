@@ -98,35 +98,27 @@ export function inject(
   arch: RNArch,
   script: string,
 ): Promise<string> {
-  return new Promise((resolve, reject) => {
-    Java.perform(() => {
-      let instance: Java.Wrapper;
-      try {
-        instance = getTracker().get(handle);
-      } catch {
-        reject(new Error("Instance not found for handle: " + handle));
-        return;
+  return perform(() => {
+    const instance = getTracker().get(handle);
+    const { id, path } = cb.prepare(script);
+
+    ensureCallbackHook();
+    const promise = new Promise<string>((resolve) => cb.register(id, resolve));
+
+    injecting = true;
+    try {
+      const url = "file://" + path;
+      if (arch === "bridgeless") {
+        instance.loadJSBundleFromFile(path, url);
+      } else {
+        instance.loadScriptFromFile(path, url, false);
       }
+    } finally {
+      injecting = false;
+    }
 
-      const { id, path } = cb.prepare(script);
-
-      ensureCallbackHook();
-      cb.register(id, resolve);
-
-      injecting = true;
-      try {
-        const url = "file://" + path;
-        if (arch === "bridgeless") {
-          instance.loadJSBundleFromFile(path, url);
-        } else {
-          instance.loadScriptFromFile(path, url, false);
-        }
-      } finally {
-        injecting = false;
-      }
-
-      unlink(path);
-    });
+    unlink(path);
+    return promise;
   });
 }
 

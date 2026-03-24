@@ -14,7 +14,7 @@ export interface ResourceTree {
 
 const SUPPORTED_TYPES = new Set(["string", "xml", "raw", "array"]);
 
-export function list(): Promise<ResourceTree> {
+export function list() {
   return perform(() => {
     const packageName = getContext().getPackageName();
 
@@ -57,7 +57,7 @@ export function list(): Promise<ResourceTree> {
   });
 }
 
-export function get(category: string, name: string): Promise<string> {
+export function get(category: string, name: string) {
   return perform(() => {
     const appContext = getContext();
     const resources = appContext.getResources();

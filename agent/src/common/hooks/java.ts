@@ -1,15 +1,17 @@
 import Java from "frida-java-bridge";
 
-export function perform<T>(fn: () => T): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    Java.perform(() => {
-      try {
-        resolve(fn());
-      } catch (e) {
-        reject(e);
-      }
-    });
+export function perform<T>(fn: () => T): T {
+  let result!: T;
+  let error: unknown;
+  Java.perform(() => {
+    try {
+      result = fn();
+    } catch (e) {
+      error = e;
+    }
   });
+  if (error !== undefined) throw error;
+  return result;
 }
 
 type AnyMethod = Java.MethodDispatcher | Java.Method;
