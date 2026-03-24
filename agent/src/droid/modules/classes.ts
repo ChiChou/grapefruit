@@ -15,6 +15,23 @@ export interface JavaField {
   isStatic: boolean;
 }
 
+export interface JavaConstant {
+  name: string;
+  type: string;
+  value: string;
+}
+
+export interface JavaAnnotationInfo {
+  method: string;
+  annotations: string[];
+}
+
+export interface JavaClassConstants {
+  staticConstants: JavaConstant[];
+  annotations: JavaAnnotationInfo[];
+  innerClasses: string[];
+}
+
 export interface JavaClassDetail {
   name: string;
   superClass: string | null;
@@ -94,5 +111,58 @@ export function inspect(name: string) {
       ownMethods,
       fields,
     } as JavaClassDetail;
+  });
+}
+
+export function constants(name: string) {
+  return perform(() => {
+    const wrapper = Java.use(name);
+    const jClass = wrapper.class;
+    const Modifier = Java.use("java.lang.reflect.Modifier");
+
+    // Static final field values
+    const staticConstants: JavaConstant[] = [];
+    const declaredFields = jClass.getDeclaredFields();
+    for (let i = 0; i < declaredFields.length; i++) {
+      const f = declaredFields[i];
+      const mods = f.getModifiers();
+      if (!Modifier.isStatic(mods) || !Modifier.isFinal(mods)) continue;
+
+      const fieldName = f.getName();
+      const fieldType = f.getType().getName();
+      let value = "?";
+      try {
+        f.setAccessible(true);
+        const raw = f.get(null);
+        value = raw === null ? "null" : String(raw);
+      } catch {
+        // Some fields may not be accessible
+      }
+      staticConstants.push({ name: fieldName, type: fieldType, value });
+    }
+
+    // Method annotations
+    const annotations: JavaAnnotationInfo[] = [];
+    const declaredMethods = jClass.getDeclaredMethods();
+    for (let i = 0; i < declaredMethods.length; i++) {
+      const m = declaredMethods[i];
+      const methodAnnotations = m.getDeclaredAnnotations();
+      if (methodAnnotations.length === 0) continue;
+
+      const annos: string[] = [];
+      for (let j = 0; j < methodAnnotations.length; j++) {
+        annos.push(methodAnnotations[j].toString());
+      }
+      annotations.push({ method: m.getName(), annotations: annos });
+    }
+
+    // Inner classes
+    const innerClasses: string[] = [];
+    const declared = jClass.getDeclaredClasses();
+    for (let i = 0; i < declared.length; i++) {
+      innerClasses.push(declared[i].getName());
+    }
+
+    return { staticConstants, annotations, innerClasses } as JavaClassConstants;
   });
 }

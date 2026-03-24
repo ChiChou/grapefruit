@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Download, RefreshCw, Trash2, X } from "lucide-react";
+import { Download, FileSearch, RefreshCw, Trash2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,6 +19,7 @@ import { usePlatformQuery } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 import { Platform, Status, useSession } from "@/context/SessionContext";
 import ConsoleRepl from "@/components/shared/ConsoleRepl";
+import { useDock } from "@/context/DockContext";
 import { t } from "i18next";
 
 interface RNInstance {
@@ -50,6 +51,7 @@ export function ReactNativeTab() {
   const [selected, setSelected] = useState<RNInstance | null>(null);
   const { fruity, droid, platform, socket, status, device, identifier } =
     useSession();
+  const { openFilePanel } = useDock();
 
   const { data: archResult, isLoading: archLoading } = usePlatformQuery<{
     legacy: boolean;
@@ -327,6 +329,25 @@ export function ReactNativeTab() {
                             <span>{formatSize(entry.size)}</span>
                           </div>
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0"
+                          onClick={() =>
+                            openFilePanel({
+                              id: `hermes_analysis_${entry.id}`,
+                              component: "hermesAnalysis",
+                              title: `HBC: ${filenameFromUrl(entry.url).slice(0, 30)}`,
+                              params: {
+                                entryId: entry.id,
+                                filename: filenameFromUrl(entry.url),
+                              },
+                            })
+                          }
+                          title="Analyze"
+                        >
+                          <FileSearch className="h-3 w-3" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"

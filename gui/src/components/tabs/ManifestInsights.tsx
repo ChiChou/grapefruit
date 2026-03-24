@@ -225,7 +225,7 @@ function parseManifestInsights(
   if (unprotectedExportedCount > 0) {
     insights.push({
       id: "exported_components",
-      severity: "high",
+      severity: "info",
       title: t("manifest_exported_components_title", {
         count: unprotectedExportedCount,
       }),

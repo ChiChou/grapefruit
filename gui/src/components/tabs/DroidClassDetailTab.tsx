@@ -21,7 +21,11 @@ import { useDroidQuery } from "@/lib/queries";
 import { useRepl } from "@/context/useRepl";
 import { java, javaBatch } from "@/lib/codegen/hookjs.ts";
 
-import type { JavaClassDetail, JavaMethod } from "@agent/droid/modules/classes";
+import type {
+  JavaClassDetail,
+  JavaClassConstants,
+  JavaMethod,
+} from "@agent/droid/modules/classes";
 
 export interface JavaClassDetailParams {
   className: string;
@@ -41,9 +45,17 @@ export function DroidClassDetailTab({
     () => new Set(),
   );
 
+  const [constantsSearch, setConstantsSearch] = useState("");
+
   const { data: classInfo, isLoading } = useDroidQuery<JavaClassDetail>(
     ["javaClassDetail", params.className],
     (api) => api.classes.inspect(params.className),
+  );
+
+  const { data: classConstants } = useDroidQuery<JavaClassConstants>(
+    ["javaClassConstants", params.className],
+    (api) => api.classes.constants(params.className),
+    { enabled: activeTab === "constants" },
   );
 
   const openClassTab = (className: string) => {
@@ -97,6 +109,20 @@ export function DroidClassDetailTab({
     const code = javaBatch(classInfo.name, methods);
     appendCode(code);
   };
+
+  const displayedConstants = useMemo(() => {
+    if (!classConstants) return [];
+    let items = classConstants.staticConstants;
+    if (constantsSearch.trim()) {
+      const q = constantsSearch.toLowerCase();
+      items = items.filter(
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          c.value.toLowerCase().includes(q),
+      );
+    }
+    return items;
+  }, [classConstants, constantsSearch]);
 
   const displayedFields = useMemo(() => {
     if (!classInfo) return [];
@@ -320,6 +346,102 @@ export function DroidClassDetailTab({
             </section>
           </TabsContent>
 
+          <TabsContent value="constants" className="overflow-hidden">
+            <section className="h-full flex flex-col">
+              <div className="relative mb-2">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={t("search")}
+                  value={constantsSearch}
+                  onChange={(e) => setConstantsSearch(e.target.value)}
+                  className="pl-9 h-8 text-sm"
+                />
+              </div>
+              {displayedConstants.length > 0 ? (
+                <div className="border rounded flex-1 overflow-auto min-h-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t("name")}</TableHead>
+                        <TableHead>{t("type")}</TableHead>
+                        <TableHead>Value</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {displayedConstants.map((c) => (
+                        <TableRow key={c.name}>
+                          <TableCell className="font-mono text-xs">
+                            {c.name}
+                          </TableCell>
+                          <TableCell className="font-mono text-xs text-muted-foreground">
+                            {c.type}
+                          </TableCell>
+                          <TableCell className="font-mono text-xs break-all max-w-[300px]">
+                            {c.value}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="text-sm text-muted-foreground py-4 text-center border rounded">
+                  {classConstants ? t("no_results") : t("loading")}
+                </div>
+              )}
+              {classConstants &&
+                classConstants.innerClasses.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-xs text-muted-foreground mb-1">
+                      Inner Classes
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {classConstants.innerClasses.map((ic) => (
+                        <button
+                          key={ic}
+                          type="button"
+                          className="text-xs font-mono text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
+                          onClick={() => openClassTab(ic)}
+                        >
+                          {ic}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              {classConstants &&
+                classConstants.annotations.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-xs text-muted-foreground mb-1">
+                      Method Annotations
+                    </p>
+                    <div className="border rounded overflow-auto max-h-32">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>{t("methods")}</TableHead>
+                            <TableHead>Annotations</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {classConstants.annotations.map((a) => (
+                            <TableRow key={a.method}>
+                              <TableCell className="font-mono text-xs">
+                                {a.method}
+                              </TableCell>
+                              <TableCell className="text-xs text-muted-foreground break-all">
+                                {a.annotations.join(", ")}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
+            </section>
+          </TabsContent>
+
           <TabsList variant="line">
             <TabsTrigger value="methods">
               {t("methods")} ({classInfo.methods.length})
@@ -327,6 +449,7 @@ export function DroidClassDetailTab({
             <TabsTrigger value="fields">
               {t("fields")} ({classInfo.fields.length})
             </TabsTrigger>
+            <TabsTrigger value="constants">Constants</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>

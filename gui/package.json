@@ -32,6 +32,7 @@
     "leaflet": "^1.9.4",
     "lucide-react": "^0.552.0",
     "magika": "^1.0.0",
+    "mermaid": "^11.13.0",
     "react": "^19.2.4",
     "react-day-picker": "^9.14.0",
     "react-dom": "^19.2.4",

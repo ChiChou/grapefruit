@@ -1,14 +1,25 @@
 import { useR2 } from "@frida/react-use-r2";
 
 import "./DisassemblyTab.css";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
 import { Loader2 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { MermaidGraphView } from "@/components/shared/MermaidGraphView";
+import Editor from "@monaco-editor/react";
 
 export interface DisassemblyTabParams {
   address: string;
   name?: string;
+}
+
+type ViewMode = "disassembly" | "graph" | "decompiler";
+
+interface AnalysisResult {
+  disassemblyHtml: string;
+  graphData: string;
+  decompilerOutput: string;
 }
 
 export function FruityDisassemblyTab({
@@ -16,11 +27,14 @@ export function FruityDisassemblyTab({
 }: IDockviewPanelProps<DisassemblyTabParams>) {
   const { t } = useTranslation();
   const address = params?.address || "";
-  const [html, setHtml] = useState<string>("");
+  const [viewMode, setViewMode] = useState<ViewMode>("disassembly");
+  const [result, setResult] = useState<AnalysisResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingView, setLoadingView] = useState<ViewMode | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { executeR2Command } = useR2();
 
+  // Analyze function once on mount
   useEffect(() => {
     if (!address || !executeR2Command) return;
 
@@ -28,19 +42,31 @@ export function FruityDisassemblyTab({
     setIsLoading(true);
     setError(null);
 
-    async function disassemble() {
+    async function analyze() {
       try {
-        // Seek to address and disassemble
-        const command = [`s ${address}`, "pd 50", "pdj 50"];
-        const result = await executeR2Command(command.join(";"));
+        // Analyze function at address, then get full function disassembly
+        // Try function-aware disassembly first, fallback to pd 50
+        let disassemblyHtml = await executeR2Command(
+          `s ${address}; af; pdf`,
+        );
 
         if (ignore) return;
 
-        const lines = result.trimEnd().split("\n");
-        // Last line is JSON metadata from pdj, skip it
-        const htmlContent = lines.slice(0, lines.length - 1).join("\n");
+        // If pdf returned empty/error, fallback to pd 50
+        if (
+          !disassemblyHtml.trim() ||
+          disassemblyHtml.includes("Cannot find function")
+        ) {
+          disassemblyHtml = await executeR2Command(`s ${address}; pd 50`);
+        }
 
-        setHtml(htmlContent);
+        if (ignore) return;
+
+        setResult({
+          disassemblyHtml: disassemblyHtml.trimEnd(),
+          graphData: "",
+          decompilerOutput: "",
+        });
         setIsLoading(false);
       } catch (e) {
         if (ignore) return;
@@ -49,12 +75,79 @@ export function FruityDisassemblyTab({
       }
     }
 
-    disassemble();
+    analyze();
 
     return () => {
       ignore = true;
     };
   }, [address, executeR2Command]);
+
+  // Lazy-load graph data when switching to graph tab
+  const loadGraph = useCallback(async () => {
+    if (!executeR2Command || result?.graphData) return;
+    setLoadingView("graph");
+    try {
+      // Try mermaid output first, then dot, then JSON
+      let graphData = await executeR2Command(
+        `s ${address}; af; agfm`,
+        { output: "plain" },
+      );
+
+      if (!graphData.trim() || graphData.includes("Cannot find function")) {
+        // Try agfd (dot format) as fallback
+        graphData = await executeR2Command(
+          `s ${address}; af; agfd`,
+          { output: "plain" },
+        );
+      }
+
+      setResult((prev) =>
+        prev ? { ...prev, graphData: graphData.trimEnd() } : prev,
+      );
+    } catch {
+      // Graph not available for this function
+      setResult((prev) =>
+        prev
+          ? { ...prev, graphData: "graph TD\n  A[Graph not available]" }
+          : prev,
+      );
+    } finally {
+      setLoadingView(null);
+    }
+  }, [address, executeR2Command, result?.graphData]);
+
+  // Lazy-load decompiler output when switching to decompiler tab
+  const loadDecompiler = useCallback(async () => {
+    if (!executeR2Command || result?.decompilerOutput) return;
+    setLoadingView("decompiler");
+    try {
+      const output = await executeR2Command(
+        `s ${address}; af; pdc`,
+        { output: "plain" },
+      );
+      setResult((prev) =>
+        prev ? { ...prev, decompilerOutput: output.trimEnd() } : prev,
+      );
+    } catch {
+      setResult((prev) =>
+        prev
+          ? {
+              ...prev,
+              decompilerOutput: "// Decompiler not available for this function",
+            }
+          : prev,
+      );
+    } finally {
+      setLoadingView(null);
+    }
+  }, [address, executeR2Command, result?.decompilerOutput]);
+
+  const handleTabChange = (value: string) => {
+    const mode = value as ViewMode;
+    setViewMode(mode);
+    if (mode === "graph") loadGraph();
+    if (mode === "decompiler") loadDecompiler();
+  };
 
   if (isLoading) {
     return (
@@ -73,7 +166,7 @@ export function FruityDisassemblyTab({
     );
   }
 
-  if (!html) {
+  if (!result) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
         {t("no_results")}
@@ -83,13 +176,66 @@ export function FruityDisassemblyTab({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center gap-2 p-2 border-b bg-[#1b1b1f] text-muted-foreground">
-        <span className="text-xs font-mono">{params?.name || address}</span>
-      </div>
-      <div className="disassembly-view flex-1 overflow-auto p-3">
-        {/* r2 WASM output — trusted local source, not user input */}
-        <div dangerouslySetInnerHTML={{ __html: html }} />
-      </div>
+      <Tabs
+        value={viewMode}
+        onValueChange={handleTabChange}
+        className="h-full flex flex-col"
+      >
+        <TabsContent value="disassembly" className="flex-1 overflow-hidden">
+          <div className="disassembly-view h-full overflow-auto p-3">
+            {/* r2 WASM output — trusted local source, not user input */}
+            <div dangerouslySetInnerHTML={{ __html: result.disassemblyHtml }} />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="graph" className="flex-1 overflow-hidden">
+          {loadingView === "graph" ? (
+            <div className="flex items-center justify-center h-full text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Loading graph...
+            </div>
+          ) : (
+            <MermaidGraphView graphData={result.graphData} />
+          )}
+        </TabsContent>
+
+        <TabsContent value="decompiler" className="flex-1 overflow-hidden">
+          {loadingView === "decompiler" ? (
+            <div className="flex items-center justify-center h-full text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Loading decompiler...
+            </div>
+          ) : (
+            <Editor
+              height="100%"
+              language="c"
+              theme="vs-dark"
+              value={result.decompilerOutput}
+              options={{
+                readOnly: true,
+                minimap: { enabled: false },
+                fontSize: 13,
+                fontFamily:
+                  "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace",
+                lineNumbers: "on",
+                scrollBeyondLastLine: false,
+                wordWrap: "on",
+              }}
+            />
+          )}
+        </TabsContent>
+
+        <div className="flex items-center border-t bg-[#1b1b1f]">
+          <span className="text-xs font-mono text-muted-foreground px-3 py-1.5 truncate max-w-[40%]">
+            {params?.name || address}
+          </span>
+          <TabsList variant="line" className="ml-auto">
+            <TabsTrigger value="disassembly">Disassembly</TabsTrigger>
+            <TabsTrigger value="graph">Graph</TabsTrigger>
+            <TabsTrigger value="decompiler">Decompiler</TabsTrigger>
+          </TabsList>
+        </div>
+      </Tabs>
     </div>
   );
 }
