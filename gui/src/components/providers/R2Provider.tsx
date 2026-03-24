@@ -1,5 +1,5 @@
 import { type ReactNode, useCallback } from "react";
-import { useR2, type Platform, type Architecture } from "@frida/react-use-r2";
+import { useR2, type Platform, type Architecture } from "@/lib/use-r2";
 import { useSession } from "@/context/SessionContext";
 import { useFruityQuery } from "@/lib/queries";
 

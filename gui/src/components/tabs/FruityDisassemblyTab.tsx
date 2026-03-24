@@ -1,4 +1,4 @@
-import { useR2 } from "@frida/react-use-r2";
+import { useR2 } from "@/lib/use-r2";
 
 import "./DisassemblyTab.css";
 import { useCallback, useEffect, useState } from "react";
@@ -122,7 +122,7 @@ export function FruityDisassemblyTab({
     setLoadingView("decompiler");
     try {
       const output = await executeR2Command(
-        `s ${address}; af; pdc`,
+        `e scr.color=0; s ${address}; af; pdc; e scr.color=3`,
         { output: "plain" },
       );
       setResult((prev) =>
@@ -181,6 +181,17 @@ export function FruityDisassemblyTab({
         onValueChange={handleTabChange}
         className="h-full flex flex-col"
       >
+        <div className="flex items-center border-b bg-[#1b1b1f]">
+          <TabsList variant="line">
+            <TabsTrigger value="disassembly">Linear</TabsTrigger>
+            <TabsTrigger value="graph">Graph</TabsTrigger>
+            <TabsTrigger value="decompiler">Decompiler</TabsTrigger>
+          </TabsList>
+          <span className="text-xs font-mono text-muted-foreground px-3 py-1.5 truncate ml-auto max-w-[40%]">
+            {params?.name || address}
+          </span>
+        </div>
+
         <TabsContent value="disassembly" className="flex-1 overflow-hidden">
           <div className="disassembly-view h-full overflow-auto p-3">
             {/* r2 WASM output — trusted local source, not user input */}
@@ -224,17 +235,6 @@ export function FruityDisassemblyTab({
             />
           )}
         </TabsContent>
-
-        <div className="flex items-center border-t bg-[#1b1b1f]">
-          <span className="text-xs font-mono text-muted-foreground px-3 py-1.5 truncate max-w-[40%]">
-            {params?.name || address}
-          </span>
-          <TabsList variant="line" className="ml-auto">
-            <TabsTrigger value="disassembly">Disassembly</TabsTrigger>
-            <TabsTrigger value="graph">Graph</TabsTrigger>
-            <TabsTrigger value="decompiler">Decompiler</TabsTrigger>
-          </TabsList>
-        </div>
       </Tabs>
     </div>
   );
