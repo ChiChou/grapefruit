@@ -4,11 +4,19 @@ import { readFile } from "node:fs/promises";
 
 import env from "./env.ts";
 
+declare global {
+  // eslint-disable-next-line no-var
+  var Bun: {
+    file(path: string): { bytes(): Promise<Uint8Array> };
+    Archive: new (data: Uint8Array) => { extract(path: string): Promise<void> };
+  } | undefined;
+}
+
 // bun does not support embedded directory as a tree
 // extract assets when it's not present
 
 async function extract(): Promise<string> {
-  if (!globalThis.Bun) throw new Error("bun runtime required");
+  if (!Bun) throw new Error("bun runtime required");
 
   // @ts-ignore embed file has no typing
   const tar: { default: string } = await import("../../assets.tgz", {

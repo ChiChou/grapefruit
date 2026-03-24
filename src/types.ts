@@ -12,8 +12,8 @@ import type { HttpStore, HttpEvent } from "./lib/store/http.ts";
 
 import type { NSURLEvent } from "./lib/store/nsurl.ts";
 import type { BaseMessage as BaseHookMessage } from "@agent/common/hooks/context";
-import type { PrivacyMessage } from "@agent/common/hooks/privacy";
 import type { JNIEvent } from "@agent/droid/hooks/jni";
+import type { PrivacyInput } from "./lib/store/privacy.ts";
 
 export interface FlutterEvent {
   type: "method" | "event" | "message";
@@ -59,7 +59,7 @@ export interface ServerToClientEvents {
   xpc: (event: XPCEvent) => void;
   droidHttp: (event: HttpEvent) => void;
   jni: (event: JNIEvent) => void;
-  privacy: (msg: PrivacyMessage) => void;
+  privacy: (msg: PrivacyInput) => void;
   hermes: (event: { url: string; hash: string; size: number }) => void;
   memoryScan: (event: MemoryScanEvent, data?: ArrayBuffer) => void;
   fatal: (detail: unknown) => void;

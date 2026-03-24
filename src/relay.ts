@@ -7,8 +7,8 @@ import type { Writer } from "./lib/log.ts";
 import type { NSURLEvent } from "./lib/store/nsurl.ts";
 import type { XPCEvent } from "./lib/store/xpc.ts";
 import type { BaseMessage } from "@agent/common/hooks/context";
-import type { PrivacyMessage } from "@agent/common/hooks/privacy";
 import type { JNIEvent } from "@agent/droid/hooks/jni";
+import type { PrivacyInput } from "./lib/store/privacy.ts";
 import type {
   SessionSocket,
   SessionStores,
@@ -233,7 +233,7 @@ export function setup(
       }
 
       case "privacy": {
-        const msg = payload as PrivacyMessage;
+        const msg = payload as PrivacyInput;
         socket.emit("privacy", msg);
         stores.privacy.append(msg);
         break;
