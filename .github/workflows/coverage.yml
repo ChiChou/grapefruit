@@ -19,10 +19,19 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Cache r2hermes WASM
+        id: cache-wasm
+        uses: actions/cache@v4
+        with:
+          path: externals/radare/r2hermes.wasm/dist
+          key: r2hermes-wasm-${{ hashFiles('externals/radare/r2hermes/**', 'externals/radare/r2hermes.wasm/Makefile', 'externals/radare/r2hermes.wasm/hbc_wasm.c') }}
+
       - name: Setup Emscripten
+        if: steps.cache-wasm.outputs.cache-hit != 'true'
         uses: mymindstorm/setup-emsdk@v14
 
       - name: Build r2hermes WASM
+        if: steps.cache-wasm.outputs.cache-hit != 'true'
         run: make -C externals/radare/r2hermes.wasm
 
       - name: Install dependencies
