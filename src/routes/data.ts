@@ -13,15 +13,17 @@ import { HttpStore } from "../lib/store/http.ts";
 import { FlutterStore } from "../lib/store/flutter.ts";
 import { JNIStore } from "../lib/store/jni.ts";
 import { XPCStore } from "../lib/store/xpc.ts";
-import { HermesStore } from "../lib/store/hermes.ts";
 import { PrivacyStore } from "../lib/store/privacy.ts";
+import hermesRoutes from "./hermes.ts";
 import { createPinStore } from "../lib/store/pins.ts";
 import { toHAR } from "../lib/har.ts";
 const LOG_TAIL_BYTES = 1024 * 1024; // 1MB
 
 /** Reject path segments that escape the data directory */
 function isSafeSegment(s: string): boolean {
-  return s !== "" && s !== "." && s !== ".." && !s.includes("/") && !s.includes("\\");
+  return (
+    s !== "" && s !== "." && s !== ".." && !s.includes("/") && !s.includes("\\")
+  );
 }
 
 interface QueryOptions {
@@ -285,7 +287,12 @@ const routes = new Hono()
       return c.text("invalid parameters", 400);
     }
 
-    const logsDir = nodePath.join(nodePath.join(env.workdir, "data"), "logs", deviceId, identifier);
+    const logsDir = nodePath.join(
+      nodePath.join(env.workdir, "data"),
+      "logs",
+      deviceId,
+      identifier,
+    );
     await fs.rm(logsDir, { recursive: true, force: true });
 
     return c.body(null, 204);
@@ -434,119 +441,41 @@ const routes = new Hono()
       return c.text("Failed to clear HTTP records", 500);
     }
   })
-  .get(
-    "/history/http/:device/:identifier/attachment/:requestId",
-    async (c) => {
-      const deviceId = c.req.param("device");
-      const identifier = c.req.param("identifier");
-      const requestId = c.req.param("requestId");
+  .get("/history/http/:device/:identifier/attachment/:requestId", async (c) => {
+    const deviceId = c.req.param("device");
+    const identifier = c.req.param("identifier");
+    const requestId = c.req.param("requestId");
 
-      try {
-        const httpStore = new HttpStore(deviceId, identifier);
-
-        const attachment = httpStore.getAttachment(requestId);
-
-        if (!attachment) {
-          return c.text("No attachment found", 404);
-        }
-
-        const stat = await fs.stat(attachment.path).catch(() => null);
-        if (!stat) {
-          return c.text("Attachment file not found", 404);
-        }
-
-        c.header(
-          "Content-Type",
-          attachment.mimeType || "application/octet-stream",
-        );
-        c.header("Content-Length", stat.size.toString());
-        return c.body(
-          Readable.toWeb(
-            createReadStream(attachment.path),
-          ) as unknown as ReadableStream,
-        );
-      } catch (e) {
-        console.error("Failed to serve HTTP attachment:", e);
-        return c.text("Failed to serve attachment", 500);
+    try {
+      const httpStore = new HttpStore(deviceId, identifier);
+      const attachment = httpStore.getAttachment(requestId);
+      if (!attachment) {
+        return c.text("No attachment found", 404);
       }
-    },
-  )
+
+      const stat = await fs.stat(attachment.path).catch(() => null);
+      if (!stat) {
+        return c.text("Attachment file not found", 404);
+      }
+
+      c.header(
+        "Content-Type",
+        attachment.mimeType || "application/octet-stream",
+      );
+      c.header("Content-Length", stat.size.toString());
+      return c.body(
+        Readable.toWeb(
+          createReadStream(attachment.path),
+        ) as unknown as ReadableStream,
+      );
+    } catch (e) {
+      console.error("Failed to serve HTTP attachment:", e);
+      return c.text("Failed to serve attachment", 500);
+    }
+  })
   .route("/", xpcRoutes)
   .route("/", privacyRoutes)
-  // Hermes capture endpoints
-  .get("/hermes/:device/:identifier", (c) => {
-    const deviceId = c.req.param("device");
-    const identifier = c.req.param("identifier");
-    const limit = parseInt(c.req.query("limit") || "100", 10);
-    const offset = parseInt(c.req.query("offset") || "0", 10);
-
-    try {
-      const store = new HermesStore(deviceId, identifier);
-      const records = store.query({ limit, offset });
-      const total = store.count();
-
-      return c.json({
-        logs: records.map((r) => ({
-          id: r.id,
-          url: r.url,
-          hash: r.hash,
-          size: r.size,
-          createdAt: r.createdAt,
-        })),
-        total,
-        limit,
-        offset,
-      });
-    } catch (e) {
-      console.error("Failed to query Hermes records:", e);
-      return c.json({ logs: [], total: 0, limit, offset });
-    }
-  })
-  .get("/hermes/:device/:identifier/download/:id", (c) => {
-    const deviceId = c.req.param("device");
-    const identifier = c.req.param("identifier");
-    const id = parseInt(c.req.param("id"), 10);
-
-    try {
-      const store = new HermesStore(deviceId, identifier);
-      const blob = store.getBlob(id);
-      if (!blob) return c.text("Not found", 404);
-
-      const filename = blob.url.split("/").pop() || `hermes-${id}.bin`;
-      c.header("Content-Disposition", `attachment; filename="${filename}"`);
-      c.header("Content-Type", "application/octet-stream");
-      c.header("Content-Length", blob.data.length.toString());
-      return c.body(new Uint8Array(blob.data).buffer as ArrayBuffer);
-    } catch (e) {
-      console.error("Failed to serve Hermes blob:", e);
-      return c.text("Failed to serve Hermes blob", 500);
-    }
-  })
-  .delete("/hermes/:device/:identifier/:id", (c) => {
-    const deviceId = c.req.param("device");
-    const identifier = c.req.param("identifier");
-    const id = Number(c.req.param("id"));
-
-    try {
-      new HermesStore(deviceId, identifier).rmOne(id);
-      return c.body(null, 204);
-    } catch (e) {
-      console.error("Failed to delete Hermes record:", e);
-      return c.text("Failed to delete Hermes record", 500);
-    }
-  })
-  .delete("/hermes/:device/:identifier", (c) => {
-    const deviceId = c.req.param("device");
-    const identifier = c.req.param("identifier");
-
-    try {
-      new HermesStore(deviceId, identifier).rm();
-      return c.body(null, 204);
-    } catch (e) {
-      console.error("Failed to clear Hermes records:", e);
-      return c.text("Failed to clear Hermes records", 500);
-    }
-  })
+  .route("/", hermesRoutes)
   // Pins snapshot endpoints
   .get("/pins/:device/:identifier", (c) => {
     const deviceId = c.req.param("device");
