@@ -6,6 +6,10 @@ on:
     tags:
       - "v*"
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,6 +21,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: "24"
+          registry-url: 'https://registry.npmjs.org'
           cache: "npm"
 
       - name: Setup Bun
@@ -38,4 +43,13 @@ jobs:
           name: igf.tgz
           path: build/igf-*.tgz
 
-      # todo: npm publish
+      - name: Publish to npm
+        run: npm publish
+
+      - name: Generate GitHub Release Notes
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref, 'beta') || contains(github.ref, 'alpha') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
