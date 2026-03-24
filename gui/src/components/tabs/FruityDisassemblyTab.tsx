@@ -22,6 +22,9 @@ interface AnalysisResult {
   decompilerOutput: string;
 }
 
+// r2 analysis setup: moderate depth to avoid WASM stack overflow
+const analysisSetup = `e anal.depth=64; e anal.hasnext=true`;
+
 export function FruityDisassemblyTab({
   params,
 }: IDockviewPanelProps<DisassemblyTabParams>) {
@@ -44,10 +47,9 @@ export function FruityDisassemblyTab({
 
     async function analyze() {
       try {
-        // Analyze function at address, then get full function disassembly
-        // Try function-aware disassembly first, fallback to pd 50
+        // Configure analysis, seek to address, analyze function, print disassembly
         let disassemblyHtml = await executeR2Command(
-          `s ${address}; af; pdf`,
+          `${analysisSetup}; s ${address}; af; pdf`,
         );
 
         if (ignore) return;
@@ -87,16 +89,17 @@ export function FruityDisassemblyTab({
     if (!executeR2Command || result?.graphData) return;
     setLoadingView("graph");
     try {
-      // Try mermaid output first, then dot, then JSON
+      // Ensure deep analysis is done before graph generation
+      // afr gives complete CFG; agfm outputs mermaid format
       let graphData = await executeR2Command(
-        `s ${address}; af; agfm`,
+        `${analysisSetup}; s ${address}; af; agfm`,
         { output: "plain" },
       );
 
       if (!graphData.trim() || graphData.includes("Cannot find function")) {
         // Try agfd (dot format) as fallback
         graphData = await executeR2Command(
-          `s ${address}; af; agfd`,
+          `${analysisSetup}; s ${address}; af; agfd`,
           { output: "plain" },
         );
       }
@@ -121,8 +124,9 @@ export function FruityDisassemblyTab({
     if (!executeR2Command || result?.decompilerOutput) return;
     setLoadingView("decompiler");
     try {
+      // Deep analysis needed for complete decompilation with all basic blocks
       const output = await executeR2Command(
-        `e scr.color=0; s ${address}; af; pdc; e scr.color=3`,
+        `${analysisSetup}; e scr.color=0; s ${address}; af; pdc; e scr.color=3`,
         { output: "plain" },
       );
       setResult((prev) =>

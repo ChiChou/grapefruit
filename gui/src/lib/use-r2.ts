@@ -172,6 +172,14 @@ async function loadR2(sourceRef: React.RefObject<R2Source>) {
     { async: true },
   );
 
+  // Set calling convention to suppress "select the calling convention" warning
+  const cc = arch === "arm64" ? "aapcs64" : arch === "arm" ? "aapcs" : "cdecl";
+  const evaluate = r2.cwrap("r2_execute", "number", ["string", "number"], {
+    async: true,
+  }) as (cmd: string, html: number) => Promise<number>;
+  const ptr = await evaluate(`e anal.cc=${cc}`, 0);
+  r2._free(ptr);
+
   state = "loaded";
   r2Module = r2;
   maybeProcessPendingCommands();
