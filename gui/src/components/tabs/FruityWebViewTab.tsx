@@ -6,9 +6,10 @@ import {
   RefreshCw,
   Play,
   Globe,
-  Check,
-  X,
   Navigation,
+  ShieldAlert,
+  Shield,
+  ShieldOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -23,11 +24,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -62,37 +58,51 @@ function isWKWebView(entry: WebViewEntry): entry is WKWebViewInfo {
   return entry.kind === "WK";
 }
 
-function BooleanBadge({
-  value,
-  label,
-  t,
-}: {
-  value: boolean | undefined;
-  label: string;
-  t: (key: string) => string;
-}) {
-  if (value === undefined) return null;
-  return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <span
-            className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded ${
-              value
-                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-            }`}
-          />
-        }
-      >
-        {value ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
-        {label}
-      </TooltipTrigger>
-      <TooltipContent>
-        {label}: {value ? t("enabled") : t("disabled")}
-      </TooltipContent>
-    </Tooltip>
-  );
+// Settings that are risky when enabled
+const RISKY_WHEN_TRUE = new Set([
+  "js",
+  "contentJs",
+  "jsAutoOpenWindow",
+  "fileURLAccess",
+  "universalFileAccess",
+]);
+
+// Settings that are risky when disabled
+const RISKY_WHEN_FALSE = new Set(["secure"]);
+
+const SETTING_LABELS: Record<string, string> = {
+  js: "javaScriptEnabled",
+  contentJs: "allowsContentJavaScript",
+  jsAutoOpenWindow: "javaScriptCanOpenWindowsAutomatically",
+  fileURLAccess: "allowFileAccessFromFileURLs",
+  universalFileAccess: "allowUniversalAccessFromFileURLs",
+  secure: "contentBlockersEnabled",
+};
+
+function settingColor(key: string, value: boolean): string {
+  if (RISKY_WHEN_TRUE.has(key)) {
+    return value
+      ? "text-red-600 dark:text-red-400"
+      : "text-green-600 dark:text-green-400";
+  }
+  if (RISKY_WHEN_FALSE.has(key)) {
+    return value
+      ? "text-green-600 dark:text-green-400"
+      : "text-red-600 dark:text-red-400";
+  }
+  return "text-muted-foreground";
+}
+
+function riskCount(entry: WebViewEntry): number {
+  if (!isWKWebView(entry)) return 0;
+  let count = 0;
+  if (entry.js) count++;
+  if (entry.contentJs) count++;
+  if (entry.jsAutoOpenWindow) count++;
+  if (entry.fileURLAccess) count++;
+  if (entry.universalFileAccess) count++;
+  if (entry.secure === false) count++;
+  return count;
 }
 
 export function FruityWebViewTab() {
@@ -228,48 +238,58 @@ document.title`);
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-24">{t("type")}</TableHead>
-                      <TableHead>
-                        {t("title")} / URL
-                      </TableHead>
+                      <TableHead className="w-20">Risk</TableHead>
+                      <TableHead>{t("title")} / URL</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {entries.map((entry) => (
-                      <TableRow
-                        key={entry.handle}
-                        className={`cursor-pointer ${
-                          selectedHandle === entry.handle ? "bg-accent" : ""
-                        }`}
-                        onClick={() => selectEntry(entry.handle)}
-                      >
-                        <TableCell>
-                          <span
-                            className={`px-2 py-1 text-xs rounded ${
-                              entry.kind === "WK"
-                                ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
-                                : "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
-                            }`}
-                          >
-                            {entry.kind}WebView
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div
-                            className="truncate font-medium"
-                            title={entry.title}
-                          >
-                            {entry.title || "-"}
-                          </div>
-                          <div
-                            className="truncate text-xs text-muted-foreground font-mono"
-                            title={entry.url}
-                          >
-                            {entry.url || "-"}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {entries.map((entry) => {
+                      const risks = riskCount(entry);
+                      return (
+                        <TableRow
+                          key={entry.handle}
+                          className={`cursor-pointer ${
+                            selectedHandle === entry.handle ? "bg-accent" : ""
+                          }`}
+                          onClick={() => selectEntry(entry.handle)}
+                        >
+                          <TableCell>
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded ${
+                                risks >= 3
+                                  ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                                  : risks >= 1
+                                    ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
+                                    : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                              }`}
+                            >
+                              {risks >= 3 ? (
+                                <ShieldAlert className="w-3 h-3" />
+                              ) : risks >= 1 ? (
+                                <ShieldOff className="w-3 h-3" />
+                              ) : (
+                                <Shield className="w-3 h-3" />
+                              )}
+                              {risks}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div
+                              className="truncate font-medium"
+                              title={entry.title}
+                            >
+                              {entry.title || "-"}
+                            </div>
+                            <div
+                              className="truncate text-xs text-muted-foreground font-mono"
+                              title={entry.url}
+                            >
+                              {entry.url || "-"}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
@@ -318,44 +338,53 @@ document.title`);
                         )}
                     </div>
 
-                    {/* WKWebView-specific properties */}
+                    {/* WKWebView configuration table */}
                     {isWKWebView(selectedEntry) && (
                       <div>
                         <div className="text-sm font-medium mb-2">
-                          {t("configuration")}
+                          WKPreferences
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          <BooleanBadge
-                            value={selectedEntry.js}
-                            label="JavaScript"
-                            t={t}
-                          />
-                          <BooleanBadge
-                            value={selectedEntry.contentJs}
-                            label={t("content_js")}
-                            t={t}
-                          />
-                          <BooleanBadge
-                            value={selectedEntry.jsAutoOpenWindow}
-                            label={t("auto_open_windows")}
-                            t={t}
-                          />
-                          <BooleanBadge
-                            value={selectedEntry.fileURLAccess}
-                            label={t("file_url_access")}
-                            t={t}
-                          />
-                          <BooleanBadge
-                            value={selectedEntry.universalFileAccess}
-                            label={t("universal_file_access")}
-                            t={t}
-                          />
-                          <BooleanBadge
-                            value={selectedEntry.secure}
-                            label={t("secure")}
-                            t={t}
-                          />
-                        </div>
+                        <Table>
+                          <TableBody>
+                            {(
+                              [
+                                ["js", selectedEntry.js],
+                                ["contentJs", selectedEntry.contentJs],
+                                [
+                                  "jsAutoOpenWindow",
+                                  selectedEntry.jsAutoOpenWindow,
+                                ],
+                                [
+                                  "fileURLAccess",
+                                  selectedEntry.fileURLAccess,
+                                ],
+                                [
+                                  "universalFileAccess",
+                                  selectedEntry.universalFileAccess,
+                                ],
+                                ["secure", selectedEntry.secure],
+                              ] as [string, boolean | undefined][]
+                            )
+                              .filter(([, v]) => v !== undefined)
+                              .map(([key, value]) => (
+                                <TableRow key={key}>
+                                  <TableCell className="py-1 font-mono text-xs">
+                                    {SETTING_LABELS[key] ?? key}
+                                  </TableCell>
+                                  <TableCell className="py-1 text-xs text-right">
+                                    <span
+                                      className={settingColor(
+                                        key,
+                                        value as boolean,
+                                      )}
+                                    >
+                                      {String(value)}
+                                    </span>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                          </TableBody>
+                        </Table>
                       </div>
                     )}
 
