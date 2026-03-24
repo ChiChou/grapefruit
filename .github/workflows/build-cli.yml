@@ -28,6 +28,12 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+
+      - name: Build r2hermes WASM
+        run: make -C externals/radare/r2hermes.wasm
+
       - name: Reset node_modules
         run: rm -rf node_modules
 
