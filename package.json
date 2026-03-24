@@ -52,6 +52,7 @@
     "frida-remote-stream": "^6.0.3",
     "frida16": "npm:frida@^16.7.19",
     "hono": "^4.12.8",
+    "r2hermes-wasm": "file:./externals/radare/r2hermes.wasm",
     "socket.io": "^4.8.3"
   },
   "devDependencies": {

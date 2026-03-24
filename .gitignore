@@ -142,3 +142,6 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Downloaded r2 WASM assets (fetched during `bun run prepare`)
+gui/public/

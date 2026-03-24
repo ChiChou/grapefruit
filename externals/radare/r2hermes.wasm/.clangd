@@ -1,0 +1,4 @@
+CompileFlags:
+  Add:
+    - "-I"
+    - "../r2hermes/include"

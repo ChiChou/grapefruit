@@ -1,0 +1,31 @@
+name: Build r2hermes WASM
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, dev]
+    paths:
+      - "externals/radare/r2hermes.wasm/**"
+      - ".gitmodules"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: true
+
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+
+      - name: Build WASM
+        run: cd externals/radare/r2hermes.wasm && sh build.sh
+
+      - name: Upload WASM artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: r2hermes.wasm
+          path: |
+            externals/radare/r2hermes.wasm/dist/hbc.mjs
+            externals/radare/r2hermes.wasm/dist/hbc.wasm

@@ -1,0 +1,19 @@
+{
+  "name": "r2hermes-wasm",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./hbc.mjs",
+  "types": "./hbc.d.ts",
+  "exports": {
+    ".": {
+      "import": "./hbc.mjs",
+      "types": "./hbc.d.mts"
+    }
+  },
+  "files": [
+    "hbc.mjs",
+    "hbc.d.mts",
+    "dist/hbc.mjs",
+    "dist/hbc.wasm"
+  ]
+}
