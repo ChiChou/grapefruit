@@ -18,7 +18,7 @@ cd agent && bun run type     # type-check only (droid + fruity)
 ### gui/ (frontend)
 
 ```sh
-cd gui && bun run lint       # ESLint
+cd gui && bun run lint       # Oxlint
 cd gui && bunx tsgo --noEmit # type-check
 cd gui && bun run build      # full build
 ```

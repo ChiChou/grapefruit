@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicolo-ribaudo/oxc-project/refs/heads/nicolo/json-schema/npm/oxlint/configuration_schema.json",
+  "plugins": ["react", "typescript"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "pedantic": "off",
+    "perf": "off",
+    "style": "off",
+    "nursery": "off",
+    "restriction": "off"
+  },
+  "rules": {
+    "no-unused-vars": "off",
+    "no-shadow": "off",
+    "react/react-in-jsx-scope": "off",
+    "react/exhaustive-deps": "warn",
+    "react/rules-of-hooks": "error"
+  },
+  "ignorePatterns": [
+    "dist",
+    "src/components/ui",
+    "src/components/theme-provider.tsx"
+  ]
+}
