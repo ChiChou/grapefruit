@@ -58,5 +58,6 @@ jobs:
             build/Release/igf-windows-x64.exe
             build/Release/igf-darwin-x64
             build/Release/igf-darwin-arm64
+          prerelease: ${{ contains(github.ref, 'beta') || contains(github.ref, 'alpha') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
