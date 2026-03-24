@@ -88,6 +88,17 @@ export function typeFor(filename: string): string {
     case "car":
       return "car";
 
+    case "mp3":
+    case "wav":
+    case "aac":
+    case "m4a":
+    case "flac":
+    case "ogg":
+    case "opus":
+    case "webm":
+    case "weba":
+      return "audio";
+
     default:
       return "hex";
   }

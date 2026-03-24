@@ -193,6 +193,7 @@ export function FilesTab({ params }: IDockviewPanelProps<FilesTabParams>) {
         text: "textEditor",
         sqlite: "sqliteEditor",
         image: "imagePreview",
+        audio: "audioPreview",
         plist: "plistPreview",
         xcprivacy: "xcprivacy",
         font: "fontPreview",

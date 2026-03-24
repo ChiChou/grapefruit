@@ -94,6 +94,7 @@
   "text_editor": "文本编辑器",
   "sqlite_editor": "SQLite 编辑器",
   "image_preview": "图片预览",
+  "audio_preview": "音频预览",
   "font_preview": "字体预览",
   "plist_preview": "plist 预览",
   "expand_all": "全部展开",

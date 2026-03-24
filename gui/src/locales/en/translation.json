@@ -94,6 +94,7 @@
   "text_editor": "Text Editor",
   "sqlite_editor": "SQLite Editor",
   "image_preview": "Image Preview",
+  "audio_preview": "Audio Preview",
   "font_preview": "Font Preview",
   "plist_preview": "Property List Preview",
   "expand_all": "Expand All",

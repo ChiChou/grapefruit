@@ -12,6 +12,7 @@ import {
   Database,
   FileJson,
   FileImage,
+  FileAudio,
   Layers,
   Type,
   Check,
@@ -526,6 +527,12 @@ export function FileTable({
                               >
                                 <FileImage className="mr-2 h-4 w-4" />
                                 {t("image_preview")}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => onPreview(item.name, "audio")}
+                              >
+                                <FileAudio className="mr-2 h-4 w-4" />
+                                {t("audio_preview")}
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => onPreview(item.name, "plist")}

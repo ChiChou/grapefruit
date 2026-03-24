@@ -37,6 +37,7 @@ import { DroidClassDetailTab } from "../tabs/DroidClassDetailTab";
 import { ApkBrowserTab } from "../tabs/ApkBrowserTab";
 import { FilesTab } from "../tabs/FilesTab";
 import { ImagePreviewTab } from "../tabs/ImagePreviewTab";
+import { AudioPreviewTab } from "../tabs/AudioPreviewTab";
 import { HexPreviewTab } from "../tabs/HexPreviewTab";
 import { TextEditorTab } from "../tabs/TextEditorTab";
 import { FruityPlistPreviewTab } from "../tabs/FruityPlistPreviewTab";
@@ -176,6 +177,7 @@ function WorkspaceContent() {
     javaClassDetail: DroidClassDetailTab,
     files: FilesTab,
     imagePreview: ImagePreviewTab,
+    audioPreview: AudioPreviewTab,
     hexPreview: HexPreviewTab,
     textEditor: TextEditorTab,
     plistPreview: FruityPlistPreviewTab,
