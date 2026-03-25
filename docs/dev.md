@@ -4,6 +4,7 @@
 
 - [Bun](https://bun.sh/) (primary runtime, recommended)
 - Node.js >= 22.18.0 (alternative runtime for npm package)
+- [Emscripten](https://emscripten.org/) (for `r2hermes.wasm`)
 - A device running [frida-server](https://frida.re/docs/installation/) connected via USB or network
 - iOS or Android target device/emulator
 
@@ -13,6 +14,9 @@
 # Clone the repository
 git clone https://github.com/chichou/grapefruit.git
 cd grapefruit
+
+# Build r2hermes.wasm first (requires emcc)
+make -C externals/radare/r2hermes.wasm
 
 # Install all dependencies (root + agent + gui)
 bun install
