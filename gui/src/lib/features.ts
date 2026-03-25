@@ -296,7 +296,6 @@ const panelFeatures: Record<FeatureKey, PanelFeature[]> = {
       "Resources",
       "Browse Android app resources",
     ),
-    pf("droid_webview_tab", "droidWebview", Globe, "WebViews", "home_webview_desc"),
   ],
   "droid:daemon": [
     pf("checksec_tab", "checksec", ShieldCheck, "mitigations", "home_checksec_desc"),
