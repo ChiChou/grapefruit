@@ -1,35 +1,43 @@
-export const endpoints = {
+const KNOWN_ENDPOINTS: Record<string, string> = {
   anthropic: "https://api.anthropic.com",
   openai: "https://api.openai.com",
   gemini: "https://generativelanguage.googleapis.com",
   openrouter: "https://openrouter.ai/api",
-} as const;
+};
 
-export type Provider = keyof typeof endpoints;
+type Format = "anthropic" | "gemini" | "openai";
 
 export interface LLMConfig {
-  provider: Provider;
+  provider: string;
   apiKey: string;
   model: string;
+  baseUrl: string;
+  format: Format;
 }
 
 export function config(): LLMConfig {
-  const provider = (process.env.LLM_PROVIDER || "") as Provider;
+  const provider = process.env.LLM_PROVIDER || "";
   const apiKey = process.env.LLM_API_KEY || "";
   const model = process.env.LLM_MODEL || "";
-  return { provider, apiKey, model };
+  const baseUrl = process.env.LLM_BASE_URL || KNOWN_ENDPOINTS[provider] || "";
+  const format = resolveFormat(provider, baseUrl);
+  return { provider, apiKey, model, baseUrl, format };
+}
+
+function resolveFormat(provider: string, baseUrl: string): Format {
+  if (provider === "anthropic") return "anthropic";
+  if (provider === "gemini") return "gemini";
+  if (provider in KNOWN_ENDPOINTS) return "openai";
+  if (baseUrl) return "openai";
+  return "openai";
 }
 
 export async function sendText(cfg: LLMConfig, input: string): Promise<string> {
-  if (!cfg.provider || !cfg.apiKey || !cfg.model) {
+  if (!cfg.baseUrl || !cfg.model) {
     throw new Error(
-      "LLM not configured. Set LLM_PROVIDER, LLM_API_KEY, and LLM_MODEL environment variables.",
-    );
-  }
-
-  if (!(cfg.provider in endpoints)) {
-    throw new Error(
-      `Unknown LLM provider: ${cfg.provider}. Supported: ${Object.keys(endpoints).join(", ")}`,
+      "LLM not configured. Set LLM_PROVIDER (or LLM_BASE_URL) and LLM_MODEL.\n" +
+        "Built-in providers: " + Object.keys(KNOWN_ENDPOINTS).join(", ") + "\n" +
+        "Custom: set LLM_BASE_URL to any OpenAI-compatible endpoint.",
     );
   }
 
@@ -42,20 +50,17 @@ export async function sendText(cfg: LLMConfig, input: string): Promise<string> {
   }
 
   const json = await res.json();
-  return extractText(cfg.provider, json);
+  return extractText(cfg.format, json);
 }
 
 function buildRequest(cfg: LLMConfig, input: string) {
-  const endpoint = endpoints[cfg.provider];
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
 
-  if (cfg.provider === "anthropic") {
+  if (cfg.format === "anthropic") {
     headers["x-api-key"] = cfg.apiKey;
     headers["anthropic-version"] = "2023-06-01";
     return {
-      url: `${endpoint}/v1/messages`,
+      url: `${cfg.baseUrl}/v1/messages`,
       headers,
       body: JSON.stringify({
         model: cfg.model,
@@ -65,9 +70,9 @@ function buildRequest(cfg: LLMConfig, input: string) {
     };
   }
 
-  if (cfg.provider === "gemini") {
+  if (cfg.format === "gemini") {
     return {
-      url: `${endpoint}/v1beta/models/${cfg.model}:generateContent?key=${cfg.apiKey}`,
+      url: `${cfg.baseUrl}/v1beta/models/${cfg.model}:generateContent?key=${cfg.apiKey}`,
       headers,
       body: JSON.stringify({
         contents: [{ parts: [{ text: input }] }],
@@ -75,9 +80,9 @@ function buildRequest(cfg: LLMConfig, input: string) {
     };
   }
 
-  headers["Authorization"] = `Bearer ${cfg.apiKey}`;
+  if (cfg.apiKey) headers["Authorization"] = `Bearer ${cfg.apiKey}`;
   return {
-    url: `${endpoint}/v1/chat/completions`,
+    url: `${cfg.baseUrl}/v1/chat/completions`,
     headers,
     body: JSON.stringify({
       model: cfg.model,
@@ -86,17 +91,15 @@ function buildRequest(cfg: LLMConfig, input: string) {
   };
 }
 
-function extractText(provider: Provider, json: unknown): string {
+function extractText(format: Format, json: unknown): string {
   const data = json as Record<string, unknown>;
 
-  if (provider === "anthropic") {
-    const content = (
-      data.content as Array<{ type: string; text: string }>
-    )?.[0];
+  if (format === "anthropic") {
+    const content = (data.content as Array<{ type: string; text: string }>)?.[0];
     return content?.text ?? "";
   }
 
-  if (provider === "gemini") {
+  if (format === "gemini") {
     const candidates = data.candidates as Array<{
       content: { parts: Array<{ text: string }> };
     }>;

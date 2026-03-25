@@ -195,7 +195,9 @@ Query parameters for history endpoints: `limit`, `offset`, `since`, `category` (
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/llm` | LLM integration endpoint |
+| `POST` | `/llm` | Send text to configured LLM, returns text response |
+
+See [LLM Setup](./llm.md) for configuration.
 
 ## End-to-End Data Flow
 
