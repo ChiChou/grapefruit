@@ -1,11 +1,11 @@
 import { parseArgs } from "node:util";
 import { schema } from "./lib/cli.ts";
 
-const cliCommands = ["version", "device", "log", "history", "agent"];
+const cliCommands = ["version", "device", "log", "history", "agent", "setup"];
 
 const args = parseArgs(schema);
 
-if (args.values.help) {
+if (args.values.help && !args.positionals[0]) {
   console.log(`
 IGF - Grapefruit Dynamic Instrumentation Server
 
@@ -27,6 +27,7 @@ CLI Commands:
   log <subcommand>       Log management (hooks|crypto|syslog|agent|clear)
   history <subcommand>   Query history data (http|nsurl|jni|flutter|xpc|privacy|hermes)
   agent <namespace>      Agent RPC commands
+  setup                  Install Claude Code skills (/igf, /audit)
 
 Run 'igf <command> --help' for command details.
 `);

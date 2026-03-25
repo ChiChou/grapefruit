@@ -34,7 +34,17 @@ bun test            # run tests
 
 ## Skills
 
-`/igf` — CLI interface for the IGF server. Exposes all REST API and agent RPC. See `.claude/skills/igf/` for details.
+Install skills for Claude Code:
+
+```sh
+igf setup           # install to .claude/skills/ in current project
+igf setup --global  # install to ~/.claude/skills/ for all projects
+```
+
+Available skills:
+
+- `/igf` — CLI interface for the IGF server. Exposes all REST API and agent RPC.
+- `/audit` — Autonomous mobile security audit aligned with OWASP MASTG v2.
 
 ## Code Style
 

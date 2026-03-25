@@ -11,7 +11,8 @@
     "./gui/dist/",
     "./agent/dist",
     "./agent/types",
-    "./drizzle"
+    "./drizzle",
+    "./skills"
   ],
   "scripts": {
     "prepare": "bun scripts/prepare.ts",
