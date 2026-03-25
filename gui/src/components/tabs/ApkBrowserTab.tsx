@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Status, useSession } from "@/context/SessionContext";
+import { useDock } from "@/context/DockContext";
 import { useDroidQuery } from "@/lib/queries";
 import { formatSize } from "@/lib/explorer";
 
@@ -205,6 +206,7 @@ function ZipFileTable({
   currentPath,
   onNavigate,
   onDownload,
+  onOpen,
   onRefresh,
 }: {
   items: DirEntry[];
@@ -212,6 +214,7 @@ function ZipFileTable({
   currentPath: string;
   onNavigate: (name: string) => void;
   onDownload: (name: string) => void;
+  onOpen?: (name: string) => void;
   onRefresh?: () => void;
 }) {
   const { t } = useTranslation();
@@ -298,6 +301,14 @@ function ZipFileTable({
                     <button
                       type="button"
                       onClick={() => onNavigate(entry.name)}
+                      className="hover:text-amber-600 dark:hover:text-amber-400 hover:underline"
+                    >
+                      {entry.name}
+                    </button>
+                  ) : onOpen && entry.name.endsWith(".dex") ? (
+                    <button
+                      type="button"
+                      onClick={() => onOpen(entry.name)}
                       className="hover:text-amber-600 dark:hover:text-amber-400 hover:underline"
                     >
                       {entry.name}
@@ -433,6 +444,22 @@ export function ApkBrowserTab() {
     [pid, device, effectiveApk, currentPath],
   );
 
+  const { openSingletonPanel } = useDock();
+
+  const handleOpen = useCallback(
+    (fileName: string) => {
+      if (!effectiveApk) return;
+      const entryPath = currentPath ? `${currentPath}/${fileName}` : fileName;
+      openSingletonPanel({
+        id: `dex-${entryPath}`,
+        component: "dexViewer",
+        title: fileName,
+        params: { apk: effectiveApk, entry: entryPath },
+      });
+    },
+    [effectiveApk, currentPath, openSingletonPanel],
+  );
+
   const hasMultipleApks = apks && apks.length > 1;
 
   return (
@@ -502,6 +529,7 @@ export function ApkBrowserTab() {
           currentPath={currentPath}
           onNavigate={handleNavigate}
           onDownload={handleDownload}
+          onOpen={handleOpen}
           onRefresh={effectiveApk ? () => refetch() : undefined}
         />
       </ResizablePanel>

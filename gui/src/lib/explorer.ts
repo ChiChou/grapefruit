@@ -88,6 +88,9 @@ export function typeFor(filename: string): string {
     case "car":
       return "car";
 
+    case "dex":
+      return "dex";
+
     case "mp3":
     case "wav":
     case "aac":

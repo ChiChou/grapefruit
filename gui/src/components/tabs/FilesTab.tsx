@@ -198,6 +198,7 @@ export function FilesTab({ params }: IDockviewPanelProps<FilesTabParams>) {
         xcprivacy: "xcprivacy",
         font: "fontPreview",
         car: "assetCatalog",
+        dex: "dexViewer",
       };
 
       const component = componentMap[type];
