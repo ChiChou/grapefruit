@@ -5,6 +5,7 @@
     "": {
       "name": "igf-agent",
       "dependencies": {
+        "frida-il2cpp-bridge": "^0.13.0",
         "frida-java-bridge": "^7.0.12",
         "frida-objc-bridge": "^8.0.5",
         "frida-remote-stream": "^6.0.3",
@@ -193,6 +194,8 @@
     "frida": ["frida@17.8.2", "", { "dependencies": { "bindings": "^1.5.0", "minimatch": "^10.0.1", "prebuild-install": "^7.1.3" } }, "sha512-V3P1kcwdt9P9de9R+NVey5aEgfv5KxLa7bFpQfYO71L5akQise7dmXruD01+nXOvQIG1BtQCzOQJmG1FkJS68w=="],
 
     "frida-compile": ["frida-compile@19.0.5", "", { "dependencies": { "chalk": "^5.4.1", "commander": "^14.0.0", "frida": "^17.8.0" }, "bin": { "frida-compile": "dist/cli.js" } }, "sha512-dHkZBswL6zzF63bcqK2AaXOrZTYIk4ZynJhcI1EP+dFRtmCx1nhMQH/dFZfkgcS5yoP6nabA/Ra2IUji3j3GOg=="],
+
+    "frida-il2cpp-bridge": ["frida-il2cpp-bridge@0.13.0", "", { "bin": { "frida-il2cpp-bridge": "cli/main.py" } }, "sha512-y337LVmjQPFER2vRYX2klTNkWCauuj2G1WVct4QESb7ME4HC9nSVtOEfYCf77mE3zt3y5YQ0zjXR6xpwudC92A=="],
 
     "frida-java-bridge": ["frida-java-bridge@7.0.12", "", {}, "sha512-xpoTFPQkUjNMeRnyZ6rUj/APlYGWpKEv5iekOk4lQeDcv9fv8J/s3ETjTRdSfyZ8/aPv9r8+oBmsxN2gCHRTqg=="],
 

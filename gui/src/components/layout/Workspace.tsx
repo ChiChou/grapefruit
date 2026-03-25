@@ -72,6 +72,8 @@ import { DroidWebViewTab } from "../tabs/DroidWebViewTab";
 import { AssetCatalogTab } from "../tabs/AssetCatalogTab";
 import { ChecksecTab } from "../tabs/ChecksecTab";
 import { CryptoTab } from "../tabs/CryptoTab";
+import { Il2CppClassDetailTab } from "../tabs/Il2CppClassDetailTab";
+import { Il2CppClassDumpTab } from "../tabs/Il2CppClassDumpTab";
 import { NoCloseTabHeader } from "../tabs/NoCloseTabHeader";
 
 import { DockContext, useDockActions } from "@/context/DockContext";
@@ -212,6 +214,8 @@ function WorkspaceContent() {
     assetCatalog: AssetCatalogTab,
     checksec: ChecksecTab,
     crypto: CryptoTab,
+    il2cppClassDetail: Il2CppClassDetailTab,
+    il2cppClassDump: Il2CppClassDumpTab,
   };
 
   const tabComponents = {

@@ -33,7 +33,7 @@ import {
   Archive,
   Lock,
 } from "lucide-react";
-import { SiFlutter, SiReact } from "@icons-pack/react-simple-icons";
+import { SiFlutter, SiReact, SiUnity } from "@icons-pack/react-simple-icons";
 
 import type { PlatformType, ModeType } from "@/context/SessionContext";
 
@@ -87,6 +87,7 @@ const routeFeatures: Record<FeatureKey, RouteFeature[]> = {
     rf("general", Info, "general"),
     rf("modules", Package, "modules"),
     rf("classes", Braces, "classes"),
+    rf("il2cpp", SiUnity, "IL2CPP"),
     rf("urls", LinkIcon, "URL Schemes"),
     rf("extensions", Blocks, "Extensions"),
     rf("hooks", Anchor, "hooks"),
@@ -97,6 +98,7 @@ const routeFeatures: Record<FeatureKey, RouteFeature[]> = {
   "fruity:daemon": [
     rf("modules", Package, "modules"),
     rf("classes", Braces, "classes"),
+    rf("il2cpp", SiUnity, "IL2CPP"),
     rf("hooks", Anchor, "hooks"),
     rf("device", Smartphone, "device_info"),
     rf("threads", Cpu, "Threads"),
@@ -105,6 +107,7 @@ const routeFeatures: Record<FeatureKey, RouteFeature[]> = {
     rf("general", Info, "general"),
     rf("components", Puzzle, "components"),
     rf("classes", Braces, "classes"),
+    rf("il2cpp", SiUnity, "IL2CPP"),
     rf("urls", LinkIcon, "URL Schemes"),
     rf("hooks", Anchor, "hooks"),
     rf("modules", Package, "modules"),
@@ -114,6 +117,7 @@ const routeFeatures: Record<FeatureKey, RouteFeature[]> = {
   "droid:daemon": [
     rf("modules", Package, "modules"),
     rf("classes", Braces, "classes"),
+    rf("il2cpp", SiUnity, "IL2CPP"),
     rf("threads", Cpu, "Threads"),
   ],
 };
