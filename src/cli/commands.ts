@@ -69,9 +69,14 @@ export async function runCLI(argv: string[]) {
   const { positionals, values } = args;
   const opts = getClientOpts(values);
 
-  if (values.help || positionals.length === 0) {
+  if (positionals.length === 0) {
     printHelp();
-    process.exit(values.help ? 0 : 1);
+    process.exit(1);
+  }
+
+  if (values.help && positionals[0] !== "setup") {
+    printHelp();
+    process.exit(0);
   }
 
   const [cmd, ...subArgs] = positionals;
@@ -96,6 +101,12 @@ export async function runCLI(argv: string[]) {
     case "agent": {
       const session = requireSession(values);
       await runAgentCmd(subArgs[0], subArgs.slice(1), session, opts);
+      break;
+    }
+
+    case "setup": {
+      const { runSetup } = await import("./setup.ts");
+      await runSetup(argv.slice(1));
       break;
     }
 
@@ -221,10 +232,13 @@ async function runAgentCmd(
       await runAppCmd(args[0], s, opts);
       break;
     case "checksec":
-      await runChecksecCmd(args[0], s, opts);
+      await runChecksecCmd(args[0], args[1], s, opts);
       break;
     case "class":
       await runClassCmd(args[0], args[1], s, opts);
+      break;
+    case "classdump":
+      await runClassdumpCmd(args[0], args[1], s, opts);
       break;
     case "hook":
       await runHookCmd(args[0], args[1], s, opts);
@@ -236,7 +250,7 @@ async function runAgentCmd(
       await runPinCmd(args[0], args[1], s, opts);
       break;
     case "symbol":
-      await runSymbolCmd(args[0], args[1], s, opts);
+      await runSymbolCmd(args[0], args.slice(1), s, opts);
       break;
     case "thread":
       printJson(await agent.thread.list(s, opts));
@@ -250,8 +264,11 @@ async function runAgentCmd(
     case "sqlite":
       await runSqliteCmd(args[0], args[1], args[2], s, opts);
       break;
+    case "il2cpp":
+      await runIl2cppCmd(args[0], args[1], s, opts);
+      break;
     case "android":
-      await runAndroidCmd(args[0], args[1], s, opts);
+      await runAndroidCmd(args[0], args.slice(1), s, opts);
       break;
     case "ios":
       await runIosCmd(args[0], args.slice(1), s, opts);
@@ -272,7 +289,7 @@ async function runAgentCmd(
 }
 
 async function runFsCmd(sub: string | undefined, args: string[], s: SessionParams, opts: ClientOptions) {
-  if (!sub) exitErr("agent fs requires subcommand: ls|cat|rm|cp|mv|mkdir|stat|roots");
+  if (!sub) exitErr("agent fs requires subcommand: ls|cat|data|plist|preview|rm|cp|mv|mkdir|stat|access|roots|write");
   switch (sub) {
     case "ls":
       if (!args[0]) exitErr("agent fs ls requires <path>");
@@ -281,6 +298,18 @@ async function runFsCmd(sub: string | undefined, args: string[], s: SessionParam
     case "cat":
       if (!args[0]) exitErr("agent fs cat requires <path>");
       console.log(await agent.fs.cat(s, args[0], opts));
+      break;
+    case "data":
+      if (!args[0]) exitErr("agent fs data requires <path>");
+      printJson(await agent.fs.data(s, args[0], opts));
+      break;
+    case "plist":
+      if (!args[0]) exitErr("agent fs plist requires <path>");
+      printJson(await agent.fs.plist(s, args[0], opts));
+      break;
+    case "preview":
+      if (!args[0]) exitErr("agent fs preview requires <path>");
+      printJson(await agent.fs.preview(s, args[0], opts));
       break;
     case "rm":
       if (!args[0]) exitErr("agent fs rm requires <path>");
@@ -306,8 +335,17 @@ async function runFsCmd(sub: string | undefined, args: string[], s: SessionParam
       if (!args[0]) exitErr("agent fs stat requires <path>");
       printJson(await agent.fs.stat(s, args[0], opts));
       break;
+    case "access":
+      if (!args[0]) exitErr("agent fs access requires <path>");
+      printJson(await agent.fs.access(s, args[0], opts));
+      break;
     case "roots":
       printJson(await agent.fs.roots(s, opts));
+      break;
+    case "write":
+      if (!args[0] || !args[1]) exitErr("agent fs write requires <path> <content>");
+      await agent.fs.saveText(s, args[0], args[1], opts);
+      console.log("Written");
       break;
     default:
       exitErr(`Unknown agent fs subcommand: ${sub}`);
@@ -315,7 +353,7 @@ async function runFsCmd(sub: string | undefined, args: string[], s: SessionParam
 }
 
 async function runAppCmd(sub: string | undefined, s: SessionParams, opts: ClientOptions) {
-  if (!sub) exitErr("agent app requires subcommand: info|manifest|entitlements|urls");
+  if (!sub) exitErr("agent app requires subcommand: info|manifest|entitlements|urls|plist|process-info");
   switch (sub) {
     case "info":
       printJson(await agent.app.info(s, opts));
@@ -329,13 +367,19 @@ async function runAppCmd(sub: string | undefined, s: SessionParams, opts: Client
     case "urls":
       printJson(await agent.app.urls(s, opts));
       break;
+    case "plist":
+      printJson(await agent.app.plist(s, opts));
+      break;
+    case "process-info":
+      printJson(await agent.app.processInfo(s, opts));
+      break;
     default:
       exitErr(`Unknown agent app subcommand: ${sub}`);
   }
 }
 
-async function runChecksecCmd(sub: string | undefined, s: SessionParams, opts: ClientOptions) {
-  if (!sub) exitErr("agent checksec requires subcommand: all|main");
+async function runChecksecCmd(sub: string | undefined, name: string | undefined, s: SessionParams, opts: ClientOptions) {
+  if (!sub) exitErr("agent checksec requires subcommand: all|main|single");
   switch (sub) {
     case "all":
       printJson(await agent.checksec.all(s, opts));
@@ -343,13 +387,17 @@ async function runChecksecCmd(sub: string | undefined, s: SessionParams, opts: C
     case "main":
       printJson(await agent.checksec.main(s, opts));
       break;
+    case "single":
+      if (!name) exitErr("agent checksec single requires <name>");
+      printJson(await agent.checksec.single(s, name, opts));
+      break;
     default:
       exitErr(`Unknown agent checksec subcommand: ${sub}`);
   }
 }
 
 async function runClassCmd(sub: string | undefined, name: string | undefined, s: SessionParams, opts: ClientOptions) {
-  if (!sub) exitErr("agent class requires subcommand: list|inspect");
+  if (!sub) exitErr("agent class requires subcommand: list|inspect|constants");
   switch (sub) {
     case "list":
       printJson(await agent.class.list(s, opts));
@@ -358,13 +406,40 @@ async function runClassCmd(sub: string | undefined, name: string | undefined, s:
       if (!name) exitErr("agent class inspect requires <name>");
       printJson(await agent.class.inspect(s, name, opts));
       break;
+    case "constants":
+      if (!name) exitErr("agent class constants requires <name>");
+      printJson(await agent.class.constants(s, name, opts));
+      break;
     default:
       exitErr(`Unknown agent class subcommand: ${sub}`);
   }
 }
 
+async function runClassdumpCmd(sub: string | undefined, name: string | undefined, s: SessionParams, opts: ClientOptions) {
+  if (!sub) exitErr("agent classdump requires subcommand: list|module|inheritance|inspect");
+  switch (sub) {
+    case "list":
+      printJson(await agent.classdump.list(s, opts));
+      break;
+    case "module":
+      if (!name) exitErr("agent classdump module requires <module>");
+      printJson(await agent.classdump.classesForModule(s, name, opts));
+      break;
+    case "inheritance":
+      if (!name) exitErr("agent classdump inheritance requires <name>");
+      printJson(await agent.classdump.inheritance(s, name, opts));
+      break;
+    case "inspect":
+      if (!name) exitErr("agent classdump inspect requires <name>");
+      printJson(await agent.classdump.inspect(s, name, opts));
+      break;
+    default:
+      exitErr(`Unknown agent classdump subcommand: ${sub}`);
+  }
+}
+
 async function runHookCmd(sub: string | undefined, group: string | undefined, s: SessionParams, opts: ClientOptions) {
-  if (!sub) exitErr("agent hook requires subcommand: list|status|start|stop");
+  if (!sub) exitErr("agent hook requires subcommand: list|status|start|stop|user-hooks");
   switch (sub) {
     case "list":
       printJson(await agent.hook.list(s, opts));
@@ -382,16 +457,22 @@ async function runHookCmd(sub: string | undefined, group: string | undefined, s:
       await agent.hook.stop(s, group, opts);
       console.log("Hook stopped");
       break;
+    case "user-hooks":
+      printJson(await agent.hook.userHooks(s, opts));
+      break;
     default:
       exitErr(`Unknown agent hook subcommand: ${sub}`);
   }
 }
 
 async function runCryptoCmd(sub: string | undefined, group: string | undefined, s: SessionParams, opts: ClientOptions) {
-  if (!sub) exitErr("agent crypto requires subcommand: status|start|stop");
+  if (!sub) exitErr("agent crypto requires subcommand: status|available|start|stop");
   switch (sub) {
     case "status":
       printJson(await agent.crypto.status(s, opts));
+      break;
+    case "available":
+      printJson(await agent.crypto.available(s, opts));
       break;
     case "start":
       if (!group) exitErr("agent crypto start requires <group>");
@@ -409,10 +490,16 @@ async function runCryptoCmd(sub: string | undefined, group: string | undefined, 
 }
 
 async function runPinCmd(sub: string | undefined, id: string | undefined, s: SessionParams, opts: ClientOptions) {
-  if (!sub) exitErr("agent pin requires subcommand: list|start|stop");
+  if (!sub) exitErr("agent pin requires subcommand: list|active|available|start|stop|snapshot|restore");
   switch (sub) {
     case "list":
       printJson(await agent.pin.list(s, opts));
+      break;
+    case "active":
+      printJson(await agent.pin.active(s, opts));
+      break;
+    case "available":
+      printJson(await agent.pin.available(s, opts));
       break;
     case "start":
       if (!id) exitErr("agent pin start requires <id>");
@@ -424,13 +511,17 @@ async function runPinCmd(sub: string | undefined, id: string | undefined, s: Ses
       await agent.pin.stop(s, id, opts);
       console.log("Pin stopped");
       break;
+    case "snapshot":
+      printJson(await agent.pin.snapshot(s, opts));
+      break;
     default:
       exitErr(`Unknown agent pin subcommand: ${sub}`);
   }
 }
 
-async function runSymbolCmd(sub: string | undefined, mod: string | undefined, s: SessionParams, opts: ClientOptions) {
-  if (!sub) exitErr("agent symbol requires subcommand: modules|exports|imports|strings|symbols|deps");
+async function runSymbolCmd(sub: string | undefined, args: string[], s: SessionParams, opts: ClientOptions) {
+  if (!sub) exitErr("agent symbol requires subcommand: modules|exports|imports|imports-grouped|strings|symbols|deps|sections|resolve|symbolicate");
+  const mod = args[0];
   switch (sub) {
     case "modules":
       printJson(await agent.symbol.modules(s, opts));
@@ -442,6 +533,10 @@ async function runSymbolCmd(sub: string | undefined, mod: string | undefined, s:
     case "imports":
       if (!mod) exitErr("agent symbol imports requires <module>");
       printJson(await agent.symbol.imports(s, mod, opts));
+      break;
+    case "imports-grouped":
+      if (!mod) exitErr("agent symbol imports-grouped requires <module>");
+      printJson(await agent.symbol.importsGrouped(s, mod, opts));
       break;
     case "strings":
       if (!mod) exitErr("agent symbol strings requires <module>");
@@ -455,13 +550,25 @@ async function runSymbolCmd(sub: string | undefined, mod: string | undefined, s:
       if (!mod) exitErr("agent symbol deps requires <module>");
       printJson(await agent.symbol.deps(s, mod, opts));
       break;
+    case "sections":
+      if (!mod) exitErr("agent symbol sections requires <module>");
+      printJson(await agent.symbol.sections(s, mod, opts));
+      break;
+    case "resolve":
+      if (!mod || !args[1]) exitErr("agent symbol resolve requires <module> <name>");
+      printJson(await agent.symbol.resolve(s, mod, args[1], opts));
+      break;
+    case "symbolicate":
+      if (!mod) exitErr("agent symbol symbolicate requires <addr>");
+      printJson(await agent.symbol.symbolicate(s, mod, opts));
+      break;
     default:
       exitErr(`Unknown agent symbol subcommand: ${sub}`);
   }
 }
 
 async function runMemoryCmd(sub: string | undefined, args: string[], s: SessionParams, opts: ClientOptions) {
-  if (!sub) exitErr("agent memory requires subcommand: dump|scan|ranges");
+  if (!sub) exitErr("agent memory requires subcommand: dump|scan|stop-scan|ranges|info");
   switch (sub) {
     case "dump":
       if (!args[0] || !args[1]) exitErr("agent memory dump requires <addr> <size>");
@@ -471,8 +578,16 @@ async function runMemoryCmd(sub: string | undefined, args: string[], s: SessionP
       if (!args[0]) exitErr("agent memory scan requires <pattern>");
       printJson(await agent.memory.scan(s, args[0], opts));
       break;
+    case "stop-scan":
+      await agent.memory.stopScan(s, opts);
+      console.log("Scan stopped");
+      break;
     case "ranges":
       printJson(await agent.memory.ranges(s, opts));
+      break;
+    case "info":
+      if (!args[0]) exitErr("agent memory info requires <addr>");
+      printJson(await agent.memory.addressInfo(s, args[0], opts));
       break;
     default:
       exitErr(`Unknown agent memory subcommand: ${sub}`);
@@ -495,17 +610,86 @@ async function runSqliteCmd(sub: string | undefined, path: string | undefined, t
   }
 }
 
-async function runAndroidCmd(sub: string | undefined, arg: string | undefined, s: SessionParams, opts: ClientOptions) {
+async function runIl2cppCmd(sub: string | undefined, arg: string | undefined, s: SessionParams, opts: ClientOptions) {
+  if (!sub) exitErr("agent il2cpp requires subcommand: available|info|assemblies|classes|search|detail|dump|gc-stats|gc-collect|gc-toggle|threads");
+  switch (sub) {
+    case "available":
+      printJson(await agent.il2cpp.available(s, opts));
+      break;
+    case "info":
+      printJson(await agent.il2cpp.info(s, opts));
+      break;
+    case "assemblies":
+      printJson(await agent.il2cpp.assemblies(s, opts));
+      break;
+    case "classes":
+      if (!arg) exitErr("agent il2cpp classes requires <assembly>");
+      printJson(await agent.il2cpp.classes(s, arg, opts));
+      break;
+    case "search":
+      if (!arg) exitErr("agent il2cpp search requires <query>");
+      printJson(await agent.il2cpp.searchClasses(s, arg, opts));
+      break;
+    case "detail":
+      if (!arg) exitErr("agent il2cpp detail requires <name>");
+      printJson(await agent.il2cpp.classDetail(s, arg, opts));
+      break;
+    case "dump":
+      if (!arg) exitErr("agent il2cpp dump requires <name>");
+      printJson(await agent.il2cpp.classDump(s, arg, opts));
+      break;
+    case "gc-stats":
+      printJson(await agent.il2cpp.gcStats(s, opts));
+      break;
+    case "gc-collect":
+      await agent.il2cpp.gcCollect(s, opts);
+      console.log("GC collected");
+      break;
+    case "gc-toggle":
+      if (!arg) exitErr("agent il2cpp gc-toggle requires <on|off>");
+      await agent.il2cpp.gcToggle(s, arg === "on", opts);
+      console.log(`GC ${arg === "on" ? "enabled" : "disabled"}`);
+      break;
+    case "threads":
+      printJson(await agent.il2cpp.threads(s, opts));
+      break;
+    default:
+      exitErr(`Unknown agent il2cpp subcommand: ${sub}`);
+  }
+}
+
+async function runAndroidCmd(sub: string | undefined, args: string[], s: SessionParams, opts: ClientOptions) {
   if (!sub) exitErr("agent android requires subcommand");
+  const arg = args[0];
   switch (sub) {
     case "activities":
       printJson(await agent.android.activities(s, opts));
       break;
+    case "start-activity":
+      if (!arg) exitErr("agent android start-activity requires <name>");
+      await agent.android.startActivity(s, arg, opts);
+      console.log("Activity started");
+      break;
     case "services":
       printJson(await agent.android.services(s, opts));
       break;
+    case "start-service":
+      if (!arg) exitErr("agent android start-service requires <name>");
+      await agent.android.startService(s, arg, opts);
+      console.log("Service started");
+      break;
+    case "stop-service":
+      if (!arg) exitErr("agent android stop-service requires <name>");
+      await agent.android.stopService(s, arg, opts);
+      console.log("Service stopped");
+      break;
     case "receivers":
       printJson(await agent.android.receivers(s, opts));
+      break;
+    case "send-broadcast":
+      if (!arg) exitErr("agent android send-broadcast requires <action>");
+      await agent.android.sendBroadcast(s, arg, opts);
+      console.log("Broadcast sent");
       break;
     case "providers":
       printJson(await agent.android.providers(s, opts));
@@ -521,11 +705,53 @@ async function runAndroidCmd(sub: string | undefined, arg: string | undefined, s
       if (!arg) exitErr("agent android keystore-info requires <alias>");
       printJson(await agent.android.keystoreInfo(s, arg, opts));
       break;
+    case "keystore-cert":
+      if (!arg) exitErr("agent android keystore-cert requires <alias>");
+      printJson(await agent.android.keystoreCert(s, arg, opts));
+      break;
+    case "device-info":
+      printJson(await agent.android.deviceInfo(s, opts));
+      break;
     case "device-props":
       printJson(await agent.android.deviceProps(s, opts));
       break;
+    case "resources":
+      printJson(await agent.android.resources(s, opts));
+      break;
+    case "resource":
+      if (!arg || !args[1]) exitErr("agent android resource requires <type> <name>");
+      printJson(await agent.android.resource(s, arg, args[1], opts));
+      break;
+    case "webview":
+      await runAndroidWebviewCmd(args.slice(0), s, opts);
+      break;
     default:
       exitErr(`Unknown agent android subcommand: ${sub}`);
+  }
+}
+
+async function runAndroidWebviewCmd(args: string[], s: SessionParams, opts: ClientOptions) {
+  const sub = args[0];
+  if (!sub || sub === "list") {
+    printJson(await agent.android.webview.list(s, opts));
+    return;
+  }
+  switch (sub) {
+    case "debug":
+      await agent.android.webview.setDebugging(s, true, opts);
+      console.log("WebView debugging enabled");
+      break;
+    case "eval":
+      if (!args[1] || !args[2]) exitErr("agent android webview eval requires <handle> <code>");
+      printJson(await agent.android.webview.evaluate(s, args[1], args[2], opts));
+      break;
+    case "navigate":
+      if (!args[1] || !args[2]) exitErr("agent android webview navigate requires <handle> <url>");
+      await agent.android.webview.navigate(s, args[1], args[2], opts);
+      console.log("Navigated");
+      break;
+    default:
+      exitErr(`Unknown agent android webview subcommand: ${sub}`);
   }
 }
 
@@ -535,22 +761,65 @@ async function runIosCmd(sub: string | undefined, args: string[], s: SessionPara
     case "keychain":
       printJson(await agent.ios.keychain(s, opts));
       break;
+    case "keychain-remove":
+      if (!args[0]) exitErr("agent ios keychain-remove requires <account>");
+      await agent.ios.keychainRemove(s, args[0], opts);
+      console.log("Removed");
+      break;
     case "cookies":
       printJson(await agent.ios.cookies(s, opts));
+      break;
+    case "cookies-clear":
+      await agent.ios.cookiesClear(s, opts);
+      console.log("Cookies cleared");
       break;
     case "userdefaults":
       printJson(await agent.ios.userdefaults(s, opts));
       break;
+    case "userdefaults-update":
+      if (!args[0] || !args[1]) exitErr("agent ios userdefaults-update requires <key> <value>");
+      await agent.ios.userdefaultsUpdate(s, args[0], args[1], opts);
+      console.log("Updated");
+      break;
+    case "userdefaults-remove":
+      if (!args[0]) exitErr("agent ios userdefaults-remove requires <key>");
+      await agent.ios.userdefaultsRemove(s, args[0], opts);
+      console.log("Removed");
+      break;
     case "webviews":
       printJson(await agent.ios.webviews(s, opts));
       break;
+    case "webviews-ui":
+      printJson(await agent.ios.webviewsUI(s, opts));
+      break;
+    case "webview-eval":
+      if (!args[0] || !args[1]) exitErr("agent ios webview-eval requires <handle> <code>");
+      printJson(await agent.ios.webviewEval(s, args[0], args[1], opts));
+      break;
+    case "webview-navigate":
+      if (!args[0] || !args[1]) exitErr("agent ios webview-navigate requires <handle> <url>");
+      await agent.ios.webviewNavigate(s, args[0], args[1], opts);
+      console.log("Navigated");
+      break;
     case "jsc":
       printJson(await agent.ios.jsc(s, opts));
+      break;
+    case "jsc-dump":
+      if (!args[0]) exitErr("agent ios jsc-dump requires <handle>");
+      printJson(await agent.ios.jscDump(s, args[0], opts));
+      break;
+    case "jsc-run":
+      if (!args[0] || !args[1]) exitErr("agent ios jsc-run requires <handle> <code>");
+      printJson(await agent.ios.jscRun(s, args[0], args[1], opts));
       break;
     case "geolocation":
       if (!args[0] || !args[1]) exitErr("agent ios geolocation requires <lat> <lng>");
       await agent.ios.geolocation(s, parseFloat(args[0]), parseFloat(args[1]), opts);
       console.log("GPS spoofed");
+      break;
+    case "geolocation-dismiss":
+      await agent.ios.geolocationDismiss(s, opts);
+      console.log("GPS spoofing dismissed");
       break;
     case "uidevice":
       printJson(await agent.ios.uidevice(s, opts));
@@ -560,14 +829,32 @@ async function runIosCmd(sub: string | undefined, args: string[], s: SessionPara
       await agent.ios.openUrl(s, args[0], opts);
       console.log("URL opened");
       break;
+    case "ui-dump":
+      printJson(await agent.ios.ui.dump(s, opts));
+      break;
+    case "ui-highlight":
+      if (!args[0]) exitErr("agent ios ui-highlight requires <addr>");
+      await agent.ios.ui.highlight(s, args[0], opts);
+      console.log("Highlighted");
+      break;
+    case "ui-dismiss":
+      await agent.ios.ui.dismissHighlight(s, opts);
+      console.log("Dismissed");
+      break;
+    case "plugins":
+      printJson(await agent.ios.plugins(s, opts));
+      break;
     default:
       exitErr(`Unknown agent ios subcommand: ${sub}`);
   }
 }
 
 async function runRnCmd(sub: string | undefined, args: string[], s: SessionParams, opts: ClientOptions) {
-  if (!sub) exitErr("agent rn requires subcommand: list|inject");
+  if (!sub) exitErr("agent rn requires subcommand: arch|list|inject");
   switch (sub) {
+    case "arch":
+      printJson(await agent.rn.arch(s, opts));
+      break;
     case "list":
       printJson(await agent.rn.list(s, opts));
       break;
@@ -581,19 +868,19 @@ async function runRnCmd(sub: string | undefined, args: string[], s: SessionParam
 }
 
 async function runNativeCmd(sub: string | undefined, mod: string | undefined, name: string | undefined, s: SessionParams, opts: ClientOptions) {
-  if (!sub) exitErr("agent native requires subcommand: list|start|stop");
+  if (!sub) exitErr("agent native requires subcommand: list|hook|unhook");
   switch (sub) {
     case "list":
       printJson(await agent.native.list(s, opts));
       break;
-    case "start":
-      if (!mod || !name) exitErr("agent native start requires <module> <name>");
-      await agent.native.start(s, mod, name, opts);
+    case "hook":
+      if (!mod || !name) exitErr("agent native hook requires <module> <name>");
+      await agent.native.hook(s, mod, name, opts);
       console.log("Native hook started");
       break;
-    case "stop":
-      if (!mod || !name) exitErr("agent native stop requires <module> <name>");
-      await agent.native.stop(s, mod, name, opts);
+    case "unhook":
+      if (!mod || !name) exitErr("agent native unhook requires <module> <name>");
+      await agent.native.unhook(s, mod, name, opts);
       console.log("Native hook stopped");
       break;
     default:
@@ -634,83 +921,33 @@ Commands:
     hermes <device> <id>      Hermes JS captures
 
   agent <namespace> <subcommand>   Agent RPC (requires session)
-    fs ls <path>                    List directory
-    fs cat <path>                    Read file as text
-    fs rm <path>                    Delete file/directory
-    fs cp <src> <dst>               Copy file
-    fs mv <src> <dst>               Move/rename file
-    fs mkdir <path>                 Create directory
-    fs stat <path>                  File attributes
-    fs roots                        Home and bundle directories
-
-    app info                        App package info
-    app manifest                    AndroidManifest.xml (Android)
-    app entitlements                App entitlements (iOS)
-    app urls                        URL schemes (iOS)
-
-    checksec all                    All binaries
-    checksec main                   Main binary only
-
-    class list                      List loaded classes
-    class inspect <name>            Inspect class methods/fields
-
-    hook list                        List hook groups
-    hook status                      Hook group status
-    hook start <group>               Start hook group
-    hook stop <group>                Stop hook group
-
-    crypto status                    Crypto hook status
-    crypto start <group>             Start crypto group
-    crypto stop <group>              Stop crypto group
-
-    pin list                         List pins
-    pin start <id>                   Start pin
-    pin stop <id>                    Stop pin
-
-    symbol modules                   List loaded modules
-    symbol exports <module>          Module exports
-    symbol imports <module>           Module imports
-    symbol strings <module>          Extract strings from module
-    symbol symbols <module>          All symbols
-    symbol deps <module>             Module dependencies
-
-    thread list                      List threads
-
-    memory dump <addr> <size>        Dump memory
-    memory scan <pattern>            Scan memory for pattern
-    memory ranges                    List allocated memory ranges
-
-    lsof                             List open file descriptors
-
-    sqlite tables <path>             List tables in SQLite DB
-    sqlite dump <path> <table>       Query table
-
-    android activities               List activities
-    android services                 List services
-    android receivers                List broadcast receivers
-    android providers                List content providers
-    android provider-query <uri>     Query content provider
-    android keystore                 List Android Keystore entries
-    android keystore-info <alias>     Keystore entry details
-    android device-props             System properties
-
-    ios keychain                     List keychain items
-    ios cookies                      List HTTP cookies
-    ios userdefaults                 NSUserDefaults
-    ios webviews                     List WKWebView instances
-    ios jsc                          List JSContext instances
-    ios geolocation <lat> <lng>      Spoof GPS
-    ios uidevice                     UIDevice info
-    ios open-url <url>               Open URL in app
-
-    eval <code>                      Evaluate JavaScript
-
-    rn list                          List RN instances
-    rn inject <handle> <arch> <script>  Inject JS into RN
-
-    native list                      List native hooks
-    native start <module> <name>    Start native hook
-    native stop <module> <name>     Stop native hook
+    fs ls|cat|data|plist|preview|rm|cp|mv|mkdir|stat|access|roots|write
+    app info|manifest|entitlements|urls|plist|process-info
+    checksec all|main|single <name>
+    class list|inspect|constants <name>
+    classdump list|module|inheritance|inspect <name>   (iOS)
+    hook list|status|start|stop|user-hooks <group>
+    crypto status|available|start|stop <group>
+    pin list|active|available|start|stop|snapshot <id>
+    symbol modules|exports|imports|imports-grouped|strings|symbols|deps|sections|resolve|symbolicate
+    thread list
+    memory dump|scan|stop-scan|ranges|info <addr>
+    lsof
+    sqlite tables|dump|query <path> [table|sql]
+    il2cpp available|info|assemblies|classes|search|detail|dump|gc-stats|gc-collect|gc-toggle|threads
+    android activities|start-activity|services|start-service|stop-service
+            receivers|send-broadcast|providers|provider-query
+            keystore|keystore-info|keystore-cert|device-info|device-props
+            resources|resource|webview
+    ios keychain|keychain-remove|cookies|cookies-clear
+        userdefaults|userdefaults-update|userdefaults-remove
+        webviews|webviews-ui|webview-eval|webview-navigate
+        jsc|jsc-dump|jsc-run
+        geolocation|geolocation-dismiss|uidevice|open-url
+        ui-dump|ui-highlight|ui-dismiss|plugins
+    eval <code>
+    rn arch|list|inject <handle> <arch> <script>
+    native list|hook|unhook <module> <name>
 
 Global Options:
   -H, --host <host>   Server host (default: localhost)

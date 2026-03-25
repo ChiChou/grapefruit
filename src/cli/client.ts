@@ -53,6 +53,8 @@ export const rest = {
   version: (opts: ClientOptions) => get("/version", opts),
   addRemote: (hostname: string, opts: ClientOptions) => post(`/devices/remote/${hostname}`, undefined, opts),
   removeRemote: (hostname: string, opts: ClientOptions) => del(`/devices/remote/${hostname}`, opts),
+  icon: (device: string, bundle: string, opts: ClientOptions) =>
+    getText(`/device/${device}/icon/${bundle}`, opts),
 
   hooks: (device: string, id: string, limit: number, opts: ClientOptions) =>
     get(`/hooks/${device}/${id}?limit=${limit}`, opts),
@@ -85,6 +87,14 @@ export const rest = {
   clearPrivacy: (device: string, id: string, opts: ClientOptions) => del(`/history/privacy/${device}/${id}`, opts),
   hermes: (device: string, id: string, limit: number, opts: ClientOptions) =>
     get(`/hermes/${device}/${id}?limit=${limit}`, opts),
+  hermesAnalyze: (device: string, id: string, hid: number, opts: ClientOptions) =>
+    get(`/hermes/${device}/${id}/analyze/${hid}`, opts),
+  hermesDecompile: (device: string, id: string, hid: number, fn: number, opts: ClientOptions) =>
+    get(`/hermes/${device}/${id}/decompile/${hid}?fn=${fn}&offsets=1`, opts),
+  hermesDisassemble: (device: string, id: string, hid: number, fn: number, opts: ClientOptions) =>
+    get(`/hermes/${device}/${id}/disassemble/${hid}?fn=${fn}`, opts),
+  hermesDelete: (device: string, id: string, hid: number, opts: ClientOptions) =>
+    del(`/hermes/${device}/${id}/${hid}`, opts),
   clearHermes: (device: string, id: string, opts: ClientOptions) => del(`/hermes/${device}/${id}`, opts),
   pins: (device: string, id: string, opts: ClientOptions) => get(`/pins/${device}/${id}`, opts),
   clearPins: (device: string, id: string, opts: ClientOptions) => del(`/pins/${device}/${id}`, opts),
