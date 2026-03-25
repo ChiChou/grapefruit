@@ -35,3 +35,7 @@ bun test            # run tests
 ## Skills
 
 `/igf` — CLI interface for the IGF server. Exposes all REST API and agent RPC. See `.claude/skills/igf/` for details.
+
+## Code Style
+
+Do not generate code splitter comments (or code dividers/dividers)
