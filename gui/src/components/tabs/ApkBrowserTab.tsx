@@ -37,8 +37,6 @@ interface ApkInfo {
 /** [name, size] */
 type ApkEntry = [string, number];
 
-// ── Tree building from flat entry list ───────────────────────────────
-
 interface TreeNode {
   name: string;
   fullPath: string;
@@ -108,8 +106,6 @@ function getChildren(
   return { dirs, files };
 }
 
-// ── APK Selector (left panel) ────────────────────────────────────────
-
 function ApkSelector({
   apks,
   selected,
@@ -139,8 +135,6 @@ function ApkSelector({
     </div>
   );
 }
-
-// ── ZIP Directory Tree (middle panel) ────────────────────────────────
 
 function ZipTree({
   nodes,
@@ -198,8 +192,6 @@ function ZipTree({
     </div>
   );
 }
-
-// ── File List (right panel) ──────────────────────────────────────────
 
 interface DirEntry {
   name: string;
@@ -342,8 +334,6 @@ function ZipFileTable({
   );
 }
 
-// ── Main Tab ─────────────────────────────────────────────────────────
-
 export function ApkBrowserTab() {
   const { droid, status, pid, device } = useSession();
   const { t } = useTranslation();
@@ -398,9 +388,7 @@ export function ApkBrowserTab() {
 
   const handleNavigate = useCallback(
     (folderName: string) => {
-      const newPath = currentPath
-        ? `${currentPath}/${folderName}`
-        : folderName;
+      const newPath = currentPath ? `${currentPath}/${folderName}` : folderName;
       setCurrentPath(newPath);
       setExpanded((prev) => {
         const next = new Set(prev);

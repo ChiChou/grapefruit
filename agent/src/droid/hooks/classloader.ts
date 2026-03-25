@@ -34,8 +34,6 @@ function riskLevel(untrusted: boolean, isInMemory?: boolean): "critical" | "high
 
 const hooks: InvocationListener[] = [];
 
-// ── DexClassLoader ──────────────────────────────────────────────────────
-
 function hookDexClassLoader() {
   const DexClassLoader = Java.use("dalvik.system.DexClassLoader");
 
@@ -66,8 +64,6 @@ function hookDexClassLoader() {
     return original.call(self, ...args);
   }));
 }
-
-// ── PathClassLoader ─────────────────────────────────────────────────────
 
 function hookPathClassLoader() {
   const PathClassLoader = Java.use("dalvik.system.PathClassLoader");
@@ -130,8 +126,6 @@ function hookPathClassLoader() {
   }
 }
 
-// ── InMemoryDexClassLoader (API 26+) ────────────────────────────────────
-
 function hookInMemoryDexClassLoader() {
   const InMemoryDexClassLoader = Java.use("dalvik.system.InMemoryDexClassLoader");
 
@@ -186,8 +180,6 @@ function hookInMemoryDexClassLoader() {
   }
 }
 
-// ── BaseDexClassLoader ──────────────────────────────────────────────────
-
 function hookBaseDexClassLoader() {
   const BaseDexClassLoader = Java.use("dalvik.system.BaseDexClassLoader");
 
@@ -218,8 +210,6 @@ function hookBaseDexClassLoader() {
   }));
 }
 
-// ── DexFile.loadDex (deprecated but still used) ─────────────────────────
-
 function hookDexFile() {
   const DexFile = Java.use("dalvik.system.DexFile");
 
@@ -249,8 +239,6 @@ function hookDexFile() {
     return original.call(self, ...args);
   }));
 }
-
-// ── Runtime.exec ────────────────────────────────────────────────────────
 
 function hookRuntimeExec() {
   const Runtime = Java.use("java.lang.Runtime");
@@ -312,8 +300,6 @@ function hookRuntimeExec() {
     console.warn("classloader: Runtime.exec(String[]) overload unavailable:", e);
   }
 }
-
-// ── Lifecycle ───────────────────────────────────────────────────────────
 
 let running = false;
 

@@ -43,10 +43,11 @@ function formatBytes(s: string): string {
 }
 
 export function Il2CppPanel() {
-  const { data: il2cppAvailable, isLoading: checkingAvailable } = usePlatformQuery(
-    ["il2cpp", "available"],
-    (api) => (api as any).il2cpp.available() as Promise<boolean>,
-  );
+  const { data: il2cppAvailable, isLoading: checkingAvailable } =
+    usePlatformQuery(
+      ["il2cpp", "available"],
+      (api) => (api as any).il2cpp.available() as Promise<boolean>,
+    );
 
   if (checkingAvailable) {
     return (
@@ -89,7 +90,10 @@ export function Il2CppPanel() {
       <TabsContent value="runtime" className="flex-1 min-h-0 overflow-auto">
         <RuntimeTab />
       </TabsContent>
-      <TabsContent value="assemblies" className="flex-1 min-h-0 flex flex-col overflow-hidden">
+      <TabsContent
+        value="assemblies"
+        className="flex-1 min-h-0 flex flex-col overflow-hidden"
+      >
         <AssembliesTab />
       </TabsContent>
       <TabsContent value="threads" className="flex-1 min-h-0 overflow-auto">
@@ -98,8 +102,6 @@ export function Il2CppPanel() {
     </Tabs>
   );
 }
-
-// ── Runtime Tab ─────────────────────────────────────────────────────
 
 function RuntimeTab() {
   const queryClient = useQueryClient();
@@ -157,13 +159,14 @@ function RuntimeTab() {
         <InfoRow label="Heap" value={formatBytes(info.gc.heapSize)} />
         <InfoRow label="Used" value={formatBytes(info.gc.usedHeapSize)} />
         <InfoRow label="Enabled" value={info.gc.isEnabled ? "Yes" : "No"} />
-        <InfoRow label="Incremental" value={info.gc.isIncremental ? "Yes" : "No"} />
+        <InfoRow
+          label="Incremental"
+          value={info.gc.isIncremental ? "Yes" : "No"}
+        />
       </Section>
     </div>
   );
 }
-
-// ── Assemblies Tab ──────────────────────────────────────────────────
 
 function AssembliesTab() {
   const { t } = useTranslation();
@@ -173,7 +176,9 @@ function AssembliesTab() {
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [classCache, setClassCache] = useState<Record<string, string[]>>({});
-  const [loadingAssemblies, setLoadingAssemblies] = useState<Set<string>>(new Set());
+  const [loadingAssemblies, setLoadingAssemblies] = useState<Set<string>>(
+    new Set(),
+  );
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { data: assemblies = [], isLoading } = usePlatformQuery(
@@ -194,7 +199,9 @@ function AssembliesTab() {
     if (!classCache[name] && rpcApi) {
       setLoadingAssemblies((prev) => new Set(prev).add(name));
       try {
-        const classes = (await (rpcApi as any).il2cpp.classes(name)) as string[];
+        const classes = (await (rpcApi as any).il2cpp.classes(
+          name,
+        )) as string[];
         setClassCache((prev) => ({ ...prev, [name]: classes }));
       } catch {
         // skip
@@ -216,17 +223,31 @@ function AssembliesTab() {
         const classes = classCache[asm.name] ?? [];
         for (const cls of classes) {
           if (cls.toLowerCase().includes(query)) {
-            entries.push({ kind: "class", assemblyName: asm.name, label: cls, fullName: cls });
+            entries.push({
+              kind: "class",
+              assemblyName: asm.name,
+              label: cls,
+              fullName: cls,
+            });
           }
         }
       }
       return entries;
     }
     for (const asm of assemblies) {
-      entries.push({ kind: "assembly", assemblyName: asm.name, label: `${asm.name} (${asm.classCount})` });
+      entries.push({
+        kind: "assembly",
+        assemblyName: asm.name,
+        label: `${asm.name} (${asm.classCount})`,
+      });
       if (expanded.has(asm.name)) {
         for (const cls of classCache[asm.name] ?? []) {
-          entries.push({ kind: "class", assemblyName: asm.name, label: cls, fullName: cls });
+          entries.push({
+            kind: "class",
+            assemblyName: asm.name,
+            label: cls,
+            fullName: cls,
+          });
         }
       }
     }
@@ -270,10 +291,15 @@ function AssembliesTab() {
             {t("no_results")}
           </div>
         ) : (
-          <div style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
+          <div
+            style={{ height: virtualizer.getTotalSize(), position: "relative" }}
+          >
             {virtualizer.getVirtualItems().map((vItem) => {
               const entry = flatList[vItem.index];
-              const style = { height: vItem.size, transform: `translateY(${vItem.start}px)` };
+              const style = {
+                height: vItem.size,
+                transform: `translateY(${vItem.start}px)`,
+              };
               if (entry.kind === "assembly") {
                 return (
                   <AssemblyRow
@@ -297,7 +323,10 @@ function AssembliesTab() {
                       id: `il2cpp_class_${entry.assemblyName}_${entry.fullName}`,
                       component: "il2cppClassDetail",
                       title: entry.fullName ?? entry.label,
-                      params: { assemblyName: entry.assemblyName, fullName: entry.fullName! },
+                      params: {
+                        assemblyName: entry.assemblyName,
+                        fullName: entry.fullName!,
+                      },
                     })
                   }
                   onClickDump={() =>
@@ -305,7 +334,10 @@ function AssembliesTab() {
                       id: `il2cpp_dump_${entry.assemblyName}_${entry.fullName}`,
                       component: "il2cppClassDump",
                       title: `Dump: ${entry.fullName}`,
-                      params: { assemblyName: entry.assemblyName, fullName: entry.fullName! },
+                      params: {
+                        assemblyName: entry.assemblyName,
+                        fullName: entry.fullName!,
+                      },
                     })
                   }
                 />
@@ -317,8 +349,6 @@ function AssembliesTab() {
     </>
   );
 }
-
-// ── Threads Tab ─────────────────────────────────────────────────────
 
 function ThreadsTab() {
   const queryClient = useQueryClient();
@@ -368,10 +398,15 @@ function ThreadsTab() {
           </thead>
           <tbody>
             {threads.map((t) => (
-              <tr key={t.id} className="border-t border-border hover:bg-accent/30">
+              <tr
+                key={t.id}
+                className="border-t border-border hover:bg-accent/30"
+              >
                 <td className="px-4 py-1.5 font-mono">{t.id}</td>
                 <td className="px-4 py-1.5 font-mono">{t.managedId}</td>
-                <td className="px-4 py-1.5">{t.isFinalizer ? "Finalizer" : "User"}</td>
+                <td className="px-4 py-1.5">
+                  {t.isFinalizer ? "Finalizer" : "User"}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -380,8 +415,6 @@ function ThreadsTab() {
     </div>
   );
 }
-
-// ── Shared sub-components ───────────────────────────────────────────
 
 function Section({
   title,
@@ -408,7 +441,9 @@ function Section({
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center gap-3 py-0.5">
-      <span className="text-xs text-muted-foreground w-24 shrink-0">{label}</span>
+      <span className="text-xs text-muted-foreground w-24 shrink-0">
+        {label}
+      </span>
       <span className="text-xs font-mono truncate">{value}</span>
     </div>
   );
@@ -440,7 +475,9 @@ function AssemblyRow({
       )}
       <span className="text-sm font-medium truncate">{entry.label}</span>
       {isLoading && (
-        <span className="ml-2 text-xs text-muted-foreground animate-pulse">loading...</span>
+        <span className="ml-2 text-xs text-muted-foreground animate-pulse">
+          loading...
+        </span>
       )}
     </div>
   );
@@ -476,7 +513,9 @@ function ClassRow({
         onClick={onClickClass}
       >
         {inSearch && (
-          <span className="text-muted-foreground text-xs mr-1">{entry.assemblyName}/</span>
+          <span className="text-muted-foreground text-xs mr-1">
+            {entry.assemblyName}/
+          </span>
         )}
         {entry.fullName}
       </button>

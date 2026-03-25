@@ -4,8 +4,6 @@
 
 import "frida-il2cpp-bridge";
 
-// ── Serializable types ──────────────────────────────────────────────
-
 export interface Il2CppAssemblyInfo {
   name: string;
   classCount: number;
@@ -78,8 +76,6 @@ export interface Il2CppRuntimeInfo {
   gc: Il2CppGCStats;
 }
 
-// ── Init guard ──────────────────────────────────────────────────────
-
 let ready = false;
 
 function withIl2Cpp<T>(block: () => T): T | Promise<T> {
@@ -89,8 +85,6 @@ function withIl2Cpp<T>(block: () => T): T | Promise<T> {
     return block();
   });
 }
-
-// ── Helpers ─────────────────────────────────────────────────────────
 
 function findImage(assemblyName: string): Il2Cpp.Image {
   const asm = Il2Cpp.domain.tryAssembly(assemblyName);
@@ -148,8 +142,6 @@ function serializeMethod(m: Il2Cpp.Method): Il2CppMethodInfo {
     modifier: m.modifier,
   };
 }
-
-// ── RPC exports ─────────────────────────────────────────────────────
 
 /** Check if IL2CPP is available in the current process */
 export function available(): boolean {
