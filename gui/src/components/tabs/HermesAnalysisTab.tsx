@@ -3,10 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
 import { Loader2, Search } from "lucide-react";
 import Editor, { loader } from "@monaco-editor/react";
-import {
-  HERMES_LANGUAGE_ID,
-  monarchTokens,
-} from "@/lib/hermes-lang";
+import { HERMES_LANGUAGE_ID, monarchTokens } from "@/lib/syntax/hermes";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
 import {
@@ -23,9 +20,16 @@ import { useSession } from "@/context/SessionContext";
 import { useTheme } from "@/components/providers/ThemeProvider";
 
 loader.init().then((monaco) => {
-  if (!monaco.languages.getLanguages().some((l: { id: string }) => l.id === HERMES_LANGUAGE_ID)) {
+  if (
+    !monaco.languages
+      .getLanguages()
+      .some((l: { id: string }) => l.id === HERMES_LANGUAGE_ID)
+  ) {
     monaco.languages.register({ id: HERMES_LANGUAGE_ID });
-    monaco.languages.setMonarchTokensProvider(HERMES_LANGUAGE_ID, monarchTokens);
+    monaco.languages.setMonarchTokensProvider(
+      HERMES_LANGUAGE_ID,
+      monarchTokens,
+    );
   }
 });
 
@@ -99,7 +103,8 @@ export function HermesAnalysisTab({
   const [funcSearch, setFuncSearch] = useState("");
   const [selectedFuncId, setSelectedFuncId] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(
-    () => (localStorage.getItem("hermes-view-mode") as ViewMode) || "pseudocode",
+    () =>
+      (localStorage.getItem("hermes-view-mode") as ViewMode) || "pseudocode",
   );
 
   const [codeContent, setCodeContent] = useState("");
@@ -237,7 +242,9 @@ export function HermesAnalysisTab({
         a.download = `${params.filename?.replace(/\.[^.]+$/, "") ?? "hermes"}.${ext}`;
         a.click();
         URL.revokeObjectURL(url);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     },
     [device, identifier, params?.entryId, params?.filename],
   );
@@ -285,14 +292,35 @@ export function HermesAnalysisTab({
         </Badge>
         <ButtonGroup className="ml-auto">
           <ButtonGroupText className="text-[10px] h-7">Save</ButtonGroupText>
-          <Button variant="outline" size="sm" className="text-[10px] h-7 px-2" onClick={() => downloadAll("decompile")}>.js</Button>
-          <Button variant="outline" size="sm" className="text-[10px] h-7 px-2" onClick={() => downloadAll("disassemble")}>.asm</Button>
-          <Button variant="outline" size="sm" className="text-[10px] h-7 px-2" render={
-            <a
-              href={`/api/hermes/${device}/${identifier}/download/${params?.entryId}`}
-              download={`${params?.filename?.replace(/\.[^.]+$/, "") ?? "hermes"}.hbc`}
-            />
-          }>.hbc</Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-[10px] h-7 px-2"
+            onClick={() => downloadAll("decompile")}
+          >
+            .js
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-[10px] h-7 px-2"
+            onClick={() => downloadAll("disassemble")}
+          >
+            .asm
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-[10px] h-7 px-2"
+            render={
+              <a
+                href={`/api/hermes/${device}/${identifier}/download/${params?.entryId}`}
+                download={`${params?.filename?.replace(/\.[^.]+$/, "") ?? "hermes"}.hbc`}
+              />
+            }
+          >
+            .hbc
+          </Button>
         </ButtonGroup>
       </div>
 
@@ -318,7 +346,10 @@ export function HermesAnalysisTab({
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="functions" className="flex-1 overflow-hidden flex flex-col">
+            <TabsContent
+              value="functions"
+              className="flex-1 overflow-hidden flex flex-col"
+            >
               <div className="px-2 py-1.5 border-b shrink-0">
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -340,7 +371,10 @@ export function HermesAnalysisTab({
               />
             </TabsContent>
 
-            <TabsContent value="strings" className="flex-1 overflow-hidden flex flex-col">
+            <TabsContent
+              value="strings"
+              className="flex-1 overflow-hidden flex flex-col"
+            >
               <div className="px-2 py-1.5 border-b shrink-0 flex items-center gap-2">
                 <div className="relative flex-1">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -381,7 +415,14 @@ export function HermesAnalysisTab({
           {selectedString ? (
             <div className="h-full flex flex-col">
               <div className="flex items-center gap-2 px-3 py-1.5 border-b shrink-0">
-                <Badge variant={selectedString.kind === "identifier" ? "secondary" : "outline"} className="text-[10px]">
+                <Badge
+                  variant={
+                    selectedString.kind === "identifier"
+                      ? "secondary"
+                      : "outline"
+                  }
+                  className="text-[10px]"
+                >
                   {selectedString.kind}
                 </Badge>
                 <span className="text-[10px] text-muted-foreground">
@@ -390,7 +431,11 @@ export function HermesAnalysisTab({
               </div>
               <div className="flex-1 overflow-auto p-3">
                 <pre className="font-mono text-xs whitespace-pre-wrap break-all">
-                  {selectedString.value || <span className="text-muted-foreground italic">(empty)</span>}
+                  {selectedString.value || (
+                    <span className="text-muted-foreground italic">
+                      (empty)
+                    </span>
+                  )}
                 </pre>
               </div>
             </div>
@@ -479,9 +524,10 @@ function FunctionList({
     (e: React.KeyboardEvent) => {
       if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
       e.preventDefault();
-      const idx = selectedId !== null
-        ? functions.findIndex((f) => f.id === selectedId)
-        : -1;
+      const idx =
+        selectedId !== null
+          ? functions.findIndex((f) => f.id === selectedId)
+          : -1;
       const next =
         e.key === "ArrowDown"
           ? Math.min(idx + 1, functions.length - 1)
@@ -568,9 +614,10 @@ function StringList({
     (e: React.KeyboardEvent) => {
       if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
       e.preventDefault();
-      const idx = selectedIndex !== null
-        ? strings.findIndex((s) => s.index === selectedIndex)
-        : -1;
+      const idx =
+        selectedIndex !== null
+          ? strings.findIndex((s) => s.index === selectedIndex)
+          : -1;
       const next =
         e.key === "ArrowDown"
           ? Math.min(idx + 1, strings.length - 1)
@@ -619,7 +666,9 @@ function StringList({
                 </span>
                 <span className="font-mono text-xs truncate" title={str.value}>
                   {str.value || (
-                    <span className="text-muted-foreground italic">(empty)</span>
+                    <span className="text-muted-foreground italic">
+                      (empty)
+                    </span>
                   )}
                 </span>
                 <Badge
