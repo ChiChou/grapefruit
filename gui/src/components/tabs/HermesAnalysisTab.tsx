@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Search, AlertCircle } from "lucide-react";
 import Editor, { loader } from "@monaco-editor/react";
 import { HERMES_LANGUAGE_ID, monarchTokens } from "@/lib/syntax/hermes";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -73,7 +73,7 @@ interface AnalysisData {
   strings: HBCString[];
 }
 
-type ViewMode = "disassembly" | "pseudocode";
+type ViewMode = "disassembly" | "pseudocode" | "ai-decompile";
 type LeftTab = "functions" | "strings";
 
 function formatHex(n: number): string {
@@ -104,7 +104,7 @@ export function HermesAnalysisTab({
   const [selectedFuncId, setSelectedFuncId] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(
     () =>
-      (localStorage.getItem("hermes-view-mode") as ViewMode) || "pseudocode",
+      (localStorage.getItem("hermes-view-mode") as ViewMode) || "disassembly",
   );
 
   const [codeContent, setCodeContent] = useState("");
@@ -113,6 +113,11 @@ export function HermesAnalysisTab({
   const [strSearch, setStrSearch] = useState("");
   const [strKindFilter, setStrKindFilter] = useState("all");
   const [selectedString, setSelectedString] = useState<HBCString | null>(null);
+
+  const [aiContent, setAiContent] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const aiCache = useRef<Map<number | null, string>>(new Map());
 
   // Fetch analysis
   useEffect(() => {
@@ -154,7 +159,6 @@ export function HermesAnalysisTab({
         const endpoint = mode === "disassembly" ? "disassemble" : "decompile";
         const params_ = new URLSearchParams();
         if (funcId !== null) params_.set("fn", String(funcId));
-        if (mode === "pseudocode") params_.set("offsets", "1");
         const query = params_.size ? `?${params_}` : "";
 
         const res = await fetch(
@@ -162,7 +166,21 @@ export function HermesAnalysisTab({
         );
         if (!res.ok) throw new Error(`Failed to ${endpoint}`);
         const result = await res.json();
-        setCodeContent(result.source ?? "");
+        let source: string = result.source ?? "";
+
+        if (mode === "disassembly" && funcId !== null) {
+          const func = data?.functions.find((f) => f.id === funcId);
+          if (func) {
+            const params = Array.from({ length: func.paramCount }, (_, i) => `a${i}`).join(", ");
+            const header = `; function ${func.name}(${params})  [#${func.id}, ${func.size} bytes]`;
+            source = source.replace(
+              /^\s*@\s*offset\s+0x[0-9a-f]+\s*\n+Bytecode listing \(asm\):\s*\n*/,
+              header + "\n\n",
+            );
+          }
+        }
+
+        setCodeContent(source);
       } catch {
         setCodeContent(
           mode === "disassembly"
@@ -173,17 +191,7 @@ export function HermesAnalysisTab({
         setCodeLoading(false);
       }
     },
-    [device, identifier, params?.entryId],
-  );
-
-  // When selecting a function, load its code
-  const handleFuncClick = useCallback(
-    (funcId: number) => {
-      setSelectedFuncId(funcId);
-      setSelectedString(null);
-      fetchCode(funcId, viewMode);
-    },
-    [viewMode, fetchCode],
+    [device, identifier, params?.entryId, data?.functions],
   );
 
   const changeLeftTab = useCallback((tab: LeftTab) => {
@@ -192,13 +200,102 @@ export function HermesAnalysisTab({
     if (tab === "functions") setSelectedString(null);
   }, []);
 
+  const loadAiDecompile = useCallback(
+    async (funcId: number | null) => {
+      if (!device || !identifier || !params?.entryId) return;
+
+      const cached = aiCache.current.get(funcId);
+      if (cached) {
+        setAiContent(cached);
+        setAiError(null);
+        return;
+      }
+
+      setAiLoading(true);
+      setAiError(null);
+      setAiContent("");
+
+      try {
+        const fnQuery = funcId !== null ? `?fn=${funcId}` : "";
+
+        const [decompileRes, disasmRes] = await Promise.all([
+          fetch(`/api/hermes/${device}/${identifier}/decompile/${params.entryId}${fnQuery}`),
+          fetch(`/api/hermes/${device}/${identifier}/disassemble/${params.entryId}${fnQuery}`),
+        ]);
+
+        if (!decompileRes.ok) throw new Error("Failed to fetch pseudocode");
+        const { source: pseudocode } = await decompileRes.json();
+        const { source: disasm } = disasmRes.ok ? await disasmRes.json() : { source: "" };
+
+        const func = funcId !== null
+          ? data?.functions.find((f) => f.id === funcId)
+          : null;
+        const funcName = func?.name ?? (funcId !== null ? `function #${funcId}` : "global code");
+        const paramCount = func?.paramCount;
+
+        const prompt = [
+          "Decompile the following Hermes bytecode into clean, idiomatic JavaScript.",
+          "Reconstruct variable names from context, simplify control flow, recover React/RN patterns.",
+          "Output ONLY raw source code. No markdown, no code fences, no explanations.",
+          "",
+          `Function name: ${funcName}`,
+          paramCount !== undefined ? `Parameter count: ${paramCount}` : "",
+          "",
+          "Pseudocode:",
+          pseudocode.replace(/^0x[0-9a-f]+:\s*/gm, ""),
+          "",
+          "Disassembly:",
+          disasm,
+        ].filter(Boolean).join("\n");
+
+        const llmRes = await fetch("/api/llm/stream", { method: "POST", body: prompt });
+        if (!llmRes.ok) throw new Error(await llmRes.text());
+
+        const reader = llmRes.body!.getReader();
+        const decoder = new TextDecoder();
+        let accumulated = "";
+
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          accumulated += decoder.decode(value, { stream: true });
+          setAiContent(accumulated);
+        }
+
+        aiCache.current.set(funcId, accumulated);
+      } catch (e) {
+        setAiError(e instanceof Error ? e.message : "AI decompilation failed");
+      } finally {
+        setAiLoading(false);
+      }
+    },
+    [device, identifier, params?.entryId, data?.functions],
+  );
+
   const changeViewMode = useCallback(
     (mode: ViewMode) => {
       setViewMode(mode);
       localStorage.setItem("hermes-view-mode", mode);
-      fetchCode(selectedFuncId, mode);
+      if (mode === "ai-decompile") {
+        loadAiDecompile(selectedFuncId);
+      } else {
+        fetchCode(selectedFuncId, mode);
+      }
     },
-    [selectedFuncId, fetchCode],
+    [selectedFuncId, fetchCode, loadAiDecompile],
+  );
+
+  const handleFuncClick = useCallback(
+    (funcId: number) => {
+      setSelectedFuncId(funcId);
+      setSelectedString(null);
+      if (viewMode === "ai-decompile") {
+        loadAiDecompile(funcId);
+      } else {
+        fetchCode(funcId, viewMode);
+      }
+    },
+    [viewMode, fetchCode, loadAiDecompile],
   );
 
   // Filtered functions
@@ -448,8 +545,9 @@ export function HermesAnalysisTab({
                   onValueChange={(v) => changeViewMode(v as ViewMode)}
                 >
                   <TabsList variant="line">
-                    <TabsTrigger value="pseudocode">Pseudocode</TabsTrigger>
                     <TabsTrigger value="disassembly">Disassembly</TabsTrigger>
+                    <TabsTrigger value="pseudocode">Pseudocode</TabsTrigger>
+                    <TabsTrigger value="ai-decompile">AI Decompile</TabsTrigger>
                   </TabsList>
                 </Tabs>
 
@@ -462,7 +560,15 @@ export function HermesAnalysisTab({
 
               {/* Editor */}
               <div className="flex-1 overflow-hidden">
-                {codeLoading ? (
+                {viewMode === "ai-decompile" ? (
+                  <AiDecompileView
+                    content={aiContent}
+                    isLoading={aiLoading}
+                    error={aiError}
+                    theme={theme}
+                    onRetry={() => loadAiDecompile(selectedFuncId)}
+                  />
+                ) : codeLoading ? (
                   <div className="flex items-center justify-center h-full text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                     Loading...
@@ -498,6 +604,88 @@ export function HermesAnalysisTab({
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>
+  );
+}
+
+function AiDecompileView({
+  content,
+  isLoading,
+  error,
+  theme,
+  onRetry,
+}: {
+  content: string;
+  isLoading: boolean;
+  error: string | null;
+  theme: string;
+  onRetry: () => void;
+}) {
+  if (isLoading && !content) {
+    return (
+      <div className="flex items-center justify-center h-full text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+        Decompiling with AI...
+      </div>
+    );
+  }
+
+  if (error) {
+    const isNotConfigured =
+      error.includes("LLM not configured") || error.includes("LLM_PROVIDER");
+    return (
+      <div className="flex items-center justify-center h-full px-6">
+        <div className="flex flex-col items-center gap-3 max-w-md text-center">
+          <AlertCircle className="h-8 w-8 text-destructive" />
+          {isNotConfigured ? (
+            <>
+              <p className="text-sm font-medium">LLM not configured</p>
+              <p className="text-xs text-muted-foreground">
+                AI decompilation requires an LLM provider. Set these environment
+                variables before starting the server:
+              </p>
+              <pre className="text-[11px] text-left bg-muted rounded-md px-3 py-2 w-full font-mono">
+                {`LLM_PROVIDER=anthropic   # or openai, gemini, openrouter\nLLM_API_KEY=sk-...\nLLM_MODEL=claude-sonnet-4-20250514`}
+              </pre>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-medium">AI decompilation failed</p>
+              <p className="text-xs text-muted-foreground break-all">{error}</p>
+              <Button variant="outline" size="sm" className="text-xs" onClick={onRetry}>
+                Retry
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (!content) {
+    return (
+      <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+        Select a function to decompile with AI
+      </div>
+    );
+  }
+
+  return (
+    <Editor
+      height="100%"
+      language="javascript"
+      theme={theme === "dark" ? "vs-dark" : "light"}
+      value={content}
+      options={{
+        readOnly: true,
+        minimap: { enabled: false },
+        fontSize: 12,
+        fontFamily:
+          "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace",
+        lineNumbers: "on",
+        scrollBeyondLastLine: false,
+        wordWrap: "on",
+      }}
+    />
   );
 }
 
