@@ -265,14 +265,16 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
 
   const handleXrefClick = useCallback(
     async (xref: StringXref) => {
-      // Find the class and method matching the xref
-      const cls = classes.find((c) => c.name === xref.className);
-      if (!cls) return;
-      const method = cls.methods.find((m) => m.name === xref.methodName);
-      if (!method) return;
-
-      setExpandedClasses((prev) => new Set(prev).add(cls.name));
-      handleMethodClick(cls, method);
+      // Find method by function address (compare numerically to handle zero-padding)
+      const targetAddr = xref.fcnAddr;
+      for (const cls of classes) {
+        const method = cls.methods.find((m) => parseInt(m.addr, 16) === targetAddr);
+        if (method) {
+          setExpandedClasses((prev) => new Set(prev).add(cls.name));
+          handleMethodClick(cls, method);
+          return;
+        }
+      }
     },
     [classes, handleMethodClick],
   );
@@ -429,7 +431,7 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
                   >
                     <span className="text-muted-foreground">{xref.addr}</span>{" "}
                     <span className="text-amber-600 dark:text-amber-400 hover:underline">
-                      {xref.className}.{xref.methodName}
+                      {xref.fcnName}
                     </span>
                   </button>
                 ))}
@@ -446,7 +448,7 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
                     <TabsList variant="line">
                       <TabsTrigger value="disassembly">Disassembly</TabsTrigger>
                       <TabsTrigger value="graph">Graph</TabsTrigger>
-                      <TabsTrigger value="decompile">Decompile</TabsTrigger>
+                      <TabsTrigger value="decompile">AI Decompile</TabsTrigger>
                     </TabsList>
                   </Tabs>
                 ) : null}

@@ -495,6 +495,7 @@ export async function createFileSession(
 
   await r2.start();
   await r2.loadFile(data, filename);
+  r2.rawCmd("aa");
 
   const session: R2Session = {
     id,

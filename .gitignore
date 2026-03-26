@@ -151,3 +151,5 @@ radare2.wasm
 
 # R2 WASI temp directories
 .r2-*
+r2web
+wasi

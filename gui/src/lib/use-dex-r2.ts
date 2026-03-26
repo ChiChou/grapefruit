@@ -34,9 +34,8 @@ export interface DexString {
 
 export interface StringXref {
   addr: string;
+  fcnAddr: number;
   fcnName: string;
-  className: string;
-  methodName: string;
 }
 
 function parseIcOutput(text: string): DexClass[] {
@@ -99,18 +98,6 @@ function parseIcOutput(text: string): DexClass[] {
   }
 
   return classes;
-}
-
-function parseXrefFcnName(fcnName: string): { className: string; methodName: string } {
-  const parts = fcnName.split(".method.");
-  if (parts.length >= 2) {
-    const methodPart = parts[parts.length - 1];
-    const methodName = methodPart.replace(/_L[a-z].*$/, "").replace(/__.*$/, "");
-    const classPart = parts[parts.length - 2];
-    const classMatch = classPart.match(/(L\S+)$/);
-    return { className: classMatch ? classMatch[1] : classPart, methodName };
-  }
-  return { className: "", methodName: fcnName };
 }
 
 function socketCmd(
@@ -251,17 +238,13 @@ export function useDexR2Session(opts: {
       if (!vaddr) return [];
       const raw = await cmd(`axtj @ 0x${vaddr.toString(16)}`);
       try {
-        const refs: Array<{ from: number; fcn_name?: string }> = JSON.parse(raw);
-        return refs.map((r) => {
-          const fcnName = r.fcn_name ?? "";
-          const { className, methodName } = parseXrefFcnName(fcnName);
-          return {
-            addr: `0x${(r.from ?? 0).toString(16)}`,
-            fcnName,
-            className,
-            methodName,
-          };
-        });
+        const refs: Array<{ from: number; fcn_addr?: number; fcn_name?: string }> =
+          JSON.parse(raw);
+        return refs.map((r) => ({
+          addr: `0x${(r.from ?? 0).toString(16)}`,
+          fcnAddr: r.fcn_addr ?? 0,
+          fcnName: r.fcn_name ?? "",
+        }));
       } catch {
         return [];
       }
