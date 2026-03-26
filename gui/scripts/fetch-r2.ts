@@ -1,49 +1,43 @@
 /**
- * Downloads r2.mjs + r2.wasm from @frida/react-use-r2 npm tarball.
+ * Downloads r2.mjs + r2.wasm from @frida/react-use-r2 via unpkg.
  *
  * These are Emscripten-compiled radare2 WASM assets with custom r2_open/r2_execute
  * entry points and on-demand memory read callbacks (LGPLv3, source: radare2).
  *
  * The React hook wrapper lives in externals/react-use-r2 (MIT).
  */
-import { existsSync } from "node:fs";
-import { mkdir, writeFile, rm } from "node:fs/promises";
-import { execSync } from "node:child_process";
+import { access, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 const PKG = "@frida/react-use-r2";
+const VERSION = "2.0.0";
 const OUT_DIR = join(import.meta.dirname, "..", "public");
 const MARKER = join(OUT_DIR, "r2.wasm");
 
+const FILES = ["dist/r2.mjs", "dist/r2.wasm"] as const;
+
 async function main() {
-  if (existsSync(MARKER)) {
+  if (await access(MARKER).then(() => true, () => false)) {
     console.log("[r2] already present, skipping");
     return;
   }
 
   await mkdir(OUT_DIR, { recursive: true });
 
-  console.log(`[r2] fetching tarball URL for ${PKG}...`);
-  const meta = await fetch(`https://registry.npmjs.org/${PKG}/latest`).then(
-    (r) => r.json(),
+  await Promise.all(
+    FILES.map(async (file) => {
+      const url = `https://unpkg.com/${PKG}@${VERSION}/${file}`;
+      const dest = join(OUT_DIR, file.split("/").pop()!);
+      console.log(`[r2] fetching ${url}...`);
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.status}`);
+      await writeFile(dest, new Uint8Array(await res.arrayBuffer()));
+    }),
   );
-  const tarballUrl = meta.dist?.tarball as string;
-  if (!tarballUrl) throw new Error("Could not resolve tarball URL");
 
-  console.log(`[r2] downloading ${tarballUrl}...`);
-  const tmp = join(OUT_DIR, "_r2.tgz");
-  const buf = await fetch(tarballUrl).then((r) => r.arrayBuffer());
-  await writeFile(tmp, new Uint8Array(buf));
-
-  execSync(
-    `tar xzf "${tmp}" --strip-components=2 -C "${OUT_DIR}" package/dist/r2.mjs package/dist/r2.wasm`,
-    { stdio: "inherit" },
-  );
-  await rm(tmp);
-
-  if (!existsSync(MARKER)) {
-    throw new Error("r2.wasm not found after extraction");
-  }
+  await access(MARKER).catch(() => {
+    throw new Error("r2.wasm not found after download");
+  });
 
   console.log("[r2] done");
 }
