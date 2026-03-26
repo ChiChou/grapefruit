@@ -29,6 +29,17 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Cache radare2 WASI
+        id: cache-r2-wasi
+        uses: actions/cache@v4
+        with:
+          path: radare2.wasm
+          key: r2-wasi-${{ hashFiles('scripts/fetch-r2-wasm.ts') }}
+
+      - name: Fetch radare2 WASI
+        if: steps.cache-r2-wasi.outputs.cache-hit != 'true'
+        run: bun scripts/fetch-r2-wasm.ts
+
       - name: Reset node_modules
         run: rm -rf node_modules
 

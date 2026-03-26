@@ -145,3 +145,9 @@ vite.config.ts.timestamp-*
 
 # Downloaded r2 WASM assets (fetched during `bun run prepare`)
 gui/public/
+
+# radare2 WASI build (~42MB, fetched separately)
+radare2.wasm
+
+# R2 WASI temp directories
+.r2-*

@@ -16,6 +16,7 @@
   ],
   "scripts": {
     "prepare": "bun scripts/prepare.ts",
+    "fetch:r2-wasm": "bun scripts/fetch-r2-wasm.ts",
     "dev:both": "node scripts/dev.ts",
     "dev": "bun --watch src/index.ts",
     "start": "bun src/index.ts",
