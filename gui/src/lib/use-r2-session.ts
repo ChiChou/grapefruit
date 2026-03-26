@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { io, type Socket } from "socket.io-client";
 import { useSession } from "@/context/SessionContext";
 import { usePlatformQuery } from "@/lib/queries";
 
@@ -13,6 +14,19 @@ export interface CmdOptions {
   output?: "plain" | "html";
 }
 
+function socketCmd(
+  socket: Socket,
+  event: string,
+  ...args: any[]
+): Promise<any> {
+  return new Promise((resolve, reject) => {
+    socket.emit(event, ...args, (err: string | null, result?: any) => {
+      if (err) reject(new Error(err));
+      else resolve(result);
+    });
+  });
+}
+
 interface R2SessionHandle {
   cmd: (command: string, options?: CmdOptions) => Promise<string>;
   analyze: (address: string) => Promise<any>;
@@ -24,11 +38,9 @@ interface R2SessionHandle {
 
 export function useR2Session(): R2SessionHandle {
   const { device, pid, platform } = useSession();
-  const [sessionId, setSessionId] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const opening = useRef(false);
-  const sessionRef = useRef<string | null>(null);
+  const socketRef = useRef<Socket | null>(null);
 
   const { data: processInfo } = usePlatformQuery<ProcessInfo>(
     ["processInfo"],
@@ -36,92 +48,68 @@ export function useR2Session(): R2SessionHandle {
   );
 
   useEffect(() => {
-    if (!device || !pid || !processInfo || opening.current) return;
-    opening.current = true;
+    if (!device || !pid || !processInfo) return;
 
-    fetch("/api/r2/open", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        deviceId: device,
-        pid,
-        arch: processInfo.arch,
-        platform: processInfo.platform,
-        pointerSize: processInfo.pointerSize,
-        pageSize: processInfo.pageSize,
-      }),
-    })
-      .then((res) => res.json())
-      .then((data: { id?: string; error?: string }) => {
-        if (data.error) {
-          setError(data.error);
-          return;
-        }
-        sessionRef.current = data.id!;
-        setSessionId(data.id!);
+    const socket = io("/r2", { autoConnect: true });
+    socketRef.current = socket;
+
+    socket.on("connect", async () => {
+      try {
+        await socketCmd(socket, "open", {
+          deviceId: device,
+          pid,
+          arch: processInfo.arch,
+          platform: processInfo.platform,
+          pointerSize: processInfo.pointerSize,
+          pageSize: processInfo.pageSize,
+        });
         setIsReady(true);
-      })
-      .catch((e) => setError(e.message))
-      .finally(() => { opening.current = false; });
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e));
+      }
+    });
+
+    socket.on("connect_error", (e) => {
+      setError(e.message);
+    });
 
     return () => {
-      const id = sessionRef.current;
-      if (id) {
-        fetch(`/api/r2/${id}`, { method: "DELETE" }).catch(() => {});
-        sessionRef.current = null;
-      }
+      socket.disconnect();
+      socketRef.current = null;
+      setIsReady(false);
     };
   }, [device, pid, platform, processInfo]);
 
   const cmd = useCallback(
     async (command: string, options?: CmdOptions): Promise<string> => {
-      if (!sessionId) throw new Error("R2 session not ready");
-      const res = await fetch(`/api/r2/${sessionId}/cmd`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command, output: options?.output }),
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      return data.result;
+      if (!socketRef.current) throw new Error("R2 session not ready");
+      return socketCmd(socketRef.current, "cmd", command, options?.output ?? null);
     },
-    [sessionId],
+    [],
   );
 
   const analyze = useCallback(
     async (address: string) => {
-      if (!sessionId) throw new Error("R2 session not ready");
-      const res = await fetch(`/api/r2/${sessionId}/analyze/${address}`);
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      return data.blocks;
+      const raw = await cmd(`s ${address}; af; afbj`);
+      return JSON.parse(raw);
     },
-    [sessionId],
+    [cmd],
   );
 
   const disassemble = useCallback(
     async (address: string, options?: CmdOptions): Promise<string | null> => {
-      if (!sessionId) throw new Error("R2 session not ready");
-      const output = options?.output ?? "plain";
-      const res = await fetch(
-        `/api/r2/${sessionId}/disassemble/${address}?output=${output}`,
-      );
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      return data.text;
+      if (!socketRef.current) throw new Error("R2 session not ready");
+      return socketCmd(socketRef.current, "disassemble", address, options?.output ?? null);
     },
-    [sessionId],
+    [],
   );
 
   const graph = useCallback(
     async (address: string) => {
-      if (!sessionId) throw new Error("R2 session not ready");
-      const res = await fetch(`/api/r2/${sessionId}/graph/${address}`);
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      return data.cfg;
+      if (!socketRef.current) throw new Error("R2 session not ready");
+      return socketCmd(socketRef.current, "graph", address) ?? null;
     },
-    [sessionId],
+    [],
   );
 
   return { cmd, analyze, disassemble, graph, isReady, error };

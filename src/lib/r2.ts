@@ -5,7 +5,8 @@ import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 
 import frida from "./xvii.ts";
-import { asset } from "./assets.ts";
+import { asset, agent } from "./assets.ts";
+import { create as createTransport } from "./transport.ts";
 
 export type ReadRequestHandler = (
   address: bigint,
@@ -175,9 +176,10 @@ class R2Wasi {
   }
 
   async cmd(command: string): Promise<string> {
-    const atMatch = command.match(/@\s*(0x[0-9a-fA-F]+)/);
-    if (atMatch) {
-      const addr = BigInt(atMatch[1]);
+    // Prefetch memory for @ 0x... or s 0x... (seek) patterns
+    const addrMatch = command.match(/(?:@|^s)\s*(0x[0-9a-fA-F]+)/);
+    if (addrMatch) {
+      const addr = BigInt(addrMatch[1]);
       await this.mapMemory(addr, this.#config.pageSize ?? 4096);
     }
     return this.#rawCmd(command);
@@ -493,7 +495,6 @@ export async function createFileSession(
 
   await r2.start();
   await r2.loadFile(data, filename);
-  r2.rawCmd("aa");
 
   const session: R2Session = {
     id,
@@ -503,6 +504,94 @@ export async function createFileSession(
   };
   sessions.set(id, session);
   return session;
+}
+
+async function pullFileToBuffer(
+  device: import("./xvii.ts").Device,
+  pid: number,
+  path: string,
+): Promise<Uint8Array> {
+  const transport = await createTransport(device, pid);
+  const { script, controller } = transport;
+
+  const size: number = await script.exports.len(path);
+  const chunks: Uint8Array[] = [];
+
+  await new Promise<void>((resolve, reject) => {
+    controller.events.on("stream", async (incoming: import("node:stream").Readable) => {
+      for await (const chunk of incoming) {
+        chunks.push(chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk));
+      }
+      await transport.close();
+      resolve();
+    });
+    script.exports.pull(path).catch(reject);
+  });
+
+  const result = new Uint8Array(size);
+  let off = 0;
+  for (const c of chunks) {
+    result.set(c, off);
+    off += c.length;
+  }
+  return result;
+}
+
+async function pullZipEntryToBuffer(
+  device: import("./xvii.ts").Device,
+  pid: number,
+  apkPath: string,
+  entry: string,
+): Promise<Uint8Array> {
+  const transport = await createTransport(device, pid);
+  const { script, controller } = transport;
+
+  const size: number = await script.exports.zipLen(apkPath, entry);
+  const chunks: Uint8Array[] = [];
+
+  await new Promise<void>((resolve, reject) => {
+    controller.events.on("stream", async (incoming: import("node:stream").Readable) => {
+      for await (const chunk of incoming) {
+        chunks.push(chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk));
+      }
+      await transport.close();
+      resolve();
+    });
+    script.exports.pullZip(apkPath, entry).catch(reject);
+  });
+
+  const result = new Uint8Array(size);
+  let off = 0;
+  for (const c of chunks) {
+    result.set(c, off);
+    off += c.length;
+  }
+  return result;
+}
+
+export async function createDeviceFileSession(opts: {
+  deviceId: string;
+  pid: number;
+  path?: string;
+  apk?: string;
+  entry?: string;
+}): Promise<R2Session> {
+  const device = await frida.getDevice(opts.deviceId);
+
+  let data: Uint8Array;
+  let filename: string;
+
+  if (opts.apk && opts.entry) {
+    data = await pullZipEntryToBuffer(device, opts.pid, opts.apk, opts.entry);
+    filename = opts.entry.split("/").pop() ?? "entry.bin";
+  } else if (opts.path) {
+    data = await pullFileToBuffer(device, opts.pid, opts.path);
+    filename = opts.path.split("/").pop() ?? "file.bin";
+  } else {
+    throw new Error("path or apk+entry required");
+  }
+
+  return createFileSession(data, filename);
 }
 
 export function getSession(id: string): R2Session | undefined {

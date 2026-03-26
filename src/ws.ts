@@ -3,6 +3,7 @@ import { Server } from "socket.io";
 
 import { manager, parse, connect } from "./session.ts";
 import type { ClientToServerEvents, ServerToClientEvents } from "./types.ts";
+import { attachR2 } from "./r2ws.ts";
 
 export default function attach(server: ServerType) {
   const io = new Server<ClientToServerEvents, ServerToClientEvents>(server);
@@ -34,6 +35,8 @@ export default function attach(server: ServerType) {
       setTimeout(() => socket.disconnect(true), 100);
     }
   });
+
+  attachR2(io);
 
   return io;
 }
