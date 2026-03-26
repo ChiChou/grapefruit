@@ -49,3 +49,7 @@ Available skills:
 ## Code Style
 
 Do not generate code splitter comments (or code dividers/dividers)
+
+## git
+
+Do not automatically commit unless I ask
