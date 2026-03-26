@@ -1,4 +1,5 @@
 import { useR2Session } from "@/lib/use-r2-session";
+import * as strip from "@/lib/strip";
 
 import "./DisassemblyTab.css";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -176,7 +177,7 @@ export function DisassemblyTab({
         `Address: ${address}`,
         "",
         "Disassembly:",
-        result.plainDisasm,
+        strip.r2(result.plainDisasm),
       ].join("\n");
 
       const res = await fetch("/api/llm/stream", { method: "POST", body: prompt });

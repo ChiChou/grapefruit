@@ -4,6 +4,7 @@ import type { IDockviewPanelProps } from "dockview";
 import { Loader2, Search, AlertCircle } from "lucide-react";
 import Editor, { loader } from "@monaco-editor/react";
 import { HERMES_LANGUAGE_ID, monarchTokens } from "@/lib/syntax/hermes";
+import * as strip from "@/lib/strip";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
 import {
@@ -245,7 +246,7 @@ export function HermesAnalysisTab({
           pseudocode.replace(/^0x[0-9a-f]+:\s*/gm, ""),
           "",
           "Disassembly:",
-          disasm,
+          strip.hermes(disasm),
         ].filter(Boolean).join("\n");
 
         const llmRes = await fetch("/api/llm/stream", { method: "POST", body: prompt });

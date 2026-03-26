@@ -18,6 +18,7 @@ import {
   type DexString,
   type StringXref,
 } from "@/lib/use-dex-r2";
+import * as strip from "@/lib/strip";
 import {
   CFGView,
   type CFGNode,
@@ -214,7 +215,7 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
       setDecompileError(null);
       setDecompileContent("");
       try {
-        const disasm = htmlToPlain(await disassembleAt(method.addr, "html"));
+        const disasm = strip.r2(htmlToPlain(await disassembleAt(method.addr, "html")));
         const prompt = [
           "Decompile the following Dalvik bytecode into equivalent Java source code.",
           "Output ONLY raw source code. No markdown, no code fences, no explanations.",
