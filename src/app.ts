@@ -13,6 +13,7 @@ import deviceRoutes from "./routes/devices.ts";
 import transferRoutes from "./routes/transfer.ts";
 import dataRoutes from "./routes/data.ts";
 import llmRoutes from "./routes/llm.ts";
+import r2Routes from "./routes/r2.ts";
 
 const app = new Hono();
 
@@ -49,6 +50,7 @@ api.route("/", deviceRoutes);
 api.route("/", transferRoutes);
 api.route("/", dataRoutes);
 api.route("/", llmRoutes);
+api.route("/", r2Routes);
 
 app.route("/api", api);
 
