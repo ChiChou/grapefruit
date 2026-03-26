@@ -313,8 +313,7 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
         const signature = `${method.accessString} ${method.returnType} ${method.name}(${methodParams})`;
         const prompt = [
           "Decompile the following Dalvik bytecode into equivalent Java source code.",
-          "Output the complete Java method including its signature and body.",
-          "Do not include explanations or markdown fences.",
+          "Output ONLY raw source code. No markdown, no code fences, no explanations.",
           "",
           `Class: ${cls.className}`,
           cls.superclassName ? `Extends: ${cls.superclassName}` : "",
@@ -326,11 +325,21 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
           .filter(Boolean)
           .join("\n");
 
-        const res = await fetch("/api/llm", { method: "POST", body: prompt });
+        const res = await fetch("/api/llm/stream", { method: "POST", body: prompt });
         if (!res.ok) throw new Error(await res.text());
-        const java = await res.text();
-        decompileCache.current.set(cacheKey, java);
-        setDecompileContent(java);
+
+        const reader = res.body!.getReader();
+        const decoder = new TextDecoder();
+        let accumulated = "";
+
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          accumulated += decoder.decode(value, { stream: true });
+          setDecompileContent(accumulated);
+        }
+
+        decompileCache.current.set(cacheKey, accumulated);
       } catch (e) {
         setDecompileError(
           e instanceof Error ? e.message : "Decompilation failed",
@@ -654,7 +663,7 @@ function DecompileView({
   theme: string;
   onRetry?: () => void;
 }) {
-  if (isLoading) {
+  if (isLoading && !content) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin mr-2" />

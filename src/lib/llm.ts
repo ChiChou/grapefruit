@@ -32,7 +32,7 @@ function resolveFormat(provider: string, baseUrl: string): Format {
   return "openai";
 }
 
-export async function sendText(cfg: LLMConfig, input: string): Promise<string> {
+function ensureConfigured(cfg: LLMConfig) {
   if (!cfg.baseUrl || !cfg.model) {
     throw new Error(
       "LLM not configured. Set LLM_PROVIDER (or LLM_BASE_URL) and LLM_MODEL.\n" +
@@ -40,8 +40,12 @@ export async function sendText(cfg: LLMConfig, input: string): Promise<string> {
         "Custom: set LLM_BASE_URL to any OpenAI-compatible endpoint.",
     );
   }
+}
 
-  const { url, headers, body } = buildRequest(cfg, input);
+export async function sendText(cfg: LLMConfig, input: string): Promise<string> {
+  ensureConfigured(cfg);
+
+  const { url, headers, body } = buildRequest(cfg, input, false);
   const res = await fetch(url, { method: "POST", headers, body });
 
   if (!res.ok) {
@@ -53,7 +57,74 @@ export async function sendText(cfg: LLMConfig, input: string): Promise<string> {
   return extractText(cfg.format, json);
 }
 
-function buildRequest(cfg: LLMConfig, input: string) {
+export async function streamText(
+  cfg: LLMConfig,
+  input: string,
+): Promise<ReadableStream<Uint8Array>> {
+  ensureConfigured(cfg);
+
+  // Gemini doesn't support streaming in the same way, fall back to buffered
+  if (cfg.format === "gemini") {
+    const text = await sendText(cfg, input);
+    return new ReadableStream({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode(text));
+        controller.close();
+      },
+    });
+  }
+
+  const { url, headers, body } = buildRequest(cfg, input, true);
+  const res = await fetch(url, { method: "POST", headers, body });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`LLM request failed (${res.status}): ${text}`);
+  }
+
+  const format = cfg.format;
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  return new ReadableStream({
+    async start(controller) {
+      const reader = res.body!.getReader();
+      try {
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop()!;
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || !trimmed.startsWith("data: ")) continue;
+            const payload = trimmed.slice(6);
+            if (payload === "[DONE]") continue;
+
+            try {
+              const json = JSON.parse(payload);
+              const text = extractDelta(format, json);
+              if (text) {
+                controller.enqueue(new TextEncoder().encode(text));
+              }
+            } catch {
+              // skip malformed SSE chunks
+            }
+          }
+        }
+      } catch (e) {
+        controller.error(e);
+      } finally {
+        controller.close();
+      }
+    },
+  });
+}
+
+function buildRequest(cfg: LLMConfig, input: string, stream: boolean) {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
 
   if (cfg.format === "anthropic") {
@@ -65,6 +136,7 @@ function buildRequest(cfg: LLMConfig, input: string) {
       body: JSON.stringify({
         model: cfg.model,
         max_tokens: 4096,
+        stream,
         messages: [{ role: "user", content: input }],
       }),
     };
@@ -86,6 +158,7 @@ function buildRequest(cfg: LLMConfig, input: string) {
     headers,
     body: JSON.stringify({
       model: cfg.model,
+      stream,
       messages: [{ role: "user", content: input }],
     }),
   };
@@ -108,4 +181,20 @@ function extractText(format: Format, json: unknown): string {
 
   const choices = data.choices as Array<{ message: { content: string } }>;
   return choices?.[0]?.message?.content ?? "";
+}
+
+function extractDelta(format: Format, json: unknown): string {
+  const data = json as Record<string, unknown>;
+
+  if (format === "anthropic") {
+    if (data.type === "content_block_delta") {
+      const delta = data.delta as { type: string; text?: string };
+      return delta?.text ?? "";
+    }
+    return "";
+  }
+
+  // openai / openrouter
+  const choices = data.choices as Array<{ delta: { content?: string } }>;
+  return choices?.[0]?.delta?.content ?? "";
 }

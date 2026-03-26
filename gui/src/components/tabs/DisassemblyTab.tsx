@@ -192,7 +192,7 @@ export function DisassemblyTab({
     }
   }, [address, executeR2Command, result?.decompilerOutput]);
 
-  // AI decompilation via LLM
+  // AI decompilation via LLM (streaming)
   const loadAiDecompile = useCallback(async () => {
     if (!result?.plainDisasm) return;
 
@@ -220,11 +220,21 @@ export function DisassemblyTab({
         result.plainDisasm,
       ].join("\n");
 
-      const res = await fetch("/api/llm", { method: "POST", body: prompt });
+      const res = await fetch("/api/llm/stream", { method: "POST", body: prompt });
       if (!res.ok) throw new Error(await res.text());
-      const code = await res.text();
-      aiCache.current.set(address, code);
-      setAiContent(code);
+
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let accumulated = "";
+
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        accumulated += decoder.decode(value, { stream: true });
+        setAiContent(accumulated);
+      }
+
+      aiCache.current.set(address, accumulated);
     } catch (e) {
       setAiError(e instanceof Error ? e.message : "AI decompilation failed");
     } finally {
@@ -355,7 +365,7 @@ function AiDecompileView({
   error: string | null;
   onRetry: () => void;
 }) {
-  if (isLoading) {
+  if (isLoading && !content) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin mr-2" />

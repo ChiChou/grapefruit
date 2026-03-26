@@ -1,6 +1,6 @@
 import { styleText } from "node:util";
 import { Hono } from "hono";
-import { config, sendText } from "../lib/llm.ts";
+import { config, sendText, streamText } from "../lib/llm.ts";
 
 const cfg = config();
 
@@ -14,16 +14,35 @@ if (cfg.baseUrl) {
   }
 }
 
-const routes = new Hono().post("/llm", async (c) => {
-  const input = await c.req.text();
-  if (!input.trim()) return c.text("", 400);
+const routes = new Hono()
+  .post("/llm", async (c) => {
+    const input = await c.req.text();
+    if (!input.trim()) return c.text("", 400);
 
-  try {
-    return c.text(await sendText(cfg, input));
-  } catch (e) {
-    console.error("failed to get LLM response:", e);
-    return c.text(e instanceof Error ? e.message : "unknown error", 500);
-  }
-});
+    try {
+      return c.text(await sendText(cfg, input));
+    } catch (e) {
+      console.error("failed to get LLM response:", e);
+      return c.text(e instanceof Error ? e.message : "unknown error", 500);
+    }
+  })
+  .post("/llm/stream", async (c) => {
+    const input = await c.req.text();
+    if (!input.trim()) return c.text("", 400);
+
+    try {
+      const stream = await streamText(cfg, input);
+      return new Response(stream, {
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Transfer-Encoding": "chunked",
+          "Cache-Control": "no-cache",
+        },
+      });
+    } catch (e) {
+      console.error("failed to stream LLM response:", e);
+      return c.text(e instanceof Error ? e.message : "unknown error", 500);
+    }
+  });
 
 export default routes;
