@@ -8,7 +8,7 @@ import {
   ChevronDown,
   AlertCircle,
 } from "lucide-react";
-import Editor, { loader } from "@monaco-editor/react";
+import Editor from "@monaco-editor/react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
 import {
@@ -18,7 +18,11 @@ import {
   type DexString,
   type StringXref,
 } from "@/lib/use-dex-r2";
-import { CFGView, type CFGNode, type CFGEdge } from "@/components/shared/CFGView";
+import {
+  CFGView,
+  type CFGNode,
+  type CFGEdge,
+} from "@/components/shared/CFGView";
 
 import {
   ResizablePanelGroup,
@@ -90,7 +94,9 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
     [classes],
   );
 
-  const [expandedClasses, setExpandedClasses] = useState<Set<string>>(new Set());
+  const [expandedClasses, setExpandedClasses] = useState<Set<string>>(
+    new Set(),
+  );
   const [leftTab, setLeftTab] = useState<LeftTab>(
     () => (localStorage.getItem("dex-left-tab") as LeftTab) || "classes",
   );
@@ -104,7 +110,10 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
   const [stringXrefs, setStringXrefs] = useState<StringXref[]>([]);
 
   const [viewMode, setViewMode] = useState<ViewMode>("disassembly");
-  const [cfgData, setCfgData] = useState<{ nodes: CFGNode[]; edges: CFGEdge[] } | null>(null);
+  const [cfgData, setCfgData] = useState<{
+    nodes: CFGNode[];
+    edges: CFGEdge[];
+  } | null>(null);
   const [cfgLoading, setCfgLoading] = useState(false);
   const [decompileContent, setDecompileContent] = useState("");
   const [decompileLoading, setDecompileLoading] = useState(false);
@@ -217,7 +226,10 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
           disasm,
         ].join("\n");
 
-        const res = await fetch("/api/llm/stream", { method: "POST", body: prompt });
+        const res = await fetch("/api/llm/stream", {
+          method: "POST",
+          body: prompt,
+        });
         if (!res.ok) throw new Error(await res.text());
 
         const reader = res.body!.getReader();
@@ -231,7 +243,9 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
         }
         decompileCache.current.set(cacheKey, accumulated);
       } catch (e) {
-        setDecompileError(e instanceof Error ? e.message : "Decompilation failed");
+        setDecompileError(
+          e instanceof Error ? e.message : "Decompilation failed",
+        );
       } finally {
         setDecompileLoading(false);
       }
@@ -268,7 +282,9 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
       // Find method by function address (compare numerically to handle zero-padding)
       const targetAddr = xref.fcnAddr;
       for (const cls of classes) {
-        const method = cls.methods.find((m) => parseInt(m.addr, 16) === targetAddr);
+        const method = cls.methods.find(
+          (m) => parseInt(m.addr, 16) === targetAddr,
+        );
         if (method) {
           setExpandedClasses((prev) => new Set(prev).add(cls.name));
           handleMethodClick(cls, method);
@@ -351,7 +367,10 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="classes" className="flex-1 overflow-hidden flex flex-col">
+            <TabsContent
+              value="classes"
+              className="flex-1 overflow-hidden flex flex-col"
+            >
               <div className="px-2 py-1.5 border-b shrink-0">
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -376,7 +395,10 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
               />
             </TabsContent>
 
-            <TabsContent value="strings" className="flex-1 overflow-hidden flex flex-col">
+            <TabsContent
+              value="strings"
+              className="flex-1 overflow-hidden flex flex-col"
+            >
               <div className="px-2 py-1.5 border-b shrink-0">
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -413,7 +435,9 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
               <div className="flex-1 overflow-auto p-3">
                 <pre className="font-mono text-xs whitespace-pre-wrap break-all mb-4">
                   {selectedString.value || (
-                    <span className="text-muted-foreground italic">(empty)</span>
+                    <span className="text-muted-foreground italic">
+                      (empty)
+                    </span>
                   )}
                 </pre>
                 <div className="text-xs text-muted-foreground mb-2">
@@ -455,7 +479,7 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
                 <span className="text-[10px] text-muted-foreground ml-auto pr-3 truncate max-w-[50%]">
                   {selectedMethod
                     ? `${selectedClass?.name}.${selectedMethod.name}`
-                    : selectedClass?.name ?? "Select a class or method"}
+                    : (selectedClass?.name ?? "Select a class or method")}
                 </span>
               </div>
               <div className="flex-1 overflow-hidden">
@@ -552,7 +576,12 @@ function DecompileView({
             </>
           )}
           {onRetry && !isNotConfigured && (
-            <Button variant="outline" size="sm" className="text-xs" onClick={onRetry}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs"
+              onClick={onRetry}
+            >
               Retry
             </Button>
           )}
@@ -621,7 +650,11 @@ function ClassTree({
   });
 
   return (
-    <div ref={parentRef} className="flex-1 overflow-auto outline-none" tabIndex={0}>
+    <div
+      ref={parentRef}
+      className="flex-1 overflow-auto outline-none"
+      tabIndex={0}
+    >
       <div
         style={{
           height: `${virtualizer.getTotalSize()}px`,
@@ -635,7 +668,8 @@ function ClassTree({
           if (item.kind === "class") {
             const { cls } = item;
             const isExpanded = expanded.has(cls.name);
-            const isSelected = selectedClass?.name === cls.name && !selectedMethod;
+            const isSelected =
+              selectedClass?.name === cls.name && !selectedMethod;
 
             return (
               <div
@@ -660,7 +694,10 @@ function ClassTree({
                     {cls.name}
                   </span>
                   {cls.methods.length > 0 && (
-                    <Badge variant="outline" className="text-[8px] px-1 py-0 ml-auto shrink-0">
+                    <Badge
+                      variant="outline"
+                      className="text-[8px] px-1 py-0 ml-auto shrink-0"
+                    >
                       {cls.methods.length}
                     </Badge>
                   )}
@@ -721,7 +758,11 @@ function StringList({
   });
 
   return (
-    <div ref={parentRef} className="flex-1 overflow-auto outline-none" tabIndex={0}>
+    <div
+      ref={parentRef}
+      className="flex-1 overflow-auto outline-none"
+      tabIndex={0}
+    >
       <div
         style={{
           height: `${virtualizer.getTotalSize()}px`,
@@ -747,7 +788,9 @@ function StringList({
                 </span>
                 <span className="font-mono text-xs truncate" title={str.value}>
                   {str.value || (
-                    <span className="text-muted-foreground italic">(empty)</span>
+                    <span className="text-muted-foreground italic">
+                      (empty)
+                    </span>
                   )}
                 </span>
               </div>
