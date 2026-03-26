@@ -19,6 +19,7 @@ import * as webview from "./modules/webview.js";
 import * as pins from "./pins.js";
 
 import * as il2cpp from "@/common/il2cpp.js";
+import * as info from "@/common/info.js";
 import * as memory from "@/common/memory.js";
 import * as native from "@/common/hooks/native.js";
 import * as sqlite from "@/common/sqlite.js";
@@ -30,6 +31,7 @@ import * as threads from "@/common/threads.js";
 export default {
   activities,
   il2cpp,
+  info,
   apk,
   app,
   checksec,

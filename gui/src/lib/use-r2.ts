@@ -8,7 +8,7 @@
  *
  * Based on @frida/react-use-r2 by Ole André Vadla Ravnås (MIT).
  */
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export type Platform = "windows" | "darwin" | "linux" | "freebsd" | "qnx";
 export type Architecture = "ia32" | "x64" | "arm" | "arm64" | "mips";
@@ -58,8 +58,21 @@ let r2Module: R2Module | null = null;
 const pendingCommands: CommandRequest[] = [];
 const cachedPages = new Map<bigint, Uint8Array | null>([[0n, null]]);
 
+const readyListeners = new Set<() => void>();
+
 export function useR2({ source }: { source?: R2Source } = {}) {
   const sourceRef = useRef<R2Source | undefined>(undefined);
+  const [isReady, setIsReady] = useState(state === "loaded");
+
+  useEffect(() => {
+    if (state === "loaded") {
+      setIsReady(true);
+      return;
+    }
+    const listener = () => setIsReady(true);
+    readyListeners.add(listener);
+    return () => { readyListeners.delete(listener); };
+  }, []);
 
   useEffect(() => {
     if (source === undefined) return;
@@ -80,7 +93,7 @@ export function useR2({ source }: { source?: R2Source } = {}) {
     [],
   );
 
-  return { executeR2Command };
+  return { executeR2Command, isReady };
 }
 
 async function loadR2(sourceRef: React.RefObject<R2Source>) {
@@ -93,56 +106,69 @@ async function loadR2(sourceRef: React.RefObject<R2Source>) {
     async onRead(offset: string, size: number): Promise<Uint8Array> {
       const address = BigInt(offset);
       const pageSize = BigInt(sourceRef.current!.pageSize);
+      const pageSizeNum = Number(pageSize);
 
       const firstPage = pageStart(address, pageSize);
       const lastPage = pageStart(address + BigInt(size) - 1n, pageSize);
       const pageAfterLastPage = lastPage + pageSize;
       const numPages = (pageAfterLastPage - firstPage) / pageSize;
 
-      let allInCache = true;
+      // Fetch uncached pages
+      let needsFetch = false;
       for (
         let page = firstPage;
         page !== pageAfterLastPage;
         page += pageSize
       ) {
-        const entry = cachedPages.get(page);
-        if (entry === null) throw new Error("read failed");
-        if (entry === undefined) {
-          allInCache = false;
+        if (!cachedPages.has(page)) {
+          needsFetch = true;
           break;
         }
       }
 
-      if (!allInCache) {
+      if (needsFetch) {
         try {
           const block = await sourceRef.current!.onReadRequest(
             firstPage,
             Number(numPages * pageSize),
           );
-          if (!block) throw new Error("read failed");
+          if (block) {
+            for (
+              let page = firstPage;
+              page !== pageAfterLastPage;
+              page += pageSize
+            ) {
+              const off = page - firstPage;
+              cachedPages.set(
+                page,
+                block.slice(Number(off), Number(off + pageSize)),
+              );
+            }
+          } else {
+            // Cache zero-filled pages for unreadable regions
+            const zeroPage = new Uint8Array(pageSizeNum);
+            for (
+              let page = firstPage;
+              page !== pageAfterLastPage;
+              page += pageSize
+            ) {
+              cachedPages.set(page, zeroPage);
+            }
+          }
+        } catch {
+          // Return zeros for unreadable memory instead of crashing WASM
+          const zeroPage = new Uint8Array(pageSizeNum);
           for (
             let page = firstPage;
             page !== pageAfterLastPage;
             page += pageSize
           ) {
-            const off = page - firstPage;
-            cachedPages.set(
-              page,
-              block.slice(Number(off), Number(off + pageSize)),
-            );
+            cachedPages.set(page, zeroPage);
           }
-        } catch (e) {
-          for (
-            let page = firstPage;
-            page !== pageAfterLastPage;
-            page += pageSize
-          ) {
-            cachedPages.set(page, null);
-          }
-          throw e;
         }
       }
 
+      // Assemble result from cached pages (always succeeds now)
       const result = new Uint8Array(size);
       let resultOffset = 0;
       for (
@@ -151,11 +177,11 @@ async function loadR2(sourceRef: React.RefObject<R2Source>) {
         page += pageSize
       ) {
         const remaining = size - resultOffset;
-        const chunkSize = remaining > pageSize ? Number(pageSize) : remaining;
+        const chunkSize = remaining > Number(pageSize) ? pageSizeNum : remaining;
         const fromOffset = Number(
           page === firstPage ? address % pageSize : 0n,
         );
-        const pageData = cachedPages.get(page)!;
+        const pageData = cachedPages.get(page) ?? new Uint8Array(pageSizeNum);
         result.set(pageData.slice(fromOffset, fromOffset + chunkSize), resultOffset);
         resultOffset += chunkSize;
       }
@@ -182,6 +208,8 @@ async function loadR2(sourceRef: React.RefObject<R2Source>) {
 
   state = "loaded";
   r2Module = r2;
+  for (const listener of readyListeners) listener();
+  readyListeners.clear();
   maybeProcessPendingCommands();
 }
 

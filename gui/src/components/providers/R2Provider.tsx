@@ -1,7 +1,7 @@
 import { type ReactNode, useCallback } from "react";
 import { useR2, type Platform, type Architecture } from "@/lib/use-r2";
 import { useSession } from "@/context/SessionContext";
-import { useFruityQuery } from "@/lib/queries";
+import { usePlatformQuery } from "@/lib/queries";
 
 interface ProcessInfo {
   platform: string;
@@ -30,18 +30,19 @@ function mapArch(arch: string): Architecture {
 }
 
 export function R2Provider({ children }: { children: ReactNode }) {
-  const { fruity } = useSession();
+  const { fruity, droid, platform } = useSession();
 
-  const { data: processInfo } = useFruityQuery<ProcessInfo>(
+  const { data: processInfo } = usePlatformQuery<ProcessInfo>(
     ["processInfo"],
     (api) => api.info.processInfo(),
   );
 
+  const rpc = platform === "droid" ? droid : fruity;
+
   const onReadRequest = useCallback(
     async (address: bigint, size: number): Promise<Uint8Array | null> => {
-      if (!fruity) return null;
+      if (!rpc) return null;
 
-      // Agent's memory.dump has a 2KB limit, so we need to chunk reads
       const CHUNK_SIZE = 2048;
       const result = new Uint8Array(size);
       let offset = 0;
@@ -50,20 +51,15 @@ export function R2Provider({ children }: { children: ReactNode }) {
         const chunkSize = Math.min(CHUNK_SIZE, size - offset);
         const chunkAddress = address + BigInt(offset);
         try {
-          const chunk = await fruity.memory.dump(
+          const chunk = await rpc.memory.dump(
             "0x" + chunkAddress.toString(16),
             chunkSize,
           );
-          if (chunk === null) {
-            // Read failed - fill remaining with zeros
-            return null;
-          }
-          result.set(new Uint8Array(chunk), offset);
-          offset += chunk.byteLength;
-          // If we got less than requested, stop
-          if (chunk.byteLength < chunkSize) {
-            break;
-          }
+          if (chunk === null) return null;
+          const bytes = new Uint8Array(chunk);
+          result.set(bytes, offset);
+          offset += bytes.byteLength;
+          if (bytes.byteLength < chunkSize) break;
         } catch {
           return null;
         }
@@ -71,7 +67,7 @@ export function R2Provider({ children }: { children: ReactNode }) {
 
       return result;
     },
-    [fruity],
+    [rpc],
   );
 
   useR2({
