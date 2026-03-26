@@ -227,26 +227,22 @@ function readMutf8(dv: DataView, offset: number): string {
   const cur: Cursor = { offset };
   readULeb128(dv, cur); // char count — not needed
 
-  const chars: number[] = [];
+  let result = "";
   for (;;) {
     const a = dv.getUint8(cur.offset++);
     if (a === 0) break;
     if ((a & 0x80) === 0) {
-      chars.push(a);
+      result += String.fromCharCode(a);
     } else if ((a & 0xe0) === 0xc0) {
       const b = dv.getUint8(cur.offset++);
-      chars.push(((a & 0x1f) << 6) | (b & 0x3f));
+      result += String.fromCharCode(((a & 0x1f) << 6) | (b & 0x3f));
     } else if ((a & 0xf0) === 0xe0) {
       const b = dv.getUint8(cur.offset++);
       const c = dv.getUint8(cur.offset++);
-      chars.push(((a & 0x0f) << 12) | ((b & 0x3f) << 6) | (c & 0x3f));
+      result += String.fromCharCode(((a & 0x0f) << 12) | ((b & 0x3f) << 6) | (c & 0x3f));
     } else {
-      chars.push(0xfffd);
+      result += "\uFFFD";
     }
-  }
-  let result = "";
-  for (let i = 0; i < chars.length; i += 4096) {
-    result += String.fromCharCode(...chars.slice(i, i + 4096));
   }
   return result;
 }
@@ -254,10 +250,10 @@ function readMutf8(dv: DataView, offset: number): string {
 export function parseDex(buffer: ArrayBuffer): DexFile {
   const dv = new DataView(buffer);
 
-  const magic = String.fromCharCode(
-    ...new Uint8Array(buffer, 0, 8),
-    // eslint-disable-next-line no-control-regex
-  ).replace(/\u0000/g, "");
+  const rawMagic = new Uint8Array(buffer, 0, 8);
+  let magicEnd = rawMagic.indexOf(0);
+  if (magicEnd === -1) magicEnd = 8;
+  const magic = new TextDecoder().decode(rawMagic.subarray(0, magicEnd));
 
   if (!magic.startsWith("dex\n")) {
     throw new Error("Not a valid DEX file");
