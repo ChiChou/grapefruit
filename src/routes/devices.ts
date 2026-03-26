@@ -5,7 +5,7 @@ import {
   device as serializeDevice,
   process as serializeProcess,
 } from "../lib/serializer.ts";
-import { getDeviceMiddleware } from "../lib/middleware.ts";
+import * as middleware from "../lib/middleware.ts";
 import env from "../lib/env.ts";
 
 const manager = frida.getDeviceManager();
@@ -18,12 +18,12 @@ const routes = new Hono()
       devices.filter((dev) => !skip.has(dev.id)).map(serializeDevice),
     );
   })
-  .get("/device/:device/apps", getDeviceMiddleware, async (c) => {
+  .get("/device/:device/apps", middleware.device, async (c) => {
     const device = c.get("device");
     const apps = await device.enumerateApplications();
     return c.json(apps.map(serializeApp));
   })
-  .get("/device/:device/processes", getDeviceMiddleware, async (c) => {
+  .get("/device/:device/processes", middleware.device, async (c) => {
     const device = c.get("device");
     const processes = await device.enumerateProcesses({
       scope: frida.Scope.Metadata,
@@ -71,7 +71,7 @@ const routes = new Hono()
 
     return c.text("icon not found", 404);
   })
-  .get("/device/:device/info", getDeviceMiddleware, async (c) => {
+  .get("/device/:device/info", middleware.device, async (c) => {
     const device = c.get("device");
     const params = await device.querySystemParameters();
     return c.text(
@@ -83,7 +83,7 @@ const routes = new Hono()
       { "Content-Type": "application/json" },
     );
   })
-  .post("/device/:device/kill/:pid", getDeviceMiddleware, async (c) => {
+  .post("/device/:device/kill/:pid", middleware.device, async (c) => {
     const device = c.get("device");
     const pid = parseInt(c.req.param("pid"), 10);
     if (isNaN(pid)) {

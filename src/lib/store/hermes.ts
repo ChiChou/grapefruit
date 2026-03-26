@@ -63,7 +63,7 @@ export class HermesStore {
     return result?.count ?? 0;
   }
 
-  getBlob(id: number): { data: Buffer; url: string } | null {
+  blob(id: number): { data: Buffer; url: string } | null {
     const row = db
       .select({ data: hermes.data, url: hermes.url })
       .from(hermes)

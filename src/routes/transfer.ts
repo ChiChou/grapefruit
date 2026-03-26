@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
 import { create as createTransport } from "../lib/transport.ts";
-import { getDeviceMiddleware } from "../lib/middleware.ts";
+import * as middleware from "../lib/middleware.ts";
 
 const routes = new Hono()
-  .get("/download/:device/:pid", getDeviceMiddleware, async (c) => {
+  .get("/download/:device/:pid", middleware.device, async (c) => {
     const path = c.req.query("path");
     if (typeof path !== "string") return c.text("invalid path", 400);
 
@@ -36,7 +36,7 @@ const routes = new Hono()
       transport.pipe(streamer, () => script.exports.pull(path)),
     );
   })
-  .on(["HEAD", "GET"], "/dump/:device/:pid", getDeviceMiddleware, async (c) => {
+  .on(["HEAD", "GET"], "/dump/:device/:pid", middleware.device, async (c) => {
     const path = c.req.query("path");
     if (typeof path !== "string") return c.text("invalid path", 400);
 
@@ -94,7 +94,7 @@ const routes = new Hono()
       }).finally(() => transport.close());
     });
   })
-  .get("/resource/:device/:pid", getDeviceMiddleware, async (c) => {
+  .get("/resource/:device/:pid", middleware.device, async (c) => {
     const type = c.req.query("type");
     const name = c.req.query("name");
     if (typeof type !== "string" || typeof name !== "string")
@@ -124,7 +124,7 @@ const routes = new Hono()
       transport.pipe(streamer, () => script.exports.pullResource(type, name)),
     );
   })
-  .post("/upload/:device/:pid", getDeviceMiddleware, async (c) => {
+  .post("/upload/:device/:pid", middleware.device, async (c) => {
     const formBody = await c.req.parseBody();
     const path = formBody["path"];
     if (typeof path !== "string") return c.text("invalid path", 400);

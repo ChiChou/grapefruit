@@ -266,7 +266,7 @@ export class NSURLStore {
     });
   }
 
-  getAttachment(requestId: string): {
+  attachment(requestId: string): {
     path: string;
     mimeType?: string;
   } | null {

@@ -1,7 +1,7 @@
 import { createMiddleware } from "hono/factory";
 import frida, { type Device } from "./xvii.ts";
 
-export const getDeviceMiddleware = createMiddleware<{
+export const device = createMiddleware<{
   Variables: {
     device: Device;
     bundle?: string;

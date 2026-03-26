@@ -10,7 +10,7 @@ async function withHBC<T>(c: Context, fn: (hbc: HBC) => T): Promise<T | Response
   const id = parseInt(c.req.param("id")!, 10);
 
   const store = new HermesStore(deviceId, identifier);
-  const blob = store.getBlob(id);
+  const blob = store.blob(id);
   if (!blob) return c.text("Not found", 404);
 
   const { HBC } = await import("r2hermes-wasm");
@@ -58,7 +58,7 @@ const routes = new Hono()
 
     try {
       const store = new HermesStore(deviceId, identifier);
-      const blob = store.getBlob(id);
+      const blob = store.blob(id);
       if (!blob) return c.text("Not found", 404);
 
       const filename = blob.url.split("/").pop() || `hermes-${id}.bin`;

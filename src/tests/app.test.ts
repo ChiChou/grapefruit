@@ -70,7 +70,7 @@ describe("API tests", () => {
 
   it("should return error for non-existent device", async () => {
     const r = await app.request("/api/device/nonexistent-device/apps");
-    // Note: getDeviceMiddleware throws when device is not found, resulting in 500
+    // Note: device middleware throws when device is not found, resulting in 500
     assert(
       r.status === 404 || r.status === 500,
       "Should return 404 or 500 for non-existent device",

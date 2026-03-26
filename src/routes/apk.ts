@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
 import { create as createTransport } from "../lib/transport.ts";
-import { getDeviceMiddleware } from "../lib/middleware.ts";
+import * as middleware from "../lib/middleware.ts";
 
 const routes = new Hono()
-  .get("/apk-entry/:device/:pid", getDeviceMiddleware, async (c) => {
+  .get("/apk-entry/:device/:pid", middleware.device, async (c) => {
     const apkPath = c.req.query("apk");
     const entry = c.req.query("entry");
     if (typeof apkPath !== "string" || typeof entry !== "string")

@@ -222,7 +222,7 @@ export class HttpStore {
     });
   }
 
-  getAttachment(requestId: string): {
+  attachment(requestId: string): {
     path: string;
     mimeType?: string;
   } | null {

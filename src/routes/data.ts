@@ -363,7 +363,7 @@ const routes = new Hono()
       try {
         const nsurlStore = new NSURLStore(deviceId, identifier);
 
-        const attachment = nsurlStore.getAttachment(requestId);
+        const attachment = nsurlStore.attachment(requestId);
 
         if (!attachment) {
           return c.text("No attachment found", 404);
@@ -448,7 +448,7 @@ const routes = new Hono()
 
     try {
       const httpStore = new HttpStore(deviceId, identifier);
-      const attachment = httpStore.getAttachment(requestId);
+      const attachment = httpStore.attachment(requestId);
       if (!attachment) {
         return c.text("No attachment found", 404);
       }
