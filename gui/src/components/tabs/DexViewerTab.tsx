@@ -15,6 +15,7 @@ import { DALVIK_LANGUAGE_ID, monarchTokens } from "@/lib/syntax/dalvik";
 import {
   parseDex,
   disassembleMethod,
+  buildCFG,
   findStringXrefs,
   type DexFile,
   type DexClassDef,
@@ -22,6 +23,7 @@ import {
   type DexString,
   type StringXref,
 } from "@/lib/dex";
+import { CFGView } from "@/components/shared/CFGView";
 
 import {
   ResizablePanelGroup,
@@ -57,7 +59,7 @@ export interface DexViewerParams {
 }
 
 type LeftTab = "classes" | "strings";
-type ViewMode = "disassembly" | "decompile";
+type ViewMode = "disassembly" | "graph" | "decompile";
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return bytes + " B";
@@ -279,6 +281,19 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
     },
     [dex],
   );
+
+  const cfgData = useMemo(() => {
+    if (!dex || !selectedMethod) return null;
+    const { blocks, edges } = buildCFG(dex, selectedMethod);
+    return {
+      nodes: blocks.map((b) => ({
+        id: b.id,
+        label: `0x${(b.startPc * 2).toString(16)}`,
+        lines: b.lines,
+      })),
+      edges,
+    };
+  }, [dex, selectedMethod]);
 
   const decompileMethod = useCallback(
     async (cls: DexClassDef, method: DexClassMethod) => {
@@ -576,6 +591,7 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
                   >
                     <TabsList variant="line">
                       <TabsTrigger value="disassembly">Disassembly</TabsTrigger>
+                      <TabsTrigger value="graph">Graph</TabsTrigger>
                       <TabsTrigger value="decompile">Decompile</TabsTrigger>
                     </TabsList>
                   </Tabs>
@@ -593,6 +609,8 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
                   <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
                     Click a class or method to view details
                   </div>
+                ) : viewMode === "graph" && cfgData ? (
+                  <CFGView nodes={cfgData.nodes} edges={cfgData.edges} />
                 ) : viewMode === "decompile" && selectedMethod ? (
                   <DecompileView
                     content={decompileContent}

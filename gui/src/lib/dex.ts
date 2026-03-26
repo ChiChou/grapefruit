@@ -244,7 +244,11 @@ function readMutf8(dv: DataView, offset: number): string {
       chars.push(0xfffd);
     }
   }
-  return String.fromCharCode(...chars);
+  let result = "";
+  for (let i = 0; i < chars.length; i += 4096) {
+    result += String.fromCharCode(...chars.slice(i, i + 4096));
+  }
+  return result;
 }
 
 export function parseDex(buffer: ArrayBuffer): DexFile {
@@ -544,7 +548,6 @@ export function disassembleMethod(
     const startPc = pc;
     const word = u16();
     const op = word & 0xff;
-    const addr = hex(startPc * 2);
     const vA4 = (word >> 8) & 0xf;
     const vB4 = (word >> 12) & 0xf;
     const vAA = (word >> 8) & 0xff;
@@ -1154,10 +1157,224 @@ export function disassembleMethod(
         break;
     }
 
-    lines.push(`  ${addr}  ${line}`);
+    lines.push(`  ${line}`);
   }
 
   return lines;
+}
+
+export interface CFGBlock {
+  id: string;
+  startPc: number;
+  lines: string[];
+}
+
+export interface CFGEdgeData {
+  from: string;
+  to: string;
+  type: "true" | "false" | "unconditional";
+}
+
+export interface CFGResult {
+  blocks: CFGBlock[];
+  edges: CFGEdgeData[];
+}
+
+/**
+ * Build a control flow graph from Dalvik bytecode.
+ * Returns basic blocks and edges suitable for visualization.
+ */
+export function buildCFG(dex: DexFile, method: DexClassMethod): CFGResult {
+  if (method.codeOff === 0 || method.codeSize === 0)
+    return { blocks: [], edges: [] };
+
+  const dv = dex.data;
+  const insnsOff = method.codeOff + 16;
+  const insnsSize = method.codeSize;
+
+  // First pass: collect instruction PCs and identify control flow
+  interface InsnInfo {
+    pc: number;
+    op: number;
+    targets: number[]; // branch target PCs
+    fallsThrough: boolean;
+    isBranch: boolean;
+    isConditional: boolean;
+  }
+  const insns: InsnInfo[] = [];
+  const leaders = new Set<number>([0]); // block start PCs
+
+  let pc = 0;
+  while (pc < insnsSize) {
+    const startPc = pc;
+    const byteOff = insnsOff + pc * 2;
+    const word = dv.getUint16(byteOff, true);
+    const op = word & 0xff;
+    const vAA = (word >> 8) & 0xff;
+
+    const info: InsnInfo = {
+      pc: startPc,
+      op,
+      targets: [],
+      fallsThrough: true,
+      isBranch: false,
+      isConditional: false,
+    };
+
+    if (op >= 0x0e && op <= 0x11) {
+      // return-void, return, return-wide, return-object
+      info.fallsThrough = false;
+    } else if (op === 0x27) {
+      // throw
+      info.fallsThrough = false;
+    } else if (op === 0x28) {
+      // goto
+      const off = vAA > 127 ? vAA - 256 : vAA;
+      info.targets.push(startPc + off);
+      info.fallsThrough = false;
+      info.isBranch = true;
+    } else if (op === 0x29) {
+      // goto/16
+      const raw = dv.getUint16(insnsOff + (pc + 1) * 2, true);
+      const off = raw > 0x7fff ? raw - 0x10000 : raw;
+      info.targets.push(startPc + off);
+      info.fallsThrough = false;
+      info.isBranch = true;
+    } else if (op === 0x2a) {
+      // goto/32
+      const lo = dv.getUint16(insnsOff + (pc + 1) * 2, true);
+      const hi = dv.getUint16(insnsOff + (pc + 2) * 2, true);
+      let off = (hi << 16) | lo;
+      if (off > 0x7fffffff) off -= 0x100000000;
+      info.targets.push(startPc + off);
+      info.fallsThrough = false;
+      info.isBranch = true;
+    } else if (op >= 0x32 && op <= 0x37) {
+      // if-eq ... if-le (two register)
+      const raw = dv.getUint16(insnsOff + (pc + 1) * 2, true);
+      const off = raw > 0x7fff ? raw - 0x10000 : raw;
+      info.targets.push(startPc + off);
+      info.fallsThrough = true;
+      info.isBranch = true;
+      info.isConditional = true;
+    } else if (op >= 0x38 && op <= 0x3d) {
+      // if-eqz ... if-lez (one register)
+      const raw = dv.getUint16(insnsOff + (pc + 1) * 2, true);
+      const off = raw > 0x7fff ? raw - 0x10000 : raw;
+      info.targets.push(startPc + off);
+      info.fallsThrough = true;
+      info.isBranch = true;
+      info.isConditional = true;
+    } else if (op === 0x2b || op === 0x2c) {
+      // packed-switch / sparse-switch
+      const lo = dv.getUint16(insnsOff + (pc + 1) * 2, true);
+      const hi = dv.getUint16(insnsOff + (pc + 2) * 2, true);
+      let tableOff = (hi << 16) | lo;
+      if (tableOff > 0x7fffffff) tableOff -= 0x100000000;
+      const tableAddr = startPc + tableOff;
+      const tableByteOff = insnsOff + tableAddr * 2;
+      if (tableByteOff >= 0 && tableByteOff + 4 < dv.byteLength) {
+        const ident = dv.getUint16(tableByteOff, true);
+        const size = dv.getUint16(tableByteOff + 2, true);
+        if (ident === 0x0100) {
+          // packed-switch: targets start at offset 4 (after ident + size + first_key)
+          for (let i = 0; i < size; i++) {
+            const tOff = tableByteOff + 8 + i * 4;
+            if (tOff + 4 <= dv.byteLength) {
+              let rel = dv.getInt32(tOff, true);
+              info.targets.push(startPc + rel);
+            }
+          }
+        } else if (ident === 0x0200) {
+          // sparse-switch: keys then targets
+          for (let i = 0; i < size; i++) {
+            const tOff = tableByteOff + 4 + size * 4 + i * 4;
+            if (tOff + 4 <= dv.byteLength) {
+              let rel = dv.getInt32(tOff, true);
+              info.targets.push(startPc + rel);
+            }
+          }
+        }
+      }
+      info.fallsThrough = true;
+      info.isBranch = true;
+      info.isConditional = true;
+    }
+
+    // Mark leaders
+    for (const t of info.targets) {
+      if (t >= 0 && t < insnsSize) leaders.add(t);
+    }
+    insns.push(info);
+    pc = startPc + opcodeWidth(op);
+
+    // Instruction after a branch is a leader
+    if (info.isBranch || !info.fallsThrough) {
+      if (pc < insnsSize) leaders.add(pc);
+    }
+  }
+
+  // Get disassembly text (one line per instruction)
+  const textLines = disassembleMethod(dex, method);
+
+  // Build blocks
+  const sortedLeaders = [...leaders].sort((a, b) => a - b);
+  const pcToBlockId = new Map<number, string>();
+  for (const l of sortedLeaders) {
+    pcToBlockId.set(l, `bb_${("0000" + (l * 2).toString(16)).slice(-4)}`);
+  }
+
+  const blocks: CFGBlock[] = [];
+  const edges: CFGEdgeData[] = [];
+
+  for (let bi = 0; bi < sortedLeaders.length; bi++) {
+    const blockStart = sortedLeaders[bi];
+    const blockEnd = bi + 1 < sortedLeaders.length ? sortedLeaders[bi + 1] : insnsSize;
+    const blockId = pcToBlockId.get(blockStart)!;
+
+    // Collect instructions in this block
+    const blockInsns = insns.filter((ins) => ins.pc >= blockStart && ins.pc < blockEnd);
+    // Collect corresponding text lines
+    const startIdx = insns.indexOf(blockInsns[0]);
+    const blockLines = textLines.slice(startIdx, startIdx + blockInsns.length).map((l) => l.trim());
+
+    blocks.push({
+      id: blockId,
+      startPc: blockStart,
+      lines: blockLines,
+    });
+
+    if (blockInsns.length === 0) continue;
+    const lastInsn = blockInsns[blockInsns.length - 1];
+
+    // Add edges
+    if (lastInsn.isConditional) {
+      // True branch (first target)
+      for (const t of lastInsn.targets) {
+        const targetId = pcToBlockId.get(t);
+        if (targetId) edges.push({ from: blockId, to: targetId, type: "true" });
+      }
+      // Fall-through (false branch)
+      if (lastInsn.fallsThrough) {
+        const nextPc = lastInsn.pc + opcodeWidth(lastInsn.op);
+        const targetId = pcToBlockId.get(nextPc);
+        if (targetId) edges.push({ from: blockId, to: targetId, type: "false" });
+      }
+    } else if (lastInsn.isBranch) {
+      // Unconditional goto
+      for (const t of lastInsn.targets) {
+        const targetId = pcToBlockId.get(t);
+        if (targetId) edges.push({ from: blockId, to: targetId, type: "unconditional" });
+      }
+    } else if (lastInsn.fallsThrough) {
+      // Normal fall-through
+      const nextPc = lastInsn.pc + opcodeWidth(lastInsn.op);
+      const targetId = pcToBlockId.get(nextPc);
+      if (targetId) edges.push({ from: blockId, to: targetId, type: "unconditional" });
+    }
+  }
+
+  return { blocks, edges };
 }
 
 /**
