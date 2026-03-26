@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
 import {
@@ -11,19 +11,14 @@ import {
 import Editor, { loader } from "@monaco-editor/react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
-import { DALVIK_LANGUAGE_ID, monarchTokens } from "@/lib/syntax/dalvik";
 import {
-  parseDex,
-  disassembleMethod,
-  buildCFG,
-  findStringXrefs,
-  type DexFile,
-  type DexClassDef,
-  type DexClassMethod,
+  useDexR2Session,
+  type DexClass,
+  type DexMethod,
   type DexString,
   type StringXref,
-} from "@/lib/dex";
-import { CFGView } from "@/components/shared/CFGView";
+} from "@/lib/use-dex-r2";
+import { CFGView, type CFGNode, type CFGEdge } from "@/components/shared/CFGView";
 
 import {
   ResizablePanelGroup,
@@ -33,24 +28,17 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/context/SessionContext";
 import { useTheme } from "@/components/providers/ThemeProvider";
 
-loader.init().then((monaco) => {
-  if (
-    !monaco.languages
-      .getLanguages()
-      .some((l: { id: string }) => l.id === DALVIK_LANGUAGE_ID)
-  ) {
-    monaco.languages.register({ id: DALVIK_LANGUAGE_ID });
-    monaco.languages.setMonarchTokensProvider(
-      DALVIK_LANGUAGE_ID,
-      monarchTokens,
-    );
-  }
-});
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function htmlToPlain(html: string): string {
+  return html.replace(/<[^>]*>/g, "");
+}
 
 export interface DexViewerParams {
   path?: string;
@@ -60,16 +48,6 @@ export interface DexViewerParams {
 
 type LeftTab = "classes" | "strings";
 type ViewMode = "disassembly" | "graph" | "decompile";
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return bytes + " B";
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
-}
-
-function formatHex(n: number): string {
-  return "0x" + n.toString(16);
-}
 
 const editorOpts = {
   readOnly: true,
@@ -90,121 +68,60 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
   const { theme } = useTheme();
   const { device, pid } = useSession();
 
-  const [dex, setDex] = useState<DexFile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [progress, setProgress] = useState(0);
-  const [loadPhase, setLoadPhase] = useState<"download" | "parse">("download");
+  const {
+    classes,
+    strings,
+    isLoading,
+    error,
+    isReady,
+    disassembleAt,
+    getCFGAt,
+    findStringXrefs,
+  } = useDexR2Session({
+    deviceId: device,
+    pid,
+    path: params?.path,
+    apk: params?.apk,
+    entry: params?.entry,
+  });
 
+  const totalMethods = useMemo(
+    () => classes.reduce((sum, c) => sum + c.methods.length, 0),
+    [classes],
+  );
+
+  const [expandedClasses, setExpandedClasses] = useState<Set<string>>(new Set());
   const [leftTab, setLeftTab] = useState<LeftTab>(
     () => (localStorage.getItem("dex-left-tab") as LeftTab) || "classes",
   );
   const [classSearch, setClassSearch] = useState("");
   const [strSearch, setStrSearch] = useState("");
 
-  const [selectedClass, setSelectedClass] = useState<DexClassDef | null>(null);
-  const [selectedMethod, setSelectedMethod] = useState<DexClassMethod | null>(
-    null,
-  );
+  const [selectedClass, setSelectedClass] = useState<DexClass | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<DexMethod | null>(null);
   const [selectedString, setSelectedString] = useState<DexString | null>(null);
-  const [codeContent, setCodeContent] = useState("");
-  const [expandedClasses, setExpandedClasses] = useState<Set<string>>(
-    new Set(),
-  );
+  const [codeHtml, setCodeHtml] = useState("");
   const [stringXrefs, setStringXrefs] = useState<StringXref[]>([]);
 
   const [viewMode, setViewMode] = useState<ViewMode>("disassembly");
+  const [cfgData, setCfgData] = useState<{ nodes: CFGNode[]; edges: CFGEdge[] } | null>(null);
+  const [cfgLoading, setCfgLoading] = useState(false);
   const [decompileContent, setDecompileContent] = useState("");
   const [decompileLoading, setDecompileLoading] = useState(false);
   const [decompileError, setDecompileError] = useState<string | null>(null);
   const decompileCache = useRef<Map<string, string>>(new Map());
 
-  useEffect(() => {
-    if (!device || pid === undefined) return;
-    let ignore = false;
-    setIsLoading(true);
-    setError(null);
-    setProgress(0);
-    setLoadPhase("download");
-
-    (async () => {
-      try {
-        let url: string;
-        if (params?.apk && params?.entry) {
-          const u = new URL(window.location.href);
-          u.pathname = `/api/apk-entry/${device}/${pid}`;
-          u.searchParams.set("apk", params.apk);
-          u.searchParams.set("entry", params.entry);
-          url = u.toString();
-        } else if (params?.path) {
-          const u = new URL(window.location.href);
-          u.pathname = `/api/download/${device}/${pid}`;
-          u.searchParams.set("path", params.path);
-          url = u.toString();
-        } else {
-          throw new Error("No DEX file path specified");
-        }
-
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`Failed to fetch DEX file: ${res.status}`);
-        const contentLength = res.headers.get("content-length");
-        const total = contentLength ? parseInt(contentLength, 10) : 0;
-
-        let buffer: ArrayBuffer;
-        if (!res.body || !total) {
-          buffer = await res.arrayBuffer();
-          if (ignore) return;
-          setProgress(100);
-        } else {
-          const reader = res.body.getReader();
-          const chunks: Uint8Array[] = [];
-          let received = 0;
-          for (;;) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            chunks.push(value);
-            received += value.length;
-            if (!ignore) setProgress(Math.round((received / total) * 100));
-          }
-          if (ignore) return;
-          const merged = new Uint8Array(received);
-          let off = 0;
-          for (const c of chunks) {
-            merged.set(c, off);
-            off += c.length;
-          }
-          buffer = merged.buffer;
-        }
-
-        setLoadPhase("parse");
-        const parsed = parseDex(buffer);
-        if (ignore) return;
-        setDex(parsed);
-      } catch (e) {
-        if (ignore) return;
-        setError(e instanceof Error ? e.message : "Failed to parse DEX file");
-      } finally {
-        if (!ignore) setIsLoading(false);
-      }
-    })();
-    return () => {
-      ignore = true;
-    };
-  }, [device, pid, params?.path, params?.apk, params?.entry]);
-
   const filteredClasses = useMemo(() => {
-    if (!dex) return [];
-    if (!classSearch.trim()) return dex.classes;
+    if (!classSearch.trim()) return classes;
     const q = classSearch.toLowerCase();
-    return dex.classes.filter((c) => c.className.toLowerCase().includes(q));
-  }, [dex, classSearch]);
+    return classes.filter((c) => c.name.toLowerCase().includes(q));
+  }, [classes, classSearch]);
 
   const filteredStrings = useMemo(() => {
-    if (!dex) return [];
-    if (!strSearch.trim()) return dex.strings;
+    if (!strSearch.trim()) return strings;
     const q = strSearch.toLowerCase();
-    return dex.strings.filter((s) => s.value.toLowerCase().includes(q));
-  }, [dex, strSearch]);
+    return strings.filter((s) => s.value.toLowerCase().includes(q));
+  }, [strings, strSearch]);
 
   const toggleClass = useCallback((className: string) => {
     setExpandedClasses((prev) => {
@@ -216,88 +133,68 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
   }, []);
 
   const handleClassClick = useCallback(
-    (cls: DexClassDef) => {
+    (cls: DexClass) => {
       setSelectedClass(cls);
       setSelectedMethod(null);
       setSelectedString(null);
       setViewMode("disassembly");
-      toggleClass(cls.className);
+      toggleClass(cls.name);
 
-      const lines: string[] = [];
-      lines.push(`; ${cls.accessString} class ${cls.className}`);
-      if (cls.superclassName) lines.push(`;   extends ${cls.superclassName}`);
-      if (cls.interfaces.length > 0)
-        lines.push(`;   implements ${cls.interfaces.join(", ")}`);
-      if (cls.sourceFile) lines.push(`; source: ${cls.sourceFile}`);
-      lines.push("");
-
-      if (cls.staticFields.length > 0) {
-        lines.push("; --- Static Fields ---");
-        for (const f of cls.staticFields)
-          lines.push(`;   ${f.accessString} ${f.type} ${f.name}`);
-        lines.push("");
-      }
-      if (cls.instanceFields.length > 0) {
-        lines.push("; --- Instance Fields ---");
-        for (const f of cls.instanceFields)
-          lines.push(`;   ${f.accessString} ${f.type} ${f.name}`);
-        lines.push("");
-      }
-
-      const allMethods = [...cls.directMethods, ...cls.virtualMethods];
-      if (allMethods.length > 0) {
-        lines.push("; --- Methods ---");
-        for (const m of allMethods) {
-          const p = m.parameterTypes.join(", ");
-          lines.push(`;   ${m.accessString} ${m.returnType} ${m.name}(${p})`);
-          if (m.codeOff !== 0)
-            lines.push(
-              `;     registers=${m.registersSize} ins=${m.insSize} outs=${m.outsSize} code_size=${m.codeSize}`,
-            );
-        }
-      }
-      setCodeContent(lines.join("\n"));
+      const lines = [
+        `; class ${cls.name}`,
+        cls.superclass ? `;   extends ${cls.superclass}` : "",
+        "",
+        ...(cls.fields.length > 0
+          ? [
+              "; --- Fields ---",
+              ...cls.fields.map((f) => `;   [${f.flags}] ${f.signature}`),
+              "",
+            ]
+          : []),
+        `; --- Methods (${cls.methods.length}) ---`,
+        ...cls.methods.map((m) => `;   [${m.flags}] ${m.signature}`),
+      ].filter(Boolean);
+      setCodeHtml(escapeHtml(lines.join("\n")));
     },
     [toggleClass],
   );
 
-  const buildDisassembly = useCallback(
-    (cls: DexClassDef, method: DexClassMethod): string => {
-      if (!dex) return "";
-      const lines: string[] = [];
-      const p = method.parameterTypes.join(", ");
-      lines.push(
-        `; ${method.accessString} ${method.returnType} ${cls.className}.${method.name}(${p})`,
-      );
-      if (method.codeOff !== 0) {
-        lines.push(
-          `; registers=${method.registersSize} ins=${method.insSize} outs=${method.outsSize} code_size=${method.codeSize}`,
-        );
-        lines.push(`; code_offset=${formatHex(method.codeOff)}`);
+  const handleMethodClick = useCallback(
+    async (cls: DexClass, method: DexMethod) => {
+      setSelectedClass(cls);
+      setSelectedMethod(method);
+      setSelectedString(null);
+      setDecompileError(null);
+      setDecompileContent("");
+      setCfgData(null);
+      setViewMode("disassembly");
+
+      setCodeHtml("; Loading disassembly...");
+      try {
+        const html = await disassembleAt(method.addr, "html");
+        setCodeHtml(html || "; (empty disassembly)");
+      } catch {
+        setCodeHtml("; Failed to disassemble method");
       }
-      lines.push("");
-      lines.push(...disassembleMethod(dex, method));
-      return lines.join("\n");
     },
-    [dex],
+    [disassembleAt],
   );
 
-  const cfgData = useMemo(() => {
-    if (!dex || !selectedMethod) return null;
-    const { blocks, edges } = buildCFG(dex, selectedMethod);
-    return {
-      nodes: blocks.map((b) => ({
-        id: b.id,
-        label: `0x${(b.startPc * 2).toString(16)}`,
-        lines: b.lines,
-      })),
-      edges,
-    };
-  }, [dex, selectedMethod]);
+  const loadCFG = useCallback(async () => {
+    if (!selectedMethod || cfgData) return;
+    setCfgLoading(true);
+    try {
+      setCfgData(await getCFGAt(selectedMethod.addr));
+    } catch {
+      setCfgData(null);
+    } finally {
+      setCfgLoading(false);
+    }
+  }, [selectedMethod, cfgData, getCFGAt]);
 
   const decompileMethod = useCallback(
-    async (cls: DexClassDef, method: DexClassMethod) => {
-      const cacheKey = `${cls.className}.${method.name}@${method.codeOff}`;
+    async (cls: DexClass, method: DexMethod) => {
+      const cacheKey = `${cls.name}.${method.name}@${method.addr}`;
       const cached = decompileCache.current.get(cacheKey);
       if (cached) {
         setDecompileContent(cached);
@@ -308,22 +205,17 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
       setDecompileError(null);
       setDecompileContent("");
       try {
-        const disasm = buildDisassembly(cls, method);
-        const methodParams = method.parameterTypes.join(", ");
-        const signature = `${method.accessString} ${method.returnType} ${method.name}(${methodParams})`;
+        const disasm = htmlToPlain(await disassembleAt(method.addr, "html"));
         const prompt = [
           "Decompile the following Dalvik bytecode into equivalent Java source code.",
           "Output ONLY raw source code. No markdown, no code fences, no explanations.",
           "",
-          `Class: ${cls.className}`,
-          cls.superclassName ? `Extends: ${cls.superclassName}` : "",
-          `Method signature: ${signature}`,
+          `Class: ${cls.name}`,
+          `Method: ${method.signature}`,
           "",
           "Bytecode:",
           disasm,
-        ]
-          .filter(Boolean)
-          .join("\n");
+        ].join("\n");
 
         const res = await fetch("/api/llm/stream", { method: "POST", body: prompt });
         if (!res.ok) throw new Error(await res.text());
@@ -331,81 +223,58 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
         const reader = res.body!.getReader();
         const decoder = new TextDecoder();
         let accumulated = "";
-
         for (;;) {
           const { done, value } = await reader.read();
           if (done) break;
           accumulated += decoder.decode(value, { stream: true });
           setDecompileContent(accumulated);
         }
-
         decompileCache.current.set(cacheKey, accumulated);
       } catch (e) {
-        setDecompileError(
-          e instanceof Error ? e.message : "Decompilation failed",
-        );
+        setDecompileError(e instanceof Error ? e.message : "Decompilation failed");
       } finally {
         setDecompileLoading(false);
       }
     },
-    [buildDisassembly],
-  );
-
-  const handleMethodClick = useCallback(
-    (cls: DexClassDef, method: DexClassMethod) => {
-      if (!dex) return;
-      setSelectedClass(cls);
-      setSelectedMethod(method);
-      setSelectedString(null);
-      setDecompileError(null);
-      setDecompileContent("");
-      setViewMode("disassembly");
-      setCodeContent(buildDisassembly(cls, method));
-    },
-    [dex, buildDisassembly],
+    [disassembleAt],
   );
 
   const changeViewMode = useCallback(
     (mode: ViewMode) => {
       setViewMode(mode);
+      if (mode === "graph" && selectedMethod) loadCFG();
       if (mode === "decompile" && selectedClass && selectedMethod) {
         decompileMethod(selectedClass, selectedMethod);
       }
     },
-    [selectedClass, selectedMethod, decompileMethod],
+    [selectedClass, selectedMethod, decompileMethod, loadCFG],
   );
 
   const handleStringClick = useCallback(
-    (s: DexString) => {
-      if (!dex) return;
+    async (s: DexString) => {
       setSelectedString(s);
       setSelectedClass(null);
       setSelectedMethod(null);
       setViewMode("disassembly");
-      setStringXrefs(findStringXrefs(dex, s.index));
+      setStringXrefs([]);
+      const xrefs = await findStringXrefs(s.vaddr);
+      setStringXrefs(xrefs);
     },
-    [dex],
+    [findStringXrefs],
   );
 
   const handleXrefClick = useCallback(
-    (xref: StringXref) => {
-      if (!dex) return;
-      for (const cls of dex.classes) {
-        const allMethods = [...cls.directMethods, ...cls.virtualMethods];
-        const method = allMethods.find((m) => m.methodIdx === xref.methodIdx);
-        if (method) {
-          setSelectedClass(cls);
-          setSelectedMethod(method);
-          setSelectedString(null);
-          setDecompileError(null);
-          setDecompileContent("");
-          setViewMode("disassembly");
-          setCodeContent(buildDisassembly(cls, method));
-          return;
-        }
-      }
+    async (xref: StringXref) => {
+      // Find the class and method matching the xref
+      const cls = classes.find((c) => c.name === xref.className);
+      if (!cls) return;
+      const method = cls.methods.find((m) => m.name === xref.methodName);
+      if (!method) return;
+
+      setExpandedClasses((prev) => new Set(prev).add(cls.name));
+      handleMethodClick(cls, method);
     },
-    [dex, buildDisassembly],
+    [classes, handleMethodClick],
   );
 
   const changeLeftTab = useCallback((tab: LeftTab) => {
@@ -413,22 +282,16 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
     localStorage.setItem("dex-left-tab", tab);
   }, []);
 
+  const fileName =
+    params?.entry?.split("/").pop() ??
+    params?.path?.split("/").pop() ??
+    "classes.dex";
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span className="text-sm">
-            {loadPhase === "download"
-              ? progress > 0
-                ? `Downloading... ${progress}%`
-                : "Downloading..."
-              : "Parsing DEX..."}
-          </span>
-        </div>
-        {loadPhase === "download" && progress > 0 && (
-          <Progress value={progress} className="w-48 h-1.5" />
-        )}
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <span className="text-sm">Fetching and analyzing with radare2...</span>
       </div>
     );
   }
@@ -441,7 +304,7 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
     );
   }
 
-  if (!dex) {
+  if (!isReady) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
         {t("no_results")}
@@ -449,31 +312,20 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
     );
   }
 
-  const fileName =
-    params?.entry?.split("/").pop() ??
-    params?.path?.split("/").pop() ??
-    "classes.dex";
-
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center gap-3 px-4 py-1.5 border-b flex-wrap shrink-0">
         <span className="text-xs font-mono text-muted-foreground truncate max-w-62.5">
           {fileName}
         </span>
-        <Badge variant="secondary" className="text-[10px]">
-          {dex.header.magic.replace("dex\n", "DEX ")}
+        <Badge variant="outline" className="text-[10px]">
+          {classes.length} classes
         </Badge>
         <Badge variant="outline" className="text-[10px]">
-          {formatSize(dex.header.fileSize)}
+          {totalMethods} methods
         </Badge>
         <Badge variant="outline" className="text-[10px]">
-          {dex.classes.length} classes
-        </Badge>
-        <Badge variant="outline" className="text-[10px]">
-          {dex.methods.length} methods
-        </Badge>
-        <Badge variant="outline" className="text-[10px]">
-          {dex.strings.length} strings
+          {strings.length} strings
         </Badge>
       </div>
 
@@ -490,17 +342,14 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
           >
             <TabsList variant="line" className="shrink-0">
               <TabsTrigger value="classes">
-                Classes ({dex.classes.length})
+                Classes ({classes.length})
               </TabsTrigger>
               <TabsTrigger value="strings">
-                Strings ({dex.strings.length})
+                Strings ({strings.length})
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent
-              value="classes"
-              className="flex-1 overflow-hidden flex flex-col"
-            >
+            <TabsContent value="classes" className="flex-1 overflow-hidden flex flex-col">
               <div className="px-2 py-1.5 border-b shrink-0">
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -512,7 +361,7 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
                   />
                 </div>
                 <div className="text-[10px] text-muted-foreground mt-1 px-0.5">
-                  {filteredClasses.length} / {dex.classes.length}
+                  {filteredClasses.length} / {classes.length}
                 </div>
               </div>
               <ClassTree
@@ -525,10 +374,7 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
               />
             </TabsContent>
 
-            <TabsContent
-              value="strings"
-              className="flex-1 overflow-hidden flex flex-col"
-            >
+            <TabsContent value="strings" className="flex-1 overflow-hidden flex flex-col">
               <div className="px-2 py-1.5 border-b shrink-0">
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -540,7 +386,7 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
                   />
                 </div>
                 <div className="text-[10px] text-muted-foreground mt-1 px-0.5">
-                  {filteredStrings.length} / {dex.strings.length}
+                  {filteredStrings.length} / {strings.length}
                 </div>
               </div>
               <StringList
@@ -575,14 +421,13 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
                 </div>
                 {stringXrefs.map((xref, i) => (
                   <button
-                    key={`${xref.methodIdx}-${xref.codeOffset}-${i}`}
+                    key={`${xref.addr}-${i}`}
                     type="button"
                     className="block w-full text-left font-mono text-xs px-2 py-1 rounded hover:bg-accent/50 truncate"
                     onClick={() => handleXrefClick(xref)}
-                    title={`${xref.className}.${xref.methodName}`}
+                    title={xref.fcnName}
                   >
-                    <span className="text-muted-foreground">{formatHex(xref.codeOffset)}</span>
-                    {" "}
+                    <span className="text-muted-foreground">{xref.addr}</span>{" "}
                     <span className="text-amber-600 dark:text-amber-400 hover:underline">
                       {xref.className}.{xref.methodName}
                     </span>
@@ -607,19 +452,28 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
                 ) : null}
                 <span className="text-[10px] text-muted-foreground ml-auto pr-3 truncate max-w-[50%]">
                   {selectedMethod
-                    ? `${selectedClass?.className}.${selectedMethod.name}`
-                    : selectedClass
-                      ? selectedClass.className
-                      : "Select a class or method"}
+                    ? `${selectedClass?.name}.${selectedMethod.name}`
+                    : selectedClass?.name ?? "Select a class or method"}
                 </span>
               </div>
               <div className="flex-1 overflow-hidden">
-                {!codeContent && !decompileContent ? (
+                {!codeHtml && !decompileContent ? (
                   <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
                     Click a class or method to view details
                   </div>
-                ) : viewMode === "graph" && cfgData ? (
-                  <CFGView nodes={cfgData.nodes} edges={cfgData.edges} />
+                ) : viewMode === "graph" ? (
+                  cfgLoading ? (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Loading graph...
+                    </div>
+                  ) : cfgData ? (
+                    <CFGView nodes={cfgData.nodes} edges={cfgData.edges} />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+                      No graph data available
+                    </div>
+                  )
                 ) : viewMode === "decompile" && selectedMethod ? (
                   <DecompileView
                     content={decompileContent}
@@ -633,13 +487,12 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
                     }
                   />
                 ) : (
-                  <Editor
-                    height="100%"
-                    language={DALVIK_LANGUAGE_ID}
-                    theme={theme === "dark" ? "vs-dark" : "light"}
-                    value={codeContent}
-                    options={editorOpts}
-                  />
+                  <div className="h-full overflow-auto">
+                    <pre
+                      className="p-3 m-0 text-xs leading-[1.4] font-mono"
+                      dangerouslySetInnerHTML={{ __html: codeHtml }}
+                    />
+                  </div>
                 )}
               </div>
             </div>
@@ -697,12 +550,7 @@ function DecompileView({
             </>
           )}
           {onRetry && !isNotConfigured && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-xs"
-              onClick={onRetry}
-            >
+            <Button variant="outline" size="sm" className="text-xs" onClick={onRetry}>
               Retry
             </Button>
           )}
@@ -738,32 +586,26 @@ function ClassTree({
   onClassClick,
   onMethodClick,
 }: {
-  classes: DexClassDef[];
+  classes: DexClass[];
   expanded: Set<string>;
-  selectedClass: DexClassDef | null;
-  selectedMethod: DexClassMethod | null;
-  onClassClick: (cls: DexClassDef) => void;
-  onMethodClick: (cls: DexClassDef, method: DexClassMethod) => void;
+  selectedClass: DexClass | null;
+  selectedMethod: DexMethod | null;
+  onClassClick: (cls: DexClass) => void;
+  onMethodClick: (cls: DexClass, method: DexMethod) => void;
 }) {
   const parentRef = useRef<HTMLDivElement>(null);
 
   const flatItems = useMemo(() => {
     const items: Array<
-      | { kind: "class"; cls: DexClassDef }
-      | {
-          kind: "method";
-          cls: DexClassDef;
-          method: DexClassMethod;
-          isVirtual: boolean;
-        }
+      | { kind: "class"; cls: DexClass }
+      | { kind: "method"; cls: DexClass; method: DexMethod }
     > = [];
     for (const cls of classes) {
       items.push({ kind: "class", cls });
-      if (expanded.has(cls.className)) {
-        for (const m of cls.directMethods)
-          items.push({ kind: "method", cls, method: m, isVirtual: false });
-        for (const m of cls.virtualMethods)
-          items.push({ kind: "method", cls, method: m, isVirtual: true });
+      if (expanded.has(cls.name)) {
+        for (const m of cls.methods) {
+          items.push({ kind: "method", cls, method: m });
+        }
       }
     }
     return items;
@@ -777,11 +619,7 @@ function ClassTree({
   });
 
   return (
-    <div
-      ref={parentRef}
-      className="flex-1 overflow-auto outline-none"
-      tabIndex={0}
-    >
+    <div ref={parentRef} className="flex-1 overflow-auto outline-none" tabIndex={0}>
       <div
         style={{
           height: `${virtualizer.getTotalSize()}px`,
@@ -793,16 +631,13 @@ function ClassTree({
           const item = flatItems[virtualRow.index];
 
           if (item.kind === "class") {
-            const cls = item.cls;
-            const isExpanded = expanded.has(cls.className);
-            const isSelected =
-              selectedClass?.className === cls.className && !selectedMethod;
-            const methodCount =
-              cls.directMethods.length + cls.virtualMethods.length;
+            const { cls } = item;
+            const isExpanded = expanded.has(cls.name);
+            const isSelected = selectedClass?.name === cls.name && !selectedMethod;
 
             return (
               <div
-                key={`c-${cls.className}`}
+                key={`c-${cls.name}`}
                 data-index={virtualRow.index}
                 ref={virtualizer.measureElement}
                 className={`absolute top-0 left-0 w-full px-2 py-1 cursor-pointer border-b border-border/40 hover:bg-accent/50 ${isSelected ? "bg-accent text-accent-foreground" : ""}`}
@@ -811,7 +646,7 @@ function ClassTree({
               >
                 <div className="flex items-center gap-1 min-w-0">
                   <span className="w-3 h-3 shrink-0 flex items-center justify-center">
-                    {methodCount > 0 ? (
+                    {cls.methods.length > 0 ? (
                       isExpanded ? (
                         <ChevronDown className="w-3 h-3" />
                       ) : (
@@ -819,31 +654,27 @@ function ClassTree({
                       )
                     ) : null}
                   </span>
-                  <span
-                    className="font-mono text-xs truncate"
-                    title={cls.className}
-                  >
-                    {cls.className}
+                  <span className="font-mono text-xs truncate" title={cls.name}>
+                    {cls.name}
                   </span>
-                  <Badge
-                    variant="outline"
-                    className="text-[8px] px-1 py-0 ml-auto shrink-0"
-                  >
-                    {methodCount}
-                  </Badge>
+                  {cls.methods.length > 0 && (
+                    <Badge variant="outline" className="text-[8px] px-1 py-0 ml-auto shrink-0">
+                      {cls.methods.length}
+                    </Badge>
+                  )}
                 </div>
               </div>
             );
           }
 
-          const { cls, method, isVirtual } = item;
+          const { cls, method } = item;
           const isSelected =
-            selectedMethod?.methodIdx === method.methodIdx &&
-            selectedClass?.className === cls.className;
+            selectedMethod?.addr === method.addr &&
+            selectedClass?.name === cls.name;
 
           return (
             <div
-              key={`m-${cls.className}-${method.methodIdx}`}
+              key={`m-${cls.name}-${method.addr}`}
               data-index={virtualRow.index}
               ref={virtualizer.measureElement}
               className={`absolute top-0 left-0 w-full pl-7 pr-2 py-1 cursor-pointer border-b border-border/20 hover:bg-accent/50 ${isSelected ? "bg-accent text-accent-foreground" : ""}`}
@@ -851,25 +682,15 @@ function ClassTree({
               onClick={() => onMethodClick(cls, method)}
             >
               <div className="flex items-center gap-1.5 min-w-0">
-                <span
-                  className={`text-[9px] font-medium shrink-0 ${isVirtual ? "text-blue-500" : "text-green-500"}`}
-                >
-                  {isVirtual ? "V" : "D"}
+                <span className="text-[9px] font-medium shrink-0 text-muted-foreground">
+                  {method.flags}
                 </span>
                 <span
                   className="font-mono text-[11px] truncate"
-                  title={`${method.name}(${method.parameterTypes.join(", ")}): ${method.returnType}`}
+                  title={method.signature}
                 >
                   {method.name}
                 </span>
-                {method.codeOff === 0 && (
-                  <Badge
-                    variant="outline"
-                    className="text-[7px] px-1 py-0 shrink-0 text-muted-foreground"
-                  >
-                    {method.accessFlags & 0x100 ? "native" : "abstract"}
-                  </Badge>
-                )}
               </div>
             </div>
           );
@@ -898,11 +719,7 @@ function StringList({
   });
 
   return (
-    <div
-      ref={parentRef}
-      className="flex-1 overflow-auto outline-none"
-      tabIndex={0}
-    >
+    <div ref={parentRef} className="flex-1 overflow-auto outline-none" tabIndex={0}>
       <div
         style={{
           height: `${virtualizer.getTotalSize()}px`,
@@ -928,9 +745,7 @@ function StringList({
                 </span>
                 <span className="font-mono text-xs truncate" title={str.value}>
                   {str.value || (
-                    <span className="text-muted-foreground italic">
-                      (empty)
-                    </span>
+                    <span className="text-muted-foreground italic">(empty)</span>
                   )}
                 </span>
               </div>
