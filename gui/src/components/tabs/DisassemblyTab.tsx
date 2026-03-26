@@ -1,4 +1,4 @@
-import { useR2 } from "@/lib/use-r2";
+import { useR2Session } from "@/lib/use-r2-session";
 
 import "./DisassemblyTab.css";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -25,9 +25,6 @@ interface AnalysisResult {
   decompilerOutput: string;
 }
 
-// r2 analysis setup: moderate depth to avoid WASM stack overflow
-const analysisSetup = `e anal.depth=64; e anal.hasnext=true`;
-
 export function DisassemblyTab({
   params,
 }: IDockviewPanelProps<DisassemblyTabParams>) {
@@ -38,14 +35,13 @@ export function DisassemblyTab({
   const [isLoading, setIsLoading] = useState(true);
   const [loadingView, setLoadingView] = useState<ViewMode | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const { executeR2Command, isReady } = useR2();
+  const { cmd, disassemble, graph, isReady, error: sessionError } = useR2Session();
 
   const [aiContent, setAiContent] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const aiCache = useRef<Map<string, string>>(new Map());
 
-  // Analyze function once r2 is ready
   useEffect(() => {
     if (!address || !isReady) return;
 
@@ -55,45 +51,28 @@ export function DisassemblyTab({
 
     async function analyze() {
       try {
-        let disassemblyHtml = await executeR2Command(
-          `${analysisSetup}; s ${address}; af; pdf`,
-        );
-
+        let html = await disassemble(address, { output: "html" });
         if (ignore) return;
 
-        if (
-          !disassemblyHtml.trim() ||
-          disassemblyHtml.includes("Cannot find function")
-        ) {
-          disassemblyHtml = await executeR2Command(`s ${address}; pd 50`);
+        if (!html?.trim()) {
+          html = await cmd(`s ${address}; pd 50`, { output: "html" });
         }
-
         if (ignore) return;
 
-        // Get plain-text disassembly for AI decompilation
-        let plainDisasm = "";
+        let plain = "";
         try {
-          plainDisasm = await executeR2Command(
-            `${analysisSetup}; s ${address}; af; pdf`,
-            { output: "plain" },
-          );
-          if (
-            !plainDisasm.trim() ||
-            plainDisasm.includes("Cannot find function")
-          ) {
-            plainDisasm = await executeR2Command(`s ${address}; pd 50`, {
-              output: "plain",
-            });
+          plain = (await disassemble(address)) ?? "";
+          if (!plain.trim()) {
+            plain = await cmd(`s ${address}; pd 50`);
           }
         } catch {
-          // plain disasm is optional
+          // plain text is optional (used for AI decompile)
         }
-
         if (ignore) return;
 
         setResult({
-          disassemblyHtml: disassemblyHtml.trimEnd(),
-          plainDisasm: plainDisasm.trimEnd(),
+          disassemblyHtml: (html ?? "").trimEnd(),
+          plainDisasm: plain.trimEnd(),
           graphNodes: [],
           graphEdges: [],
           decompilerOutput: "",
@@ -108,49 +87,34 @@ export function DisassemblyTab({
     }
 
     analyze();
+    return () => { ignore = true; };
+  }, [address, isReady, cmd, disassemble]);
 
-    return () => {
-      ignore = true;
-    };
-  }, [address, isReady, executeR2Command]);
-
-  // Lazy-load graph data when switching to graph tab
   const loadGraph = useCallback(async () => {
-    if (!executeR2Command || (result?.graphNodes && result.graphNodes.length > 0)) return;
+    if (!isReady || (result?.graphNodes && result.graphNodes.length > 0)) return;
     setLoadingView("graph");
     try {
-      const raw = await executeR2Command(
-        `${analysisSetup}; s ${address}; af; agfj`,
-        { output: "plain" },
-      );
-
+      const cfg = await graph(address);
       const nodes: CFGNode[] = [];
       const edges: CFGEdge[] = [];
-      const parsed = JSON.parse(raw);
-      const blocks: Array<{
-        offset: number;
-        size: number;
-        ops?: Array<{ offset: number; disasm?: string; type?: string }>;
-        jump?: number;
-        fail?: number;
-      }> = Array.isArray(parsed) && parsed.length > 0
-        ? parsed[0].blocks ?? []
-        : [];
 
-      for (const block of blocks) {
-        const id = `bb_${block.offset.toString(16)}`;
-        const lines = (block.ops ?? []).map(
-          (op) => op.disasm ?? `unknown @ 0x${op.offset.toString(16)}`,
-        );
-        nodes.push({ id, label: `0x${block.offset.toString(16)}`, lines });
-        if (block.jump !== undefined) {
-          const targetId = `bb_${block.jump.toString(16)}`;
-          const type = block.fail !== undefined ? "true" : "unconditional";
-          edges.push({ from: id, to: targetId, type });
-        }
-        if (block.fail !== undefined) {
-          const targetId = `bb_${block.fail.toString(16)}`;
-          edges.push({ from: id, to: targetId, type: "false" });
+      if (cfg?.blocks) {
+        for (const block of cfg.blocks) {
+          const id = `bb_${block.addr.toString(16)}`;
+          const lines = (block.ops ?? []).map(
+            (op: { disasm?: string; offset: number }) =>
+              op.disasm ?? `unknown @ 0x${op.offset.toString(16)}`,
+          );
+          nodes.push({ id, label: `0x${block.addr.toString(16)}`, lines });
+          if (block.jump !== undefined) {
+            const targetId = `bb_${block.jump.toString(16)}`;
+            const type = block.fail !== undefined ? "true" : "unconditional";
+            edges.push({ from: id, to: targetId, type });
+          }
+          if (block.fail !== undefined) {
+            const targetId = `bb_${block.fail.toString(16)}`;
+            edges.push({ from: id, to: targetId, type: "false" });
+          }
         }
       }
 
@@ -164,17 +128,13 @@ export function DisassemblyTab({
     } finally {
       setLoadingView(null);
     }
-  }, [address, executeR2Command, result?.graphNodes]);
+  }, [address, isReady, graph, result?.graphNodes]);
 
-  // Lazy-load r2 decompiler output
   const loadDecompiler = useCallback(async () => {
-    if (!executeR2Command || result?.decompilerOutput) return;
+    if (!isReady || result?.decompilerOutput) return;
     setLoadingView("decompiler");
     try {
-      const output = await executeR2Command(
-        `${analysisSetup}; e scr.color=0; s ${address}; af; pdc; e scr.color=3`,
-        { output: "plain" },
-      );
+      const output = await cmd(`e scr.color=0; s ${address}; af; pdc`);
       setResult((prev) =>
         prev ? { ...prev, decompilerOutput: output.trimEnd() } : prev,
       );
@@ -190,9 +150,8 @@ export function DisassemblyTab({
     } finally {
       setLoadingView(null);
     }
-  }, [address, executeR2Command, result?.decompilerOutput]);
+  }, [address, isReady, cmd, result?.decompilerOutput]);
 
-  // AI decompilation via LLM (streaming)
   const loadAiDecompile = useCallback(async () => {
     if (!result?.plainDisasm) return;
 
@@ -250,11 +209,23 @@ export function DisassemblyTab({
     if (mode === "ai-decompile") loadAiDecompile();
   };
 
+  if (sessionError) {
+    return (
+      <div className="flex items-center justify-center h-full px-6">
+        <div className="flex flex-col items-center gap-3 max-w-lg text-center">
+          <AlertCircle className="h-8 w-8 text-destructive" />
+          <p className="text-sm font-medium">Failed to start R2 session</p>
+          <p className="text-xs text-muted-foreground break-all font-mono">{sessionError}</p>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin mr-2" />
-        {isReady ? `${t("loading")}...` : "Waiting for r2..."}
+        {isReady ? `${t("loading")}...` : "Starting r2 session..."}
       </div>
     );
   }
@@ -299,8 +270,11 @@ export function DisassemblyTab({
         </div>
 
         <TabsContent value="disassembly" className="flex-1 overflow-hidden">
-          <div className="disassembly-view h-full overflow-auto p-3">
-            <div dangerouslySetInnerHTML={{ __html: result.disassemblyHtml }} />
+          <div className="disassembly-view h-full overflow-auto">
+            <pre
+              className="p-3 m-0 text-[13px] leading-[1.4] font-mono"
+              dangerouslySetInnerHTML={{ __html: result.disassemblyHtml }}
+            />
           </div>
         </TabsContent>
 

@@ -78,7 +78,6 @@ import { DexViewerTab } from "../tabs/DexViewerTab";
 import { NoCloseTabHeader } from "../tabs/NoCloseTabHeader";
 
 import { DockContext, useDockActions } from "@/context/DockContext";
-import { R2Provider } from "../providers/R2Provider";
 
 const themeApp: DockviewTheme = {
   name: "app",
@@ -332,9 +331,7 @@ function WorkspaceContent() {
 export function Workspace() {
   return (
     <SessionProvider>
-      <R2Provider>
-        <WorkspaceContent />
-      </R2Provider>
+      <WorkspaceContent />
     </SessionProvider>
   );
 }
