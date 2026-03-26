@@ -38,7 +38,7 @@ export interface StringXref {
   fcnName: string;
 }
 
-function parseIcOutput(text: string): DexClass[] {
+function parseIc(text: string): DexClass[] {
   const classes: DexClass[] = [];
   let current: DexClass | null = null;
 
@@ -152,7 +152,7 @@ export function useDexR2Session(opts: {
           socketCmd(socket, "strings") as Promise<string>,
         ]);
 
-        setClasses(parseIcOutput(icText));
+        setClasses(parseIc(icText));
 
         try {
           const parsed: Array<{ vaddr: number; string: string }> = JSON.parse(strJson);
@@ -188,13 +188,13 @@ export function useDexR2Session(opts: {
     [],
   );
 
-  const disassembleAt = useCallback(
+  const disassemble = useCallback(
     (address: string, output?: "plain" | "html") =>
       cmd(`s ${address}; af; pdf`, output),
     [cmd],
   );
 
-  const getCFGAt = useCallback(
+  const cfg = useCallback(
     async (address: string): Promise<{ nodes: CFGNode[]; edges: CFGEdge[] } | null> => {
       const raw = await cmd(`s ${address}; af; agfj`);
       try {
@@ -233,7 +233,7 @@ export function useDexR2Session(opts: {
     [cmd],
   );
 
-  const findStringXrefs = useCallback(
+  const xrefs = useCallback(
     async (vaddr: number): Promise<StringXref[]> => {
       if (!vaddr) return [];
       const raw = await cmd(`axtj @ 0x${vaddr.toString(16)}`);
@@ -259,8 +259,8 @@ export function useDexR2Session(opts: {
     error,
     isReady,
     cmd,
-    disassembleAt,
-    getCFGAt,
-    findStringXrefs,
+    disassemble,
+    cfg,
+    xrefs,
   };
 }

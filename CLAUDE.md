@@ -50,6 +50,8 @@ Available skills:
 
 Do not generate code splitter comments (or code dividers/dividers)
 
+Prefer short symbol names. Do not repeat the module name in exported functions (e.g. `ansi.toHtml` not `ansi.ansiToHtml`). Drop noise words like "get", "create", "find" when the meaning is clear from context. Use import aliases to resolve name conflicts instead of making names longer.
+
 ## git
 
 Do not automatically commit unless I ask

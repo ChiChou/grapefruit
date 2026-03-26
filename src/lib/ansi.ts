@@ -14,7 +14,7 @@ function escapeHtml(s: string): string {
     .replace(/>/g, "&gt;");
 }
 
-export function ansiToHtml(input: string): string {
+export function toHtml(input: string): string {
   let result = "";
   let lastIndex = 0;
   let openSpan = false;

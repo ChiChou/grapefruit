@@ -1,12 +1,12 @@
 import type { Server } from "socket.io";
 
 import {
-  createLiveSession,
-  createDeviceFileSession,
-  closeSession,
+  openLive,
+  openDeviceFile,
+  close,
   type R2Session,
 } from "./lib/r2.ts";
-import { ansiToHtml } from "./lib/ansi.ts";
+import * as ansi from "./lib/ansi.ts";
 
 type Ack = (err: string | null, result?: any) => void;
 
@@ -19,7 +19,7 @@ export function attachR2(io: Server) {
 
       try {
         if (params.path || (params.apk && params.entry)) {
-          session = await createDeviceFileSession({
+          session = await openDeviceFile({
             deviceId: params.deviceId,
             pid: params.pid,
             path: params.path,
@@ -27,7 +27,7 @@ export function attachR2(io: Server) {
             entry: params.entry,
           });
         } else if (params.arch) {
-          session = await createLiveSession({
+          session = await openLive({
             deviceId: params.deviceId,
             pid: params.pid,
             arch: params.arch,
@@ -54,7 +54,7 @@ export function attachR2(io: Server) {
         session.r2.rawCmd(`e scr.color=${wantHtml ? 3 : 0}`);
         const raw = await session.r2.cmd(command);
         session.r2.rawCmd("e scr.color=0");
-        ack(null, wantHtml ? ansiToHtml(raw) : raw);
+        ack(null, wantHtml ? ansi.toHtml(raw) : raw);
       } catch (e) {
         ack(e instanceof Error ? e.message : String(e));
       }
@@ -68,7 +68,7 @@ export function attachR2(io: Server) {
         session.r2.rawCmd(`e scr.color=${wantHtml ? 3 : 0}`);
         const raw = await session.r2.disassembleFunction(addr);
         session.r2.rawCmd("e scr.color=0");
-        ack(null, raw && wantHtml ? ansiToHtml(raw) : raw);
+        ack(null, raw && wantHtml ? ansi.toHtml(raw) : raw);
       } catch (e) {
         ack(e instanceof Error ? e.message : String(e));
       }
@@ -105,7 +105,7 @@ export function attachR2(io: Server) {
     socket.on("disconnect", () => {
       if (session) {
         console.info(`[r2ws] closing session ${session.id}`);
-        closeSession(session.id);
+        close(session.id);
         session = null;
       }
     });

@@ -415,7 +415,7 @@ function bitsFromFrida(arch: string, pointerSize: number): number {
   }
 }
 
-export async function createLiveSession(opts: {
+export async function openLive(opts: {
   deviceId: string;
   pid: number;
   arch: string;
@@ -481,7 +481,7 @@ export async function createLiveSession(opts: {
   return session;
 }
 
-export async function createFileSession(
+export async function openFile(
   data: Uint8Array,
   filename: string,
 ): Promise<R2Session> {
@@ -570,7 +570,7 @@ async function pullZipEntryToBuffer(
   return result;
 }
 
-export async function createDeviceFileSession(opts: {
+export async function openDeviceFile(opts: {
   deviceId: string;
   pid: number;
   path?: string;
@@ -592,16 +592,16 @@ export async function createDeviceFileSession(opts: {
     throw new Error("path or apk+entry required");
   }
 
-  return createFileSession(data, filename);
+  return openFile(data, filename);
 }
 
-export function getSession(id: string): R2Session | undefined {
+export function get(id: string): R2Session | undefined {
   const s = sessions.get(id);
   if (s) s.lastUsed = Date.now();
   return s;
 }
 
-export async function closeSession(id: string): Promise<boolean> {
+export async function close(id: string): Promise<boolean> {
   const s = sessions.get(id);
   if (!s) return false;
   s.r2.close();
@@ -610,7 +610,7 @@ export async function closeSession(id: string): Promise<boolean> {
   return true;
 }
 
-export function listSessions(): Array<{
+export function list(): Array<{
   id: string;
   createdAt: number;
   lastUsed: number;

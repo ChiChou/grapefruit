@@ -79,9 +79,9 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
     isLoading,
     error,
     isReady,
-    disassembleAt,
-    getCFGAt,
-    findStringXrefs,
+    disassemble,
+    cfg,
+    xrefs: fetchXrefs,
   } = useDexR2Session({
     deviceId: device,
     pid,
@@ -181,26 +181,26 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
 
       setCodeHtml("; Loading disassembly...");
       try {
-        const html = await disassembleAt(method.addr, "html");
+        const html = await disassemble(method.addr, "html");
         setCodeHtml(html || "; (empty disassembly)");
       } catch {
         setCodeHtml("; Failed to disassemble method");
       }
     },
-    [disassembleAt],
+    [disassemble],
   );
 
   const loadCFG = useCallback(async () => {
     if (!selectedMethod || cfgData) return;
     setCfgLoading(true);
     try {
-      setCfgData(await getCFGAt(selectedMethod.addr));
+      setCfgData(await cfg(selectedMethod.addr));
     } catch {
       setCfgData(null);
     } finally {
       setCfgLoading(false);
     }
-  }, [selectedMethod, cfgData, getCFGAt]);
+  }, [selectedMethod, cfgData, cfg]);
 
   const decompileMethod = useCallback(
     async (cls: DexClass, method: DexMethod) => {
@@ -215,7 +215,7 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
       setDecompileError(null);
       setDecompileContent("");
       try {
-        const disasm = strip.r2(htmlToPlain(await disassembleAt(method.addr, "html")));
+        const disasm = strip.r2(htmlToPlain(await disassemble(method.addr, "html")));
         const prompt = [
           "Decompile the following Dalvik bytecode into equivalent Java source code.",
           "Output ONLY raw source code. No markdown, no code fences, no explanations.",
@@ -251,7 +251,7 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
         setDecompileLoading(false);
       }
     },
-    [disassembleAt],
+    [disassemble],
   );
 
   const changeViewMode = useCallback(
@@ -272,10 +272,10 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
       setSelectedMethod(null);
       setViewMode("disassembly");
       setStringXrefs([]);
-      const xrefs = await findStringXrefs(s.vaddr);
-      setStringXrefs(xrefs);
+      const refs = await fetchXrefs(s.vaddr);
+      setStringXrefs(refs);
     },
-    [findStringXrefs],
+    [fetchXrefs],
   );
 
   const handleXrefClick = useCallback(
