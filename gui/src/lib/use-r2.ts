@@ -51,6 +51,7 @@ interface CommandRequest {
   command: string;
   options: CommandOptions;
   onComplete(result: string): void;
+  onError(error: Error): void;
 }
 
 let state: "unloaded" | "loading" | "loaded" | "executing-command" = "unloaded";
@@ -85,8 +86,8 @@ export function useR2({ source }: { source?: R2Source } = {}) {
 
   const executeR2Command = useCallback(
     (command: string, options: CommandOptions = {}) => {
-      return new Promise<string>((resolve) => {
-        pendingCommands.push({ command, options, onComplete: resolve });
+      return new Promise<string>((resolve, reject) => {
+        pendingCommands.push({ command, options, onComplete: resolve, onError: reject });
         maybeProcessPendingCommands();
       });
     },
@@ -229,11 +230,17 @@ async function maybeProcessPendingCommands() {
   let req: CommandRequest | undefined;
   while ((req = pendingCommands.shift()) !== undefined) {
     const { output = "html" } = req.options;
-    const rawResult = await evaluate(req.command, output === "html" ? 1 : 0);
     try {
-      req.onComplete(r.UTF8ToString(rawResult));
-    } finally {
-      r._free(rawResult);
+      const rawResult = await evaluate(req.command, output === "html" ? 1 : 0);
+      try {
+        req.onComplete(r.UTF8ToString(rawResult));
+      } finally {
+        r._free(rawResult);
+      }
+    } catch (e) {
+      req.onError(
+        e instanceof Error ? e : new Error("r2 command failed"),
+      );
     }
   }
 

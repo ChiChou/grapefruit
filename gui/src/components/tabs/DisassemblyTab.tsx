@@ -1,12 +1,13 @@
 import { useR2 } from "@/lib/use-r2";
 
 import "./DisassemblyTab.css";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
-import { Loader2 } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CFGView, type CFGNode, type CFGEdge } from "@/components/shared/CFGView";
+import { Button } from "@/components/ui/button";
 import Editor from "@monaco-editor/react";
 
 export interface DisassemblyTabParams {
@@ -14,10 +15,11 @@ export interface DisassemblyTabParams {
   name?: string;
 }
 
-type ViewMode = "disassembly" | "graph" | "decompiler";
+type ViewMode = "disassembly" | "graph" | "decompiler" | "ai-decompile";
 
 interface AnalysisResult {
   disassemblyHtml: string;
+  plainDisasm: string;
   graphNodes: CFGNode[];
   graphEdges: CFGEdge[];
   decompilerOutput: string;
@@ -37,6 +39,11 @@ export function DisassemblyTab({
   const [loadingView, setLoadingView] = useState<ViewMode | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { executeR2Command, isReady } = useR2();
+
+  const [aiContent, setAiContent] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const aiCache = useRef<Map<string, string>>(new Map());
 
   // Analyze function once r2 is ready
   useEffect(() => {
@@ -63,8 +70,30 @@ export function DisassemblyTab({
 
         if (ignore) return;
 
+        // Get plain-text disassembly for AI decompilation
+        let plainDisasm = "";
+        try {
+          plainDisasm = await executeR2Command(
+            `${analysisSetup}; s ${address}; af; pdf`,
+            { output: "plain" },
+          );
+          if (
+            !plainDisasm.trim() ||
+            plainDisasm.includes("Cannot find function")
+          ) {
+            plainDisasm = await executeR2Command(`s ${address}; pd 50`, {
+              output: "plain",
+            });
+          }
+        } catch {
+          // plain disasm is optional
+        }
+
+        if (ignore) return;
+
         setResult({
           disassemblyHtml: disassemblyHtml.trimEnd(),
+          plainDisasm: plainDisasm.trimEnd(),
           graphNodes: [],
           graphEdges: [],
           decompilerOutput: "",
@@ -72,7 +101,8 @@ export function DisassemblyTab({
         setIsLoading(false);
       } catch (e) {
         if (ignore) return;
-        setError(e instanceof Error ? e.message : "Failed to disassemble");
+        const msg = e instanceof Error ? e.message : String(e);
+        setError(msg);
         setIsLoading(false);
       }
     }
@@ -136,12 +166,11 @@ export function DisassemblyTab({
     }
   }, [address, executeR2Command, result?.graphNodes]);
 
-  // Lazy-load decompiler output when switching to decompiler tab
+  // Lazy-load r2 decompiler output
   const loadDecompiler = useCallback(async () => {
     if (!executeR2Command || result?.decompilerOutput) return;
     setLoadingView("decompiler");
     try {
-      // Deep analysis needed for complete decompilation with all basic blocks
       const output = await executeR2Command(
         `${analysisSetup}; e scr.color=0; s ${address}; af; pdc; e scr.color=3`,
         { output: "plain" },
@@ -163,26 +192,71 @@ export function DisassemblyTab({
     }
   }, [address, executeR2Command, result?.decompilerOutput]);
 
+  // AI decompilation via LLM
+  const loadAiDecompile = useCallback(async () => {
+    if (!result?.plainDisasm) return;
+
+    const cached = aiCache.current.get(address);
+    if (cached) {
+      setAiContent(cached);
+      setAiError(null);
+      return;
+    }
+
+    setAiLoading(true);
+    setAiError(null);
+    setAiContent("");
+
+    try {
+      const name = params?.name || address;
+      const prompt = [
+        "Decompile the following disassembly into equivalent C/C++ source code.",
+        "Output ONLY raw source code. No markdown, no code fences, no explanations.",
+        "",
+        `Function: ${name}`,
+        `Address: ${address}`,
+        "",
+        "Disassembly:",
+        result.plainDisasm,
+      ].join("\n");
+
+      const res = await fetch("/api/llm", { method: "POST", body: prompt });
+      if (!res.ok) throw new Error(await res.text());
+      const code = await res.text();
+      aiCache.current.set(address, code);
+      setAiContent(code);
+    } catch (e) {
+      setAiError(e instanceof Error ? e.message : "AI decompilation failed");
+    } finally {
+      setAiLoading(false);
+    }
+  }, [address, result?.plainDisasm, params?.name]);
+
   const handleTabChange = (value: string) => {
     const mode = value as ViewMode;
     setViewMode(mode);
     if (mode === "graph") loadGraph();
     if (mode === "decompiler") loadDecompiler();
+    if (mode === "ai-decompile") loadAiDecompile();
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin mr-2" />
-        {t("loading")}...
+        {isReady ? `${t("loading")}...` : "Waiting for r2..."}
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-full text-destructive">
-        {error}
+      <div className="flex items-center justify-center h-full px-6">
+        <div className="flex flex-col items-center gap-3 max-w-lg text-center">
+          <AlertCircle className="h-8 w-8 text-destructive" />
+          <p className="text-sm font-medium">Disassembly failed</p>
+          <p className="text-xs text-muted-foreground break-all font-mono">{error}</p>
+        </div>
       </div>
     );
   }
@@ -207,6 +281,7 @@ export function DisassemblyTab({
             <TabsTrigger value="disassembly">Linear</TabsTrigger>
             <TabsTrigger value="graph">Graph</TabsTrigger>
             <TabsTrigger value="decompiler">Decompiler</TabsTrigger>
+            <TabsTrigger value="ai-decompile">AI Decompile</TabsTrigger>
           </TabsList>
           <span className="text-xs font-mono text-muted-foreground px-3 py-1.5 truncate ml-auto max-w-[40%]">
             {params?.name || address}
@@ -215,7 +290,6 @@ export function DisassemblyTab({
 
         <TabsContent value="disassembly" className="flex-1 overflow-hidden">
           <div className="disassembly-view h-full overflow-auto p-3">
-            {/* r2 WASM output — trusted local source, not user input */}
             <div dangerouslySetInnerHTML={{ __html: result.disassemblyHtml }} />
           </div>
         </TabsContent>
@@ -256,7 +330,101 @@ export function DisassemblyTab({
             />
           )}
         </TabsContent>
+
+        <TabsContent value="ai-decompile" className="flex-1 overflow-hidden">
+          <AiDecompileView
+            content={aiContent}
+            isLoading={aiLoading}
+            error={aiError}
+            onRetry={loadAiDecompile}
+          />
+        </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function AiDecompileView({
+  content,
+  isLoading,
+  error,
+  onRetry,
+}: {
+  content: string;
+  isLoading: boolean;
+  error: string | null;
+  onRetry: () => void;
+}) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+        Decompiling with AI...
+      </div>
+    );
+  }
+
+  if (error) {
+    const isNotConfigured =
+      error.includes("LLM not configured") || error.includes("LLM_PROVIDER");
+    return (
+      <div className="flex items-center justify-center h-full px-6">
+        <div className="flex flex-col items-center gap-3 max-w-md text-center">
+          <AlertCircle className="h-8 w-8 text-destructive" />
+          {isNotConfigured ? (
+            <>
+              <p className="text-sm font-medium">LLM not configured</p>
+              <p className="text-xs text-muted-foreground">
+                AI decompilation requires an LLM provider. Set these environment
+                variables before starting the server:
+              </p>
+              <pre className="text-[11px] text-left bg-muted rounded-md px-3 py-2 w-full font-mono">
+                {`LLM_PROVIDER=anthropic   # or openai, gemini, openrouter\nLLM_API_KEY=sk-...\nLLM_MODEL=claude-sonnet-4-20250514`}
+              </pre>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-medium">AI decompilation failed</p>
+              <p className="text-xs text-muted-foreground break-all">{error}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={onRetry}
+              >
+                Retry
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (!content) {
+    return (
+      <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+        Switch to this tab to decompile with AI
+      </div>
+    );
+  }
+
+  return (
+    <Editor
+      height="100%"
+      language="c"
+      theme="vs-dark"
+      value={content}
+      options={{
+        readOnly: true,
+        minimap: { enabled: false },
+        fontSize: 13,
+        fontFamily:
+          "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace",
+        lineNumbers: "on",
+        scrollBeyondLastLine: false,
+        wordWrap: "on",
+      }}
+    />
   );
 }
