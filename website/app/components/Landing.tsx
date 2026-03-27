@@ -1,5 +1,8 @@
 import Image from "next/image";
+import Link from "next/link";
 import { PlatformScreenshot } from "./PlatformScreenshot";
+
+const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
 type Strings = Record<string, string>;
 
@@ -15,14 +18,14 @@ export function Landing({ t, langHref }: { t: Strings; langHref: string }) {
     <>
       <header className="fixed top-0 inset-x-0 z-50 border-b border-border/50 bg-bg/80 backdrop-blur-xl">
         <div className="max-w-6xl mx-auto flex items-center justify-between h-14 px-6">
-          <a href="/" className="flex items-center gap-2.5">
-            <Image src="/logo.svg" alt="Grapefruit" width={24} height={24} />
+          <Link href="/" className="flex items-center gap-2.5">
+            <Image src={`${base}/logo.svg`} alt="Grapefruit" width={24} height={24} />
             <span className="font-semibold tracking-tight text-sm">Grapefruit</span>
-          </a>
+          </Link>
           <nav className="flex items-center gap-6 text-sm text-muted">
-            <a href="/docs" className="hover:text-fg transition-colors">
+            <Link href="/docs" className="hover:text-fg transition-colors">
               {t.nav_docs}
-            </a>
+            </Link>
             <a href={GITHUB} className="hover:text-fg transition-colors" target="_blank" rel="noopener">
               {t.nav_github}
             </a>
@@ -56,9 +59,9 @@ export function Landing({ t, langHref }: { t: Strings; langHref: string }) {
                 {t.hero_cta}
                 <Arrow />
               </a>
-              <a href={langHref === "/" ? "/cn/docs" : "/docs"} className="inline-flex items-center gap-2 px-6 py-3 border border-border rounded-lg font-medium text-sm text-muted hover:text-fg hover:border-fg/20 transition-colors">
+              <Link href={langHref === "/" ? "/cn/docs" : "/docs"} className="inline-flex items-center gap-2 px-6 py-3 border border-border rounded-lg font-medium text-sm text-muted hover:text-fg hover:border-fg/20 transition-colors">
                 {t.hero_cta_docs}
-              </a>
+              </Link>
             </div>
             <PlatformScreenshot />
           </div>

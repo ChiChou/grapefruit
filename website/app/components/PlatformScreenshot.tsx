@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 
+const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
+
 export function PlatformScreenshot() {
   const [platform, setPlatform] = useState<"ios" | "android">("ios");
 
@@ -32,7 +34,7 @@ export function PlatformScreenshot() {
       </div>
       <div className="rounded-xl overflow-hidden relative">
         <Image
-          src="/screenshot-droid.png"
+          src={`${base}/screenshot-droid.png`}
           alt="Grapefruit Android workspace"
           width={1200}
           height={750}
@@ -40,7 +42,7 @@ export function PlatformScreenshot() {
           priority
         />
         <Image
-          src="/screenshot-fruity.png"
+          src={`${base}/screenshot-fruity.png`}
           alt="Grapefruit iOS workspace"
           width={1200}
           height={750}

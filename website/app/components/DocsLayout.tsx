@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
+
 export function DocsLayout({
   children,
   prefix = "",
@@ -36,12 +38,12 @@ export function DocsLayout({
     <div className="min-h-dvh bg-bg text-fg">
       <header className="border-b border-border bg-bg/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-6xl mx-auto flex items-center justify-between h-14 px-6">
-          <a href={prefix || "/"} className="flex items-center gap-2.5">
-            <Image src="/logo.svg" alt="Grapefruit" width={24} height={24} />
+          <Link href={prefix || "/"} className="flex items-center gap-2.5">
+            <Image src={`${base}/logo.svg`} alt="Grapefruit" width={24} height={24} />
             <span className="font-semibold tracking-tight text-sm">
               Grapefruit Docs
             </span>
-          </a>
+          </Link>
           <div className="flex items-center gap-4">
             <a
               href="https://github.com/chichou/grapefruit"
