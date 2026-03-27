@@ -86,8 +86,49 @@ export function DocsLayout({
           </nav>
         </aside>
 
-        <main className="flex-1 min-w-0 px-6 md:px-12 py-8 max-w-3xl">{children}</main>
+        <main className="flex-1 min-w-0 px-6 md:px-12 py-8 max-w-3xl">
+          {children}
+
+          {(() => {
+            const idx = nav.findIndex((item) => item.href === pathname);
+            const prev = idx > 0 ? nav[idx - 1] : null;
+            const next = idx >= 0 && idx < nav.length - 1 ? nav[idx + 1] : null;
+            if (!prev && !next) return null;
+            return (
+              <nav className="mt-12 flex items-center justify-between border-t border-border pt-6 text-sm">
+                {prev ? (
+                  <Link href={prev.href} className="text-muted hover:text-fg transition-colors">
+                    ← {prev.label}
+                  </Link>
+                ) : <span />}
+                {next ? (
+                  <Link href={next.href} className="text-muted hover:text-fg transition-colors ml-auto">
+                    {next.label} →
+                  </Link>
+                ) : <span />}
+              </nav>
+            );
+          })()}
+        </main>
       </div>
+
+      <footer className="border-t border-border py-8 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted">
+          <div className="flex items-center gap-1">
+            {isZh ? "由 " : "Built by "}
+            <a href="https://infosec.exchange/@codecolorist" className="text-fg hover:text-accent transition-colors" target="_blank" rel="noopener me">
+              @codecolorist
+            </a>
+          </div>
+          <div className="flex items-center gap-6">
+            <a href="https://github.com/chichou/grapefruit" className="hover:text-fg transition-colors" target="_blank" rel="noopener">GitHub</a>
+            <a href="https://github.com/sponsors/ChiChou" className="hover:text-fg transition-colors" target="_blank" rel="noopener">
+              {isZh ? "赞助" : "Sponsor"}
+            </a>
+            <span>{isZh ? "AGPL-3.0 许可证" : "AGPL-3.0 License"}</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
