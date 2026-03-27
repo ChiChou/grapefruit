@@ -8,6 +8,18 @@ on:
       - dev
     tags:
       - "v*"
+    paths:
+      - "src/**"
+      - "agent/**"
+      - "gui/**"
+      - "scripts/**"
+      - "externals/**"
+      - "wasi/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.json"
+      - "tsdown.config.ts"
+      - ".github/workflows/build-cli.yml"
 
 jobs:
   build:

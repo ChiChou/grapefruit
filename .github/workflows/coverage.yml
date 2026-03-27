@@ -2,9 +2,27 @@ name: Code Coverage
 
 on:
   push:
+    branches:
+      - main
+      - dev
+    paths:
+      - "src/**"
+      - "agent/**"
+      - "externals/**"
+      - "wasi/**"
+      - "package.json"
+      - "bun.lock"
+      - ".github/workflows/coverage.yml"
   pull_request:
     branches:
       - main
+    paths:
+      - "src/**"
+      - "agent/**"
+      - "externals/**"
+      - "wasi/**"
+      - "package.json"
+      - "bun.lock"
 
 jobs:
   coverage:
