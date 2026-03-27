@@ -2,12 +2,11 @@ name: Build Single Executable Tool
 
 on:
   workflow_dispatch:
+  workflow_call:
   push:
     branches:
       - main
       - dev
-    tags:
-      - "v*"
     paths:
       - "src/**"
       - "agent/**"
@@ -72,15 +71,12 @@ jobs:
       - name: Build binaries
         run: bun run build:all
 
-      - name: Upload to GitHub Release
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Upload Binaries
+        uses: actions/upload-artifact@v6
         with:
-          files: |
+          name: cli-binaries
+          path: |
             build/Release/igf-linux-x64
             build/Release/igf-windows-x64.exe
             build/Release/igf-darwin-x64
             build/Release/igf-darwin-arm64
-          prerelease: ${{ contains(github.ref, 'beta') || contains(github.ref, 'alpha') }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
