@@ -2,7 +2,7 @@
 
 ## npm (recommended)
 
-Install globally with npm. Requires Node.js 22+ or Bun 1.1+.
+Install globally with npm. Requires Node.js 22+ or Bun 1.3.6+.
 
 ```
 npm install -g igf

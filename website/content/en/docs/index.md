@@ -49,7 +49,7 @@ Grapefruit runs as a local server with three components:
 
 ## Requirements
 
-- Node.js 22+ or Bun 1.1+
+- Node.js 22+ or Bun 1.3.6+
 - A jailbroken iOS device or rooted Android device
 - Frida server running on the target device
 - Optional: LLM API key for AI decompilation — see [LLM Configuration](/docs/llm)

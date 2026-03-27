@@ -49,7 +49,7 @@ Grapefruit 以本地服务器方式运行，由三个组件构成：
 
 ## 环境要求
 
-- Node.js 22+ 或 Bun 1.1+
+- Node.js 22+ 或 Bun 1.3.6+
 - 已越狱的 iOS 设备或已 Root 的 Android 设备
 - 目标设备上运行有 Frida server
 - 可选：LLM API Key 用于 AI 反编译——见 [LLM 配置](/docs/llm)

@@ -2,7 +2,7 @@
 
 ## npm（推荐）
 
-使用 npm 全局安装。需要 Node.js 22+ 或 Bun 1.1+。
+使用 npm 全局安装。需要 Node.js 22+ 或 Bun 1.3.6+。
 
 ```
 npm install -g igf

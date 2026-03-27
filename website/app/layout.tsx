@@ -9,18 +9,19 @@ const mono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
 export const metadata: Metadata = {
-  title: "Grapefruit - Mobile Security Research Toolkit",
+  ...(process.env.NEXT_PUBLIC_BASE_URL && { metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL) }),
+  title: "Grapefruit - Open-Source Mobile Security Testing Suite",
   description:
-    "Instrument, analyze, and decompile mobile apps with Frida, radare2, and AI. iOS & Android.",
+    "Instrumentation, data inspection, and decompilation for iOS & Android — all in your browser.",
   icons: {
     icon: `${base}/logo.svg`,
   },
   openGraph: {
-    images: [{ url: `${base}/screenshot-fruity.png`, alt: "Grapefruit - Mobile Security Research Toolkit" }],
+    images: [{ url: "/opengraph.png", alt: "Grapefruit - Open-Source Mobile Security Testing Suite" }],
   },
   twitter: {
     card: "summary_large_image",
-    images: [{ url: `${base}/screenshot-fruity.png`, alt: "Grapefruit - Mobile Security Research Toolkit" }],
+    images: [{ url: "/screenshot-fruity.png", alt: "Grapefruit - Open-Source Mobile Security Testing Suite" }],
   },
 };
 
