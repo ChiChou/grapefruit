@@ -4,7 +4,7 @@
 
 - [Bun](https://bun.sh/) (primary runtime, recommended)
 - Node.js >= 22.18.0 (alternative runtime for npm package)
-- [Emscripten](https://emscripten.org/) (for `r2hermes.wasm`)
+- [wasi-sdk](https://github.com/WebAssembly/wasi-sdk) (for `r2hermes.wasm` — run `bun externals/radare/r2hermes.wasm/setup-wasi-sdk.ts` to install)
 - A device running [frida-server](https://frida.re/docs/installation/) connected via USB or network
 - iOS or Android target device/emulator
 
@@ -15,8 +15,8 @@
 git clone https://github.com/chichou/grapefruit.git
 cd grapefruit
 
-# Build r2hermes.wasm first (requires emcc)
-make -C externals/radare/r2hermes.wasm
+# Build r2hermes.wasm first (requires wasi-sdk)
+bun externals/radare/r2hermes.wasm/build.ts
 
 # Install all dependencies (root + agent + gui)
 bun install

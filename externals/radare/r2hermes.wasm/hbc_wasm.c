@@ -1,5 +1,5 @@
 /*
- * WASM wrapper for libhbc.
+ * WASM wrapper for libhbc (WASI build).
  * Returns JSON strings to avoid struct marshaling across the WASM boundary.
  * All returned strings are malloc'd — caller frees via hbc_wasm_free().
  */
@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define EXPORT(name) __attribute__((export_name(#name)))
 
 #define MAX_HANDLES 16
 static HBC *handles[MAX_HANDLES] = {0};
@@ -77,6 +79,7 @@ static void json_escape(StringBuffer *sb, const char *s) {
 
 /* --- Public API --- */
 
+EXPORT(hbc_wasm_open)
 int hbc_wasm_open(const unsigned char *data, int size) {
 	HBC *hbc = NULL;
 	Result res = hbc_open_from_memory(data, (size_t)size, &hbc);
@@ -89,6 +92,7 @@ int hbc_wasm_open(const unsigned char *data, int size) {
 	return h;
 }
 
+EXPORT(hbc_wasm_info)
 char *hbc_wasm_info(int handle) {
 	HBC *hbc = get_handle(handle);
 	if (!hbc) return strdup("{\"error\":\"invalid handle\"}");
@@ -119,6 +123,7 @@ char *hbc_wasm_info(int handle) {
 	return buf;
 }
 
+EXPORT(hbc_wasm_functions)
 char *hbc_wasm_functions(int handle) {
 	HBC *hbc = get_handle(handle);
 	if (!hbc) return strdup("[]");
@@ -151,6 +156,7 @@ char *hbc_wasm_functions(int handle) {
 	return sb_finish(&sb);
 }
 
+EXPORT(hbc_wasm_strings)
 char *hbc_wasm_strings(int handle) {
 	HBC *hbc = get_handle(handle);
 	if (!hbc) return strdup("[]");
@@ -189,6 +195,7 @@ char *hbc_wasm_strings(int handle) {
 	return sb_finish(&sb);
 }
 
+EXPORT(hbc_wasm_decompile)
 char *hbc_wasm_decompile(int handle, int function_id) {
 	HBC *hbc = get_handle(handle);
 	if (!hbc) return strdup("// invalid handle");
@@ -205,6 +212,7 @@ char *hbc_wasm_decompile(int handle, int function_id) {
 	return output;
 }
 
+EXPORT(hbc_wasm_decompile_all)
 char *hbc_wasm_decompile_all(int handle) {
 	HBC *hbc = get_handle(handle);
 	if (!hbc) return strdup("// invalid handle");
@@ -221,6 +229,7 @@ char *hbc_wasm_decompile_all(int handle) {
 	return output;
 }
 
+EXPORT(hbc_wasm_decompile_offsets)
 char *hbc_wasm_decompile_offsets(int handle, int function_id) {
 	HBC *hbc = get_handle(handle);
 	if (!hbc) return strdup("// invalid handle");
@@ -238,6 +247,7 @@ char *hbc_wasm_decompile_offsets(int handle, int function_id) {
 	return output;
 }
 
+EXPORT(hbc_wasm_decompile_offsets_all)
 char *hbc_wasm_decompile_offsets_all(int handle) {
 	HBC *hbc = get_handle(handle);
 	if (!hbc) return strdup("// invalid handle");
@@ -259,6 +269,7 @@ char *hbc_wasm_decompile_offsets_all(int handle) {
  * Disassemble a single function.
  * Uses the Disassembler from decoder.c with the HBCReader inside HBC.
  */
+EXPORT(hbc_wasm_disassemble)
 char *hbc_wasm_disassemble(int handle, int function_id) {
 	HBC *hbc = get_handle(handle);
 	if (!hbc) return strdup("; invalid handle");
@@ -284,6 +295,7 @@ char *hbc_wasm_disassemble(int handle, int function_id) {
 	return output;
 }
 
+EXPORT(hbc_wasm_disassemble_all)
 char *hbc_wasm_disassemble_all(int handle) {
 	HBC *hbc = get_handle(handle);
 	if (!hbc) return strdup("; invalid handle");
@@ -309,6 +321,7 @@ char *hbc_wasm_disassemble_all(int handle) {
 	return output;
 }
 
+EXPORT(hbc_wasm_close)
 void hbc_wasm_close(int handle) {
 	HBC *hbc = get_handle(handle);
 	if (!hbc) return;
@@ -316,6 +329,7 @@ void hbc_wasm_close(int handle) {
 	handles[handle] = NULL;
 }
 
+EXPORT(hbc_wasm_free)
 void hbc_wasm_free(char *ptr) {
 	free(ptr);
 }

@@ -10,10 +10,13 @@
       "types": "./hbc.d.mts"
     }
   },
+  "scripts": {
+    "build": "bun build.ts",
+    "clean": "bun build.ts --clean"
+  },
   "files": [
     "hbc.mjs",
     "hbc.d.mts",
-    "dist/hbc.mjs",
     "dist/hbc.wasm"
   ]
 }
