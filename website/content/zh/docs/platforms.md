@@ -12,13 +12,13 @@
 
 ### 安全缓解措施
 
-![安全缓解措施](/mitigations.png)
+![安全缓解措施](/mitigations.webp)
 
 检查二进制安全标志：PIE、ARC、栈保护器、代码签名和受限权限。
 
 ### Info.plist 与 Insights
 
-![Insights](/insights.png)
+![Insights](/insights.webp)
 
 查看应用的 Info.plist，Insights 面板还会对 ATS 设置、权限和其他配置进行自动化安全分析。
 
@@ -28,7 +28,7 @@
 
 ### Assets.car
 
-![Assets.car](/assets.png)
+![Assets.car](/assets.webp)
 
 浏览编译后的 asset catalog。查看应用中打包的图片、图标和其他资源。
 
@@ -36,7 +36,7 @@
 
 **iOS (WKWebView / UIWebView):**
 
-![WKWebView](/wkwebview.png)
+![WKWebView](/wkwebview.webp)
 
 - 列出所有活动的 WKWebView 实例，含 URL、标题及配置（JS 启用状态、content JS、自动打开窗口、file URL 访问、universal access、content blocker、inspectable）
 - UIWebView 支持（用于旧版应用）
@@ -46,7 +46,7 @@
 
 **Android (WebView):**
 
-![Android WebView](/android-webview.png)
+![Android WebView](/android-webview.webp)
 
 - 列出所有活动的 WebView 实例，含 URL、标题及设置（JS、文件访问、内容访问、file:// URL access、universal access、safe browsing、mixed content、database、DOM storage）
 - 显示暴露给 Web 内容的注入 JavaScript 接口
@@ -56,7 +56,7 @@
 
 ### JSContext
 
-![JSContext](/jscontext.png)
+![JSContext](/jscontext.webp)
 
 探索 JavaScriptCore 上下文。在 JS 运行时中执行 JavaScript 表达式并检查应用状态。
 
@@ -80,7 +80,7 @@
 
 ### AndroidManifest.xml
 
-![AndroidManifest](/android-manifest.png)
+![AndroidManifest](/android-manifest.webp)
 
 以语法高亮查看反编译后的 AndroidManifest。检查组件、权限、intent filters 和其他声明。
 
@@ -112,6 +112,6 @@
 
 ### IL2CPP（Unity）
 
-![IL2CPP](/ilcpp.png)
+![IL2CPP](/ilcpp.webp)
 
 分析使用 IL2CPP 提前编译的 Unity 应用。从 IL2CPP 运行时浏览 .NET 元数据、类和方法。

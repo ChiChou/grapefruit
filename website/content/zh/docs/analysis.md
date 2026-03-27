@@ -2,7 +2,7 @@
 
 ## 原生反汇编
 
-![原生反汇编](/disasm.png)
+![原生反汇编](/disasm.webp)
 
 反汇编引擎在服务器端以 WebAssembly 模块（WASI）形式运行 radare2。点击模块或类浏览器中的函数地址，Grapefruit 会打开一个包含四个视图的反汇编标签页：
 
@@ -15,7 +15,7 @@
 
 ## DEX 分析
 
-![DEX 分析](/dex.png)
+![DEX 分析](/dex.webp)
 
 从 APK 浏览器或文件系统打开任意 `.dex` 文件。Grapefruit 会将文件下载到服务器端并加载到 radare2 会话中。
 
@@ -27,7 +27,7 @@
 
 ## Hermes 字节码分析
 
-![Hermes 字节码](/hermes.png)
+![Hermes 字节码](/hermes.webp)
 
 使用 Hermes 引擎的 React Native 应用将 JavaScript 编译为私有字节码。Grapefruit 在运行时拦截 Hermes 字节码，提供：
 
@@ -49,6 +49,6 @@ LLM_MODEL=claude-sonnet-4-20250514
 
 ## 控制流图
 
-![控制流图](/cfg.png)
+![控制流图](/cfg.webp)
 
 图形视图从 radare2 的 `agfj` 命令中提取基本块和边，并使用 dagre 进行自动布局。条件分支用不同颜色显示 true/false 边。

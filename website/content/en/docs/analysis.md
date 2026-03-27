@@ -2,7 +2,7 @@
 
 ## Native Disassembly
 
-![Native Disassembly](/disasm.png)
+![Native Disassembly](/disasm.webp)
 
 The disassembly engine runs radare2 as a WebAssembly module (WASI) on the server. Tap a function address in the module or class browser to open it in a disassembly tab with four views:
 
@@ -15,7 +15,7 @@ For live processes, memory is read on demand so you can start analyzing without 
 
 ## DEX Analysis
 
-![DEX Analysis](/dex.png)
+![DEX Analysis](/dex.webp)
 
 Open any `.dex` file from the APK browser or file system. Grapefruit fetches the file server-side and loads it into a radare2 session.
 
@@ -27,7 +27,7 @@ Open any `.dex` file from the APK browser or file system. Grapefruit fetches the
 
 ## Hermes Bytecode Analysis
 
-![Hermes Bytecode](/hermes.png)
+![Hermes Bytecode](/hermes.webp)
 
 React Native apps using the Hermes engine compile JavaScript to proprietary bytecode. Grapefruit intercepts Hermes bytecode blobs at runtime and provides:
 
@@ -49,6 +49,6 @@ Before submission, disassembly is stripped of decorative formatting to reduce to
 
 ## Control Flow Graphs
 
-![Control Flow Graph](/cfg.png)
+![Control Flow Graph](/cfg.webp)
 
 The graph view renders control flow with basic blocks and edges, color-coded by branch direction.

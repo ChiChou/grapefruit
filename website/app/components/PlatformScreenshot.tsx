@@ -13,7 +13,7 @@ export function PlatformScreenshot() {
     <div className="mt-16 relative">
       <div className="rounded-xl overflow-hidden relative mb-3">
         <Image
-          src={`${base}/screenshot-droid.png`}
+          src={`${base}/screenshot-droid.webp`}
           alt="Grapefruit Android workspace"
           width={1200}
           height={750}
@@ -21,7 +21,7 @@ export function PlatformScreenshot() {
           priority
         />
         <Image
-          src={`${base}/screenshot-fruity.png`}
+          src={`${base}/screenshot-fruity.webp`}
           alt="Grapefruit iOS workspace"
           width={1200}
           height={750}

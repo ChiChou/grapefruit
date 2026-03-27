@@ -14,7 +14,7 @@ Browse the app's filesystem with a tree view. Download files to your machine, or
 
 **NSURL (iOS)**: Capture NSURLSession requests and responses in real time. View headers, body, and timing. Download request/response data for offline analysis.
 
-![NSURL](/nsurl.png)
+![NSURL](/nsurl.webp)
 
 **HTTP (Android)**: Intercept HTTP traffic from OkHttp and other common clients. View requests and responses with headers and body content.
 
@@ -34,7 +34,7 @@ Parse and display the app's binary cookie files. View cookie names, values, doma
 
 ## UserDefaults (iOS)
 
-![UserDefaults](/userdefaults.png)
+![UserDefaults](/userdefaults.webp)
 
 View and modify NSUserDefaults entries for the app. Useful for finding feature flags, cached tokens, and configuration values.
 

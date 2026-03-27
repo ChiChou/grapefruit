@@ -2,7 +2,7 @@
 
 ## 文件浏览器
 
-![文件浏览器](/files.png)
+![文件浏览器](/files.webp)
 
 文件浏览器提供目标应用文件系统的树形视图。在 iOS 上默认从应用的主目录开始。在 Android 上从根文件系统开始。
 
@@ -24,7 +24,7 @@
 
 ### SQLite 编辑器
 
-![SQLite 编辑器](/database.png)
+![SQLite 编辑器](/database.webp)
 
 打开 `.db` 和 `.sqlite` 文件，带表浏览器。选择表可在数据网格中查看内容。针对数据库运行自定义 SQL 查询。
 
@@ -46,7 +46,7 @@
 
 ### Assets.car（iOS）
 
-![Assets.car](/assets.png)
+![Assets.car](/assets.webp)
 
 解析编译后的 asset catalog，以网格视图显示包含的图片、图标和其他资源。
 

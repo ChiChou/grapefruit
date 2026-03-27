@@ -2,7 +2,7 @@
 
 ## File Browser
 
-![File Browser](/files.png)
+![File Browser](/files.webp)
 
 The file browser provides a tree view of the target app's filesystem. On iOS, it defaults to the app's home directory. On Android, it starts at the root filesystem.
 
@@ -24,7 +24,7 @@ Plain text files open in a Monaco editor with syntax highlighting. Supports view
 
 ### SQLite Editor
 
-![SQLite Editor](/database.png)
+![SQLite Editor](/database.webp)
 
 Opens `.db` and `.sqlite` files with a table browser. Select a table to view its contents in a data grid. Run custom SQL queries against the database.
 
@@ -46,7 +46,7 @@ Preview TrueType (`.ttf`) and OpenType (`.otf`) fonts with adjustable sample tex
 
 ### Assets.car (iOS)
 
-![Assets.car](/assets.png)
+![Assets.car](/assets.webp)
 
 Browse compiled asset catalogs as a grid of images, icons, and other assets.
 

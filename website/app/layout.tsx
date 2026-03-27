@@ -17,11 +17,11 @@ export const metadata: Metadata = {
     icon: `${base}/logo.svg`,
   },
   openGraph: {
-    images: [{ url: "/opengraph.png", alt: "Grapefruit - Open-Source Mobile Security Testing Suite" }],
+    images: [{ url: "/opengraph.webp", alt: "Grapefruit - Open-Source Mobile Security Testing Suite" }],
   },
   twitter: {
     card: "summary_large_image",
-    images: [{ url: "/screenshot-fruity.png", alt: "Grapefruit - Open-Source Mobile Security Testing Suite" }],
+    images: [{ url: "/screenshot-fruity.webp", alt: "Grapefruit - Open-Source Mobile Security Testing Suite" }],
   },
 };
 

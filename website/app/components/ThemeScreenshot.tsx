@@ -39,14 +39,14 @@ export function ThemeScreenshot({ title, desc }: { title: string; desc: string }
         </div>
         <div className="rounded-xl overflow-hidden relative">
           <Image
-            src={`${base}/dark.png`}
+            src={`${base}/dark.webp`}
             alt="Grapefruit dark theme"
             width={1200}
             height={750}
             className={`w-full transition-opacity duration-300 ${theme === "dark" ? "opacity-100" : "opacity-0"}`}
           />
           <Image
-            src={`${base}/light.png`}
+            src={`${base}/light.webp`}
             alt="Grapefruit light theme"
             width={1200}
             height={750}
