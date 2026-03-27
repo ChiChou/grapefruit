@@ -1,6 +1,8 @@
-<img src="gui/src/assets/logo.svg" alt="logo" width="320">
+<p align="center">
+    <img src="gui/src/assets/logo.svg" alt="logo" width="320">
+</p>
 
-# Grapefruit: Runtime Application Exploration
+# Grapefruit: Open-source mobile security testing suite
 
 [![John Discord](https://discord.com/api/guilds/591601634266578944/embed.png)](https://discord.com/invite/pwutZNx)
 [![npm version](https://img.shields.io/npm/v/igf?color=blue)](https://www.npmjs.com/package/igf)
@@ -8,12 +10,32 @@
 [![contributers](https://img.shields.io/github/contributors/chichou/grapefruit)](https://github.com/ChiChou/Grapefruit/graphs/contributors)
 [![License](https://img.shields.io/github/license/chichou/grapefruit)](https://github.com/ChiChou/Grapefruit/blob/master/LICENSE)
 
-> **Warning**: This project is under active development and is not ready for production use.
-
 Runtime mobile application instrumentation toolkit powered by [Frida](https://frida.re).
 Inspect, hook, and modify mobile apps through a web-based interface.
 
 Now it supports both iOS and Android!
+
+## Quick Start
+
+Requires [Frida](https://frida.re) server running on your device. Follow the [official setup guides](https://frida.re/docs/ios/)([Android](https://frida.re/docs/android/)) first.
+
+**npm (recommended)**
+
+```sh
+npm install -g igf
+igf
+```
+
+**Or run without installing**
+
+```sh
+npx igf
+```
+
+**Prebuilt binaries** for macOS, Linux, and Windows are available on [GitHub Releases](https://github.com/chichou/grapefruit/releases).
+
+Note: even we use `bun` as primary development environment, and the prebuilt single binaries are bun based,
+the package on npm is not compatible with bun, do not use `bunx` to run.
 
 ## Features
 
@@ -29,6 +51,7 @@ Now it supports both iOS and Android!
 - **Privacy Monitor** - Track sensitive API access (camera, microphone, location, sensors, etc.)
 - **Thread Inspector** - View and manage process threads
 - **Module/Symbol Browser** - Inspect loaded modules and exported symbols
+- **Analysis & Decompilation** - DEX, Hermes bytecode, and native code. AI assistance available for hook script generation
 
 ### iOS
 
@@ -49,7 +72,6 @@ Now it supports both iOS and Android!
 - Security analysis (PIE, ARC, stack canaries, encryption)
 - Asset catalog viewer (Assets.car)
 - XPC/NSXPC message inspection
-- Firebase/Firestore monitoring
 
 ### Android
 
