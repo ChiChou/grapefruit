@@ -33,9 +33,9 @@ export function Landing({ t, langHref }: { t: Strings; langHref: string }) {
               <span className="text-red-500">&#9829;</span>
               {t.nav_sponsor}
             </a>
-            <a href={langHref} className="hover:text-fg transition-colors font-mono text-xs border border-border rounded px-2 py-0.5">
+            <Link href={langHref} className="hover:text-fg transition-colors font-mono text-xs border border-border rounded px-2 py-0.5">
               {t.lang_switch}
-            </a>
+            </Link>
           </nav>
         </div>
       </header>

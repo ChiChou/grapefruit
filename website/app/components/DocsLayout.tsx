@@ -53,12 +53,12 @@ export function DocsLayout({
             >
               GitHub
             </a>
-            <a
+            <Link
               href={langHref}
               className="text-muted hover:text-fg text-xs font-mono border border-border rounded px-2 py-0.5"
             >
               {langLabel}
-            </a>
+            </Link>
           </div>
         </div>
       </header>
