@@ -125,7 +125,7 @@ export function DocsLayout({
             <a href="https://github.com/sponsors/ChiChou" className="hover:text-fg transition-colors" target="_blank" rel="noopener">
               {isZh ? "赞助" : "Sponsor"}
             </a>
-            <span>{isZh ? "AGPL-3.0 许可证" : "AGPL-3.0 License"}</span>
+            <span>{isZh ? "MIT 许可证" : "MIT License"}</span>
           </div>
         </div>
       </footer>
