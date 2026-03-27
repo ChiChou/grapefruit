@@ -172,7 +172,10 @@ export function HermesAnalysisTab({
         if (mode === "disassembly" && funcId !== null) {
           const func = data?.functions.find((f) => f.id === funcId);
           if (func) {
-            const params = Array.from({ length: func.paramCount }, (_, i) => `a${i}`).join(", ");
+            const params = Array.from(
+              { length: func.paramCount },
+              (_, i) => `a${i}`,
+            ).join(", ");
             const header = `; function ${func.name}(${params})  [#${func.id}, ${func.size} bytes]`;
             source = source.replace(
               /^\s*@\s*offset\s+0x[0-9a-f]+\s*\n+Bytecode listing \(asm\):\s*\n*/,
@@ -220,18 +223,25 @@ export function HermesAnalysisTab({
         const fnQuery = funcId !== null ? `?fn=${funcId}` : "";
 
         const [decompileRes, disasmRes] = await Promise.all([
-          fetch(`/api/hermes/${device}/${identifier}/decompile/${params.entryId}${fnQuery}`),
-          fetch(`/api/hermes/${device}/${identifier}/disassemble/${params.entryId}${fnQuery}`),
+          fetch(
+            `/api/hermes/${device}/${identifier}/decompile/${params.entryId}${fnQuery}`,
+          ),
+          fetch(
+            `/api/hermes/${device}/${identifier}/disassemble/${params.entryId}${fnQuery}`,
+          ),
         ]);
 
         if (!decompileRes.ok) throw new Error("Failed to fetch pseudocode");
         const { source: pseudocode } = await decompileRes.json();
-        const { source: disasm } = disasmRes.ok ? await disasmRes.json() : { source: "" };
+        const { source: disasm } = disasmRes.ok
+          ? await disasmRes.json()
+          : { source: "" };
 
-        const func = funcId !== null
-          ? data?.functions.find((f) => f.id === funcId)
-          : null;
-        const funcName = func?.name ?? (funcId !== null ? `function #${funcId}` : "global code");
+        const func =
+          funcId !== null ? data?.functions.find((f) => f.id === funcId) : null;
+        const funcName =
+          func?.name ??
+          (funcId !== null ? `function #${funcId}` : "global code");
         const paramCount = func?.paramCount;
 
         const prompt = [
@@ -247,9 +257,14 @@ export function HermesAnalysisTab({
           "",
           "Disassembly:",
           strip.hermes(disasm),
-        ].filter(Boolean).join("\n");
+        ]
+          .filter(Boolean)
+          .join("\n");
 
-        const llmRes = await fetch("/api/llm/stream", { method: "POST", body: prompt });
+        const llmRes = await fetch("/api/llm/stream", {
+          method: "POST",
+          body: prompt,
+        });
         if (!llmRes.ok) throw new Error(await llmRes.text());
 
         const reader = llmRes.body!.getReader();
@@ -652,7 +667,12 @@ function AiDecompileView({
             <>
               <p className="text-sm font-medium">AI decompilation failed</p>
               <p className="text-xs text-muted-foreground break-all">{error}</p>
-              <Button variant="outline" size="sm" className="text-xs" onClick={onRetry}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={onRetry}
+              >
                 Retry
               </Button>
             </>
@@ -767,7 +787,7 @@ function FunctionList({
                   {func.name}
                 </span>
               </div>
-              <div className="flex items-center gap-2 ml-[30px] text-[10px] text-muted-foreground">
+              <div className="flex items-center gap-2 ml-7.5 text-[10px] text-muted-foreground">
                 <span className="font-mono">{formatHex(func.offset)}</span>
                 <span>{func.size}B</span>
                 <span>{func.paramCount}p</span>
