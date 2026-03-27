@@ -24,6 +24,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - id: pages
+        uses: actions/configure-pages@v5
+
       - uses: actions/setup-node@v6
         with:
           node-version: "24"
@@ -36,7 +39,7 @@ jobs:
         run: npm run build
         working-directory: website
         env:
-          NEXT_PUBLIC_BASE_PATH: /igf
+          NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}
 
       - uses: actions/upload-pages-artifact@v3
         with:
