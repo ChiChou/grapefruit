@@ -8,7 +8,7 @@ on:
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -56,11 +56,12 @@ jobs:
 
       - name: Publish to npm
         if: ${{ !contains(github.ref, 'alpha') && !contains(github.ref, 'beta') }}
-        run: npm publish
+        run: npm publish --provenance
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          files: build/igf-*.tgz
           generate_release_notes: true
           prerelease: ${{ contains(github.ref, 'beta') || contains(github.ref, 'alpha') }}
         env:

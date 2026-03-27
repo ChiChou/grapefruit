@@ -1,6 +1,6 @@
 {
   "name": "igf",
-  "version": "0.20.1",
+  "version": "1.0.0",
   "description": "",
   "main": "dist/index.mjs",
   "bin": {
@@ -55,14 +55,14 @@
     "frida16": "npm:frida@^16.7.19",
     "hono": "^4.12.8",
     "r2hermes-wasm": "file:./externals/radare/r2hermes.wasm",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@types/bun": "^1.3.11",
     "@types/node": "^24.12.0",
     "@typescript/native-preview": "^7.0.0-dev.20260314.1",
     "drizzle-kit": "^0.31.9",
-    "socket.io-client": "^4.8.3",
     "tsdown": "^0.20.3",
     "typescript": "^5.9.3"
   },
@@ -78,10 +78,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/chichou/grapefruit.git"
+    "url": "https://github.com/ChiChou/grapefruit"
   },
   "bugs": {
-    "url": "https://github.com/chichou/grapefruit/issues"
+    "url": "https://github.com/ChiChou/grapefruit/issues"
   },
-  "homepage": "https://github.com/chichou/grapefruit#readme"
+  "homepage": "https://github.com/ChiChou/grapefruit#readme"
 }
