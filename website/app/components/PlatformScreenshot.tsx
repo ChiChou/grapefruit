@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { siApple, siAndroid } from "simple-icons";
 
 const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
@@ -10,29 +11,7 @@ export function PlatformScreenshot() {
 
   return (
     <div className="mt-16 relative">
-      <div className="flex gap-1 mb-3 justify-center">
-        <button
-          onClick={() => setPlatform("ios")}
-          className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-            platform === "ios"
-              ? "bg-surface text-fg border border-border"
-              : "text-muted hover:text-fg"
-          }`}
-        >
-          iOS
-        </button>
-        <button
-          onClick={() => setPlatform("android")}
-          className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-            platform === "android"
-              ? "bg-surface text-fg border border-border"
-              : "text-muted hover:text-fg"
-          }`}
-        >
-          Android
-        </button>
-      </div>
-      <div className="rounded-xl overflow-hidden relative">
+      <div className="rounded-xl overflow-hidden relative mb-3">
         <Image
           src={`${base}/screenshot-droid.png`}
           alt="Grapefruit Android workspace"
@@ -49,6 +28,25 @@ export function PlatformScreenshot() {
           className={`w-full absolute inset-0 transition-opacity duration-300 ${platform === "ios" ? "opacity-100" : "opacity-0"}`}
           priority
         />
+      </div>
+      <div className="inline-flex justify-center rounded-lg border border-border overflow-hidden">
+        {([["ios", siApple], ["android", siAndroid]] as const).map(([key, icon], i) => (
+          <button
+            key={key}
+            onClick={() => setPlatform(key)}
+            className={`inline-flex items-center px-3 py-1.5 transition-colors ${
+              i > 0 ? "border-l border-border" : ""
+            } ${
+              platform === key
+                ? "bg-surface text-fg"
+                : "text-muted hover:text-fg"
+            }`}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d={icon.path} />
+            </svg>
+          </button>
+        ))}
       </div>
     </div>
   );

@@ -6,8 +6,8 @@ nav_github: GitHub
 nav_sponsor: Sponsor
 
 hero_badge: Runtime Mobile Security Research
-hero_title: Inspect, hook, and decompile — in your browser
-hero_desc: Grapefruit brings Frida, binary analysis, and AI-powered decompilation together in a single browser interface.
+hero_title: Open-source mobile security testing suite
+hero_desc: Instrumentation, data inspection, and decompilation — all in your browser.
 hero_cta: Get Started
 hero_cta_docs: Documentation
 
@@ -16,8 +16,11 @@ why_1_title: Web-Based UI
 why_1_desc: Stop switching between terminal tabs. Grapefruit gives you class browsers, thread inspectors, file previews, and network monitors in one place.
 why_2_title: Cross-Platform
 why_2_desc: Runs on macOS, Windows, and Linux. Access your research workspace from any modern browser
-why_3_title: Integrated Workflow
-why_3_desc: A cohesive environment for instrumentation, browsing, and analysis. Spend less time switching tools
+why_3_title: Agent Skills
+why_3_desc: Extend your AI coding agent with security audit skills.
+
+theme_title: Dark or light
+theme_desc: Comfortable for the long sessions.
 
 highlights_title: Key Features
 h_hook_title: Instrumentation
@@ -28,8 +31,10 @@ h_disasm_title: Analysis & Decompilation
 h_disasm_desc: Native code, DEX, and Hermes bytecode — all in one viewer. AI assistance generates ready-to-use Frida hook scripts.
 
 cta_title: Ready to start?
-cta_desc: Grapefruit is free and open source. Install with npm and start your research today.
+cta_desc: Grapefruit is free and open source. Install and start your research today.
 cta_install: npx igf
+cta_all_features: Explore all features
+cta_discord: Join Discord
 
 footer_built: Built by
 footer_license: MIT License

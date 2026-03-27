@@ -6,30 +6,34 @@ nav_github: GitHub
 nav_sponsor: 赞助
 
 hero_badge: 运行时移动安全研究
-hero_title: 浏览器里的移动安全工具箱
-hero_desc: 将 Frida 动态插桩、二进制分析与 AI 反编译整合进一个浏览器界面，无需再敲命令行。
+hero_title: 开源移动安全测试套件
+hero_desc: 插桩、检查数据、反编译——一个浏览器搞定。
 hero_cta: 立即开始
 hero_cta_docs: 查看文档
 
 why_title: 一站式移动安全研究
-why_1_title: 统一工作区
-why_1_desc: 无需在终端、工具和输出之间来回切换。Grapefruit 将类浏览、线程检查、文件预览、网络监控全部集合在一处。
+why_1_title: 浏览器端操作
+why_1_desc: 无需在终端、工具和输出之间来回切换。Grapefruit 将类浏览、线程检查、文件预览、网络监控全部整合到一个界面。
 why_2_title: 跨平台支持
 why_2_desc: 支持 macOS、Windows 和 Linux。一个现代浏览器就能访问你的研究工作空间。
-why_3_title: 集成工作流
-why_3_desc: 动态插桩、代码审计、资源浏览无缝衔接，一个界面走完整个研究流程。
+why_3_title: Agent 技能
+why_3_desc: 为 AI 编程代理扩展安全审计能力，轻松应对移动安全研究场景。
+theme_title: 暗色与亮色
+theme_desc: 长时间研究也不累眼睛。
 
-highlights_title: 功能亮点
+highlights_title: 核心功能
 h_hook_title: 动态插桩
-h_hook_desc: 实时拦截函数调用，观察运行时的参数传递、返回值及完整的函数调用栈
+h_hook_desc: 实时拦截函数调用，轻松观察参数、返回值和调用栈
 h_browse_title: 数据审查
-h_browse_desc: 浏览类、方法、Keychain 和网络流量。数千条记录也能即时搜索。
-h_disasm_title: 反汇编与反编译
-h_disasm_desc: 原生代码、DEX、Hermes 字节码同窗口查看。AI 自动生成 Frida Hook 脚本，点开即用。
+h_browse_desc: 浏览类、方法、Keychain 和网络流量。数千条记录即时搜索
+h_disasm_title: 分析与反编译
+h_disasm_desc: 原生代码、DEX、Hermes 字节码同窗口查看。AI 自动生成可用的 Frida Hook 脚本
 
-cta_title: 准备好开始了吗？
-cta_desc: Grapefruit 完全免费且开源。通过 npm 安装，开启移动安全研究新体验。
-cta_install: npm install -g igf
+cta_title: 准备开始了吗？
+cta_desc: Grapefruit 完全免费且开源。立即安装，开启安全研究。
+cta_install: npx igf
+cta_all_features: 查看全部功能
+cta_discord: 加入 Discord
 
 footer_built: 由
 footer_license: MIT 许可证
