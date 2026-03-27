@@ -86,7 +86,7 @@ export function DocsLayout({
           </nav>
         </aside>
 
-        <main className="flex-1 px-6 md:px-12 py-8 max-w-3xl">{children}</main>
+        <main className="flex-1 min-w-0 px-6 md:px-12 py-8 max-w-3xl">{children}</main>
       </div>
     </div>
   );
