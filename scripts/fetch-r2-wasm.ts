@@ -9,8 +9,10 @@
 
 import { existsSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { readFile, writeFile, unlink } from "node:fs/promises";
-import { execSync } from "node:child_process";
+import { readFile, unlink, rename, rm } from "node:fs/promises";
+import { join } from "node:path";
+
+const isWin = process.platform === "win32";
 
 const R2_VERSION = "6.1.2";
 const R2_SHA256 =
@@ -35,18 +37,28 @@ async function main() {
   console.log(`[r2-wasm] downloading radare2 ${R2_VERSION} WASI API build...`);
   const zipPath = `radare2-wasi-${R2_VERSION}.zip`;
 
-  execSync(`curl -fsSL -o ${zipPath} "${WASM_URL}"`, { stdio: "inherit" });
-  execSync(
-    `unzip -o ${zipPath} "radare2-${R2_VERSION}-wasi-api/radare2.wasm" && ` +
-      `mv "radare2-${R2_VERSION}-wasi-api/radare2.wasm" ${OUTPUT} && ` +
-      `rmdir "radare2-${R2_VERSION}-wasi-api"`,
-    { stdio: "inherit" },
-  );
+  const res = await fetch(WASM_URL);
+  if (!res.ok) throw new Error(`[r2-wasm] download failed: ${res.status} ${res.statusText}`);
+  await Bun.write(zipPath, res);
+
+  const innerDir = `radare2-${R2_VERSION}-wasi-api`;
+  const zipEntry = `${innerDir}/radare2.wasm`; // zip entry path always uses forward slashes
+  const tmpDir = "radare2-wasi-tmp";
+
+  if (isWin) {
+    await Bun.$`powershell -Command Expand-Archive -Force ${zipPath} -DestinationPath ${tmpDir}`;
+  } else {
+    await Bun.$`unzip -o ${zipPath} ${zipEntry} -d ${tmpDir}`;
+  }
+
+  await rename(join(tmpDir, innerDir, "radare2.wasm"), OUTPUT);
+  await rm(tmpDir, { recursive: true, force: true });
   await unlink(zipPath);
 
   const hash = createHash("sha256")
     .update(await readFile(OUTPUT))
     .digest("hex");
+
   if (hash !== R2_SHA256) {
     console.error(`[r2-wasm] SHA256 mismatch!\n  expected: ${R2_SHA256}\n  got:      ${hash}`);
     console.error("[r2-wasm] Updating hash in script — verify this is expected.");

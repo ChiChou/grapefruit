@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 
 import env from "./env.ts";
 
@@ -53,7 +54,7 @@ export async function asset(...components: string[]) {
     } else {
       // workaround: tsdown flattens directory structure
       const basePath = env.production ? "../" : "../../";
-      assetsRoot = new URL(basePath, import.meta.url).pathname;
+      assetsRoot = fileURLToPath(new URL(basePath, import.meta.url));
     }
   }
 
