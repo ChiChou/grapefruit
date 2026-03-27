@@ -2,7 +2,7 @@
 
 ## 原生反汇编
 
-![原生反汇编](/classes.png)
+![原生反汇编](/disasm.png)
 
 反汇编引擎在服务器端以 WebAssembly 模块（WASI）形式运行 radare2。点击模块或类浏览器中的函数地址，Grapefruit 会打开一个包含四个视图的反汇编标签页：
 
