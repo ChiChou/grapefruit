@@ -22,6 +22,17 @@ The methodology for `NSURLSession` traffic logging is inspired by PonyDebugger /
 * **[kibty.town blog](https://kibty.town/blog/arc/)**
 Firebase and Firestore hooking implementation is derived from this blog post.
 
+## General
+
+* **[radare2](https://github.com/radareorg/radare2)** (LGPLv3 License)
+The WASM build of radare2 powers the disassembly, control-flow graph, and binary analysis features (`src/lib/r2.ts`).
+* **[r2hermes](https://github.com/radareorg/r2hermes)** (BSD-3-Clause License)
+Hermes bytecode disassembly and decompilation (`src/routes/hermes.ts`) uses r2hermes compiled to WASM.
+* **[frida-tools](https://github.com/frida/frida-tools)** (wxWindows Library Licence v3.1)
+The Java, Objective-C, and Swift bridge scripts bundled in the agent build are extracted from frida-tools.
+
+---
+
 ## Disclaimer
 
 Grapefruit is an independent project and is not affiliated with, endorsed by, or sponsored by any of the projects or individuals listed above.
