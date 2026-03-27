@@ -35,9 +35,9 @@ function measureNode(node: CFGNode) {
 }
 
 const EDGE_COLORS: Record<CFGEdge["type"], string> = {
-  true: "#4ade80",
-  false: "#f87171",
-  unconditional: "#94a3b8",
+  true: "var(--r2-c32)",
+  false: "var(--r2-c31)",
+  unconditional: "var(--r2-c90)",
 };
 
 function edgePath(points: Array<{ x: number; y: number }>): string {
@@ -111,7 +111,7 @@ export function CFGView({ nodes, edges }: CFGViewProps) {
     const rect = containerRef.current.getBoundingClientRect();
     const scaleX = rect.width / layout.width;
     const scaleY = rect.height / layout.height;
-    const fit = Math.min(scaleX, scaleY, 1) * 0.95;
+    const fit = Math.min(scaleX, scaleY) * 0.95;
     setZoom(fit);
     setPan({
       x: (rect.width - layout.width * fit) / 2,
@@ -196,7 +196,7 @@ export function CFGView({ nodes, edges }: CFGViewProps) {
             const rect = containerRef.current.getBoundingClientRect();
             const scaleX = rect.width / layout.width;
             const scaleY = rect.height / layout.height;
-            const fit = Math.min(scaleX, scaleY, 1) * 0.95;
+            const fit = Math.min(scaleX, scaleY) * 0.95;
             setZoom(fit);
             setPan({
               x: (rect.width - layout.width * fit) / 2,
@@ -214,7 +214,7 @@ export function CFGView({ nodes, edges }: CFGViewProps) {
       <div
         ref={containerRef}
         className="flex-1 overflow-hidden relative"
-        style={{ cursor: isDragging ? "grabbing" : "grab", background: "#141417" }}
+        style={{ cursor: isDragging ? "grabbing" : "grab", background: "var(--r2-cfg-canvas)" }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
       >
@@ -247,27 +247,27 @@ export function CFGView({ nodes, edges }: CFGViewProps) {
                 width={node.w}
                 height={node.h}
                 rx={4}
-                fill="#1e1e24"
-                stroke="#3f3f50"
+                fill="var(--r2-cfg-node)"
+                stroke="var(--r2-cfg-border)"
                 strokeWidth={1}
               />
               <text
                 x={PAD_X}
                 y={LABEL_H - 4}
-                fill="#e0a640"
+                fill="var(--r2-cfg-label)"
                 fontSize={12}
                 fontFamily="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace"
                 fontWeight={600}
               >
                 {node.label}
               </text>
-              <line x1={0} y1={LABEL_H} x2={node.w} y2={LABEL_H} stroke="#3f3f50" strokeWidth={0.5} />
+              <line x1={0} y1={LABEL_H} x2={node.w} y2={LABEL_H} stroke="var(--r2-cfg-border)" strokeWidth={0.5} />
               {node.lines.map((line, i) => (
                 <text
                   key={i}
                   x={PAD_X}
                   y={LABEL_H + PAD_Y + (i + 1) * LINE_H - 3}
-                  fill="#d4d4d8"
+                  fill="var(--r2-cfg-text)"
                   fontSize={11}
                   fontFamily="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace"
                 >

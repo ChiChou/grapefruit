@@ -45,6 +45,28 @@
   --radius: 0.65rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
+
+  --r2-c30: #3a3a3c;
+  --r2-c31: #c33c3c;
+  --r2-c32: #3a8c3a;
+  --r2-c33: #986801;
+  --r2-c34: #6a7394;
+  --r2-c35: #9a30a8;
+  --r2-c36: #0e7a8a;
+  --r2-c37: #4a4a52;
+  --r2-c90: #8c8c9a;
+  --r2-c91: #d03030;
+  --r2-c92: #3a9a3a;
+  --r2-c93: #8a6b15;
+  --r2-c94: #2563eb;
+  --r2-c95: #9540b8;
+  --r2-c96: #0b6878;
+  --r2-c97: #1a1a1e;
+  --r2-cfg-canvas: oklch(0.96 0.002 286);
+  --r2-cfg-node: oklch(0.99 0 0);
+  --r2-cfg-border: oklch(0.88 0.004 286);
+  --r2-cfg-label: #986801;
+  --r2-cfg-text: oklch(0.3 0.005 286);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.141 0.005 285.823);
   --popover: oklch(1 0 0);
@@ -79,6 +101,28 @@
 .dark {
   --background: oklch(0.141 0.005 285.823);
   --foreground: oklch(0.985 0 0);
+
+  --r2-c30: #5c5e6a;
+  --r2-c31: #e06c75;
+  --r2-c32: #98c379;
+  --r2-c33: #e5c07b;
+  --r2-c34: #7c8cbf;
+  --r2-c35: #c678dd;
+  --r2-c36: #56b6c2;
+  --r2-c37: #abb2bf;
+  --r2-c90: #5c5e6a;
+  --r2-c91: #f44747;
+  --r2-c92: #b5e890;
+  --r2-c93: #d4af37;
+  --r2-c94: #6bb5f6;
+  --r2-c95: #d291e4;
+  --r2-c96: #7ec8d8;
+  --r2-c97: #f0f0f4;
+  --r2-cfg-canvas: oklch(0.16 0.005 286);
+  --r2-cfg-node: oklch(0.2 0.006 286);
+  --r2-cfg-border: oklch(0.32 0.008 286);
+  --r2-cfg-label: #e5c07b;
+  --r2-cfg-text: oklch(0.85 0.005 286);
   --card: oklch(0.21 0.006 285.885);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.21 0.006 285.885);
@@ -118,3 +162,21 @@
     @apply bg-background text-foreground;
   }
 }
+
+.r2-c30 { color: var(--r2-c30); }
+.r2-c31 { color: var(--r2-c31); }
+.r2-c32 { color: var(--r2-c32); }
+.r2-c33 { color: var(--r2-c33); }
+.r2-c34 { color: var(--r2-c34); }
+.r2-c35 { color: var(--r2-c35); }
+.r2-c36 { color: var(--r2-c36); }
+.r2-c37 { color: var(--r2-c37); }
+.r2-c90 { color: var(--r2-c90); }
+.r2-c91 { color: var(--r2-c91); }
+.r2-c92 { color: var(--r2-c92); }
+.r2-c93 { color: var(--r2-c93); }
+.r2-c94 { color: var(--r2-c94); }
+.r2-c95 { color: var(--r2-c95); }
+.r2-c96 { color: var(--r2-c96); }
+.r2-c97 { color: var(--r2-c97); }
+.r2-bold { font-weight: bold; }

@@ -1,5 +1,6 @@
 import { useR2Session } from "@/lib/use-r2-session";
 import * as strip from "@/lib/strip";
+import { useTheme } from "@/components/providers/ThemeProvider";
 
 import "./DisassemblyTab.css";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -30,6 +31,7 @@ export function DisassemblyTab({
   params,
 }: IDockviewPanelProps<DisassemblyTabParams>) {
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const address = params?.address || "";
   const [viewMode, setViewMode] = useState<ViewMode>("disassembly");
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -258,7 +260,7 @@ export function DisassemblyTab({
         onValueChange={handleTabChange}
         className="h-full flex flex-col"
       >
-        <div className="flex items-center border-b bg-[#1b1b1f]">
+        <div className="flex items-center border-b bg-card">
           <TabsList variant="line">
             <TabsTrigger value="disassembly">Linear</TabsTrigger>
             <TabsTrigger value="graph">Graph</TabsTrigger>
@@ -300,7 +302,7 @@ export function DisassemblyTab({
             <Editor
               height="100%"
               language="c"
-              theme="vs-dark"
+              theme={theme === "dark" ? "vs-dark" : "light"}
               value={result.decompilerOutput}
               options={{
                 readOnly: true,
@@ -321,6 +323,7 @@ export function DisassemblyTab({
             content={aiContent}
             isLoading={aiLoading}
             error={aiError}
+            theme={theme}
             onRetry={loadAiDecompile}
           />
         </TabsContent>
@@ -333,11 +336,13 @@ function AiDecompileView({
   content,
   isLoading,
   error,
+  theme,
   onRetry,
 }: {
   content: string;
   isLoading: boolean;
   error: string | null;
+  theme: string;
   onRetry: () => void;
 }) {
   if (isLoading && !content) {
@@ -398,7 +403,7 @@ function AiDecompileView({
     <Editor
       height="100%"
       language="c"
-      theme="vs-dark"
+      theme={theme === "dark" ? "vs-dark" : "light"}
       value={content}
       options={{
         readOnly: true,

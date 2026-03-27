@@ -11,6 +11,7 @@ import {
 import Editor from "@monaco-editor/react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
+import "./DisassemblyTab.css";
 import {
   useDexR2Session,
   type DexClass,
@@ -514,7 +515,7 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
                     }
                   />
                 ) : (
-                  <div className="h-full overflow-auto">
+                  <div className="disassembly-view h-full overflow-auto">
                     <pre
                       className="p-3 m-0 text-xs leading-[1.4] font-mono"
                       dangerouslySetInnerHTML={{ __html: codeHtml }}

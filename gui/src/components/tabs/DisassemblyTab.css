@@ -4,15 +4,13 @@
         "Liberation Mono", monospace;
     font-size: 13px;
     line-height: 1.4;
-    /*white-space: pre-wrap;*/
-    /* Force dark theme for R2 terminal output */
-    background-color: #1b1b1f;
-    color: #fafafa;
+    background-color: var(--card);
+    color: var(--foreground);
     border-radius: 4px;
 }
 
 .disassembly-view a {
-    color: #e0a050;
+    color: var(--r2-c33);
     text-decoration: none;
 }
 

@@ -1,17 +1,14 @@
 const ANSI_RE = /\x1b\[([0-9;]*)m/g;
 
-const BASIC_COLORS: Record<number, string> = {
-  30: "#1e1e1e", 31: "#cd3131", 32: "#0dbc79", 33: "#e5e510",
-  34: "#2472c8", 35: "#bc3fbc", 36: "#11a8cd", 37: "#e5e5e5",
-  90: "#666666", 91: "#f14c4c", 92: "#23d18b", 93: "#f5f543",
-  94: "#3b8eea", 95: "#d670d6", 96: "#29b8db", 97: "#ffffff",
-};
-
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
+}
+
+function isBasicFg(code: number): boolean {
+  return (code >= 30 && code <= 37) || (code >= 90 && code <= 97);
 }
 
 export function toHtml(input: string): string {
@@ -33,7 +30,7 @@ export function toHtml(input: string): string {
       const code = codes[i];
       if (code === 0 || code === 39) continue;
 
-      // 24-bit: 38;2;r;g;b
+      // 24-bit: 38;2;r;g;b (fallback for non-themed output)
       if (code === 38 && codes[i + 1] === 2 && i + 4 < codes.length) {
         const r = codes[i + 2], g = codes[i + 3], b = codes[i + 4];
         result += `<span style="color:rgb(${r},${g},${b})">`;
@@ -42,7 +39,7 @@ export function toHtml(input: string): string {
         continue;
       }
 
-      // 256-color: 38;5;n
+      // 256-color: 38;5;n (fallback for non-themed output)
       if (code === 38 && codes[i + 1] === 5 && i + 2 < codes.length) {
         const n = codes[i + 2];
         const hex = color256(n);
@@ -52,16 +49,16 @@ export function toHtml(input: string): string {
         continue;
       }
 
-      // Basic foreground
-      if (BASIC_COLORS[code]) {
-        result += `<span style="color:${BASIC_COLORS[code]}">`;
+      // Basic foreground → CSS class (themed via --r2-c* variables)
+      if (isBasicFg(code)) {
+        result += `<span class="r2-c${code}">`;
         openSpan = true;
         continue;
       }
 
       // Bold
       if (code === 1) {
-        result += `<span style="font-weight:bold">`;
+        result += `<span class="r2-bold">`;
         openSpan = true;
         continue;
       }
