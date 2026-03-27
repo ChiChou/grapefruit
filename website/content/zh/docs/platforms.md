@@ -1,5 +1,13 @@
 # 平台功能
 
+## 模式
+
+**App 模式**附加到用户应用，拥有完整功能。
+
+**进程模式**附加到系统进程，依赖目标应用的功能（如 Info.plist、Entitlements、WebViews 等）不可用，保留通用功能（checksec、文件浏览、内存扫描等）。
+
+> 由于移动系统的沙箱和内存限制，部分系统进程可能不支持附加，强行附加会导致进程异常退出。
+
 ## iOS
 
 ### 安全缓解措施
@@ -20,7 +28,21 @@
 
 ### WebViews
 
-检查活动的 WKWebView 和 UIWebView 实例。调试嵌入式 Web 内容并在 WebView 上下文中执行 JavaScript。
+**iOS (WKWebView / UIWebView):**
+
+- 列出所有活动的 WKWebView 实例，含 URL、标题及配置（JS 启用状态、content JS、自动打开窗口、file URL 访问、universal access、content blocker、inspectable）
+- UIWebView 支持（用于旧版应用）
+- 在 WebView 上下文中执行任意 JavaScript
+- 导航到指定 URL
+- 启用 WebKit Remote Inspector（iOS 16.4+）
+
+**Android (WebView):**
+
+- 列出所有活动的 WebView 实例，含 URL、标题及设置（JS、文件访问、内容访问、file:// URL access、universal access、safe browsing、mixed content、database、DOM storage）
+- 显示暴露给 Web 内容的注入 JavaScript 接口
+- 启用 WebContents 调试
+- 在 WebView 上下文中执行任意 JavaScript
+- 导航到指定 URL
 
 ### JSContext
 
@@ -28,7 +50,7 @@
 
 ### XPC
 
-追踪应用发送和接收的 XPC（进程间通信）消息。查看消息内容和连接详情。
+监控应用与系统服务之间的 XPC（进程间通信）流量。查看消息内容、方向（发送/接收）、连接详情，以及发送消息的调用栈。
 
 ### 地理位置模拟
 

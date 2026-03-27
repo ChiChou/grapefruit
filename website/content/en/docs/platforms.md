@@ -1,14 +1,33 @@
 # Platform Features
 
+## Modes
+
+**App mode** attaches to a user-installed app and provides full feature coverage.
+
+**Process mode** attaches to a system process. App-dependent features (Info.plist, Entitlements, WebViews, etc.) are unavailable; generic features like checksec, file browser, and memory scanner remain functional.
+
+> Due to sandbox and memory constraints on mobile systems, some system processes may not support attachment and will exit abnormally if targeted.
+
 ## iOS
 
 ### Security Mitigations
 
-Check binary security flags: PIE, ARC, stack canaries, code signing, and restricted entitlements.
+Analyze binary security flags for all user-installed modules:
+- **PIE** (Position Independent Executable)
+- **NX** (No-Execute bit)
+- **Stack Canary** (stack smashing protection)
+- **ARC** (Automatic Reference Counting)
+- **RPATH** (runtime search paths)
+- **Code Signature** (code signing load command)
+- **Encryption** (App Store binary encryption)
+- **Stripped** (debug symbols removed)
+- **Fortify** (Fortify Source function count)
+- **PAC** (Pointer Authentication Code, arm64)
+- **Secure Malloc** (secure allocator usage)
 
 ### Info.plist & Insights
 
-View the app's Info.plist. The Insights panel also runs automated security analysis on ATS settings, permissions, and other configuration.
+View the app's Info.plist with full key-value data. The Insights panel runs automated security analysis on ATS settings, permissions, URL schemes, and other configuration.
 
 ### Entitlements
 
@@ -16,19 +35,33 @@ Extract and display the app's entitlements. Key security-relevant items are high
 
 ### Assets.car
 
-Browse the compiled asset catalog. View images, icons, and other assets bundled in the app.
+Browse the compiled asset catalog. List all images, view variants with scale/resolution info, and extract images as PNG or raw data.
 
 ### WebViews
 
-Inspect active WKWebView and UIWebView instances. Debug embedded web content and evaluate JavaScript in the WebView context.
+**iOS (WKWebView / UIWebView):**
+
+- List all active WKWebView instances with URL, title, and configuration (JavaScript enabled, content JavaScript, auto-open windows, file URL access, universal access, content blocker, inspectable)
+- UIWebView support for legacy apps
+- Evaluate arbitrary JavaScript in the WebView context
+- Navigate to a URL
+- Enable/disable WebKit Remote Inspector per WebView (iOS 16.4+)
+
+**Android (WebView):**
+
+- List all active WebView instances with URL, title, and settings (JavaScript, file access, content access, file:// URL access, universal access, safe browsing, mixed content mode, database, DOM storage)
+- Show injected JavaScript interfaces exposed to Web content
+- Enable WebContents debugging
+- Evaluate arbitrary JavaScript in the WebView context
+- Navigate to a URL
 
 ### JSContext
 
-Explore JavaScriptCore contexts. Evaluate JavaScript expressions and inspect the JS runtime of the app.
+Explore JavaScriptCore contexts. List all JSContext instances with their handles and inspectability status. Dump global scope variables, evaluate arbitrary JavaScript expressions, and enable/disable inspection (iOS 16.4+).
 
 ### XPC
 
-Trace XPC (inter-process communication) messages sent and received by the app. View message content and connection details.
+Monitor XPC (inter-process communication) traffic between the app and system services. View message content, direction (sent/received), connection details, and call stacks for outgoing messages.
 
 ### Geolocation Simulation
 
@@ -50,7 +83,7 @@ View the decompiled AndroidManifest with syntax highlighting. Inspect components
 
 ### Components
 
-List all Android components (Activities, Services, Broadcast Receivers, Content Providers) declared by the app with their intent filters and export status.
+List all Android components (Activities, Services, Broadcast Receivers, Content Providers) declared by the app with their intent filters and export status. Launch activities, start/stop services, and send broadcast intents.
 
 ### Content Providers
 
@@ -62,18 +95,18 @@ Trace JNI (Java Native Interface) function calls between Java and native code. C
 
 ### Resources
 
-Browse Android app resources (strings, layouts, drawables, etc.) from the APK.
+Browse Android app resources (strings, layouts, drawables, etc.) from the APK. List all resources grouped by category, and retrieve specific resource values by name.
 
 ## Cross-Platform
 
 ### Flutter Channels
 
-Intercept Flutter platform channel messages between Dart and native code. Supports method channels, event channels, and basic message channels.
+Intercept Flutter platform channel messages between Dart and native code. Supports method channels, event channels, and basic message channels. Available via the hook system.
 
 ### React Native
 
-Inspect the React Native bridge. View bridge messages, evaluate JavaScript in the RN context, and analyze Hermes bytecode.
+Inspect the React Native bridge. Detect architecture (legacy bridgeless vs bridgeless mode), list running RN instances, and inject arbitrary JavaScript into the RN context for dynamic analysis.
 
 ### IL2CPP (Unity)
 
-Analyze Unity apps that use IL2CPP ahead-of-time compilation. Browse .NET metadata, classes, and methods from the IL2CPP runtime.
+Analyze Unity apps that use IL2CPP ahead-of-time compilation. Browse .NET metadata, assemblies, classes, and methods from the IL2CPP runtime. Dump classes as C# source code, inspect GC statistics, and manage garbage collection.

@@ -51,6 +51,14 @@ For serious analysis, pull the binary from the device (using the file browser or
 - **USB connection** — The default setup requires a USB connection to the target device. Remote Frida connections are supported but require manual configuration.
 - **Single device at a time** — Each Grapefruit session connects to one device. To work with multiple devices, run multiple server instances on different ports.
 
+## Process Mode
+
+When attaching to system processes in process mode, be aware of platform-specific constraints:
+
+- **Sandbox restrictions** — System services run with reduced privileges under mobile sandboxing. Some services may refuse attachment entirely or crash when accessed outside their expected runtime context.
+- **Memory pressure** — Low-memory services may be terminated if instrumentation overhead exceeds available headroom.
+- **Limited feature set** — App-dependent features (Info.plist, Entitlements, WebViews, etc.) are unavailable; only generic features like checksec, file browser, handles, and memory scanner are functional.
+
 ## Stability
 
 Grapefruit instruments a live process by injecting code at runtime. This is inherently invasive and can cause instability:
