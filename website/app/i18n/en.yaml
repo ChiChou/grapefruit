@@ -1,0 +1,36 @@
+meta_title: Grapefruit - Mobile Security Research Toolkit
+meta_desc: Instrument, analyze, and decompile mobile apps with Frida, radare2, and AI. iOS & Android.
+
+nav_docs: Docs
+nav_github: GitHub
+nav_sponsor: Sponsor
+
+hero_badge: Runtime Mobile Security Research
+hero_title: Inspect, hook, and decompile — in your browser
+hero_desc: Grapefruit brings Frida, binary analysis, and AI-powered decompilation together in a single browser interface.
+hero_cta: Get Started
+hero_cta_docs: Documentation
+
+why_title: Making mobile auditing easier
+why_1_title: Web-Based UI
+why_1_desc: Stop switching between terminal tabs. Grapefruit gives you class browsers, thread inspectors, file previews, and network monitors in one place.
+why_2_title: Cross-Platform
+why_2_desc: Runs on macOS, Windows, and Linux. Access your research workspace from any modern browser
+why_3_title: Integrated Workflow
+why_3_desc: A cohesive environment for instrumentation, browsing, and analysis. Spend less time switching tools
+
+highlights_title: Key Features
+h_hook_title: Instrumentation
+h_hook_desc: Intercept function calls in real time. Inspect arguments, return values, and backtraces with ease
+h_browse_title: Data Inspection
+h_browse_desc: Explore classes, methods, keychain items, and network traffic. Search across thousands of entries instantly
+h_disasm_title: Analysis & Decompilation
+h_disasm_desc: Native code, DEX, and Hermes bytecode — all in one viewer. AI assistance generates ready-to-use Frida hook scripts.
+
+cta_title: Ready to start?
+cta_desc: Grapefruit is free and open source. Install with npm and start your research today.
+cta_install: npx igf
+
+footer_built: Built by
+footer_license: MIT License
+lang_switch: 中文

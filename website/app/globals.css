@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #09090b;
+  --fg: #e4e4e7;
+  --muted: #71717a;
+  --accent: #FFA745;
+  --accent-dim: #ED5E40;
+  --surface: #18181b;
+  --border: #27272a;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-dim: var(--accent-dim);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.prose { line-height: 1.75; }
+.prose h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 1rem; }
+.prose h2 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; margin-top: 2.5rem; margin-bottom: 0.75rem; }
+.prose h3 { font-size: 1.125rem; font-weight: 600; margin-top: 2rem; margin-bottom: 0.5rem; }
+.prose p { color: var(--muted); margin-bottom: 1rem; }
+.prose ul { color: var(--muted); padding-left: 1.5rem; margin-bottom: 1rem; list-style: disc; }
+.prose li { margin-bottom: 0.375rem; }
+.prose strong { color: var(--fg); font-weight: 600; }
+.prose a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.prose a:hover { color: var(--fg); }
+.prose code { font-family: var(--font-geist-mono); font-size: 0.875em; background: var(--surface); padding: 0.125rem 0.375rem; border-radius: 0.25rem; }
+.prose pre { font-family: var(--font-geist-mono); font-size: 0.875rem; background: var(--surface); border: 1px solid var(--border); border-radius: 0.5rem; padding: 1rem; overflow-x: auto; margin-bottom: 1rem; }
+.prose pre code { padding: 0; background: none; border-radius: 0; font-size: inherit; }
