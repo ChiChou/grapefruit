@@ -14,7 +14,11 @@ Browse the app's filesystem with a tree view. Download files to your machine, or
 
 **NSURL (iOS)**: Capture NSURLSession requests and responses in real time. View headers, body, and timing. Download request/response data for offline analysis.
 
+![NSURL](/nsurl.png)
+
 **HTTP (Android)**: Intercept HTTP traffic from OkHttp and other common clients. View requests and responses with headers and body content.
+
+> **Note**: HTTP monitoring is hook-based. See [Known Limitations](/docs/limits#http-monitoring-is-hook-based) for coverage details.
 
 ## Crypto Monitor
 
@@ -29,6 +33,8 @@ Track access to sensitive APIs — location, contacts, photos, camera, microphon
 Parse and display the app's binary cookie files. View cookie names, values, domains, expiry dates, and flags (secure, httpOnly).
 
 ## UserDefaults (iOS)
+
+![UserDefaults](/userdefaults.png)
 
 View and modify NSUserDefaults entries for the app. Useful for finding feature flags, cached tokens, and configuration values.
 

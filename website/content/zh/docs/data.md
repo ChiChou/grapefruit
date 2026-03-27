@@ -14,7 +14,11 @@
 
 **NSURL（iOS）**：实时捕获 NSURLSession 请求和响应。查看请求头、正文和时间。下载请求/响应数据用于离线分析。
 
+![NSURL](/nsurl.png)
+
 **HTTP（Android）**：拦截来自 OkHttp 等常见客户端的 HTTP 流量。查看带请求头和正文的请求和响应。
+
+> **注意**：HTTP 监控基于 Hook 实现。详见[已知限制](/docs/limits#http-monitoring-is-hook-based)。
 
 ## 加密监控
 
@@ -29,6 +33,8 @@
 解析并显示应用的二进制 Cookie 文件。查看 Cookie 名称、值、域、过期日期和标志（secure、httpOnly）。
 
 ## UserDefaults（iOS）
+
+![UserDefaults](/userdefaults.png)
 
 查看和修改应用的 NSUserDefaults 条目。可用于查找功能开关、缓存的 token 和配置值。
 

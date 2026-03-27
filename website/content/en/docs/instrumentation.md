@@ -2,6 +2,8 @@
 
 ## Function Hooking
 
+![Hook Logs](/hook-logs.png)
+
 The hooks panel lets you intercept function calls at runtime using Frida. Select a class and method from the browser, then apply a hook. Hooked calls are logged with arguments and return values.
 
 Hooks support:
@@ -21,6 +23,8 @@ Browse all loaded classes in the target process. On iOS, this includes Objective
 
 ## Module Browser
 
+![Modules](/modules.png)
+
 Lists all loaded dynamic libraries (dylibs on iOS, .so files on Android). Click a module to see its exports — functions and symbols that can be hooked or disassembled.
 
 ## Thread Inspector
@@ -28,6 +32,8 @@ Lists all loaded dynamic libraries (dylibs on iOS, .so files on Android). Click 
 View all running threads in the target process with their current backtrace. Useful for understanding the threading model and finding where specific operations execute.
 
 ## URL Schemes
+
+<img src="/url-schemes.png" width="300" />
 
 Inspect registered URL schemes for the app. This is a common attack surface for mobile apps — deep links can trigger sensitive operations if not properly validated.
 

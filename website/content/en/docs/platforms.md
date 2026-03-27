@@ -12,6 +12,8 @@
 
 ### Security Mitigations
 
+![Security Mitigations](/mitigations.png)
+
 Analyze binary security flags for all user-installed modules:
 - **PIE** (Position Independent Executable)
 - **NX** (No-Execute bit)
@@ -27,6 +29,8 @@ Analyze binary security flags for all user-installed modules:
 
 ### Info.plist & Insights
 
+![Insights](/insights.png)
+
 View the app's Info.plist with full key-value data. The Insights panel runs automated security analysis on ATS settings, permissions, URL schemes, and other configuration.
 
 ### Entitlements
@@ -35,11 +39,15 @@ Extract and display the app's entitlements. Key security-relevant items are high
 
 ### Assets.car
 
+![Assets.car](/assets.png)
+
 Browse the compiled asset catalog. List all images, view variants with scale/resolution info, and extract images as PNG or raw data.
 
 ### WebViews
 
 **iOS (WKWebView / UIWebView):**
+
+![WKWebView](/wkwebview.png)
 
 - List all active WKWebView instances with URL, title, and configuration (JavaScript enabled, content JavaScript, auto-open windows, file URL access, universal access, content blocker, inspectable)
 - UIWebView support for legacy apps
@@ -49,6 +57,8 @@ Browse the compiled asset catalog. List all images, view variants with scale/res
 
 **Android (WebView):**
 
+![Android WebView](/android-webview.png)
+
 - List all active WebView instances with URL, title, and settings (JavaScript, file access, content access, file:// URL access, universal access, safe browsing, mixed content mode, database, DOM storage)
 - Show injected JavaScript interfaces exposed to Web content
 - Enable WebContents debugging
@@ -56,6 +66,8 @@ Browse the compiled asset catalog. List all images, view variants with scale/res
 - Navigate to a URL
 
 ### JSContext
+
+![JSContext](/jscontext.png)
 
 Explore JavaScriptCore contexts. List all JSContext instances with their handles and inspectability status. Dump global scope variables, evaluate arbitrary JavaScript expressions, and enable/disable inspection (iOS 16.4+).
 
@@ -78,6 +90,8 @@ List all app extensions (widgets, share extensions, notification content, etc.) 
 Browse the contents of the app's APK file. Extract individual entries (DEX files, native libraries, resources, assets) for analysis.
 
 ### AndroidManifest.xml
+
+![AndroidManifest](/android-manifest.png)
 
 View the decompiled AndroidManifest with syntax highlighting. Inspect components, permissions, intent filters, and other declarations.
 
@@ -108,5 +122,7 @@ Intercept Flutter platform channel messages between Dart and native code. Suppor
 Inspect the React Native bridge. Detect architecture (legacy bridgeless vs bridgeless mode), list running RN instances, and inject arbitrary JavaScript into the RN context for dynamic analysis.
 
 ### IL2CPP (Unity)
+
+![IL2CPP](/ilcpp.png)
 
 Analyze Unity apps that use IL2CPP ahead-of-time compilation. Browse .NET metadata, assemblies, classes, and methods from the IL2CPP runtime. Dump classes as C# source code, inspect GC statistics, and manage garbage collection.

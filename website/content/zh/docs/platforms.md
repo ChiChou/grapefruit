@@ -12,9 +12,13 @@
 
 ### 安全缓解措施
 
+![安全缓解措施](/mitigations.png)
+
 检查二进制安全标志：PIE、ARC、栈保护器、代码签名和受限权限。
 
 ### Info.plist 与 Insights
+
+![Insights](/insights.png)
 
 查看应用的 Info.plist，Insights 面板还会对 ATS 设置、权限和其他配置进行自动化安全分析。
 
@@ -24,11 +28,15 @@
 
 ### Assets.car
 
+![Assets.car](/assets.png)
+
 浏览编译后的 asset catalog。查看应用中打包的图片、图标和其他资源。
 
 ### WebViews
 
 **iOS (WKWebView / UIWebView):**
+
+![WKWebView](/wkwebview.png)
 
 - 列出所有活动的 WKWebView 实例，含 URL、标题及配置（JS 启用状态、content JS、自动打开窗口、file URL 访问、universal access、content blocker、inspectable）
 - UIWebView 支持（用于旧版应用）
@@ -38,6 +46,8 @@
 
 **Android (WebView):**
 
+![Android WebView](/android-webview.png)
+
 - 列出所有活动的 WebView 实例，含 URL、标题及设置（JS、文件访问、内容访问、file:// URL access、universal access、safe browsing、mixed content、database、DOM storage）
 - 显示暴露给 Web 内容的注入 JavaScript 接口
 - 启用 WebContents 调试
@@ -45,6 +55,8 @@
 - 导航到指定 URL
 
 ### JSContext
+
+![JSContext](/jscontext.png)
 
 探索 JavaScriptCore 上下文。在 JS 运行时中执行 JavaScript 表达式并检查应用状态。
 
@@ -67,6 +79,8 @@
 浏览应用 APK 文件的内容。提取单个条目（DEX 文件、原生库、资源、assets）用于分析。
 
 ### AndroidManifest.xml
+
+![AndroidManifest](/android-manifest.png)
 
 以语法高亮查看反编译后的 AndroidManifest。检查组件、权限、intent filters 和其他声明。
 
@@ -97,5 +111,7 @@
 检查 React Native bridge。查看 bridge 消息、在 RN 上下文中执行 JavaScript，并分析 Hermes 字节码。
 
 ### IL2CPP（Unity）
+
+![IL2CPP](/ilcpp.png)
 
 分析使用 IL2CPP 提前编译的 Unity 应用。从 IL2CPP 运行时浏览 .NET 元数据、类和方法。

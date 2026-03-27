@@ -2,6 +2,8 @@
 
 ## File Browser
 
+![File Browser](/files.png)
+
 The file browser provides a tree view of the target app's filesystem. On iOS, it defaults to the app's home directory. On Android, it starts at the root filesystem.
 
 - Navigate directories with breadcrumb trail
@@ -22,6 +24,8 @@ Plain text files open in a Monaco editor with syntax highlighting. Supports view
 
 ### SQLite Editor
 
+![SQLite Editor](/database.png)
+
 Opens `.db` and `.sqlite` files with a table browser. Select a table to view its contents in a data grid. Run custom SQL queries against the database.
 
 ### Property List (plist)
@@ -41,6 +45,8 @@ Plays audio files (MP3, AAC, WAV, etc.) with a browser-native audio player.
 Preview TrueType (`.ttf`) and OpenType (`.otf`) fonts with adjustable sample text and glyph size.
 
 ### Assets.car (iOS)
+
+![Assets.car](/assets.png)
 
 Browse compiled asset catalogs as a grid of images, icons, and other assets.
 

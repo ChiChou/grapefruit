@@ -2,6 +2,8 @@
 
 ## 原生反汇编
 
+![原生反汇编](/classes.png)
+
 反汇编引擎在服务器端以 WebAssembly 模块（WASI）形式运行 radare2。点击模块或类浏览器中的函数地址，Grapefruit 会打开一个包含四个视图的反汇编标签页：
 
 - **线性视图** — 完整函数反汇编，通过 ANSI 转 HTML 转换进行语法着色
@@ -13,6 +15,8 @@
 
 ## DEX 分析
 
+![DEX 分析](/dex.png)
+
 从 APK 浏览器或文件系统打开任意 `.dex` 文件。Grapefruit 会将文件下载到服务器端并加载到 radare2 会话中。
 
 - **类浏览器** — 列出 `ic` 输出的所有类。展开类可查看其方法和字段。支持按类名搜索。
@@ -22,6 +26,8 @@
 - **AI 反编译** — 使用 LLM 将 Dalvik 字节码反编译为 Java。
 
 ## Hermes 字节码分析
+
+![Hermes 字节码](/hermes.png)
 
 使用 Hermes 引擎的 React Native 应用将 JavaScript 编译为私有字节码。Grapefruit 在运行时拦截 Hermes 字节码，提供：
 
@@ -42,5 +48,7 @@ LLM_MODEL=claude-sonnet-4-20250514
 发送前会先精简反汇编（去除地址、管道符、文件头）以节省 token 并降低延迟。符号表中的函数名和参数数量也会一并发送，作为上下文参考。
 
 ## 控制流图
+
+![控制流图](/cfg.png)
 
 图形视图从 radare2 的 `agfj` 命令中提取基本块和边，并使用 dagre 进行自动布局。条件分支用不同颜色显示 true/false 边。

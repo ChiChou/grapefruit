@@ -2,6 +2,8 @@
 
 ## 文件浏览器
 
+![文件浏览器](/files.png)
+
 文件浏览器提供目标应用文件系统的树形视图。在 iOS 上默认从应用的主目录开始。在 Android 上从根文件系统开始。
 
 - 带面包屑导航的目录浏览
@@ -22,6 +24,8 @@
 
 ### SQLite 编辑器
 
+![SQLite 编辑器](/database.png)
+
 打开 `.db` 和 `.sqlite` 文件，带表浏览器。选择表可在数据网格中查看内容。针对数据库运行自定义 SQL 查询。
 
 ### Property List（plist）
@@ -41,6 +45,8 @@
 渲染 TrueType（`.ttf`）和 OpenType（`.otf`）字体，以示例文本展示不同大小的字形。
 
 ### Assets.car（iOS）
+
+![Assets.car](/assets.png)
 
 解析编译后的 asset catalog，以网格视图显示包含的图片、图标和其他资源。
 
