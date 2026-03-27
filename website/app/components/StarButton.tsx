@@ -45,14 +45,18 @@ export function StarButton({ href }: { href: string }) {
       href={href}
       className="group inline-flex items-center rounded-lg border border-border/80 text-sm font-medium transition-colors hover:border-accent/40 overflow-hidden"
       target="_blank"
-      rel="noopener"
+      rel="noreferrer"
     >
       <span className="inline-flex items-center gap-2 px-4 py-2 bg-[#1a1a1f] hover:bg-[#222228] transition-colors">
         <Star size={14} fill="currentColor" className="text-amber-400" />
         Star
       </span>
-      <span className="px-4 py-2 bg-surface/60 text-fg font-mono tabular-nums border-l border-border/80 group-hover:text-accent transition-colors min-w-[4rem] text-center">
-        {display != null ? fmt(display) : <span className="inline-block w-[3ch] h-4 rounded bg-border/40 animate-pulse" />}
+      <span className="px-4 py-2 bg-surface/60 text-fg font-mono tabular-nums border-l border-border/80 group-hover:text-accent transition-colors min-w-16 text-center">
+        {display != null ? (
+          fmt(display)
+        ) : (
+          <span className="inline-block w-[3ch] h-4 rounded bg-border/40 animate-pulse" />
+        )}
       </span>
     </a>
   );

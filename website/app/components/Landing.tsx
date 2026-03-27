@@ -32,10 +32,10 @@ export function Landing({ t, langHref }: { t: Strings; langHref: string }) {
             <Link href="/docs" className="hover:text-fg transition-colors">
               {t.nav_docs}
             </Link>
-            <a href={GITHUB} className="hover:text-fg transition-colors" target="_blank" rel="noopener">
+            <a href={GITHUB} className="hover:text-fg transition-colors" target="_blank" rel="noreferrer">
               {t.nav_github}
             </a>
-            <a href={SPONSOR} className="hover:text-fg transition-colors inline-flex items-center gap-1" target="_blank" rel="noopener">
+            <a href={SPONSOR} className="hover:text-fg transition-colors inline-flex items-center gap-1" target="_blank" rel="noreferrer">
               <span className="text-red-500">&#9829;</span>
               {t.nav_sponsor}
             </a>
@@ -143,13 +143,13 @@ export function Landing({ t, langHref }: { t: Strings; langHref: string }) {
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted">
           <div className="flex items-center gap-1">
             {t.footer_built}{" "}
-            <a href={MASTODON} className="text-fg hover:text-accent transition-colors" target="_blank" rel="noopener me">
+            <a href={MASTODON} className="text-fg hover:text-accent transition-colors" target="_blank" rel="noreferrer me">
               @codecolorist
             </a>
           </div>
           <div className="flex items-center gap-6">
-            <a href={GITHUB} className="hover:text-fg transition-colors" target="_blank" rel="noopener">GitHub</a>
-            <a href={SPONSOR} className="hover:text-fg transition-colors" target="_blank" rel="noopener">{t.nav_sponsor}</a>
+            <a href={GITHUB} className="hover:text-fg transition-colors" target="_blank" rel="noreferrer">GitHub</a>
+            <a href={SPONSOR} className="hover:text-fg transition-colors" target="_blank" rel="noreferrer">{t.nav_sponsor}</a>
             <span>{t.footer_license}</span>
           </div>
         </div>

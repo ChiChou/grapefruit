@@ -1,0 +1,8 @@
+{
+  "$schema": "https://oxc.rs/schema/config.json",
+  "rules": {
+    "next": ["on"],
+    "typescript": ["on"]
+  },
+  "ignore": [".next/**", "out/**", "build/**", "next-env.d.ts"]
+}

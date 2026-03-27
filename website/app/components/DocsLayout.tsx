@@ -24,15 +24,43 @@ export function DocsLayout({
 
   const nav = [
     { href: `${prefix}/docs`, label: isZh ? "项目概览" : "Overview" },
-    { href: `${prefix}/docs/install`, label: isZh ? "安装指南" : "Installation" },
-    { href: `${prefix}/docs/limits`, label: isZh ? "已知限制" : "Known Limitations", accent: true },
-    { href: `${prefix}/docs/analysis`, label: isZh ? "分析与反编译" : "Analysis & Decompilation" },
-    { href: `${prefix}/docs/instrumentation`, label: isZh ? "动态插桩" : "Instrumentation" },
-    { href: `${prefix}/docs/files`, label: isZh ? "文件浏览器" : "File Browser & Previews" },
-    { href: `${prefix}/docs/data`, label: isZh ? "数据审查" : "Data Inspection" },
-    { href: `${prefix}/docs/platforms`, label: isZh ? "平台特性" : "Platform Features" },
-    { href: `${prefix}/docs/llm`, label: isZh ? "LLM 配置" : "LLM Configuration" },
-    { href: `${prefix}/docs/arch`, label: isZh ? "架构内部" : "Architecture Internals" },
+    {
+      href: `${prefix}/docs/install`,
+      label: isZh ? "安装指南" : "Installation",
+    },
+    {
+      href: `${prefix}/docs/limits`,
+      label: isZh ? "已知限制" : "Known Limitations",
+      accent: true,
+    },
+    {
+      href: `${prefix}/docs/analysis`,
+      label: isZh ? "分析与反编译" : "Analysis & Decompilation",
+    },
+    {
+      href: `${prefix}/docs/instrumentation`,
+      label: isZh ? "动态插桩" : "Instrumentation",
+    },
+    {
+      href: `${prefix}/docs/files`,
+      label: isZh ? "文件浏览器" : "File Browser & Previews",
+    },
+    {
+      href: `${prefix}/docs/data`,
+      label: isZh ? "数据审查" : "Data Inspection",
+    },
+    {
+      href: `${prefix}/docs/platforms`,
+      label: isZh ? "平台特性" : "Platform Features",
+    },
+    {
+      href: `${prefix}/docs/llm`,
+      label: isZh ? "LLM 配置" : "LLM Configuration",
+    },
+    {
+      href: `${prefix}/docs/arch`,
+      label: isZh ? "架构内部" : "Architecture Internals",
+    },
   ];
 
   return (
@@ -40,7 +68,12 @@ export function DocsLayout({
       <header className="border-b border-border bg-bg/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-6xl mx-auto flex items-center justify-between h-14 px-6">
           <Link href={prefix || "/"} className="flex items-center gap-2.5">
-            <Image src={`${base}/logo.svg`} alt="Grapefruit" width={24} height={24} />
+            <Image
+              src={`${base}/logo.svg`}
+              alt="Grapefruit"
+              width={24}
+              height={24}
+            />
             <span className="font-semibold tracking-tight text-sm">
               Grapefruit Docs
             </span>
@@ -50,7 +83,7 @@ export function DocsLayout({
               href="https://github.com/chichou/grapefruit"
               className="text-muted hover:text-fg text-sm"
               target="_blank"
-              rel="noopener"
+              rel="noreferrer"
             >
               GitHub
             </a>
@@ -97,15 +130,25 @@ export function DocsLayout({
             return (
               <nav className="mt-12 flex items-center justify-between border-t border-border pt-6 text-sm">
                 {prev ? (
-                  <Link href={prev.href} className="text-muted hover:text-fg transition-colors">
+                  <Link
+                    href={prev.href}
+                    className="text-muted hover:text-fg transition-colors"
+                  >
                     ← {prev.label}
                   </Link>
-                ) : <span />}
+                ) : (
+                  <span />
+                )}
                 {next ? (
-                  <Link href={next.href} className="text-muted hover:text-fg transition-colors ml-auto">
+                  <Link
+                    href={next.href}
+                    className="text-muted hover:text-fg transition-colors ml-auto"
+                  >
                     {next.label} →
                   </Link>
-                ) : <span />}
+                ) : (
+                  <span />
+                )}
               </nav>
             );
           })()}
@@ -116,13 +159,30 @@ export function DocsLayout({
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted">
           <div className="flex items-center gap-1">
             {isZh ? "由 " : "Built by "}
-            <a href="https://infosec.exchange/@codecolorist" className="text-fg hover:text-accent transition-colors" target="_blank" rel="noopener me">
+            <a
+              href="https://infosec.exchange/@codecolorist"
+              className="text-fg hover:text-accent transition-colors"
+              target="_blank"
+              rel="noreferrer me"
+            >
               @codecolorist
             </a>
           </div>
           <div className="flex items-center gap-6">
-            <a href="https://github.com/chichou/grapefruit" className="hover:text-fg transition-colors" target="_blank" rel="noopener">GitHub</a>
-            <a href="https://github.com/sponsors/ChiChou" className="hover:text-fg transition-colors" target="_blank" rel="noopener">
+            <a
+              href="https://github.com/chichou/grapefruit"
+              className="hover:text-fg transition-colors"
+              target="_blank"
+              rel="noreferrer"
+            >
+              GitHub
+            </a>
+            <a
+              href="https://github.com/sponsors/ChiChou"
+              className="hover:text-fg transition-colors"
+              target="_blank"
+              rel="noreferrer"
+            >
               {isZh ? "赞助" : "Sponsor"}
             </a>
             <span>{isZh ? "MIT 许可证" : "MIT License"}</span>
