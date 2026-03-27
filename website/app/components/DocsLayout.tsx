@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { MobileNav } from "./MobileNav";
 
 const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
@@ -59,6 +60,7 @@ export function DocsLayout({
             >
               {langLabel}
             </Link>
+            <MobileNav nav={nav} />
           </div>
         </div>
       </header>
