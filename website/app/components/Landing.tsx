@@ -17,12 +17,12 @@ export function Landing({ t, langHref }: { t: Strings; langHref: string }) {
   return (
     <>
       <header className="fixed top-0 inset-x-0 z-50 border-b border-border/50 bg-bg/80 backdrop-blur-xl">
-        <div className="max-w-6xl mx-auto flex items-center justify-between h-14 px-6">
-          <Link href="/" className="flex items-center gap-2.5">
+        <div className="max-w-6xl mx-auto flex items-center justify-between h-14 px-4 sm:px-6">
+          <Link href="/" className="flex items-center gap-2 shrink-0">
             <Image src={`${base}/logo.svg`} alt="Grapefruit" width={24} height={24} />
-            <span className="font-semibold tracking-tight text-sm">Grapefruit</span>
+            <span className="font-semibold tracking-tight text-sm hidden sm:inline">Grapefruit</span>
           </Link>
-          <nav className="flex items-center gap-6 text-sm text-muted">
+          <nav className="flex items-center gap-3 sm:gap-6 text-sm text-muted">
             <Link href="/docs" className="hover:text-fg transition-colors">
               {t.nav_docs}
             </Link>
