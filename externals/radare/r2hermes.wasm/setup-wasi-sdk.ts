@@ -13,6 +13,12 @@ import { join, resolve } from "path";
 const VERSION = 32;
 const BASE = `https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${VERSION}`;
 
+function setenvPrompt(k: string, v: string): string {
+  if ("PSModulePath" in process.env) return `$env:${k}="${v}"`;
+  if (process.platform === "win32") return `setx ${k} "${v}"`;
+  return `export ${k}=${v}`;
+}
+
 function platform(): string {
   const osMap: Record<string, string> = {
     linux: "linux",
@@ -57,4 +63,4 @@ await Bun.$`tar xzf ${tmp} -C ${dest} --strip-components=1`;
 await unlink(tmp);
 
 console.log(`installed wasi-sdk ${VERSION} to ${dest}`);
-console.log(`export WASI_SDK_PATH=${dest}`);
+console.log(setenvPrompt("WASI_SDK_PATH", dest));
