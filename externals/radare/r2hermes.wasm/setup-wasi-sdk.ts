@@ -25,7 +25,7 @@ function platform(): string {
   };
   if (!(process.platform in osMap) || !(process.arch in archMap))
     throw new Error(`unsupported: ${process.platform}-${process.arch}`);
-  return `${osMap[process.platform]}-${archMap[process.arch]}`;
+  return `${archMap[process.arch]}-${osMap[process.platform]}`;
 }
 
 const plat = platform();
