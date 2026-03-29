@@ -17,11 +17,31 @@ function zeroOut(memory: WebAssembly.Memory, ...ptrs: number[]): number {
   return 0;
 }
 
+function postStatus(status: string, progress?: number) {
+  self.postMessage({ id: -1, ok: true, result: { status, progress } });
+}
+
 async function load(): Promise<WebAssembly.Instance> {
   if (inst) return inst;
   if (loading) return loading;
   loading = (async () => {
-    const wasmBytes = await fetch(wasmUrl).then((r) => r.arrayBuffer());
+    postStatus("downloading");
+    const res = await fetch(wasmUrl);
+    const total = Number(res.headers.get("content-length") || 0);
+    let received = 0;
+    const chunks: Uint8Array[] = [];
+    const reader = res.body!.getReader();
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      received += value.byteLength;
+      if (total > 0) postStatus("downloading", Math.round((received / total) * 100));
+    }
+    const wasmBytes = new Uint8Array(received);
+    let offset = 0;
+    for (const chunk of chunks) { wasmBytes.set(chunk, offset); offset += chunk.byteLength; }
+    postStatus("compiling");
     let mem: WebAssembly.Memory;
     const wasi: Record<string, Function> = {
       fd_write: (_fd: number, iovs: number, iovsLen: number, nwritten: number) => {
@@ -49,11 +69,12 @@ async function load(): Promise<WebAssembly.Instance> {
       args_sizes_get: (a: number, b: number) => zeroOut(mem, a, b),
       clock_time_get: () => 0,
     };
-    const { instance: i } = await WebAssembly.instantiate(wasmBytes, {
+    const { instance: i } = await WebAssembly.instantiate(wasmBytes.buffer, {
       wasi_snapshot_preview1: wasi,
     });
     mem = i.exports.memory as WebAssembly.Memory;
     inst = i;
+    postStatus("ready");
     return i;
   })();
   return loading;

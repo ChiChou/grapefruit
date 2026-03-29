@@ -1,21 +1,49 @@
 type Response = { id: number; ok: true; result?: any } | { id: number; ok: false; error: string };
 
+export type WasmStatus = "idle" | "downloading" | "compiling" | "ready" | "failed";
+export interface WasmState {
+  status: WasmStatus;
+  progress?: number;
+}
+
 let nextId = 0;
 const pending = new Map<number, { resolve: (v: any) => void; reject: (e: Error) => void }>();
 
 let worker: Worker | null = null;
+
+const statusListeners = new Set<(state: WasmState) => void>();
+let currentState: WasmState = { status: "idle" };
+
+export function onStatus(fn: (state: WasmState) => void): () => void {
+  statusListeners.add(fn);
+  fn(currentState);
+  return () => statusListeners.delete(fn);
+}
+
+function setStatus(state: WasmState) {
+  currentState = state;
+  for (const fn of statusListeners) fn(state);
+}
 
 function w(): Worker {
   if (!worker) {
     worker = new Worker(new URL("./hbc.worker.ts", import.meta.url), { type: "module" });
     worker.onmessage = (e: MessageEvent<Response>) => {
       const { id, ...rest } = e.data;
+
+      // Status events from worker (id=-1)
+      if (id === -1 && rest.ok && rest.result?.status) {
+        setStatus(rest.result as WasmState);
+        return;
+      }
+
       const p = pending.get(id);
       if (!p) return;
       pending.delete(id);
       if (rest.ok) p.resolve(rest.result);
       else p.reject(new Error(rest.error));
     };
+    worker.onerror = () => setStatus({ status: "failed" });
   }
   return worker;
 }
