@@ -32,7 +32,7 @@ function setStatus(state: R2State) {
 
 function w(): Worker {
   if (!worker) {
-    worker = new Worker(new URL("./r2.worker.ts", import.meta.url), { type: "module" });
+    worker = new Worker(new URL("./worker.ts", import.meta.url), { type: "module" });
     worker.onmessage = (e: MessageEvent<Response>) => {
       const { id, ...rest } = e.data;
 

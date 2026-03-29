@@ -75,7 +75,7 @@ async function loadWasm(): Promise<ArrayBuffer> {
   let received = 0;
   const chunks: Uint8Array[] = [];
   const reader = res.body!.getReader();
-  for (;;) {
+  while (true) {
     const { done, value } = await reader.read();
     if (done) break;
     chunks.push(value);
@@ -170,7 +170,7 @@ self.onmessage = async (e: MessageEvent<Request>) => {
         rawCmd("o--");
         rawCmd(`o /work/${msg.name}`);
         rawCmd("e scr.color=0");
-        rawCmd("aa");
+        rawCmd("aaa");
 
         self.postMessage({ id: msg.id, ok: true });
         break;
