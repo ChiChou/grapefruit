@@ -54,4 +54,16 @@ api.route("/", r2Routes);
 
 app.route("/api", api);
 
+// Serve radare2.wasm with aggressive caching (version-pinned, SHA256-verified)
+app.get("/radare2.wasm", async (c) => {
+  const wasmPath = await asset("radare2.wasm");
+  const data = await readFile(wasmPath);
+  return c.body(data, 200, {
+    "Content-Type": "application/wasm",
+    "Cache-Control": "public, max-age=31536000, immutable",
+    "Content-Length": String(data.byteLength),
+    "X-R2-Version": "6.1.2",
+  });
+});
+
 export default app;

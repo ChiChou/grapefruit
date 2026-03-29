@@ -21,6 +21,11 @@ export default defineConfig({
         secure: false,
         ws: true,
       },
+      "/radare2.wasm": {
+        target: api,
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
   plugins: [react(), tailwindcss()],
