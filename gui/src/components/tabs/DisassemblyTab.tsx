@@ -194,7 +194,7 @@ export function DisassemblyTab({
       const decoder = new TextDecoder();
       let accumulated = "";
 
-      for (;;) {
+      while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         accumulated += decoder.decode(value, { stream: true });

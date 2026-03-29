@@ -31,7 +31,7 @@ async function load(): Promise<WebAssembly.Instance> {
     let received = 0;
     const chunks: Uint8Array[] = [];
     const reader = res.body!.getReader();
-    for (;;) {
+    while (true) {
       const { done, value } = await reader.read();
       if (done) break;
       chunks.push(value);
