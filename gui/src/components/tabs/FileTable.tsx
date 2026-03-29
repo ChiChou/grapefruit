@@ -20,6 +20,7 @@ import {
   Loader2,
   Upload,
   RefreshCw,
+  Cpu,
 } from "lucide-react";
 import {
   Table,
@@ -551,6 +552,12 @@ export function FileTable({
                               >
                                 <Layers className="mr-2 h-4 w-4" />
                                 Assets.car
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => onPreview(item.name, "hermes")}
+                              >
+                                <Cpu className="mr-2 h-4 w-4" />
+                                Hermes Disassembler
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>

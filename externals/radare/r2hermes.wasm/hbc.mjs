@@ -36,7 +36,15 @@ async function load() {
     /** @type {WebAssembly.Memory} */
     let mem;
     const wasi = {
-      fd_write: () => 0,
+      fd_write: (fd, iovs, iovsLen, nwritten) => {
+        const view = new DataView(mem.buffer);
+        let total = 0;
+        for (let i = 0; i < iovsLen; i++) {
+          total += view.getUint32(iovs + i * 8 + 4, true);
+        }
+        view.setUint32(nwritten, total, true);
+        return 0;
+      },
       fd_read: () => 0,
       fd_close: () => 0,
       fd_seek: () => 0,

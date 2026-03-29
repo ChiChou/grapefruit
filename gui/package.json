@@ -41,7 +41,8 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.2",
-    "@dagrejs/dagre": "^1.1.4"
+    "@dagrejs/dagre": "^1.1.4",
+    "r2hermes-wasm": "file:../externals/radare/r2hermes.wasm"
   },
   "devDependencies": {
     "@types/leaflet": "^1.9.21",

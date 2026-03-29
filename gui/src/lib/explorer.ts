@@ -91,6 +91,10 @@ export function typeFor(filename: string): string {
     case "dex":
       return "dex";
 
+    case "jsbundle":
+    case "hbc":
+      return "hermes";
+
     case "mp3":
     case "wav":
     case "aac":

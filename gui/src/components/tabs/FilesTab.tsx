@@ -199,6 +199,7 @@ export function FilesTab({ params }: IDockviewPanelProps<FilesTabParams>) {
         font: "fontPreview",
         car: "assetCatalog",
         dex: "dexViewer",
+        hermes: "hermesFile",
       };
 
       const component = componentMap[type];

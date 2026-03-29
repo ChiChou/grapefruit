@@ -8,7 +8,8 @@
     ".": {
       "import": "./hbc.mjs",
       "types": "./hbc.d.mts"
-    }
+    },
+    "./dist/hbc.wasm": "./dist/hbc.wasm"
   },
   "scripts": {
     "build": "bun build.ts",
