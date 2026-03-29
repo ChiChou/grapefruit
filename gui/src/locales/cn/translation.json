@@ -592,5 +592,9 @@
   "hermes_str_string": "字符串",
   "hermes_str_identifier": "标识符",
   "hermes_str_predefined": "预定义",
-  "hermes_open_with": "Hermes 反汇编器"
+  "hermes_open_with": "Hermes 反汇编器",
+
+  "r2_decompiler": "二进制反编译器",
+  "r2_drop_file": "拖放二进制文件到此处",
+  "r2_file_types": ".dex, .so, .dylib, .elf, .exe 等"
 }

@@ -30,6 +30,12 @@ export function WelcomePage() {
           >
             {t("hermes_decompiler")}
           </Link>
+          <Link
+            to="/decompiler/radare2"
+            className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors"
+          >
+            {t("r2_decompiler")}
+          </Link>
         </div>
         <footer className="mt-auto flex items-center gap-2 pt-4">
           <LanguageSelector />

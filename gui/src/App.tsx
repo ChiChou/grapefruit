@@ -11,6 +11,7 @@ import { ProcessesView } from "./components/pages/ProcessesView";
 import { Workspace } from "./components/layout/Workspace";
 import { WorkspaceIndex } from "./components/layout/WorkspaceIndex";
 import { HermesPage } from "./components/pages/HermesPage";
+import { R2Page } from "./components/pages/R2Page";
 
 import { FruityGeneralPanel } from "./components/panels/FruityGeneralPanel";
 import { FruityDevicePanel } from "./components/panels/FruityDevicePanel";
@@ -79,8 +80,9 @@ function App() {
           <Route path="list/:udid/processes" element={<ProcessesView />} />
         </Route>
 
-        {/* Standalone Hermes bytecode disassembler */}
+        {/* Standalone decompiler tools */}
         <Route path="/decompiler/hermes" element={<HermesPage />} />
+        <Route path="/decompiler/radare2" element={<R2Page />} />
 
         {/* Workspace with platform and mode as route params */}
         <Route path="/workspace/:platform/:device/:mode/:target" element={<Workspace />}>

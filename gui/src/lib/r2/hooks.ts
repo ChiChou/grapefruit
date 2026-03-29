@@ -4,6 +4,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as r2 from "./client";
+import * as ansi from "@/lib/ansi";
 import type { CFGNode, CFGEdge } from "@/components/shared/CFGView";
 
 // Re-export types from old use-dex-r2.ts for compatibility
@@ -29,6 +30,12 @@ export interface DexField {
   flags: string;
   signature: string;
   name: string;
+}
+
+export interface R2Function {
+  addr: string;
+  name: string;
+  size: number;
 }
 
 export interface DexString {
@@ -113,7 +120,10 @@ export function useR2File(opts: {
   data: ArrayBuffer | null;
   name: string;
 }) {
+  const [binType, setBinType] = useState("");
+  const [arch, setArch] = useState("");
   const [classes, setClasses] = useState<DexClass[]>([]);
+  const [functions, setFunctions] = useState<R2Function[]>([]);
   const [strings, setStrings] = useState<DexString[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -136,13 +146,35 @@ export function useR2File(opts: {
         await r2.loadFile(opts.name, copy);
         if (cancelled) return;
 
-        const [icText, strJson] = await Promise.all([
+        const [icText, aflJson, strJson, infoJson] = await Promise.all([
           r2.cmd("ic"),
+          r2.cmd("aflj"),
           r2.cmd("izj"),
+          r2.cmd("ij"),
         ]);
         if (cancelled) return;
 
+        try {
+          const info = JSON.parse(infoJson);
+          setBinType(info?.bin?.type ?? info?.core?.type ?? "");
+          setArch(info?.bin?.arch ?? "");
+        } catch { /* ignore */ }
+
         setClasses(parseIc(icText));
+
+        try {
+          const parsed = JSON.parse(aflJson);
+          const fns: R2Function[] = Array.isArray(parsed)
+            ? parsed.map((f: any) => ({
+                addr: `0x${(f.offset ?? f.addr ?? 0).toString(16)}`,
+                name: f.name ?? `fcn.${(f.offset ?? 0).toString(16)}`,
+                size: f.size ?? 0,
+              }))
+            : [];
+          setFunctions(fns);
+        } catch {
+          setFunctions([]);
+        }
 
         try {
           const parsed: Array<{ vaddr: number; string: string }> = JSON.parse(strJson);
@@ -169,10 +201,10 @@ export function useR2File(opts: {
     async (command: string, output?: "plain" | "html"): Promise<string> => {
       if (!ready.current) throw new Error("not ready");
       if (output === "html") {
-        r2.cmd("e scr.color=1");
-        const result = await r2.cmd(command);
-        r2.cmd("e scr.color=0");
-        return result;
+        await r2.cmd("e scr.color=1");
+        const raw = await r2.cmd(command);
+        await r2.cmd("e scr.color=0");
+        return ansi.toHtml(raw);
       }
       return r2.cmd(command);
     },
@@ -243,7 +275,26 @@ export function useR2File(opts: {
     [cmd],
   );
 
-  return { classes, strings, isLoading, error, isReady, cmd, disassemble, cfg, xrefs };
+  const funcXrefs = useCallback(
+    async (address: string): Promise<StringXref[]> => {
+      if (!address) return [];
+      const raw = await cmd(`axtj @ ${address}`);
+      try {
+        const refs: Array<{ from: number; fcn_addr?: number; fcn_name?: string }> =
+          JSON.parse(raw);
+        return refs.map((ref) => ({
+          addr: `0x${(ref.from ?? 0).toString(16)}`,
+          fcnAddr: ref.fcn_addr ?? 0,
+          fcnName: ref.fcn_name ?? "",
+        }));
+      } catch {
+        return [];
+      }
+    },
+    [cmd],
+  );
+
+  return { binType, arch, classes, functions, strings, isLoading, error, isReady, cmd, disassemble, cfg, xrefs, funcXrefs };
 }
 
 /**

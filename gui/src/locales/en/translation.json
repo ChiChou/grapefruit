@@ -600,5 +600,9 @@
   "hermes_str_string": "String",
   "hermes_str_identifier": "Identifier",
   "hermes_str_predefined": "Predefined",
-  "hermes_open_with": "Hermes Disassembler"
+  "hermes_open_with": "Hermes Disassembler",
+
+  "r2_decompiler": "Binary Decompiler",
+  "r2_drop_file": "Drop a binary file here",
+  "r2_file_types": ".dex, .so, .dylib, .elf, .exe, and more"
 }
