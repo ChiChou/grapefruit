@@ -210,6 +210,109 @@ function assignColumns(jumps: Jump[]): void {
 }
 
 /**
+ * Build a control flow graph from parsed instructions.
+ * Splits instructions into basic blocks at jump targets and branch instructions.
+ */
+export function buildCfg(
+  lines: Line[],
+): { nodes: { id: string; label: string; lines: string[] }[]; edges: { from: string; to: string; type: "true" | "false" | "unconditional" }[] } {
+  // Collect instruction lines only
+  const insts = lines.filter((l) => l.type === "instruction" && l.address);
+  if (insts.length === 0) return { nodes: [], edges: [] };
+
+  // Build address → index map
+  const addrIdx = new Map<string, number>();
+  for (let i = 0; i < insts.length; i++) addrIdx.set(insts[i].address!, i);
+
+  // Find block leaders: first instruction, jump targets, instructions after branches
+  const leaders = new Set<number>();
+  leaders.add(0);
+  for (let i = 0; i < insts.length; i++) {
+    const inst = insts[i];
+    if (!inst.opcode?.startsWith("j")) continue;
+    // Next instruction is a leader (fall-through)
+    if (i + 1 < insts.length) leaders.add(i + 1);
+    // Jump target is a leader
+    for (const op of inst.operands ?? []) {
+      if (!op.startsWith("0x")) continue;
+      const target = addrIdx.get(normAddr(op));
+      if (target !== undefined) leaders.add(target);
+    }
+  }
+
+  // Sort leaders and build blocks
+  const sorted = [...leaders].sort((a, b) => a - b);
+  const nodes: { id: string; label: string; lines: string[] }[] = [];
+  const blockIdForIdx = new Map<number, string>();
+
+  for (let bi = 0; bi < sorted.length; bi++) {
+    const start = sorted[bi];
+    const end = bi + 1 < sorted.length ? sorted[bi + 1] : insts.length;
+    const addr = insts[start].address!;
+    const id = `bb_${addr}`;
+    blockIdForIdx.set(start, id);
+
+    const blockLines: string[] = [];
+    for (let i = start; i < end; i++) {
+      const inst = insts[i];
+      const ops = (inst.operands ?? []).join(", ");
+      blockLines.push(`${inst.opcode}${ops ? " " + ops : ""}`);
+    }
+    nodes.push({ id, label: addr, lines: blockLines });
+  }
+
+  // Build edges
+  const edges: { from: string; to: string; type: "true" | "false" | "unconditional" }[] = [];
+  for (let bi = 0; bi < sorted.length; bi++) {
+    const start = sorted[bi];
+    const end = bi + 1 < sorted.length ? sorted[bi + 1] : insts.length;
+    const lastIdx = end - 1;
+    const last = insts[lastIdx];
+    const blockId = blockIdForIdx.get(start)!;
+
+    if (!last.opcode?.startsWith("j")) {
+      // Fall-through to next block (unless it's ret or last block)
+      if (last.opcode !== "ret" && bi + 1 < sorted.length) {
+        const nextId = blockIdForIdx.get(sorted[bi + 1]);
+        if (nextId) edges.push({ from: blockId, to: nextId, type: "unconditional" });
+      }
+      continue;
+    }
+
+    // Branch instruction
+    const isUnconditional = last.opcode === "jmp" || last.opcode === "jmp_long";
+    let targetId: string | undefined;
+    for (const op of last.operands ?? []) {
+      if (!op.startsWith("0x")) continue;
+      const target = addrIdx.get(normAddr(op));
+      if (target !== undefined) {
+        targetId = blockIdForIdx.get(target);
+        if (!targetId) {
+          // Target might be inside a block — find the block that contains it
+          for (let bj = sorted.length - 1; bj >= 0; bj--) {
+            if (sorted[bj] <= target) { targetId = blockIdForIdx.get(sorted[bj]); break; }
+          }
+        }
+      }
+      break;
+    }
+
+    if (isUnconditional) {
+      if (targetId) edges.push({ from: blockId, to: targetId, type: "unconditional" });
+    } else {
+      // Conditional: true branch = target, false branch = fall-through
+      if (targetId) edges.push({ from: blockId, to: targetId, type: "true" });
+      if (bi + 1 < sorted.length) {
+        const fallId = blockIdForIdx.get(sorted[bi + 1]);
+        if (fallId) edges.push({ from: blockId, to: fallId, type: "false" });
+      }
+    }
+  }
+
+  return { nodes, edges };
+}
+
+/**
  * Build an optimized LLM prompt from parsed disassembly.
  * - Only includes addresses for branch targets
  * - Inlines resolved string/identifier values

@@ -13,8 +13,9 @@ import {
 } from "lucide-react";
 import Editor from "@monaco-editor/react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { parse, resolve, buildLlmContext } from "@/lib/hermes-asm";
+import { parse, resolve, buildLlmContext, buildCfg } from "@/lib/hermes-asm";
 import { HermesDisasm } from "./HermesDisasm";
+import { CFGView, type CFGNode, type CFGEdge } from "./CFGView";
 
 import {
   ResizablePanelGroup,
@@ -49,7 +50,7 @@ export interface HermesViewerProps {
   decompile: (funcId?: number | null, opts?: { offsets?: boolean }) => Promise<string | null>;
 }
 
-type ViewMode = "disassembly" | "pseudocode" | "ai-decompile";
+type ViewMode = "disassembly" | "graph" | "pseudocode" | "ai-decompile";
 type LeftTab = "functions" | "strings";
 
 function formatHex(n: number): string {
@@ -99,6 +100,7 @@ export function HermesViewer({
     () => localStorage.getItem("hermes-show-addr") !== "false",
   );
   const [copied, setCopied] = useState(false);
+  const [cfgData, setCfgData] = useState<{ nodes: CFGNode[]; edges: CFGEdge[] } | null>(null);
 
   const [strSearch, setStrSearch] = useState("");
   const [strKindFilter, setStrKindFilter] = useState("all");
@@ -116,6 +118,18 @@ export function HermesViewer({
   const navigatingRef = useRef(false);
   // Force re-render when history changes (refs don't trigger renders)
   const [, setHistoryTick] = useState(0);
+
+  const loadGraph = useCallback(
+    async (funcId: number | null) => {
+      setCfgData(null);
+      const source = await disassemble(funcId);
+      if (!source) return;
+      const lines = parse(source);
+      const cfg = buildCfg(lines);
+      if (cfg.nodes.length > 0) setCfgData(cfg);
+    },
+    [disassemble],
+  );
 
   const fetchCode = useCallback(
     async (funcId: number | null, mode: ViewMode) => {
@@ -257,11 +271,13 @@ export function HermesViewer({
       localStorage.setItem("hermes-view-mode", mode);
       if (mode === "ai-decompile") {
         loadAiDecompile(selectedFuncId);
+      } else if (mode === "graph") {
+        if (selectedFuncId !== null) loadGraph(selectedFuncId);
       } else {
         fetchCode(selectedFuncId, mode);
       }
     },
-    [selectedFuncId, fetchCode, loadAiDecompile],
+    [selectedFuncId, fetchCode, loadGraph, loadAiDecompile],
   );
 
   const navigateTo = useCallback(
@@ -270,11 +286,14 @@ export function HermesViewer({
       setSelectedString(null);
       if (viewMode === "ai-decompile") {
         loadAiDecompile(funcId);
+      } else if (viewMode === "graph") {
+        fetchCode(funcId, "disassembly");
+        loadGraph(funcId);
       } else {
         fetchCode(funcId, viewMode);
       }
     },
-    [viewMode, fetchCode, loadAiDecompile],
+    [viewMode, fetchCode, loadGraph, loadAiDecompile],
   );
 
   const handleFuncClick = useCallback(
@@ -627,6 +646,7 @@ export function HermesViewer({
               >
                 <TabsList variant="line">
                   <TabsTrigger value="disassembly">{t("hermes_disassembly")}</TabsTrigger>
+                  <TabsTrigger value="graph">Graph</TabsTrigger>
                   <TabsTrigger value="pseudocode">{t("hermes_pseudocode")}</TabsTrigger>
                   <TabsTrigger value="ai-decompile">{t("hermes_ai_decompile")}</TabsTrigger>
                 </TabsList>
@@ -683,6 +703,14 @@ export function HermesViewer({
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   Loading...
                 </div>
+              ) : viewMode === "graph" ? (
+                cfgData ? (
+                  <CFGView nodes={cfgData.nodes} edges={cfgData.edges} />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+                    {t("hermes_click_function")}
+                  </div>
+                )
               ) : !codeContent ? (
                 <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
                   {t("hermes_click_function")}

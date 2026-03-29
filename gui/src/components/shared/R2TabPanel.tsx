@@ -20,7 +20,7 @@ export function R2TabPanel({ fileId }: { fileId: string }) {
     return () => { ignore = true; };
   }, [fileId]);
 
-  const { binType, arch, classes, functions, strings, isLoading, error, isReady, disassemble, cfg, xrefs, funcXrefs } =
+  const { binType, arch, classes, functions, strings, isLoading, error, isReady, cmd, disassemble, cfg, xrefs, funcXrefs } =
     useR2File({ data: entry?.data ?? null, name: entry?.name ?? "file" });
 
   const loading = fetching || isLoading;
@@ -54,6 +54,7 @@ export function R2TabPanel({ fileId }: { fileId: string }) {
     <R2Viewer
       binType={binType}
       arch={arch}
+      cmd={cmd}
       classes={classes}
       functions={functions}
       strings={strings}

@@ -45,6 +45,7 @@ export interface R2ViewerProps {
   classes: DexClass[];
   functions: R2Function[];
   strings: DexString[];
+  cmd: (command: string, output?: "plain" | "html") => Promise<string>;
   disassemble: (address: string, output?: "plain" | "html") => Promise<string>;
   cfg: (address: string) => Promise<{ nodes: CFGNode[]; edges: CFGEdge[] } | null>;
   xrefs: (vaddr: number) => Promise<StringXref[]>;
@@ -53,7 +54,7 @@ export interface R2ViewerProps {
 
 type LeftTab = "classes" | "functions" | "strings";
 
-type ViewMode = "disassembly" | "graph" | "ai-decompile";
+type ViewMode = "disassembly" | "graph" | "decompiler" | "ai-decompile";
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -69,6 +70,7 @@ export function R2Viewer({
   classes,
   functions,
   strings,
+  cmd,
   disassemble,
   cfg,
   xrefs,
@@ -93,6 +95,9 @@ export function R2Viewer({
 
   const [cfgData, setCfgData] = useState<{ nodes: CFGNode[]; edges: CFGEdge[] } | null>(null);
   const [cfgLoading, setCfgLoading] = useState(false);
+
+  const [pdcContent, setPdcContent] = useState("");
+  const [pdcLoading, setPdcLoading] = useState(false);
 
   const [aiContent, setAiContent] = useState("");
   const [aiLang, setAiLang] = useState("cpp");
@@ -142,6 +147,21 @@ export function R2Viewer({
       }
     },
     [disassemble],
+  );
+
+  const loadPdc = useCallback(
+    async (method: DexMethod) => {
+      setPdcLoading(true);
+      try {
+        const output = await cmd(`e scr.color=0; s ${method.addr}; af; pdc`);
+        setPdcContent(output);
+      } catch {
+        setPdcContent("// Decompiler failed");
+      } finally {
+        setPdcLoading(false);
+      }
+    },
+    [cmd],
   );
 
   const loadCfg = useCallback(
@@ -247,11 +267,13 @@ export function R2Viewer({
       } else if (viewMode === "graph") {
         loadDisassembly(method);
         loadCfg(method);
+      } else if (viewMode === "decompiler") {
+        loadPdc(method);
       } else {
         loadDisassembly(method);
       }
     },
-    [viewMode, loadDisassembly, loadCfg, loadAi, funcXrefs],
+    [viewMode, loadDisassembly, loadCfg, loadPdc, loadAi, funcXrefs],
   );
 
   const selectClass = useCallback((cls: DexClass) => {
@@ -287,9 +309,10 @@ export function R2Viewer({
       if (!selectedMethod || !selectedClass) return;
       if (mode === "ai-decompile") loadAi(selectedClass, selectedMethod);
       else if (mode === "graph") loadCfg(selectedMethod);
+      else if (mode === "decompiler") loadPdc(selectedMethod);
       else loadDisassembly(selectedMethod);
     },
-    [selectedMethod, selectedClass, loadDisassembly, loadCfg, loadAi],
+    [selectedMethod, selectedClass, loadDisassembly, loadCfg, loadPdc, loadAi],
   );
 
   const canGoBack = historyIdx.current > 0;
@@ -511,6 +534,7 @@ export function R2Viewer({
                   <TabsList variant="line">
                     <TabsTrigger value="disassembly">{t("hermes_disassembly")}</TabsTrigger>
                     <TabsTrigger value="graph">Graph</TabsTrigger>
+                    <TabsTrigger value="decompiler">{t("hermes_pseudocode")}</TabsTrigger>
                     <TabsTrigger value="ai-decompile">{t("hermes_ai_decompile")}</TabsTrigger>
                   </TabsList>
                 </Tabs>
@@ -540,6 +564,19 @@ export function R2Viewer({
                 </div>
               ) : viewMode === "ai-decompile" && selectedMethod ? (
                 <AiView content={aiContent} isLoading={aiLoading} error={aiError} theme={theme} lang={aiLang} onRetry={() => selectedClass && loadAi(selectedClass, selectedMethod)} />
+              ) : viewMode === "decompiler" && selectedMethod ? (
+                pdcLoading ? (
+                  <div className="flex items-center justify-center h-full text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />Loading...
+                  </div>
+                ) : pdcContent ? (
+                  <Editor
+                    height="100%" language="c" theme={theme === "dark" ? "vs-dark" : "light"} value={pdcContent}
+                    options={{ readOnly: true, minimap: { enabled: false }, fontSize: 12, lineNumbers: "off", scrollBeyondLastLine: false, wordWrap: "off" }}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-sm text-muted-foreground">{t("hermes_click_function")}</div>
+                )
               ) : viewMode === "graph" && selectedMethod ? (
                 cfgLoading ? (
                   <div className="flex items-center justify-center h-full text-muted-foreground">
