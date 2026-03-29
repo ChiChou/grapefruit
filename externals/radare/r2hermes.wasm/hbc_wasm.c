@@ -167,6 +167,8 @@ char *hbc_wasm_strings(int handle) {
 	SB_INIT(sb);
 	SB_APPEND_CHAR(sb, '[');
 
+	HBCReader *reader = &hbc->reader;
+
 	for (u32 i = 0; i < count; i++) {
 		const char *str = NULL;
 		Result res = hbc_get_string(hbc, i, &str);
@@ -182,6 +184,22 @@ char *hbc_wasm_strings(int handle) {
 			}
 		}
 
+		/* Compute the file offset the disassembler uses for this string */
+		u32 soff = 0;
+		if (i < reader->header.stringCount && reader->small_string_table) {
+			if (reader->small_string_table[i].length == 0xFF && reader->overflow_string_table) {
+				u32 oi = reader->small_string_table[i].offset;
+				if (oi < reader->header.overflowStringCount) {
+					soff = reader->overflow_string_table[oi].offset;
+				} else {
+					soff = reader->small_string_table[i].offset;
+				}
+			} else {
+				soff = reader->small_string_table[i].offset;
+			}
+		}
+		u32 abs_off = reader->string_storage_file_offset + soff;
+
 		if (i > 0) SB_APPEND_CHAR(sb, ',');
 		SB_APPEND(sb, "{\"index\":");
 		SB_APPEND_INT(sb, (int)i);
@@ -189,7 +207,9 @@ char *hbc_wasm_strings(int handle) {
 		json_escape(&sb, str);
 		SB_APPEND(sb, ",\"kind\":\"");
 		SB_APPEND(sb, kind);
-		SB_APPEND(sb, "\"}");
+		SB_APPEND(sb, "\",\"offset\":");
+		SB_APPEND_INT(sb, (int)abs_off);
+		SB_APPEND_CHAR(sb, '}');
 	}
 
 	SB_APPEND_CHAR(sb, ']');

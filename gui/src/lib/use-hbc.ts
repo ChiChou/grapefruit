@@ -28,6 +28,7 @@ export interface HBCString {
   index: number;
   value: string;
   kind: string;
+  offset: number;
 }
 
 export interface HBCXrefs {
