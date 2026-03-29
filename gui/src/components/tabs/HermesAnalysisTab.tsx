@@ -86,9 +86,9 @@ export function HermesAnalysisTab({
       data={data}
       xrefs={xrefs}
       filename={params?.filename ?? "hermes"}
+      buffer={buffer}
       disassemble={disassemble}
       decompile={decompile}
-      downloadUrl={`/api/hermes/${device}/${identifier}/download/${params?.entryId}`}
     />
   );
 }

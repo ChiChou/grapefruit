@@ -1,21 +1,47 @@
-import { useCallback, useRef, useState } from "react";
-import { Link } from "react-router";
-import { Upload, FileCode } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router";
+import { useTranslation } from "react-i18next";
+import { Upload, FileCode, FolderOpen, Loader2 } from "lucide-react";
 
 import logo from "../../assets/logo.svg";
 import { DarkmodeToggle } from "../shared/DarkmodeToggle";
+import { LanguageSelector } from "../shared/LanguageSelector";
+import { Button } from "@/components/ui/button";
 import { useHBC } from "@/lib/use-hbc";
 import { HermesViewer } from "@/components/shared/HermesViewer";
-import { Loader2 } from "lucide-react";
 
 export function HermesPage() {
+  const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
   const [buffer, setBuffer] = useState<ArrayBuffer | null>(null);
   const [filename, setFilename] = useState("hermes");
-  const { data, xrefs, isLoading, error, disassemble, decompile } =
-    useHBC(buffer);
+  const hbc = useHBC(buffer);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
+
+  useEffect(() => {
+    const source = searchParams.get("source");
+    if (source !== "download") return;
+    const device = searchParams.get("device");
+    const identifier = searchParams.get("identifier");
+    const id = searchParams.get("id");
+    const name = searchParams.get("name");
+    if (!device || !identifier || !id) return;
+    if (name) setFilename(name);
+
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/hermes/${device}/${identifier}/download/${id}`,
+        );
+        if (!res.ok) return;
+        setBuffer(await res.arrayBuffer());
+      } catch {
+        /* ignore */
+      }
+    })();
+  }, [searchParams]);
 
   const loadFile = useCallback((file: File) => {
     setFilename(file.name);
@@ -40,68 +66,53 @@ export function HermesPage() {
     [loadFile],
   );
 
-  // Show viewer once loaded
-  if (data) {
-    return (
-      <div className="h-screen w-screen flex flex-col">
-        <div className="flex items-center gap-3 px-4 py-1.5 border-b shrink-0 bg-sidebar">
-          <Link to="/">
-            <img src={logo} alt="IGF" className="h-6 w-24" />
-          </Link>
-          <span className="text-xs text-muted-foreground">/</span>
-          <span className="text-xs font-medium">Hermes Disassembler</span>
-          <button
-            className="ml-auto text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-            onClick={() => {
-              setBuffer(null);
-              setFilename("hermes");
-            }}
-          >
-            Open another file
-          </button>
-          <DarkmodeToggle />
+  const openFile = useCallback(() => {
+    inputRef.current?.click();
+  }, []);
+
+  return (
+    <div className="h-screen w-screen flex flex-col">
+      <div className="flex items-center gap-2 px-3 py-1 border-b shrink-0 bg-sidebar">
+        <Link to="/" className="shrink-0">
+          <img src={logo} alt="IGF" className="h-5 w-20" />
+        </Link>
+        <div className="w-px h-4 bg-border mx-1" />
+        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={openFile}>
+          <FolderOpen className="h-3.5 w-3.5 mr-1" />
+          {t("open")}
+        </Button>
+        <div className="flex-1 flex items-center justify-center">
+          <span className="text-xs text-muted-foreground">
+            {t("hermes_decompiler")}
+          </span>
         </div>
+        <DarkmodeToggle />
+        <LanguageSelector />
+      </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".hbc,.jsbundle"
+        className="hidden"
+        onChange={onFileChange}
+      />
+
+      {hbc.data ? (
         <div className="flex-1 overflow-hidden">
           <HermesViewer
-            data={data}
-            xrefs={xrefs}
+            data={hbc.data}
+            xrefs={hbc.xrefs}
             filename={filename}
-            disassemble={disassemble}
-            decompile={decompile}
+            buffer={hbc.buffer}
+            disassemble={hbc.disassemble}
+            decompile={hbc.decompile}
           />
         </div>
-      </div>
-    );
-  }
-
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen text-muted-foreground">
-        <Loader2 className="h-5 w-5 animate-spin mr-2" />
-        Parsing Hermes bytecode...
-      </div>
-    );
-  }
-
-  // Upload UI
-  return (
-    <div className="flex items-center justify-center h-screen">
-      <div className="flex flex-col items-center gap-6 max-w-lg w-full px-6">
-        <Link to="/">
-          <img src={logo} alt="IGF" className="h-10 w-40" />
-        </Link>
-        <h1 className="text-lg font-semibold">Hermes Bytecode Disassembler</h1>
-        <p className="text-sm text-muted-foreground text-center">
-          Analyze React Native Hermes bytecode directly in your browser.
-          No server required.
-        </p>
-
+      ) : (
         <div
-          className={`w-full border-2 border-dashed rounded-lg p-12 text-center transition-colors cursor-pointer ${
-            dragging
-              ? "border-primary bg-primary/5"
-              : "border-muted-foreground/25 hover:border-muted-foreground/50"
+          className={`flex-1 flex items-center justify-center transition-colors ${
+            dragging ? "bg-primary/5" : ""
           }`}
           onDragOver={(e) => {
             e.preventDefault();
@@ -109,45 +120,38 @@ export function HermesPage() {
           }}
           onDragLeave={() => setDragging(false)}
           onDrop={onDrop}
-          onClick={() => inputRef.current?.click()}
         >
-          <input
-            ref={inputRef}
-            type="file"
-            accept=".hbc,.jsbundle"
-            className="hidden"
-            onChange={onFileChange}
-          />
-          <div className="flex flex-col items-center gap-3">
-            {dragging ? (
-              <FileCode className="h-10 w-10 text-primary" />
+          <div className="flex flex-col items-center gap-4 max-w-sm text-center">
+            {hbc.isLoading ? (
+              <>
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  {t("hermes_parsing")}
+                </p>
+              </>
             ) : (
-              <Upload className="h-10 w-10 text-muted-foreground" />
+              <>
+                {dragging ? (
+                  <FileCode className="h-12 w-12 text-primary" />
+                ) : (
+                  <Upload className="h-12 w-12 text-muted-foreground/40" />
+                )}
+                <div>
+                  <p className="text-sm font-medium">
+                    {dragging ? t("hermes_drop_to_analyze") : t("hermes_drop_file")}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t("hermes_file_types")}
+                  </p>
+                </div>
+                {hbc.error && (
+                  <p className="text-xs text-destructive">{hbc.error}</p>
+                )}
+              </>
             )}
-            <div className="text-sm">
-              {dragging ? (
-                <span className="text-primary font-medium">Drop to analyze</span>
-              ) : (
-                <>
-                  <span className="font-medium">Click to upload</span>
-                  <span className="text-muted-foreground"> or drag and drop</span>
-                </>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              .hbc or .jsbundle files
-            </p>
           </div>
         </div>
-
-        {error && (
-          <div className="text-sm text-destructive text-center">{error}</div>
-        )}
-
-        <div className="flex items-center gap-2 mt-2">
-          <DarkmodeToggle />
-        </div>
-      </div>
+      )}
     </div>
   );
 }

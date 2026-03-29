@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Download, Trash2, RefreshCw, FileSearch } from "lucide-react";
 
-import { useDock } from "@/context/DockContext";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,14 +34,8 @@ function filenameFromUrl(url: string): string {
   return parts[parts.length - 1] || url;
 }
 
-function filenameFromUrlShort(url: string): string {
-  const name = filenameFromUrl(url);
-  return name.length > 30 ? name.slice(0, 27) + "..." : name;
-}
-
 export function HermesTab() {
   const { socket, status, device, identifier } = useSession();
-  const { openFilePanel } = useDock();
   const [entries, setEntries] = useState<HermesEntry[]>([]);
   const [sortBy, setSortBy] = useState<"id" | "hash">("id");
 
@@ -231,17 +224,16 @@ export function HermesTab() {
                     size="sm"
                     variant="ghost"
                     className="h-6 w-6 p-0"
-                    onClick={() =>
-                      openFilePanel({
-                        id: `hermes_analysis_${entry.id}`,
-                        component: "hermesAnalysis",
-                        title: `HBC: ${filenameFromUrlShort(entry.url)}`,
-                        params: {
-                          entryId: entry.id,
-                          filename: filenameFromUrl(entry.url),
-                        },
-                      })
-                    }
+                    onClick={() => {
+                      const params = new URLSearchParams({
+                        source: "download",
+                        device: device!,
+                        identifier: identifier!,
+                        id: String(entry.id),
+                        name: filenameFromUrl(entry.url),
+                      });
+                      window.open(`/decompiler/hermes?${params}`, "_blank");
+                    }}
                     title="Analyze"
                   >
                     <FileSearch className="w-3.5 h-3.5" />

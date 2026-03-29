@@ -63,7 +63,6 @@ import { DroidManifestTab } from "../tabs/DroidManifestTab";
 import { DroidProvidersTab } from "../tabs/DroidProvidersTab";
 import { FruityXPCTab } from "../tabs/FruityXPCTab";
 import { ReactNativeTab } from "../tabs/ReactNativeTab";
-import { HermesAnalysisTab } from "../tabs/HermesAnalysisTab";
 import { HermesFileTab } from "../tabs/HermesFileTab";
 import { PrivacyTab } from "../tabs/PrivacyTab";
 import { XCPrivacyTab } from "../tabs/XCPrivacyTab";
@@ -206,7 +205,6 @@ function WorkspaceContent() {
     droidProviders: DroidProvidersTab,
     xpc: FruityXPCTab,
     reactNative: ReactNativeTab,
-    hermesAnalysis: HermesAnalysisTab,
     hermesFile: HermesFileTab,
     privacy: PrivacyTab,
     xcprivacy: XCPrivacyTab,

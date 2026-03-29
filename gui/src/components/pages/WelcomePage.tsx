@@ -20,6 +20,17 @@ export function WelcomePage() {
         <div className="mb-4">
           <Devices />
         </div>
+        <div className="border-t border-border pt-3 mt-4">
+          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-1 mb-2">
+            {t("tools")}
+          </p>
+          <Link
+            to="/decompiler/hermes"
+            className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors"
+          >
+            {t("hermes_decompiler")}
+          </Link>
+        </div>
         <footer className="mt-auto flex items-center gap-2 pt-4">
           <LanguageSelector />
           <DarkmodeToggle />

@@ -80,7 +80,7 @@ function App() {
         </Route>
 
         {/* Standalone Hermes bytecode disassembler */}
-        <Route path="/hermes" element={<HermesPage />} />
+        <Route path="/decompiler/hermes" element={<HermesPage />} />
 
         {/* Workspace with platform and mode as route params */}
         <Route path="/workspace/:platform/:device/:mode/:target" element={<Workspace />}>

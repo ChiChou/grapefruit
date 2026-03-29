@@ -71,6 +71,7 @@ export function HermesFileTab({
       data={data}
       xrefs={xrefs}
       filename={filename}
+      buffer={stableBuffer}
       disassemble={disassemble}
       decompile={decompile}
     />
