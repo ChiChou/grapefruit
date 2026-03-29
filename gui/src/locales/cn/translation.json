@@ -594,6 +594,9 @@
   "hermes_str_predefined": "预定义",
   "hermes_open_with": "Hermes 反汇编器",
 
+  "decompiler": "反编译器",
+  "decompiler_hermes": "React Native",
+  "decompiler_r2": "原生二进制",
   "r2_decompiler": "二进制反编译器",
   "r2_drop_file": "拖放二进制文件到此处",
   "r2_file_types": ".dex, .so, .dylib, .elf, .exe 等"

@@ -602,6 +602,9 @@
   "hermes_str_predefined": "Predefined",
   "hermes_open_with": "Hermes Disassembler",
 
+  "decompiler": "Decompiler",
+  "decompiler_hermes": "React Native",
+  "decompiler_r2": "Native Binary",
   "r2_decompiler": "Binary Decompiler",
   "r2_drop_file": "Drop a binary file here",
   "r2_file_types": ".dex, .so, .dylib, .elf, .exe, and more"
