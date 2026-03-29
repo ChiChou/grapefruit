@@ -125,6 +125,10 @@ export class HBC {
     return this.#str(this.#exports.hbc_wasm_disassemble_all);
   }
 
+  xrefs() {
+    return JSON.parse(this.#str(this.#exports.hbc_wasm_xrefs));
+  }
+
   close() {
     if (this.#handle >= 0) {
       this.#exports.hbc_wasm_close(this.#handle);

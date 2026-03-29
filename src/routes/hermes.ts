@@ -96,6 +96,14 @@ const routes = new Hono()
       return c.text("Failed to decompile Hermes bytecode", 500);
     }
   })
+  .get("/hermes/:device/:identifier/xrefs/:id", async (c) => {
+    try {
+      return await withHBC(c, (hbc) => c.json(hbc.xrefs()));
+    } catch (e) {
+      console.error("Failed to compute xrefs:", e);
+      return c.text("Failed to compute xrefs", 500);
+    }
+  })
   .get("/hermes/:device/:identifier/disassemble/:id", async (c) => {
     const fnId = c.req.query("fn");
 

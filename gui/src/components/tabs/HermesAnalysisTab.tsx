@@ -68,6 +68,11 @@ interface HBCString {
   kind: string;
 }
 
+interface HBCXrefs {
+  strings: Record<string, number[]>;
+  functions: Record<string, number[]>;
+}
+
 interface AnalysisData {
   info: HBCInfo;
   functions: HBCFunction[];
@@ -115,6 +120,8 @@ export function HermesAnalysisTab({
   const [strKindFilter, setStrKindFilter] = useState("all");
   const [selectedString, setSelectedString] = useState<HBCString | null>(null);
 
+  const [xrefs, setXrefs] = useState<HBCXrefs | null>(null);
+
   const [aiContent, setAiContent] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -130,13 +137,17 @@ export function HermesAnalysisTab({
 
     (async () => {
       try {
-        const res = await fetch(
-          `/api/hermes/${device}/${identifier}/analyze/${params.entryId}`,
-        );
+        const [res, xrefRes] = await Promise.all([
+          fetch(`/api/hermes/${device}/${identifier}/analyze/${params.entryId}`),
+          fetch(`/api/hermes/${device}/${identifier}/xrefs/${params.entryId}`),
+        ]);
         if (!res.ok) throw new Error("Failed to analyze Hermes bytecode");
         const result = await res.json();
         if (ignore) return;
         setData(result);
+        if (xrefRes.ok) {
+          setXrefs(await xrefRes.json());
+        }
       } catch (e) {
         if (ignore) return;
         setError(e instanceof Error ? e.message : "Failed to analyze");
@@ -197,6 +208,25 @@ export function HermesAnalysisTab({
     },
     [device, identifier, params?.entryId, data?.functions],
   );
+
+  const stringXrefFuncs = useMemo(() => {
+    if (!selectedString || !xrefs || !data) return [];
+    const callers = xrefs.strings[String(selectedString.index)];
+    if (!callers) return [];
+    return callers.map((id) => data.functions[id]).filter(Boolean);
+  }, [selectedString, xrefs, data]);
+
+  const funcCallers = useMemo(() => {
+    if (selectedFuncId === null || !xrefs || !data) return [];
+    const callers = xrefs.functions[String(selectedFuncId)];
+    if (!callers) return [];
+    return callers.map((id) => data.functions[id]).filter(Boolean);
+  }, [selectedFuncId, xrefs, data]);
+
+  const handleStringClick = useCallback((str: HBCString) => {
+    setSelectedString(str);
+    setSelectedFuncId(null);
+  }, []);
 
   const changeLeftTab = useCallback((tab: LeftTab) => {
     setLeftTab(tab);
@@ -312,6 +342,16 @@ export function HermesAnalysisTab({
       }
     },
     [viewMode, fetchCode, loadAiDecompile],
+  );
+
+  const handleXrefClick = useCallback(
+    (func: HBCFunction) => {
+      setSelectedString(null);
+      setLeftTab("functions");
+      localStorage.setItem("hermes-left-tab", "functions");
+      handleFuncClick(func.id);
+    },
+    [handleFuncClick],
   );
 
   // Filtered functions
@@ -515,7 +555,7 @@ export function HermesAnalysisTab({
               <StringList
                 strings={filteredStrings}
                 selectedIndex={selectedString?.index ?? null}
-                onSelect={setSelectedString}
+                onSelect={handleStringClick}
               />
             </TabsContent>
           </Tabs>
@@ -542,7 +582,7 @@ export function HermesAnalysisTab({
                   #{selectedString.index}
                 </span>
               </div>
-              <div className="flex-1 overflow-auto p-3">
+              <div className="overflow-auto p-3">
                 <pre className="font-mono text-xs whitespace-pre-wrap break-all">
                   {selectedString.value || (
                     <span className="text-muted-foreground italic">
@@ -550,6 +590,38 @@ export function HermesAnalysisTab({
                     </span>
                   )}
                 </pre>
+              </div>
+              <div className="border-t flex flex-col flex-1 overflow-hidden">
+                <div className="px-3 py-1.5 text-[10px] text-muted-foreground shrink-0 border-b">
+                  Referenced by {stringXrefFuncs.length > 0 ? `(${stringXrefFuncs.length})` : ""}
+                </div>
+                {stringXrefFuncs.length === 0 ? (
+                  <div className="flex items-center justify-center flex-1 text-xs text-muted-foreground">
+                    No references found
+                  </div>
+                ) : (
+                  <div className="flex-1 overflow-auto">
+                    {stringXrefFuncs.map((func) => (
+                      <button
+                        key={func.id}
+                        className="w-full text-left px-3 py-1.5 hover:bg-accent transition-colors cursor-pointer group border-b border-border/40"
+                        onClick={() => handleXrefClick(func)}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[10px] text-muted-foreground font-mono shrink-0 tabular-nums">
+                            #{func.id}
+                          </span>
+                          <span className="font-mono text-xs truncate group-hover:text-accent-foreground">
+                            {func.name}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground font-mono ml-auto shrink-0">
+                            {formatHex(func.offset)}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           ) : (
@@ -615,6 +687,31 @@ export function HermesAnalysisTab({
                   />
                 )}
               </div>
+
+              {/* Function xrefs */}
+              {funcCallers.length > 0 && (
+                <div className="border-t shrink-0 max-h-40 overflow-auto">
+                  <div className="px-3 py-1 text-[10px] text-muted-foreground sticky top-0 bg-background border-b">
+                    Called by ({funcCallers.length})
+                  </div>
+                  {funcCallers.map((func) => (
+                    <button
+                      key={func.id}
+                      className="w-full text-left px-3 py-1 hover:bg-accent/50 border-b border-border/40"
+                      onClick={() => handleFuncClick(func.id)}
+                    >
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-[10px] text-muted-foreground font-mono shrink-0">
+                          {formatHex(func.offset)}
+                        </span>
+                        <span className="font-mono text-xs truncate">
+                          {func.name}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </ResizablePanel>

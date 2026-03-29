@@ -28,5 +28,9 @@ export class HBC {
   }>;
   decompile(functionId?: number, options?: { offsets?: boolean }): string | null;
   disassemble(functionId?: number): string;
+  xrefs(): {
+    strings: Record<string, number[]>;
+    functions: Record<string, number[]>;
+  };
   close(): void;
 }

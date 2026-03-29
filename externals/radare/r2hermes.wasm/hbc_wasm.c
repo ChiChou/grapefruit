@@ -7,6 +7,7 @@
 #include <hbc/hbc.h>
 #include <hbc/common.h>
 #include <hbc/disasm.h>
+#include <hbc/bytecode.h>
 
 /* Access HBC internals to reach the embedded HBCReader for disassembly */
 #include "../r2hermes/src/lib/hbc_internal.h"
@@ -319,6 +320,165 @@ char *hbc_wasm_disassemble_all(int handle) {
 	char *output = strdup(dis.output.data ? dis.output.data : "");
 	_hbc_disassembler_cleanup(&dis);
 	return output;
+}
+
+/*
+ * Compute cross-references by scanning all functions' bytecodes.
+ * Returns JSON: {"strings":{"<strIdx>":[funcId,...],...},"functions":{"<funcId>":[callerFuncId,...],...}}
+ */
+EXPORT(hbc_wasm_xrefs)
+char *hbc_wasm_xrefs(int handle) {
+	HBC *hbc = get_handle(handle);
+	if (!hbc) return strdup("{\"strings\":{},\"functions\":{}}");
+
+	u32 func_count = hbc_function_count(hbc);
+	HBCReader *reader = &hbc->reader;
+	HBCISA isa = hbc_isa_getv((int)reader->header.version);
+	if (!isa.instructions || isa.count == 0)
+		return strdup("{\"strings\":{},\"functions\":{}}");
+
+	/* Allocate per-string and per-function reference lists */
+	u32 str_count = hbc_string_count(hbc);
+
+	/* Simple dynamic arrays: for each string/func target, store list of caller func IDs */
+	typedef struct { u32 *ids; u32 count; u32 cap; } IdList;
+
+	IdList *str_refs = (IdList *)calloc(str_count, sizeof(IdList));
+	IdList *fn_refs = (IdList *)calloc(func_count, sizeof(IdList));
+	if (!str_refs || !fn_refs) {
+		free(str_refs);
+		free(fn_refs);
+		return strdup("{\"strings\":{},\"functions\":{}}");
+	}
+
+	const u8 *file_data = reader->file_buffer.data;
+	u32 file_size = (u32)reader->file_buffer.size;
+
+	for (u32 fi = 0; fi < func_count; fi++) {
+		FunctionHeader *fh = &reader->function_headers[fi];
+		u32 bc_size = fh->bytecodeSizeInBytes;
+		if (bc_size == 0 || fh->offset + bc_size > file_size)
+			continue;
+
+		/* Read bytecode directly from the file buffer at the function's offset */
+		const u8 *bc = file_data + fh->offset;
+		u32 pos = 0;
+
+		while (pos < bc_size) {
+			u8 opcode = bc[pos];
+			if (opcode >= isa.count || !isa.instructions[opcode].name) break;
+			const Instruction *inst = &isa.instructions[opcode];
+			if (pos + inst->binary_size > bc_size) break;
+
+			/* Read operands from bytes after the opcode byte */
+			u32 byte_off = pos + 1;
+			for (int oi = 0; oi < 6; oi++) {
+				OperandType ot = inst->operands[oi].operand_type;
+				if (ot == OPERAND_TYPE_NONE) break;
+				OperandMeaning m = inst->operands[oi].operand_meaning;
+
+				u32 val = 0;
+				switch (ot) {
+				case OPERAND_TYPE_REG8:
+				case OPERAND_TYPE_UINT8:
+				case OPERAND_TYPE_ADDR8:
+					if (byte_off < pos + inst->binary_size)
+						val = bc[byte_off];
+					byte_off += 1;
+					break;
+				case OPERAND_TYPE_UINT16:
+					if (byte_off + 1 < pos + inst->binary_size)
+						val = (u32)bc[byte_off] | ((u32)bc[byte_off+1] << 8);
+					byte_off += 2;
+					break;
+				case OPERAND_TYPE_REG32:
+				case OPERAND_TYPE_UINT32:
+				case OPERAND_TYPE_IMM32:
+				case OPERAND_TYPE_ADDR32:
+					if (byte_off + 3 < pos + inst->binary_size)
+						val = (u32)bc[byte_off] | ((u32)bc[byte_off+1] << 8) |
+						      ((u32)bc[byte_off+2] << 16) | ((u32)bc[byte_off+3] << 24);
+					byte_off += 4;
+					break;
+				case OPERAND_TYPE_DOUBLE:
+					byte_off += 8;
+					break;
+				default:
+					break;
+				}
+
+				IdList *list = NULL;
+				if (m == OPERAND_MEANING_STRING_ID && val < str_count) {
+					list = &str_refs[val];
+				} else if (m == OPERAND_MEANING_FUNCTION_ID && val < func_count) {
+					list = &fn_refs[val];
+				}
+
+				if (list) {
+					if (list->count == 0 || list->ids[list->count - 1] != fi) {
+						if (list->count >= list->cap) {
+							u32 nc = list->cap ? list->cap * 2 : 4;
+							u32 *nids = (u32 *)realloc(list->ids, nc * sizeof(u32));
+							if (!nids) continue;
+							list->ids = nids;
+							list->cap = nc;
+						}
+						list->ids[list->count++] = fi;
+					}
+				}
+			}
+
+			pos += inst->binary_size;
+		}
+	}
+
+	/* Build JSON output */
+	StringBuffer sb;
+	SB_INIT(sb);
+	SB_APPEND(sb, "{\"strings\":{");
+
+	int first = 1;
+	char buf[32];
+	for (u32 i = 0; i < str_count; i++) {
+		if (str_refs[i].count == 0) continue;
+		if (!first) SB_APPEND_CHAR(sb, ',');
+		first = 0;
+		SB_APPEND_CHAR(sb, '"');
+		SB_APPEND_INT(sb, (int)i);
+		SB_APPEND(sb, "\":[");
+		for (u32 j = 0; j < str_refs[i].count; j++) {
+			if (j > 0) SB_APPEND_CHAR(sb, ',');
+			SB_APPEND_INT(sb, (int)str_refs[i].ids[j]);
+		}
+		SB_APPEND_CHAR(sb, ']');
+	}
+
+	SB_APPEND(sb, "},\"functions\":{");
+
+	first = 1;
+	for (u32 i = 0; i < func_count; i++) {
+		if (fn_refs[i].count == 0) continue;
+		if (!first) SB_APPEND_CHAR(sb, ',');
+		first = 0;
+		SB_APPEND_CHAR(sb, '"');
+		SB_APPEND_INT(sb, (int)i);
+		SB_APPEND(sb, "\":[");
+		for (u32 j = 0; j < fn_refs[i].count; j++) {
+			if (j > 0) SB_APPEND_CHAR(sb, ',');
+			SB_APPEND_INT(sb, (int)fn_refs[i].ids[j]);
+		}
+		SB_APPEND_CHAR(sb, ']');
+	}
+
+	SB_APPEND(sb, "}}");
+
+	/* Cleanup */
+	for (u32 i = 0; i < str_count; i++) free(str_refs[i].ids);
+	for (u32 i = 0; i < func_count; i++) free(fn_refs[i].ids);
+	free(str_refs);
+	free(fn_refs);
+
+	return sb_finish(&sb);
 }
 
 EXPORT(hbc_wasm_close)

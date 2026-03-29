@@ -110,6 +110,7 @@ const flags = [
   "-Wl,--export=hbc_wasm_decompile_offsets_all",
   "-Wl,--export=hbc_wasm_disassemble",
   "-Wl,--export=hbc_wasm_disassemble_all",
+  "-Wl,--export=hbc_wasm_xrefs",
   "-Wl,--export=hbc_wasm_close",
   "-Wl,--export=hbc_wasm_free",
   "-Wl,-z,stack-size=65536",
