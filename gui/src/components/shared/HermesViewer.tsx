@@ -366,7 +366,7 @@ export function HermesViewer({
   return (
     <div className="h-full flex flex-col">
       {/* Navigation bar */}
-      <div className="flex items-center gap-1 px-2 py-1 border-b shrink-0">
+      <div className="flex items-center gap-1 px-2 border-b shrink-0 h-8">
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
@@ -417,15 +417,24 @@ export function HermesViewer({
           )}
         </DropdownMenu>
 
+        <div className="flex-1" />
+
+        <Badge variant="secondary" className="text-[10px] shrink-0">
+          v{data.info.version}
+        </Badge>
+        <Badge variant="outline" className="text-[10px] shrink-0">
+          {formatSize(data.info.fileLength)}
+        </Badge>
+
         <DropdownMenu>
           <DropdownMenuTrigger
-            render={<Button variant="ghost" size="sm" className="h-7 px-2 text-xs ml-1" />}
+            render={<Button variant="ghost" size="sm" className="h-7 px-2 text-xs" />}
           >
             <Download className="h-3.5 w-3.5 mr-1" />
             {t("hermes_download")}
             <ChevronDown className="h-3 w-3 ml-1 opacity-50" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="min-w-0">
+          <DropdownMenuContent align="end" className="min-w-0">
             <DropdownMenuItem
               onClick={async () => {
                 const src = await decompile(null);
@@ -465,19 +474,6 @@ export function HermesViewer({
             )}
           </DropdownMenuContent>
         </DropdownMenu>
-
-        {/* File info */}
-        <div className="flex-1 flex items-center justify-end gap-2 min-w-0">
-          <span className="text-xs font-mono text-muted-foreground truncate max-w-80">
-            {filename}
-          </span>
-          <Badge variant="secondary" className="text-[10px] shrink-0">
-            v{data.info.version}
-          </Badge>
-          <Badge variant="outline" className="text-[10px] shrink-0">
-            {formatSize(data.info.fileLength)}
-          </Badge>
-        </div>
       </div>
 
       {/* Main split view */}
@@ -862,7 +858,7 @@ function FunctionList({
   const virtualizer = useVirtualizer({
     count: functions.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 32,
+    estimateSize: () => 36,
     overscan: 20,
   });
 
@@ -906,25 +902,20 @@ function FunctionList({
           return (
             <div
               key={func.id}
-              data-index={virtualRow.index}
-              ref={virtualizer.measureElement}
-              className={`absolute top-0 left-0 w-full px-2 py-1 cursor-pointer border-b border-transparent hover:bg-accent/50 ${
-                isSelected ? "bg-accent text-accent-foreground" : ""
+              className={`absolute top-0 left-0 w-full h-9 px-3 py-1 flex flex-col justify-center cursor-pointer border-b border-border/50 transition-colors ${
+                isSelected
+                  ? "bg-primary/10 text-foreground dark:bg-primary/20"
+                  : "hover:bg-accent/50"
               }`}
               style={{
                 transform: `translateY(${virtualRow.start}px)`,
               }}
               onClick={() => onSelect(func.id)}
             >
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="text-[10px] text-muted-foreground w-6 shrink-0 text-right tabular-nums">
-                  {func.id}
-                </span>
-                <span className="font-mono text-xs truncate" title={func.name}>
-                  {func.name}
-                </span>
+              <div className="font-mono text-xs truncate leading-tight" title={func.name}>
+                {func.name || <span className="text-muted-foreground italic">anonymous</span>}
               </div>
-              <div className="flex items-center gap-2 ml-7.5 text-[10px] text-muted-foreground">
+              <div className="flex items-center gap-2 text-[10px] text-muted-foreground leading-tight">
                 <span className="font-mono">{formatHex(func.offset)}</span>
                 <span>{func.size}B</span>
                 <span>{func.paramCount}p</span>
@@ -951,7 +942,7 @@ function StringList({
   const virtualizer = useVirtualizer({
     count: strings.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 28,
+    estimateSize: () => 32,
     overscan: 20,
   });
 
@@ -995,10 +986,10 @@ function StringList({
           return (
             <div
               key={str.index}
-              data-index={virtualRow.index}
-              ref={virtualizer.measureElement}
-              className={`absolute top-0 left-0 w-full px-2 py-1 cursor-pointer border-b border-border/40 hover:bg-accent/50 ${
-                isSelected ? "bg-accent text-accent-foreground" : ""
+              className={`absolute top-0 left-0 w-full h-8 px-3 py-1 flex items-center cursor-pointer border-b border-border/50 transition-colors ${
+                isSelected
+                  ? "bg-primary/10 text-foreground dark:bg-primary/20"
+                  : "hover:bg-accent/50"
               }`}
               style={{
                 transform: `translateY(${virtualRow.start}px)`,
@@ -1006,9 +997,6 @@ function StringList({
               onClick={() => onSelect(str)}
             >
               <div className="flex items-center gap-1.5 min-w-0">
-                <span className="text-[10px] text-muted-foreground w-10 shrink-0 text-right tabular-nums">
-                  {str.index}
-                </span>
                 <span className="font-mono text-xs truncate" title={str.value}>
                   {str.value || (
                     <span className="text-muted-foreground italic">

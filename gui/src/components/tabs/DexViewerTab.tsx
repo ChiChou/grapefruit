@@ -792,9 +792,6 @@ function StringList({
               onClick={() => onSelect(str)}
             >
               <div className="flex items-center gap-1.5 min-w-0">
-                <span className="text-[10px] text-muted-foreground w-8 shrink-0 text-right tabular-nums">
-                  {str.index}
-                </span>
                 <span className="font-mono text-xs truncate" title={str.value}>
                   {str.value || (
                     <span className="text-muted-foreground italic">
