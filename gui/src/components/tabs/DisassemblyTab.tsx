@@ -44,6 +44,7 @@ export function DisassemblyTab({
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const aiCache = useRef<Map<string, string>>(new Map());
+  const aiAbort = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (!address || !isReady) return;
@@ -165,6 +166,10 @@ export function DisassemblyTab({
       return;
     }
 
+    aiAbort.current?.abort();
+    const ac = new AbortController();
+    aiAbort.current = ac;
+
     setAiLoading(true);
     setAiError(null);
     setAiContent("");
@@ -182,7 +187,7 @@ export function DisassemblyTab({
         strip.r2(result.plainDisasm),
       ].join("\n");
 
-      const res = await fetch("/api/llm/stream", { method: "POST", body: prompt });
+      const res = await fetch("/api/llm/stream", { method: "POST", body: prompt, signal: ac.signal });
       if (!res.ok) throw new Error(await res.text());
 
       const reader = res.body!.getReader();
@@ -198,6 +203,7 @@ export function DisassemblyTab({
 
       aiCache.current.set(address, accumulated);
     } catch (e) {
+      if (ac.signal.aborted) return;
       setAiError(e instanceof Error ? e.message : "AI decompilation failed");
     } finally {
       setAiLoading(false);

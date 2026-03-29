@@ -121,6 +121,7 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
   const [decompileLoading, setDecompileLoading] = useState(false);
   const [decompileError, setDecompileError] = useState<string | null>(null);
   const decompileCache = useRef<Map<string, string>>(new Map());
+  const decompileAbort = useRef<AbortController | null>(null);
 
   const filteredClasses = useMemo(() => {
     if (!classSearch.trim()) return classes;
@@ -212,6 +213,10 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
         setDecompileError(null);
         return;
       }
+      decompileAbort.current?.abort();
+      const ac = new AbortController();
+      decompileAbort.current = ac;
+
       setDecompileLoading(true);
       setDecompileError(null);
       setDecompileContent("");
@@ -231,6 +236,7 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
         const res = await fetch("/api/llm/stream", {
           method: "POST",
           body: prompt,
+          signal: ac.signal,
         });
         if (!res.ok) throw new Error(await res.text());
 
@@ -245,6 +251,7 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
         }
         decompileCache.current.set(cacheKey, accumulated);
       } catch (e) {
+        if (ac.signal.aborted) return;
         setDecompileError(
           e instanceof Error ? e.message : "Decompilation failed",
         );
