@@ -68,4 +68,22 @@ Grapefruit requires Frida server running on the target device. Follow the offici
 - [iOS](https://frida.re/docs/ios/)
 - [Android](https://frida.re/docs/android/)
 
+### Frida Version
+
+**Frida 17 (latest) is recommended** and used by default. It receives the latest features, bug fixes, and platform support.
+
+Frida 16 is also supported for environments that haven't migrated yet. To use Frida 16, pass the CLI flag or set the environment variable:
+
+```
+igf --frida 16
+```
+
+Or:
+
+```
+FRIDA_VERSION=16 igf
+```
+
+> **Note:** Frida 16 support is not as well tested. You may encounter compatibility issues with newer OS versions or missing features that are only available in Frida 17. We recommend upgrading to Frida 17 when possible.
+
 For AI-powered decompilation, see [LLM Configuration](/docs/llm).
