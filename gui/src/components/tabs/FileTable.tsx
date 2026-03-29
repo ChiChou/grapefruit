@@ -557,7 +557,7 @@ export function FileTable({
                                 onClick={() => onPreview(item.name, "hermes")}
                               >
                                 <Cpu className="mr-2 h-4 w-4" />
-                                Hermes Disassembler
+                                {t("hermes_open_with")}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
