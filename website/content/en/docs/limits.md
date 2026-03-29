@@ -47,7 +47,7 @@ For serious analysis, pull the binary from the device (using the file browser or
 
 ## Platform Requirements
 
-- **Jailbreak / root required** — Grapefruit requires Frida server running with elevated privileges on the target device. Non-jailbroken iOS and non-rooted Android are not supported.
+- **Frida required** — Grapefruit requires Frida running on the target device. Jailbroken iOS or rooted Android provides the best experience, but Frida Gadget mode, iOS Simulator, and Android emulators are also supported (see [Requirements](/docs/#supported-environments)).
 - **USB connection** — The default setup requires a USB connection to the target device. Remote Frida connections are supported but require manual configuration.
 - **Single device at a time** — Each Grapefruit session connects to one device. To work with multiple devices, run multiple server instances on different ports.
 

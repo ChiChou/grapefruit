@@ -50,6 +50,18 @@ Grapefruit runs as a local server with three components:
 ## Requirements
 
 - Node.js 22+ or Bun 1.3.6+
-- A jailbroken iOS device or rooted Android device
+- A target device with Frida support (see below)
 - Frida server running on the target device
+
+### Supported Environments
+
+| Environment | Setup |
+|---|---|
+| Jailbroken iOS / Rooted Android | Install Frida server — full feature support |
+| iOS Simulator | Frida can inject without repacking — no jailbreak needed |
+| Android Emulator | Frida can inject into debuggable apps or with root on emulator |
+| Non-jailbroken iOS | Use [Frida Gadget](https://frida.re/docs/gadget/) embedded in the app |
+| Non-rooted Android | Use Frida Gadget or a debuggable APK |
+
+> Jailbroken/rooted devices provide the best experience. Simulator and Gadget modes work but are less battle-tested.
 - Optional: LLM API key for AI decompilation — see [LLM Configuration](/docs/llm)

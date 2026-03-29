@@ -2,7 +2,7 @@
 
 ## File Browser
 
-Browse the app's filesystem with a tree view. Download files to your machine, or upload files to the device. Supports both the app sandbox and (on jailbroken/rooted devices) the full filesystem.
+Browse the app's filesystem with a tree view. Download files to your machine, or upload files to the device. Supports the app sandbox on all environments, and the full filesystem on jailbroken/rooted devices.
 
 ## Keychain / KeyStore
 

@@ -47,7 +47,7 @@ iOS 和 Android 上的 HTTP/NSURL 流量捕获通过 Hook 高级网络 API（NSU
 
 ## 平台要求
 
-- **需要越狱/Root** — Grapefruit 需要 Frida server 以提升权限在目标设备上运行。不支持未越狱的 iOS 和未 Root 的 Android。
+- **需要 Frida** — Grapefruit 需要在目标设备上运行 Frida。越狱 iOS 或 Root Android 提供最佳体验，但也支持 Frida Gadget 模式、iOS 模拟器和 Android 模拟器（见[环境要求](/docs/#支持的运行环境)）。
 - **USB 连接** — 默认设置需要 USB 连接目标设备。支持远程 Frida 连接但需要手动配置。
 - **一次只能连接一个设备** — 每个 Grapefruit 会话连接一台设备。如需同时使用多台设备，在不同端口上运行多个服务器实例。
 

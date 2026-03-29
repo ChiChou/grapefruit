@@ -50,6 +50,18 @@ Grapefruit 以本地服务器方式运行，由三个组件构成：
 ## 环境要求
 
 - Node.js 22+ 或 Bun 1.3.6+
-- 已越狱的 iOS 设备或已 Root 的 Android 设备
+- 支持 Frida 的目标设备（见下方）
 - 目标设备上运行有 Frida server
+
+### 支持的运行环境
+
+| 环境 | 配置方式 |
+|---|---|
+| 已越狱 iOS / 已 Root Android | 安装 Frida server — 完整功能支持 |
+| iOS 模拟器 | Frida 可直接注入，无需越狱 |
+| Android 模拟器 | Frida 可注入可调试应用，或在模拟器获取 root 后使用 |
+| 未越狱 iOS | 使用 [Frida Gadget](https://frida.re/docs/gadget/) 嵌入到应用中 |
+| 未 Root Android | 使用 Frida Gadget 或可调试 APK |
+
+> 越狱/Root 设备提供最佳体验。模拟器和 Gadget 模式可用，但测试覆盖较少。
 - 可选：LLM API Key 用于 AI 反编译——见 [LLM 配置](/docs/llm)
