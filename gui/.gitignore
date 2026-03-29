@@ -23,5 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 
+# Build artifacts
+public/hbc.wasm
+
 # Claude Code
 .claude/

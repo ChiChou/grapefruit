@@ -28,6 +28,7 @@ function setStatus(state: WasmState) {
 function w(): Worker {
   if (!worker) {
     worker = new Worker(new URL("./hbc.worker.ts", import.meta.url), { type: "module" });
+    worker.postMessage({ type: "init-url", url: "/hbc.wasm" });
     worker.onmessage = (e: MessageEvent<Response>) => {
       const { id, ...rest } = e.data;
 

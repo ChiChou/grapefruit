@@ -1,4 +1,4 @@
-import wasmUrl from "r2hermes-wasm/dist/hbc.wasm?url";
+let wasmUrl = "";
 
 const decoder = new TextDecoder();
 
@@ -121,8 +121,12 @@ type Request =
   | { id: number; type: "xrefs" }
   | { id: number; type: "analyze" };
 
-self.onmessage = async (e: MessageEvent<Request>) => {
+self.onmessage = async (e: MessageEvent<Request | { type: "init-url"; url: string }>) => {
   const msg = e.data;
+  if (msg.type === "init-url") {
+    wasmUrl = (msg as { type: "init-url"; url: string }).url;
+    return;
+  }
   try {
     switch (msg.type) {
       case "open": {
