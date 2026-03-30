@@ -2,7 +2,6 @@ import type { Server } from "socket.io";
 
 import {
   openLive,
-  openDeviceFile,
   close,
   type R2Session,
 } from "./lib/r2.ts";
@@ -59,15 +58,7 @@ export function attachR2(io: Server) {
       if (session) return ack("session already open");
 
       try {
-        if (params.path || (params.apk && params.entry)) {
-          session = await openDeviceFile({
-            deviceId: params.deviceId,
-            pid: params.pid,
-            path: params.path,
-            apk: params.apk,
-            entry: params.entry,
-          });
-        } else if (params.arch) {
+        if (params.arch) {
           session = await openLive({
             deviceId: params.deviceId,
             pid: params.pid,
@@ -77,7 +68,7 @@ export function attachR2(io: Server) {
             pageSize: params.pageSize,
           });
         } else {
-          return ack("invalid params: need path/apk+entry or arch");
+          return ack("invalid params: need arch for live session");
         }
 
         session.r2.rawCmd(R2_THEME);
@@ -121,24 +112,6 @@ export function attachR2(io: Server) {
       try {
         const cfg = await session.r2.functionGraph(BigInt(address));
         ack(null, cfg);
-      } catch (e) {
-        ack(e instanceof Error ? e.message : String(e));
-      }
-    });
-
-    socket.on("ic", (ack: Ack) => {
-      if (!session) return ack("no session");
-      try {
-        ack(null, session.r2.rawCmd("ic"));
-      } catch (e) {
-        ack(e instanceof Error ? e.message : String(e));
-      }
-    });
-
-    socket.on("strings", (ack: Ack) => {
-      if (!session) return ack("no session");
-      try {
-        ack(null, session.r2.rawCmd("izj"));
       } catch (e) {
         ack(e instanceof Error ? e.message : String(e));
       }
