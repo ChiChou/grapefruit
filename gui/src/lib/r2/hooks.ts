@@ -201,9 +201,7 @@ export function useR2File(opts: {
     async (command: string, output?: "plain" | "html"): Promise<string> => {
       if (!ready.current) throw new Error("not ready");
       if (output === "html") {
-        await r2.cmd("e scr.color=1");
-        const raw = await r2.cmd(command);
-        await r2.cmd("e scr.color=0");
+        const raw = await r2.cmd(`e scr.color=1; ${command}; e scr.color=0`);
         return ansi.toHtml(raw);
       }
       return r2.cmd(command);
@@ -369,10 +367,8 @@ export function useR2Live(opts: {
       }
 
       if (output === "html") {
-        await r2.cmd("e scr.color=1");
-        const result = await r2.cmd(command);
-        await r2.cmd("e scr.color=0");
-        return result;
+        const raw = await r2.cmd(`e scr.color=1; ${command}; e scr.color=0`);
+        return ansi.toHtml(raw);
       }
       return r2.cmd(command);
     },
