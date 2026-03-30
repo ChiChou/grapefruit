@@ -76,49 +76,6 @@ export function Landing({ t, langHref }: { t: Strings; langHref: string }) {
           </div>
         </section>
 
-        <section className="py-24 px-6">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-center mb-16">
-              {t.why_title}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {(["1", "2", "3"] as const).map((key, i) => {
-                const Icon = whyIcons[i];
-                return (
-                  <div key={key} className="text-center">
-                    <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mx-auto mb-4 text-accent">
-                      <Icon size={20} />
-                    </div>
-                    <h3 className="font-semibold mb-2">{t[`why_${key}_title`]}</h3>
-                    <p className="text-sm text-muted leading-relaxed">{t[`why_${key}_desc`]}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        <section className="py-24 px-6 border-t border-border">
-          <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
-            <div>
-              <h3 className="text-2xl font-bold tracking-tight mb-2">{t.feat_hermes_title}</h3>
-              <p className="text-sm text-muted leading-relaxed mb-5">{t.feat_hermes_desc}</p>
-              <div className="rounded-xl overflow-hidden border border-border">
-                <Image src={`${base}/hermes.webp`} alt="Hermes bytecode viewer" width={1374} height={1025} className="w-full" />
-              </div>
-            </div>
-            <div>
-              <h3 className="text-2xl font-bold tracking-tight mb-2">{t.feat_r2_title}</h3>
-              <p className="text-sm text-muted leading-relaxed mb-5">{t.feat_r2_desc}</p>
-              <div className="rounded-xl overflow-hidden border border-border">
-                <Image src={`${base}/radare2.webp`} alt="Radare2 split view with CFG" width={1374} height={1025} className="w-full" />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <ThemeScreenshot title={t.theme_title} desc={t.theme_desc} />
-
         <section className="py-24 px-6 border-t border-border">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-center mb-16">
@@ -146,6 +103,49 @@ export function Landing({ t, langHref }: { t: Strings; langHref: string }) {
             </div>
           </div>
         </section>
+
+        <section className="py-24 px-6 border-t border-border">
+          <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div>
+              <h3 className="text-2xl font-bold tracking-tight mb-2">{t.feat_hermes_title}</h3>
+              <p className="text-sm text-muted leading-relaxed mb-5">{t.feat_hermes_desc}</p>
+              <div className="rounded-xl overflow-hidden">
+                <Image src={`${base}/hermes.webp`} alt="Hermes bytecode viewer" width={1374} height={1025} className="w-full opacity-75 hover:opacity-100 transition-opacity" />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold tracking-tight mb-2">{t.feat_r2_title}</h3>
+              <p className="text-sm text-muted leading-relaxed mb-5">{t.feat_r2_desc}</p>
+              <div className="rounded-xl overflow-hidden">
+                <Image src={`${base}/radare2.webp`} alt="Radare2 split view with CFG" width={1374} height={1025} className="w-full opacity-75 hover:opacity-100 transition-opacity" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="py-24 px-6 border-t border-border">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-center mb-16">
+              {t.why_title}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {(["1", "2", "3"] as const).map((key, i) => {
+                const Icon = whyIcons[i];
+                return (
+                  <div key={key} className="text-center">
+                    <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mx-auto mb-4 text-accent">
+                      <Icon size={20} />
+                    </div>
+                    <h3 className="font-semibold mb-2">{t[`why_${key}_title`]}</h3>
+                    <p className="text-sm text-muted leading-relaxed">{t[`why_${key}_desc`]}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        <ThemeScreenshot title={t.theme_title} desc={t.theme_desc} />
 
         <section className="py-24 px-6 border-t border-border">
           <div className="max-w-2xl mx-auto text-center">

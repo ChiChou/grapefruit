@@ -10,7 +10,7 @@ export function ThemeScreenshot({ title, desc }: { title: string; desc: string }
 
   return (
     <section className="py-16 px-6 border-t border-border">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-2xl mx-auto">
         <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-center mb-2">
           {title}
         </h2>
@@ -37,7 +37,7 @@ export function ThemeScreenshot({ title, desc }: { title: string; desc: string }
             <Sun />
           </button>
         </div>
-        <div className="rounded-xl overflow-hidden relative">
+        <div className="rounded-xl overflow-hidden relative opacity-75 hover:opacity-100 transition-opacity">
           <Image
             src={`${base}/dark.webp`}
             alt="Grapefruit dark theme"
