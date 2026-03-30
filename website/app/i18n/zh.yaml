@@ -23,7 +23,7 @@ ida_desc: 拖入文件即刻逆向。无需设备、无需配置，基于 radare
 
 feat_hermes_title: Hermes 字节码
 feat_hermes_desc: 独立的 React Native 字节码查看器。函数、字符串、反汇编和 AI 反编译，无需连接设备。
-feat_r2_title: 可执行二进制
+feat_r2_title: 二进制可执行文件
 feat_r2_desc: 分屏展示控制流图、反汇编和反编译器。支持 ELF/Mach-O、DEX 及 radare2 支持的所有格式。
 
 theme_title: 暗色与亮色
@@ -52,7 +52,7 @@ h_url_title: URL Scheme
 h_url_desc: 枚举所有注册的 URL Scheme 和 Deep Link。直接在设备上构造并发送自定义 URL，测试输入验证、认证绕过和应用间通信攻击面。
 h_url_img: urlschemes
 
-cta_title: 准备开始了吗？
+cta_title: 准备好了吗？
 cta_desc: Grapefruit 完全免费且开源。立即安装，开启安全研究。
 cta_install: npx igf
 cta_all_features: 查看全部功能

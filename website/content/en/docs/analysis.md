@@ -1,17 +1,25 @@
 # Analysis & Decompilation
 
-## Native Disassembly
+## Interactive Decompiler
+
+![Split View with CFG](/radare2.webp)
+
+Grapefruit includes a fully browser-based decompiler powered by radare2 compiled to WebAssembly. Drop any binary file — ELF, Mach-O, DEX, or Hermes bytecode — and start reversing immediately. No device connection, no server-side processing, no setup.
+
+The split view shows disassembly alongside a control flow graph. Switch between linear, graph, decompiler, and AI decompile modes. Browse functions, classes, strings, and cross-references in an integrated workspace.
+
+## Live Disassembly
 
 ![Native Disassembly](/disasm.webp)
 
-The disassembly engine runs radare2 as a WebAssembly module (WASI) on the server. Tap a function address in the module or class browser to open it in a disassembly tab with four views:
+For live processes, memory is read on demand from the target device. Tap a function address in the module or class browser to open it in a disassembly tab with four views:
 
 - **Linear** — Full function disassembly with syntax highlighting
 - **Graph** — Control flow graph with basic blocks and jump/fail edges
 - **Decompiler** — radare2's built-in pseudo-C decompiler output
 - **AI Decompile** — Sends the disassembly to an LLM for high-quality C/C++ reconstruction with streaming output
 
-For live processes, memory is read on demand so you can start analyzing without waiting for a full dump.
+The **Graph** view renders control flow with basic blocks and edges, color-coded by branch direction (green for true, red for false, gray for unconditional).
 
 ## DEX Analysis
 
@@ -46,9 +54,3 @@ LLM_MODEL=claude-sonnet-4-20250514
 ```
 
 Before submission, disassembly is stripped of decorative formatting to reduce token usage and latency. Function names and parameter counts from the symbol table are included for better context.
-
-## Control Flow Graphs
-
-![Control Flow Graph](/cfg.webp)
-
-The graph view renders control flow with basic blocks and edges, color-coded by branch direction.

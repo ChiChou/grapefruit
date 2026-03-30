@@ -10,6 +10,16 @@
   --border: #27272a;
 }
 
+html.light {
+  --bg: #fafafa;
+  --fg: #18181b;
+  --muted: #71717a;
+  --accent: #d97706;
+  --accent-dim: #dc2626;
+  --surface: #f4f4f5;
+  --border: #e4e4e7;
+}
+
 @theme inline {
   --color-bg: var(--bg);
   --color-fg: var(--fg);
@@ -25,6 +35,7 @@
 body {
   background: var(--bg);
   color: var(--fg);
+  transition: background-color 0.2s, color 0.2s;
 }
 
 ::selection {

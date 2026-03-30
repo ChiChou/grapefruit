@@ -47,7 +47,7 @@ export function StarButton({ href }: { href: string }) {
       target="_blank"
       rel="noreferrer"
     >
-      <span className="inline-flex items-center gap-2 px-4 py-2 bg-[#1a1a1f] hover:bg-[#222228] transition-colors">
+      <span className="inline-flex items-center gap-2 px-4 py-2 bg-surface hover:bg-surface/80 transition-colors">
         <Star size={14} fill="currentColor" className="text-amber-400" />
         Star
       </span>

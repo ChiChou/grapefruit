@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { LanguageProvider } from "./context/LanguageContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import "./globals.css";
 
 const sans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -32,9 +33,13 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${sans.variable} ${mono.variable} antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `try{if(localStorage.getItem("theme")==="light")document.documentElement.classList.add("light")}catch(e){}` }} />
+      </head>
       <body className="min-h-dvh flex flex-col bg-bg text-fg">
-        <LanguageProvider>{children}</LanguageProvider>
+        <ThemeProvider><LanguageProvider>{children}</LanguageProvider></ThemeProvider>
       </body>
     </html>
   );

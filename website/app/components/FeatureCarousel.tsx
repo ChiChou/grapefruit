@@ -5,12 +5,19 @@ import Image from "next/image";
 
 const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
-const FEATURES = ["hook", "browse", "runtime", "disasm", "webview", "url"] as const;
+const FEATURES = [
+  "url",
+  "browse",
+  "webview",
+  "runtime",
+  "disasm",
+  "hook",
+] as const;
 
 type Strings = Record<string, string>;
 
 export function FeatureCarousel({ t }: { t: Strings }) {
-  const [active, setActive] = useState<(typeof FEATURES)[number]>("hook");
+  const [active, setActive] = useState<(typeof FEATURES)[number]>("url");
 
   return (
     <section className="py-24 px-6 border-t border-border">
@@ -40,15 +47,15 @@ export function FeatureCarousel({ t }: { t: Strings }) {
               {t[`h_${active}_desc`]}
             </p>
           </div>
-          <div className="order-1 md:order-2 relative aspect-[4/3] rounded-xl overflow-hidden">
+          <div className="order-1 md:order-2 relative aspect-4/3 rounded-xl overflow-hidden opacity-90 hover:opacity-100 transition-opacity">
             {FEATURES.map((key) => (
               <Image
                 key={key}
                 src={`${base}/${t[`h_${key}_img`]}.webp`}
                 alt={t[`h_${key}_title`]}
                 fill
-                className={`object-cover object-left-top transition-opacity duration-300 ${
-                  active === key ? "opacity-75 hover:opacity-100" : "opacity-0"
+                className={`object-cover object-top-left transition-opacity duration-300 ${
+                  active === key ? "opacity-100" : "opacity-0"
                 }`}
               />
             ))}

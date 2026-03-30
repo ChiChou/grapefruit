@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { ThemeToggle } from "./ThemeToggle";
 
 type Item = { href: string; label: string; accent?: boolean };
 
@@ -57,6 +58,9 @@ export function MobileNav({ nav }: { nav: Item[] }) {
               {item.label}
             </Link>
           ))}
+          <div className="pt-3 px-3">
+            <ThemeToggle />
+          </div>
         </div>
       </nav>
     </>

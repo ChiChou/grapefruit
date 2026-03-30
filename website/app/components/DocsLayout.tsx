@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MobileNav } from "./MobileNav";
+import { ThemeToggle } from "./ThemeToggle";
 
 const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
@@ -56,10 +57,6 @@ export function DocsLayout({
     {
       href: `${prefix}/docs/llm`,
       label: isZh ? "LLM 配置" : "LLM Configuration",
-    },
-    {
-      href: `${prefix}/docs/arch`,
-      label: isZh ? "架构内部" : "Architecture Internals",
     },
   ];
 
@@ -117,6 +114,9 @@ export function DocsLayout({
               </Link>
             ))}
           </nav>
+          <div className="mt-6 px-3">
+            <ThemeToggle />
+          </div>
         </aside>
 
         <main className="flex-1 min-w-0 px-6 md:px-12 py-8 max-w-3xl">
