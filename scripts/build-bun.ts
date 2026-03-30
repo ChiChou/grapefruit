@@ -1,8 +1,9 @@
 #! /usr/bin/env bun
 
 import path from "node:path";
-import fs from "node:fs/promises";
 import { $ } from "bun";
+
+const fridaModules = ["frida", "frida16"];
 
 const bunTargets: Record<string, [string, string]> = {
   "bun-linux-x64": ["linux", "x64"],
@@ -52,28 +53,24 @@ async function main() {
     process.exit(1);
   }
 
+  await $`bun scripts/fetch-r2-wasm.ts`;
   await $`tar cvf assets.tgz gui/dist agent/dist drizzle skills`;
-
-  const fridaModules = ["frida", "frida16"];
 
   if (cross) {
     for (const [target, [platform, arch]] of Object.entries(bunTargets)) {
-      // Prebuild BOTH frida modules for this target
       for (const name of fridaModules) {
         const cwd = path.join(root, "node_modules", name);
         await prebuild(cwd, platform, arch);
       }
-      // Now build with both modules having correct prebuilds
       await bunBuild(target);
     }
 
-    // Restore both prebuilds for host platform
+    // Restore prebuilds for host platform
     for (const name of fridaModules) {
       const cwd = path.join(root, "node_modules", name);
       await prebuild(cwd);
     }
   } else {
-    // For non-cross build, just prebuild for current platform and build
     for (const name of fridaModules) {
       const cwd = path.join(root, "node_modules", name);
       await prebuild(cwd);

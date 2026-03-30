@@ -1,4 +1,4 @@
-name: npm package
+name: Publish Release
 
 on:
   workflow_dispatch:
@@ -15,80 +15,21 @@ jobs:
     uses: ./.github/workflows/build-cli.yml
 
   npm:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          submodules: true
+    uses: ./.github/workflows/build-npm.yml
 
-      - uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          registry-url: 'https://registry.npmjs.org'
-          cache: "npm"
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Cache r2hermes WASM
-        id: cache-wasm
-        uses: actions/cache@v4
-        with:
-          path: externals/radare/r2hermes.wasm/dist
-          key: r2hermes-wasm-${{ hashFiles('externals/radare/r2hermes/**', 'externals/radare/r2hermes.wasm/build.ts', 'externals/radare/r2hermes.wasm/hbc_wasm.c') }}
-
-      - name: Setup wasi-sdk
-        if: steps.cache-wasm.outputs.cache-hit != 'true'
-        run: |
-          WASI_VERSION=32
-          curl -fsSL "https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${WASI_VERSION}/wasi-sdk-${WASI_VERSION}.0-x86_64-linux.tar.gz" | tar xz -C /opt
-          echo "WASI_SDK_PATH=/opt/wasi-sdk-${WASI_VERSION}.0-x86_64-linux" >> $GITHUB_ENV
-
-      - name: Build r2hermes WASM
-        if: steps.cache-wasm.outputs.cache-hit != 'true'
-        run: bun externals/radare/r2hermes.wasm/build.ts
-
-      - name: Copy hbc.wasm to gui public
-        run: mkdir -p gui/public && cp externals/radare/r2hermes.wasm/dist/hbc.wasm gui/public/hbc.wasm
-
-      - name: Cache radare2 WASI
-        id: cache-r2-wasi
-        uses: actions/cache@v4
-        with:
-          path: radare2.wasm
-          key: r2-wasi-${{ hashFiles('scripts/fetch-r2-wasm.ts') }}
-
-      - name: Fetch radare2 WASI
-        if: steps.cache-r2-wasi.outputs.cache-hit != 'true'
-        run: bun scripts/fetch-r2-wasm.ts
-
-      - name: Reset node_modules
-        run: rm -rf node_modules
-
-      - run: npm ci
-
-      - name: Package
-        run: npm pack
-
-      - name: Upload Archive
-        uses: actions/upload-artifact@v6
-        with:
-          name: igf.tgz
-          path: build/igf-*.tgz
-
-      - name: Publish to npm
-        if: ${{ !contains(github.ref, 'alpha') && !contains(github.ref, 'beta') }}
-        run: npm publish --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  coverage:
+    uses: ./.github/workflows/coverage.yml
 
   release:
-    needs: [cli, npm]
+    needs: [cli, npm, coverage]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
       - name: Download CLI binaries
         uses: actions/download-artifact@v6
         with:
@@ -100,6 +41,12 @@ jobs:
         with:
           name: igf.tgz
           path: npm
+
+      - name: Publish to npm
+        if: ${{ !contains(github.ref, 'alpha') && !contains(github.ref, 'beta') }}
+        run: npm publish npm/build/igf-*.tgz --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2

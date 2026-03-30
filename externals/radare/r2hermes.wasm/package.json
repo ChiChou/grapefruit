@@ -12,6 +12,7 @@
     "./dist/hbc.wasm": "./dist/hbc.wasm"
   },
   "scripts": {
+    "setup": "bun setup-wasi-sdk.ts",
     "build": "bun build.ts",
     "clean": "bun build.ts --clean"
   },

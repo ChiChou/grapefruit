@@ -1,6 +1,8 @@
 name: Code Coverage
 
 on:
+  workflow_dispatch:
+  workflow_call:
   push:
     branches:
       - main
@@ -8,8 +10,6 @@ on:
     paths:
       - "src/**"
       - "agent/**"
-      - "externals/**"
-      - "wasi/**"
       - "package.json"
       - "bun.lock"
       - ".github/workflows/coverage.yml"
@@ -19,8 +19,6 @@ on:
     paths:
       - "src/**"
       - "agent/**"
-      - "externals/**"
-      - "wasi/**"
       - "package.json"
       - "bun.lock"
 
@@ -37,40 +35,11 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Cache r2hermes WASM
-        id: cache-wasm
-        uses: actions/cache@v4
-        with:
-          path: externals/radare/r2hermes.wasm/dist
-          key: r2hermes-wasm-${{ hashFiles('externals/radare/r2hermes/**', 'externals/radare/r2hermes.wasm/build.ts', 'externals/radare/r2hermes.wasm/hbc_wasm.c') }}
+      - name: Install root dependencies (skip prepare)
+        run: bun install --ignore-scripts
 
-      - name: Setup wasi-sdk
-        if: steps.cache-wasm.outputs.cache-hit != 'true'
-        run: |
-          WASI_VERSION=32
-          curl -fsSL "https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${WASI_VERSION}/wasi-sdk-${WASI_VERSION}.0-x86_64-linux.tar.gz" | tar xz -C /opt
-          echo "WASI_SDK_PATH=/opt/wasi-sdk-${WASI_VERSION}.0-x86_64-linux" >> $GITHUB_ENV
-
-      - name: Build r2hermes WASM
-        if: steps.cache-wasm.outputs.cache-hit != 'true'
-        run: bun externals/radare/r2hermes.wasm/build.ts
-
-      - name: Copy hbc.wasm to gui public
-        run: mkdir -p gui/public && cp externals/radare/r2hermes.wasm/dist/hbc.wasm gui/public/hbc.wasm
-
-      - name: Cache radare2 WASI
-        id: cache-r2-wasi
-        uses: actions/cache@v4
-        with:
-          path: radare2.wasm
-          key: r2-wasi-${{ hashFiles('scripts/fetch-r2-wasm.ts') }}
-
-      - name: Fetch radare2 WASI
-        if: steps.cache-r2-wasi.outputs.cache-hit != 'true'
-        run: bun scripts/fetch-r2-wasm.ts
-
-      - name: Install dependencies
-        run: bun install
+      - name: Install and build agent
+        run: bun install --cwd agent
 
       - name: Run tests with coverage
         run: bun run test:coverage
@@ -86,10 +55,10 @@ jobs:
           echo "## Code Coverage Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ -f coverage/lcov.info ]; then
-            echo "✅ Coverage report generated successfully" >> $GITHUB_STEP_SUMMARY
+            echo "Coverage report generated successfully" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "Coverage files:" >> $GITHUB_STEP_SUMMARY
             ls -la coverage/ >> $GITHUB_STEP_SUMMARY
           else
-            echo "⚠️ No coverage report generated" >> $GITHUB_STEP_SUMMARY
+            echo "No coverage report generated" >> $GITHUB_STEP_SUMMARY
           fi

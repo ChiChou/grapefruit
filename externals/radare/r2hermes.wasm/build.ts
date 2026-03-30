@@ -22,28 +22,40 @@ if (process.argv.includes("--clean")) {
   process.exit(0);
 }
 
-const exists = (p: string) => access(p).then(() => true, () => false);
+const exists = (p: string) =>
+  access(p).then(
+    () => true,
+    () => false,
+  );
 
-const WASI_SDK =
-  process.env.WASI_SDK_PATH ??
-  [
+async function findWasiSdk() {
+  if (process.env.WASI_SDK_PATH) return process.env.WASI_SDK_PATH;
+  for (const p of [
     "/opt/wasi-sdk",
     "/opt/homebrew/opt/wasi-sdk/share/wasi-sdk",
     join(homedir(), ".wasi-sdk"),
-  ].find((p) => Bun.file(join(p, "bin")).size > 0) // sync-ish check for directory
-  ;
+  ]) {
+    if (await exists(join(p, "bin"))) return p;
+  }
+}
+
+const WASI_SDK = await findWasiSdk();
 
 // re-verify async
 if (!WASI_SDK || !(await exists(join(WASI_SDK, "bin")))) {
   console.error(
     "wasi-sdk not found. Set WASI_SDK_PATH or run:\n" +
-      "  bun externals/radare/r2hermes.wasm/setup-wasi-sdk.ts\n" +
+      "  bun run setup\n" +
       "  https://github.com/WebAssembly/wasi-sdk/releases",
   );
   process.exit(1);
 }
 
-const CC = join(WASI_SDK, "bin", process.platform === "win32" ? "clang.exe" : "clang");
+const CC = join(
+  WASI_SDK,
+  "bin",
+  process.platform === "win32" ? "clang.exe" : "clang",
+);
 const SYSROOT = join(WASI_SDK, "share", "wasi-sysroot");
 
 const mesonBuild = await readFile(join(R2HERMES, "meson.build"), "utf8");

@@ -26,10 +26,9 @@
     "prepack": "npm run build:npm",
     "install:gui": "cd gui && npm i",
     "install:agent": "cd agent && npm i",
-    "build:npm": "node scripts/build-npm.ts && tsdown",
-    "build:cli": "bun i && bun scripts/build-bun.ts",
-    "build:all": "bun i && bun scripts/build-bun.ts cross",
-    "build:skills": "bun scripts/skills.ts"
+    "build:npm": "tsdown",
+    "build:cli": "bun scripts/build-bun.ts",
+    "build:all": "bun scripts/build-bun.ts cross"
   },
   "keywords": [
     "mobile",
@@ -63,13 +62,11 @@
     "@types/node": "^24.12.0",
     "@typescript/native-preview": "^7.0.0-dev.20260314.1",
     "drizzle-kit": "^0.31.9",
-    "tsdown": "^0.20.3",
-    "typescript": "^5.9.3"
+    "tsdown": "^0.20.3"
   },
   "patchedDependencies": {
-    "frida@17.6.2": "patches/frida@17.6.2.patch",
     "frida@16.7.19": "patches/frida@16.7.19.patch",
-    "frida@17.8.2": "patches/frida@17.8.2.patch"
+    "frida@17.9.0": "patches/frida@17.9.0.patch"
   },
   "trustedDependencies": [
     "better-sqlite3",
