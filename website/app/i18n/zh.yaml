@@ -18,21 +18,39 @@ why_2_title: 跨平台支持
 why_2_desc: 支持 macOS、Windows 和 Linux。一个现代浏览器就能访问你的研究工作空间。
 why_3_title: Agent 技能
 why_3_desc: 为 AI 编程代理扩展安全审计能力，轻松应对移动安全研究场景。
+ida_title: 交互式反编译器
+ida_desc: 拖入文件即刻逆向。无需设备、无需配置，基于 radare2 和 WebAssembly，完全在浏览器中运行。
+
 feat_hermes_title: Hermes 字节码
 feat_hermes_desc: 独立的 React Native 字节码查看器。函数、字符串、反汇编和 AI 反编译，无需连接设备。
-feat_r2_title: Radare2 分析
-feat_r2_desc: 分屏展示控制流图、反汇编和反编译器。在浏览器中分析 DEX、原生二进制等格式。
+feat_r2_title: 可执行二进制
+feat_r2_desc: 分屏展示控制流图、反汇编和反编译器。支持 ELF/Mach-O、DEX 及 radare2 支持的所有格式。
 
 theme_title: 暗色与亮色
 theme_desc: 长时间研究也不累眼睛。
 
 highlights_title: 核心功能
 h_hook_title: 动态插桩
-h_hook_desc: 实时拦截函数调用，轻松观察参数、返回值和调用栈
+h_hook_desc: 内置 SQLite、剪贴板、文件 I/O、加密等 Hook。实时切换并查看完整调用栈日志，无需重启即可编写自定义 Hook。
+h_hook_img: hook-logs
 h_browse_title: 数据审查
-h_browse_desc: 浏览类、方法、Keychain 和网络流量。数千条记录即时搜索
-h_disasm_title: 分析与反编译
-h_disasm_desc: 原生代码、DEX、Hermes 字节码同窗口查看。AI 自动生成可用的 Frida Hook 脚本
+h_browse_desc: 浏览沙盒文件系统，内联预览 plist、数据库和图片。用查询编辑器打开 SQLite 文件，无需离开浏览器即可上传下载文件。
+h_browse_img: files
+h_runtime_title: 运行时探索
+h_runtime_desc: 浏览所有已加载模块、类和方法。检查导出符号、符号表和段信息，从任意符号一键跳转到实时反汇编。
+h_runtime_img: modules
+h_disasm_title: 实时反汇编
+h_disasm_desc: 直接从进程内存反汇编函数。线性和控制流图视图，AI 反编译器将汇编转为可读源码——无需从设备提取二进制文件。
+h_disasm_img: cfg
+h_security_title: 安全态势
+h_security_desc: 一键审计二进制防护——PIE、NX、栈金丝雀、ARC、代码签名和 PAC。一览 Entitlement、ATS 配置和声明权限。
+h_security_img: mitigations
+h_webview_title: WebView 检查器
+h_webview_desc: 列出所有活跃的 WebView 并审计其安全设置——文件访问、混合内容、JavaScript 状态。在任意 WebView 上下文中执行 JS，一键切换远程调试。
+h_webview_img: android-webview
+h_url_title: URL Scheme
+h_url_desc: 枚举所有注册的 URL Scheme 和 Deep Link。直接在设备上构造并发送自定义 URL，测试输入验证、认证绕过和应用间通信攻击面。
+h_url_img: urlschemes
 
 cta_title: 准备开始了吗？
 cta_desc: Grapefruit 完全免费且开源。立即安装，开启安全研究。

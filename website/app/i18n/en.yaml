@@ -19,21 +19,39 @@ why_2_desc: Runs on macOS, Windows, and Linux. Access your research workspace fr
 why_3_title: Agent Skills
 why_3_desc: Extend your AI coding agent with security audit skills.
 
+ida_title: Interactive Decompiler
+ida_desc: Drop a file and start reversing. No device, no setup — powered by radare2 and WebAssembly, runs entirely in your browser.
+
 feat_hermes_title: Hermes Bytecode
 feat_hermes_desc: Standalone bytecode viewer for React Native apps. Functions, strings, disassembly, and AI decompilation — no device needed.
-feat_r2_title: Radare2 Analysis
-feat_r2_desc: Split view with control flow graph, disassembly, and decompiler. Analyze DEX, native binaries, and more in the browser.
+feat_r2_title: Executable Binaries
+feat_r2_desc: Split view with control flow graph, disassembly, and decompiler. Supports native ELF/Mach-O, DEX, and any format radare2 understands.
 
 theme_title: Dark or light
 theme_desc: Comfortable for the long sessions.
 
 highlights_title: Key Features
 h_hook_title: Instrumentation
-h_hook_desc: Intercept function calls in real time. Inspect arguments, return values, and backtraces with ease
+h_hook_desc: Built-in hooks for SQLite, pasteboard, file I/O, crypto, and more. Toggle them on the fly and watch real-time logs with full call stacks. Write your own hooks without restarting the session.
+h_hook_img: hook-logs
 h_browse_title: Data Inspection
-h_browse_desc: Explore classes, methods, keychain items, and network traffic. Search across thousands of entries instantly
-h_disasm_title: Analysis & Decompilation
-h_disasm_desc: Native code, DEX, and Hermes bytecode — all in one viewer. AI assistance generates ready-to-use Frida hook scripts.
+h_browse_desc: Browse the sandbox filesystem with inline previews for plists, databases, and images. Open SQLite files in a query editor. Download or upload files without leaving the browser.
+h_browse_img: files
+h_runtime_title: Runtime Exploration
+h_runtime_desc: Explore loaded modules, classes, and methods across all frameworks. Inspect exports, symbols, and sections. Jump from any symbol straight into live disassembly.
+h_runtime_img: modules
+h_disasm_title: Live Disassembly
+h_disasm_desc: Disassemble functions straight from process memory. Linear and control flow graph views with AI decompiler that turns assembly into readable source — all without pulling the binary off device.
+h_disasm_img: cfg
+h_security_title: Security Posture
+h_security_desc: One-click audit for binary mitigations — PIE, NX, stack canaries, ARC, code signing, and PAC. Review entitlements, ATS configuration, and declared permissions at a glance.
+h_security_img: mitigations
+h_webview_title: WebView Inspector
+h_webview_desc: List all active WebViews and audit their security settings — file access, mixed content, JavaScript state. Execute JS in any WebView context and toggle remote debugging on the fly.
+h_webview_img: android-webview
+h_url_title: URL Schemes
+h_url_desc: Enumerate all registered URL schemes and deep links. Compose and send custom URLs directly to the app on device to test input validation, authentication bypasses, and inter-app communication attack surfaces.
+h_url_img: urlschemes
 
 cta_title: Ready to start?
 cta_desc: Grapefruit is free and open source. Install and start your research today.

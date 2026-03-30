@@ -1,8 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Globe, Layers, Wand, Anchor, Search, Cpu, ArrowRight } from "lucide-react";
+import { Globe, Layers, Wand, ArrowRight } from "lucide-react";
 import { CopyInstall } from "./CopyInstall";
 import { DiscordButton } from "./DiscordButton";
+import { FeatureCarousel } from "./FeatureCarousel";
 import { PlatformScreenshot } from "./PlatformScreenshot";
 import { StarButton } from "./StarButton";
 import { ThemeScreenshot } from "./ThemeScreenshot";
@@ -17,7 +18,6 @@ const SPONSOR = "https://github.com/sponsors/ChiChou";
 const DISCORD = "https://discord.com/invite/pwutZNx";
 
 const whyIcons = [Globe, Layers, Wand] as const;
-const highlightIcons = [Anchor, Search, Cpu] as const;
 
 export function Landing({ t, langHref }: { t: Strings; langHref: string }) {
   return (
@@ -76,36 +76,13 @@ export function Landing({ t, langHref }: { t: Strings; langHref: string }) {
           </div>
         </section>
 
-        <section className="py-24 px-6 border-t border-border">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-center mb-16">
-              {t.highlights_title}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {(["hook", "browse", "disasm"] as const).map((key, i) => {
-                const Icon = highlightIcons[i];
-                return (
-                  <div key={key} className="group p-6 rounded-xl border border-border bg-surface/50 hover:border-accent/30 hover:bg-surface transition-all">
-                    <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center mb-4 text-accent group-hover:bg-accent/20 transition-colors">
-                      <Icon size={20} />
-                    </div>
-                    <h3 className="font-semibold mb-2">{t[`h_${key}_title`]}</h3>
-                    <p className="text-sm text-muted leading-relaxed">{t[`h_${key}_desc`]}</p>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="mt-10 text-center">
-              <Link href={langHref === "/" ? "/cn/docs" : "/docs"} className="inline-flex items-center gap-2 text-sm text-muted hover:text-accent transition-colors group">
-                {t.cta_all_features}
-                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </div>
-          </div>
-        </section>
+        <FeatureCarousel t={t} />
 
         <section className="py-24 px-6 border-t border-border">
-          <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">{t.ida_title}</h2>
+            <p className="text-muted text-sm mb-12">{t.ida_desc}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             <div>
               <h3 className="text-2xl font-bold tracking-tight mb-2">{t.feat_hermes_title}</h3>
               <p className="text-sm text-muted leading-relaxed mb-5">{t.feat_hermes_desc}</p>
@@ -120,6 +97,7 @@ export function Landing({ t, langHref }: { t: Strings; langHref: string }) {
                 <Image src={`${base}/radare2.webp`} alt="Radare2 split view with CFG" width={1374} height={1025} className="w-full opacity-75 hover:opacity-100 transition-opacity" />
               </div>
             </div>
+          </div>
           </div>
         </section>
 
