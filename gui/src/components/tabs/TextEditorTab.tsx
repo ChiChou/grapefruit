@@ -1,7 +1,6 @@
 import Editor, { loader } from "@monaco-editor/react";
 import type { IDockviewPanelProps } from "dockview";
 import { Loader2 } from "lucide-react";
-import { Magika } from "magika";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -46,51 +45,14 @@ const LANGUAGES = [
   { value: "plaintext", label: "Plain Text", ext: ["txt", "text", "log"] },
 ];
 
-const MAGIKA_TO_SYNTAX: Record<string, string> = {
-  javascript: "javascript",
-  typescript: "typescript",
-  tsx: "typescript",
-  jsx: "javascript",
-  css: "css",
-  html: "html",
-  json: "json",
-  jsonc: "json",
-  jsonl: "json",
-  vue: "html", // Vue files often highlight well as HTML or specialized vue
-  wasm: "wasm",
+const EXT_TO_LANG = new Map(
+  LANGUAGES.flatMap((l) => l.ext.map((e) => [e, l.value])),
+);
 
-  kotlin: "kotlin",
-  java: "java",
-  gradle: "gradle",
-  xml: "xml",
-  // smali: "smali",
-  // is there anyone would include that in the package?
-
-  swift: "swift",
-  objectivec: "objectivec",
-  appleplist: "xml",
-
-  // dart: "dart",
-  // unlikely to be included in prod
-
-  yaml: "yaml",
-  ini: "ini",
-  toml: "toml",
-  lua: "lua",
-  python: "python",
-  proto: "protobuf",
-  textproto: "protobuf",
-  shell: "shell",
-  sql: "sql",
-  markdown: "markdown",
-  ruby: "ruby", // often used for Fastlane files
-  pem: "plaintext", // Certificates
-  license: "plaintext",
-
-  txt: "plaintext",
-  txtutf8: "plaintext",
-  txtascii: "plaintext",
-};
+function langFromPath(path: string): string {
+  const ext = path.split(".").pop()?.toLowerCase() ?? "";
+  return EXT_TO_LANG.get(ext) ?? "plaintext";
+}
 
 export interface TextEditorTabParams {
   path: string;
@@ -105,42 +67,17 @@ export function TextEditorTab({
   const { openSingletonPanel } = useDock();
   const [content, setContent] = useState<string | null>(null);
   const [isInvalidUtf8, setIsInvalidUtf8] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState<string>("");
-
-  const [magika, setMagika] = useState<Magika | null>(null);
 
   const fullPath = params?.path || "";
+  const [selectedLanguage, setSelectedLanguage] = useState(() =>
+    langFromPath(fullPath),
+  );
 
   loader.init().then((monaco) => {
     for (let i = 0; i < LANGUAGES.length; i++) {
       monaco.languages.register({ id: LANGUAGES[i].value });
     }
   });
-
-  useEffect(() => {
-    Magika.create().then(setMagika);
-  }, []);
-
-  const detectSyntaxFromBytes = useCallback(
-    async (u8: Uint8Array): Promise<string> => {
-      if (magika) {
-        const info = await magika.identifyBytes(u8);
-
-        if (info.status === "ok") {
-          const label = info.prediction.dl.label;
-          const isText = info.prediction.dl.is_text;
-
-          if (!isText) return "plaintext";
-
-          const mappedSyntax = MAGIKA_TO_SYNTAX[label];
-          if (mappedSyntax) return mappedSyntax;
-        }
-      }
-
-      return "plaintext";
-    },
-    [magika],
-  );
 
   const fs = (platform === Platform.Droid ? droid?.fs : fruity?.fs) ?? null;
 
@@ -159,9 +96,8 @@ export function TextEditorTab({
   useEffect(() => {
     if (!rawData) return;
 
-    const processData = async () => {
+    const processData = () => {
       const u8 = new Uint8Array(rawData);
-      setSelectedLanguage(await detectSyntaxFromBytes(u8));
 
       try {
         const text = new TextDecoder("utf-8", { fatal: true }).decode(u8);
@@ -174,7 +110,7 @@ export function TextEditorTab({
     };
 
     processData();
-  }, [rawData, detectSyntaxFromBytes]);
+  }, [rawData]);
 
   const handleOpenInHexPreview = useCallback(() => {
     openSingletonPanel({
