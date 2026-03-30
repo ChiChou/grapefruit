@@ -6,21 +6,23 @@ const isWindows = os.platform() === "win32";
 const root = path.join(import.meta.dirname, "..");
 const runner = process.env.npm_execpath || "bun";
 
-const panes = [
-  { cwd: path.join(root, "agent"), cmd: `${runner} run build:fruity -- --watch` },
-  { cwd: path.join(root, "agent"), cmd: `${runner} run build:droid -- --watch` },
-  { cwd: path.join(root, "gui"), cmd: `${runner} run dev` },
-  { cwd: root, cmd: `${runner} run dev` },
-];
+const agent = path.join(root, "agent");
+const gui = path.join(root, "gui");
 
+// Tab 1 — agent watches: ┌─────┬─────┬─────┐
+//                         │fruit│droid│trans│
+//                         └─────┴─────┴─────┘
+// Tab 2 — dev servers:    ┌───────┬─────────┐
+//                         │server │  gui     │
+//                         └───────┴─────────┘
 function tmux() {
-  const [fruity, droid, gui, server] = panes;
   const script = [
-    `new-session -c ${server.cwd} ${server.cmd}`,
-    `split-window -v -l 40% -c ${gui.cwd} ${gui.cmd}`,
-    `select-pane -t 0`,
-    `split-window -h -l 30% -c ${fruity.cwd} ${fruity.cmd}`,
-    `split-window -v -c ${droid.cwd} ${droid.cmd}`,
+    `new-session -c ${agent} ${runner} run build:fruity -- --watch`,
+    `split-window -h -c ${agent} ${runner} run build:droid -- --watch`,
+    `split-window -h -c ${agent} ${runner} run build:transport -- --watch`,
+    `select-layout even-horizontal`,
+    `new-window -c ${root} ${runner} run dev`,
+    `split-window -h -c ${gui} ${runner} run dev`,
     `select-pane -t 0`,
   ].join(" \\; ");
   cp.execSync(`tmux ${script}`, { stdio: "inherit" });

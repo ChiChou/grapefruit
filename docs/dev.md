@@ -30,7 +30,7 @@ Each workspace has its own `package.json`. The root `prepare` script handles bui
 
 | Script                       | Description                                   |
 | ---------------------------- | --------------------------------------------- |
-| `bun run dev:both`           | Start backend + frontend dev servers together |
+| `bun run dev:all`           | Start backend + frontend dev servers together |
 | `bun run dev`                | Backend only with file watching (`--watch`)   |
 | `bun run start`              | Start backend without watch                   |
 | `bun test`                   | Run tests with Bun test runner                |
@@ -141,7 +141,7 @@ Coverage output goes to `coverage/lcov.info`.
 
 ## Development Tips
 
-- The dev server (`bun run dev:both`) starts the backend on port 31337 and the Vite frontend on port 3000. The frontend proxies `/api` and `/socket.io/` to the backend.
+- The dev server (`bun run dev:all`) starts the backend on port 31337 and the Vite frontend on port 3000. The frontend proxies `/api` and `/socket.io/` to the backend.
 - When working on the agent only, use `bun run watch:fruity` or `bun run watch:droid` for live rebuilds.
 - Agent RPC can be tested directly with Frida CLI:
   ```bash
