@@ -1,8 +1,22 @@
 Monorepo with three workspaces:
 
-- root (server), 
-- `agent/` (Frida agent), 
+- root (server),
+- `agent/` (Frida agent),
 - `gui/` (frontend).
+
+## First-time setup
+
+```sh
+bun install        # root dependencies only
+bun run setup      # install + build agent, gui, fetch/build WASM assets
+```
+
+## Development
+
+```sh
+bun run dev        # server with watch
+bun run dev:all    # tmux/wt: agent watch + gui dev + server dev
+```
 
 ## Static checks
 
@@ -30,7 +44,6 @@ bunx tsgo --noEmit  # type-check
 bun test            # run tests
 ```
 
-`bun run prepare` build everything at once, slow
 
 ## Skills
 

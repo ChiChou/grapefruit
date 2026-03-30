@@ -31,7 +31,9 @@ jobs:
       - uses: ./.github/actions/setup
 
       - name: Install dependencies
-        run: bun install
+        run: |
+          bun install
+          bun run setup
 
       - name: Build binaries
         run: bun run build:all

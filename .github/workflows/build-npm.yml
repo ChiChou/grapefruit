@@ -19,7 +19,11 @@ jobs:
 
       - uses: ./.github/actions/setup
 
-      - run: npm ci
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd agent && npm i && cd ..
+          cd gui && npm i
 
       - name: Package
         run: npm pack

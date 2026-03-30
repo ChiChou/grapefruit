@@ -36,7 +36,9 @@ jobs:
           bun-version: latest
 
       - name: Install dependencies
-        run: bun install
+        run: |
+          bun install
+          bun install --cwd agent
 
       - name: Run tests with coverage
         run: bun run test:coverage
