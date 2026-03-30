@@ -8,7 +8,8 @@ const run = (cmd: string, cwd?: string) =>
 // ensure submodules are initialized
 run("git submodule update --init --recursive");
 
-// sub-workspace dependencies (triggers their prepare hooks → build)
+// all workspace dependencies
+run("bun i");
 run("bun i", "./agent");
 run("bun i", "./gui");
 

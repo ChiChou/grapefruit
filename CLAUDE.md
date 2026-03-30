@@ -7,8 +7,7 @@ Monorepo with three workspaces:
 ## First-time setup
 
 ```sh
-bun install        # root dependencies only
-bun run setup      # install + build agent, gui, fetch/build WASM assets
+bun run setup      # install all deps, build agent, gui, fetch/build WASM assets
 ```
 
 ## Development
