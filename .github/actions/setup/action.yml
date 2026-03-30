@@ -11,7 +11,7 @@ runs:
 
     - name: Cache r2hermes WASM
       id: cache-wasm
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: externals/radare/r2hermes.wasm/dist
         key: r2hermes-wasm-${{ hashFiles('externals/radare/r2hermes/**', 'externals/radare/r2hermes.wasm/build.ts', 'externals/radare/r2hermes.wasm/hbc_wasm.c') }}
@@ -35,7 +35,7 @@ runs:
 
     - name: Cache radare2 WASI
       id: cache-r2-wasi
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: radare2.wasm
         key: r2-wasi-${{ hashFiles('scripts/fetch-r2-wasm.ts') }}
