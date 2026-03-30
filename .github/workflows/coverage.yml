@@ -55,6 +55,9 @@ jobs:
         if: steps.cache-wasm.outputs.cache-hit != 'true'
         run: bun externals/radare/r2hermes.wasm/build.ts
 
+      - name: Copy hbc.wasm to gui public
+        run: mkdir -p gui/public && cp externals/radare/r2hermes.wasm/dist/hbc.wasm gui/public/hbc.wasm
+
       - name: Cache radare2 WASI
         id: cache-r2-wasi
         uses: actions/cache@v4
