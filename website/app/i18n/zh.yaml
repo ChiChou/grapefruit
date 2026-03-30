@@ -18,6 +18,11 @@ why_2_title: 跨平台支持
 why_2_desc: 支持 macOS、Windows 和 Linux。一个现代浏览器就能访问你的研究工作空间。
 why_3_title: Agent 技能
 why_3_desc: 为 AI 编程代理扩展安全审计能力，轻松应对移动安全研究场景。
+feat_hermes_title: Hermes 字节码
+feat_hermes_desc: 独立的 React Native 字节码查看器。函数、字符串、反汇编和 AI 反编译，无需连接设备。
+feat_r2_title: Radare2 分析
+feat_r2_desc: 分屏展示控制流图、反汇编和反编译器。在浏览器中分析 DEX、原生二进制等格式。
+
 theme_title: 暗色与亮色
 theme_desc: 长时间研究也不累眼睛。
 

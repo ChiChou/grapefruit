@@ -9,13 +9,13 @@ export function ThemeScreenshot({ title, desc }: { title: string; desc: string }
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   return (
-    <section className="py-24 px-6 border-t border-border">
-      <div className="max-w-6xl mx-auto">
-        <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-center mb-4">
+    <section className="py-16 px-6 border-t border-border">
+      <div className="max-w-4xl mx-auto">
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-center mb-2">
           {title}
         </h2>
-        <p className="text-muted text-center text-lg mb-8 max-w-2xl mx-auto">{desc}</p>
-        <div className="flex gap-1 mb-6 justify-center">
+        <p className="text-muted text-center text-sm mb-6 max-w-xl mx-auto">{desc}</p>
+        <div className="flex gap-1 mb-4 justify-center">
           <button
             onClick={() => setTheme("dark")}
             className={`px-3 py-1.5 rounded-l-lg text-xs font-medium transition-colors border ${

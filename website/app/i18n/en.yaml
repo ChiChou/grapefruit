@@ -19,6 +19,11 @@ why_2_desc: Runs on macOS, Windows, and Linux. Access your research workspace fr
 why_3_title: Agent Skills
 why_3_desc: Extend your AI coding agent with security audit skills.
 
+feat_hermes_title: Hermes Bytecode
+feat_hermes_desc: Standalone bytecode viewer for React Native apps. Functions, strings, disassembly, and AI decompilation — no device needed.
+feat_r2_title: Radare2 Analysis
+feat_r2_desc: Split view with control flow graph, disassembly, and decompiler. Analyze DEX, native binaries, and more in the browser.
+
 theme_title: Dark or light
 theme_desc: Comfortable for the long sessions.
 

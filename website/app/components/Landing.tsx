@@ -98,6 +98,25 @@ export function Landing({ t, langHref }: { t: Strings; langHref: string }) {
           </div>
         </section>
 
+        <section className="py-24 px-6 border-t border-border">
+          <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div>
+              <h3 className="text-2xl font-bold tracking-tight mb-2">{t.feat_hermes_title}</h3>
+              <p className="text-sm text-muted leading-relaxed mb-5">{t.feat_hermes_desc}</p>
+              <div className="rounded-xl overflow-hidden border border-border">
+                <Image src={`${base}/hermes.webp`} alt="Hermes bytecode viewer" width={1374} height={1025} className="w-full" />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold tracking-tight mb-2">{t.feat_r2_title}</h3>
+              <p className="text-sm text-muted leading-relaxed mb-5">{t.feat_r2_desc}</p>
+              <div className="rounded-xl overflow-hidden border border-border">
+                <Image src={`${base}/radare2.webp`} alt="Radare2 split view with CFG" width={1374} height={1025} className="w-full" />
+              </div>
+            </div>
+          </div>
+        </section>
+
         <ThemeScreenshot title={t.theme_title} desc={t.theme_desc} />
 
         <section className="py-24 px-6 border-t border-border">
