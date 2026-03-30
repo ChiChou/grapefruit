@@ -62,6 +62,7 @@ export function R2TabPanel({ fileId }: { fileId: string }) {
       cfg={cfg}
       xrefs={xrefs}
       funcXrefs={funcXrefs}
+      storageKey={fileId}
     />
   );
 }

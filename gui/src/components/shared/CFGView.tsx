@@ -16,6 +16,7 @@ export interface CFGEdge {
 interface CFGViewProps {
   nodes: CFGNode[];
   edges: CFGEdge[];
+  fnName?: string;
 }
 
 const CHAR_W = 7.2;
@@ -66,8 +67,41 @@ function arrowHead(
   );
 }
 
-export function CFGView({ nodes, edges }: CFGViewProps) {
+function downloadSvg(svgEl: SVGSVGElement, name: string) {
+  const clone = svgEl.cloneNode(true) as SVGSVGElement;
+  clone.removeAttribute("style");
+  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+
+  // Inline computed styles for portability
+  const style = getComputedStyle(document.documentElement);
+  const vars = [
+    "--r2-cfg-canvas", "--r2-cfg-node", "--r2-cfg-border",
+    "--r2-cfg-label", "--r2-cfg-text", "--r2-c31", "--r2-c32", "--r2-c90",
+  ];
+  const defs = clone.querySelector("defs") ?? clone.insertBefore(document.createElementNS("http://www.w3.org/2000/svg", "defs"), clone.firstChild);
+  const css = document.createElementNS("http://www.w3.org/2000/svg", "style");
+  css.textContent = `:root{${vars.map((v) => `${v}:${style.getPropertyValue(v)}`).join(";")}}`;
+  defs.appendChild(css);
+
+  // Add background rect
+  const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  bg.setAttribute("width", "100%");
+  bg.setAttribute("height", "100%");
+  bg.setAttribute("fill", style.getPropertyValue("--r2-cfg-canvas").trim() || "#1a1a2e");
+  clone.insertBefore(bg, clone.firstChild);
+
+  const blob = new Blob([new XMLSerializer().serializeToString(clone)], { type: "image/svg+xml" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${name.replace(/[^\w.-]/g, "_")}.svg`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export function CFGView({ nodes, edges, fnName }: CFGViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -207,6 +241,15 @@ export function CFGView({ nodes, edges }: CFGViewProps) {
           Fit
         </button>
         <span className="ml-auto">{Math.round(zoom * 100)}%</span>
+        <button
+          type="button"
+          className="px-2 py-0.5 rounded bg-muted hover:bg-accent"
+          onClick={() => {
+            if (svgRef.current) downloadSvg(svgRef.current, fnName ?? "cfg");
+          }}
+        >
+          SVG
+        </button>
         <span className="text-muted-foreground/60">
           Drag to pan · Ctrl+scroll to zoom
         </span>
@@ -219,6 +262,7 @@ export function CFGView({ nodes, edges }: CFGViewProps) {
         onMouseMove={handleMouseMove}
       >
         <svg
+          ref={svgRef}
           width={layout.width}
           height={layout.height}
           style={{

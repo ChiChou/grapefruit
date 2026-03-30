@@ -252,6 +252,25 @@ export function useDexR2Session(opts: {
     [cmd],
   );
 
+  const funcXrefs = useCallback(
+    async (address: string): Promise<StringXref[]> => {
+      if (!address) return [];
+      const raw = await cmd(`axtj @ ${address}`);
+      try {
+        const refs: Array<{ from: number; fcn_addr?: number; fcn_name?: string }> =
+          JSON.parse(raw);
+        return refs.map((r) => ({
+          addr: `0x${(r.from ?? 0).toString(16)}`,
+          fcnAddr: r.fcn_addr ?? 0,
+          fcnName: r.fcn_name ?? "",
+        }));
+      } catch {
+        return [];
+      }
+    },
+    [cmd],
+  );
+
   return {
     classes,
     strings,
@@ -262,5 +281,6 @@ export function useDexR2Session(opts: {
     disassemble,
     cfg,
     xrefs,
+    funcXrefs,
   };
 }

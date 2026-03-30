@@ -75,9 +75,20 @@ import { CryptoTab } from "../tabs/CryptoTab";
 import { Il2CppClassDetailTab } from "../tabs/Il2CppClassDetailTab";
 import { Il2CppClassDumpTab } from "../tabs/Il2CppClassDumpTab";
 import { DexViewerTab } from "../tabs/DexViewerTab";
+import { BinaryOverviewTab } from "../tabs/BinaryOverviewTab";
+import { MemoryMapsTab } from "../tabs/MemoryMapsTab";
+import { BinariesTab } from "../tabs/BinariesTab";
+import { R2SearchTab } from "../tabs/R2SearchTab";
+import { TypeEditorTab } from "../tabs/TypeEditorTab";
+import { XrefGraphTab } from "../tabs/XrefGraphTab";
+import { BookmarksTab } from "../tabs/BookmarksTab";
+import { R2GraphTab } from "../tabs/R2GraphTab";
+import { R2HexTab } from "../tabs/R2HexTab";
+import { R2DisasmTab } from "../tabs/R2DisasmTab";
 import { NoCloseTabHeader } from "../tabs/NoCloseTabHeader";
 
 import { DockContext, useDockActions } from "@/context/DockContext";
+import { R2Provider } from "@/context/R2Context";
 
 const themeApp: DockviewTheme = {
   name: "app",
@@ -217,6 +228,16 @@ function WorkspaceContent() {
     il2cppClassDetail: Il2CppClassDetailTab,
     il2cppClassDump: Il2CppClassDumpTab,
     dexViewer: DexViewerTab,
+    binaryOverview: BinaryOverviewTab,
+    memoryMaps: MemoryMapsTab,
+    binaries: BinariesTab,
+    r2Search: R2SearchTab,
+    typeEditor: TypeEditorTab,
+    xrefGraph: XrefGraphTab,
+    bookmarks: BookmarksTab,
+    r2Graph: R2GraphTab,
+    r2Hex: R2HexTab,
+    r2Disasm: R2DisasmTab,
   };
 
   const tabComponents = {
@@ -267,7 +288,10 @@ function WorkspaceContent() {
     });
   };
 
+  const r2StorageKey = `${device}:${mode}:${bundle || pid}`;
+
   return (
+    <R2Provider storageKey={r2StorageKey}>
     <DockContext.Provider value={dockContextValue}>
       <div className="flex h-screen flex-col">
         <ResizablePanelGroup
@@ -325,6 +349,7 @@ function WorkspaceContent() {
       </div>
       <CommandPalette open={commandPaletteOpen} onOpenChange={setCommandPaletteOpen} />
     </DockContext.Provider>
+    </R2Provider>
   );
 }
 

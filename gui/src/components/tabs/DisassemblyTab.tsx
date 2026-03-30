@@ -6,10 +6,17 @@ import "./DisassemblyTab.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
-import { AlertCircle, Loader2 } from "lucide-react";
+import {
+  AlertCircle,
+  Loader2,
+  Binary,
+  Pencil,
+} from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CFGView, type CFGNode, type CFGEdge } from "@/components/shared/CFGView";
 import { Button } from "@/components/ui/button";
+import { DisassemblyMinimap } from "@/components/shared/DisassemblyMinimap";
+import { RenameDialog } from "@/components/shared/RenameDialog";
 import Editor from "@monaco-editor/react";
 
 export interface DisassemblyTabParams {
@@ -38,6 +45,7 @@ export function DisassemblyTab({
   const [isLoading, setIsLoading] = useState(true);
   const [loadingView, setLoadingView] = useState<ViewMode | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showBytes, setShowBytes] = useState(false);
   const { cmd, disassemble, graph, isReady, error: sessionError } = useR2Session();
 
   const [aiContent, setAiContent] = useState("");
@@ -45,6 +53,22 @@ export function DisassemblyTab({
   const [aiError, setAiError] = useState<string | null>(null);
   const aiCache = useRef<Map<string, string>>(new Map());
   const aiAbort = useRef<AbortController | null>(null);
+
+  const [renameOpen, setRenameOpen] = useState(false);
+
+  const fetchDisassembly = useCallback(
+    async (withBytes: boolean) => {
+      if (withBytes) {
+        return cmd(`e asm.bytes=true; e asm.nbytes=8; s ${address}; af; pdf`, { output: "html" });
+      }
+      let html = await disassemble(address, { output: "html" });
+      if (!html?.trim()) {
+        html = await cmd(`s ${address}; pd 50`, { output: "html" });
+      }
+      return html ?? "";
+    },
+    [address, cmd, disassemble],
+  );
 
   useEffect(() => {
     if (!address || !isReady) return;
@@ -55,12 +79,7 @@ export function DisassemblyTab({
 
     async function analyze() {
       try {
-        let html = await disassemble(address, { output: "html" });
-        if (ignore) return;
-
-        if (!html?.trim()) {
-          html = await cmd(`s ${address}; pd 50`, { output: "html" });
-        }
+        const html = await fetchDisassembly(showBytes);
         if (ignore) return;
 
         let plain = "";
@@ -69,9 +88,7 @@ export function DisassemblyTab({
           if (!plain.trim()) {
             plain = await cmd(`s ${address}; pd 50`);
           }
-        } catch {
-          // plain text is optional (used for AI decompile)
-        }
+        } catch {}
         if (ignore) return;
 
         setResult({
@@ -84,15 +101,25 @@ export function DisassemblyTab({
         setIsLoading(false);
       } catch (e) {
         if (ignore) return;
-        const msg = e instanceof Error ? e.message : String(e);
-        setError(msg);
+        setError(e instanceof Error ? e.message : String(e));
         setIsLoading(false);
       }
     }
 
     analyze();
     return () => { ignore = true; };
-  }, [address, isReady, cmd, disassemble]);
+  }, [address, isReady, showBytes, fetchDisassembly, cmd, disassemble]);
+
+  const toggleBytes = useCallback(async () => {
+    const next = !showBytes;
+    setShowBytes(next);
+    if (result) {
+      try {
+        const html = await fetchDisassembly(next);
+        setResult((prev) => prev ? { ...prev, disassemblyHtml: html.trimEnd() } : prev);
+      } catch {}
+    }
+  }, [showBytes, result, fetchDisassembly]);
 
   const loadGraph = useCallback(async () => {
     if (!isReady || (result?.graphNodes && result.graphNodes.length > 0)) return;
@@ -101,7 +128,6 @@ export function DisassemblyTab({
       const cfg = await graph(address);
       const nodes: CFGNode[] = [];
       const edges: CFGEdge[] = [];
-
       if (cfg?.blocks) {
         for (const block of cfg.blocks) {
           const id = `bb_${block.addr.toString(16)}`;
@@ -111,24 +137,20 @@ export function DisassemblyTab({
           );
           nodes.push({ id, label: `0x${block.addr.toString(16)}`, lines });
           if (block.jump !== undefined) {
-            const targetId = `bb_${block.jump.toString(16)}`;
-            const type = block.fail !== undefined ? "true" : "unconditional";
-            edges.push({ from: id, to: targetId, type });
+            edges.push({
+              from: id,
+              to: `bb_${block.jump.toString(16)}`,
+              type: block.fail !== undefined ? "true" : "unconditional",
+            });
           }
           if (block.fail !== undefined) {
-            const targetId = `bb_${block.fail.toString(16)}`;
-            edges.push({ from: id, to: targetId, type: "false" });
+            edges.push({ from: id, to: `bb_${block.fail.toString(16)}`, type: "false" });
           }
         }
       }
-
-      setResult((prev) =>
-        prev ? { ...prev, graphNodes: nodes, graphEdges: edges } : prev,
-      );
+      setResult((prev) => prev ? { ...prev, graphNodes: nodes, graphEdges: edges } : prev);
     } catch {
-      setResult((prev) =>
-        prev ? { ...prev, graphNodes: [], graphEdges: [] } : prev,
-      );
+      setResult((prev) => prev ? { ...prev, graphNodes: [], graphEdges: [] } : prev);
     } finally {
       setLoadingView(null);
     }
@@ -139,17 +161,10 @@ export function DisassemblyTab({
     setLoadingView("decompiler");
     try {
       const output = await cmd(`e scr.color=0; s ${address}; af; pdc`);
-      setResult((prev) =>
-        prev ? { ...prev, decompilerOutput: output.trimEnd() } : prev,
-      );
+      setResult((prev) => prev ? { ...prev, decompilerOutput: output.trimEnd() } : prev);
     } catch {
       setResult((prev) =>
-        prev
-          ? {
-              ...prev,
-              decompilerOutput: "// Decompiler not available for this function",
-            }
-          : prev,
+        prev ? { ...prev, decompilerOutput: "// Decompiler not available for this function" } : prev,
       );
     } finally {
       setLoadingView(null);
@@ -158,18 +173,12 @@ export function DisassemblyTab({
 
   const loadAiDecompile = useCallback(async () => {
     if (!result?.plainDisasm) return;
-
     const cached = aiCache.current.get(address);
-    if (cached) {
-      setAiContent(cached);
-      setAiError(null);
-      return;
-    }
+    if (cached) { setAiContent(cached); setAiError(null); return; }
 
     aiAbort.current?.abort();
     const ac = new AbortController();
     aiAbort.current = ac;
-
     setAiLoading(true);
     setAiError(null);
     setAiContent("");
@@ -193,14 +202,12 @@ export function DisassemblyTab({
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
       let accumulated = "";
-
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         accumulated += decoder.decode(value, { stream: true });
         setAiContent(accumulated);
       }
-
       aiCache.current.set(address, accumulated);
     } catch (e) {
       if (ac.signal.aborted) return;
@@ -217,6 +224,16 @@ export function DisassemblyTab({
     if (mode === "decompiler") loadDecompiler();
     if (mode === "ai-decompile") loadAiDecompile();
   };
+
+  const handleRename = useCallback(async (newName: string) => {
+    try {
+      await cmd(`afn ${newName} @ ${address}`);
+      // Re-fetch disassembly to reflect new name
+      const html = await fetchDisassembly(showBytes);
+      setResult((prev) => prev ? { ...prev, disassemblyHtml: html.trimEnd() } : prev);
+    } catch {}
+  }, [cmd, address, fetchDisassembly, showBytes]);
+
 
   if (sessionError) {
     return (
@@ -260,12 +277,8 @@ export function DisassemblyTab({
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <Tabs
-        value={viewMode}
-        onValueChange={handleTabChange}
-        className="h-full flex flex-col"
-      >
+    <div className="h-full flex">
+      <Tabs value={viewMode} onValueChange={handleTabChange} className="h-full flex flex-col flex-1 min-w-0">
         <div className="flex items-center border-b bg-card">
           <TabsList variant="line">
             <TabsTrigger value="disassembly">Linear</TabsTrigger>
@@ -273,7 +286,27 @@ export function DisassemblyTab({
             <TabsTrigger value="decompiler">Decompiler</TabsTrigger>
             <TabsTrigger value="ai-decompile">AI Decompile</TabsTrigger>
           </TabsList>
-          <span className="text-xs font-mono text-muted-foreground px-3 py-1.5 truncate ml-auto max-w-[40%]">
+          <div className="flex items-center gap-0.5 ml-auto px-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`h-6 w-6 p-0 ${showBytes ? "text-primary" : ""}`}
+              onClick={toggleBytes}
+              title="Toggle opcode bytes"
+            >
+              <Binary className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={() => setRenameOpen(true)}
+              title="Rename function"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+          <span className="text-xs font-mono text-muted-foreground px-3 py-1.5 truncate max-w-[30%]">
             {params?.name || address}
           </span>
         </div>
@@ -290,19 +323,17 @@ export function DisassemblyTab({
         <TabsContent value="graph" className="flex-1 overflow-hidden">
           {loadingView === "graph" ? (
             <div className="flex items-center justify-center h-full text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              Loading graph...
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />Loading graph...
             </div>
           ) : (
-            <CFGView nodes={result.graphNodes} edges={result.graphEdges} />
+            <CFGView nodes={result.graphNodes} edges={result.graphEdges} fnName={params?.name} />
           )}
         </TabsContent>
 
         <TabsContent value="decompiler" className="flex-1 overflow-hidden">
           {loadingView === "decompiler" ? (
             <div className="flex items-center justify-center h-full text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              Loading decompiler...
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />Loading decompiler...
             </div>
           ) : (
             <Editor
@@ -314,8 +345,7 @@ export function DisassemblyTab({
                 readOnly: true,
                 minimap: { enabled: false },
                 fontSize: 13,
-                fontFamily:
-                  "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace",
+                fontFamily: "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace",
                 lineNumbers: "on",
                 scrollBeyondLastLine: false,
                 wordWrap: "on",
@@ -334,6 +364,15 @@ export function DisassemblyTab({
           />
         </TabsContent>
       </Tabs>
+      <DisassemblyMinimap cmd={async (c) => cmd(c)} isReady={isReady} currentAddr={address} />
+
+      <RenameDialog
+        open={renameOpen}
+        onOpenChange={setRenameOpen}
+        currentName={params?.name || ""}
+        address={address}
+        onRename={handleRename}
+      />
     </div>
   );
 }
@@ -354,15 +393,13 @@ function AiDecompileView({
   if (isLoading && !content) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-        Decompiling with AI...
+        <Loader2 className="h-4 w-4 animate-spin mr-2" />Decompiling with AI...
       </div>
     );
   }
 
   if (error) {
-    const isNotConfigured =
-      error.includes("LLM not configured") || error.includes("LLM_PROVIDER");
+    const isNotConfigured = error.includes("LLM not configured") || error.includes("LLM_PROVIDER");
     return (
       <div className="flex items-center justify-center h-full px-6">
         <div className="flex flex-col items-center gap-3 max-w-md text-center">
@@ -371,8 +408,7 @@ function AiDecompileView({
             <>
               <p className="text-sm font-medium">LLM not configured</p>
               <p className="text-xs text-muted-foreground">
-                AI decompilation requires an LLM provider. Set these environment
-                variables before starting the server:
+                AI decompilation requires an LLM provider. Set these environment variables before starting the server:
               </p>
               <pre className="text-[11px] text-left bg-muted rounded-md px-3 py-2 w-full font-mono">
                 {`LLM_PROVIDER=anthropic   # or openai, gemini, openrouter\nLLM_API_KEY=sk-...\nLLM_MODEL=claude-sonnet-4-20250514`}
@@ -382,14 +418,7 @@ function AiDecompileView({
             <>
               <p className="text-sm font-medium">AI decompilation failed</p>
               <p className="text-xs text-muted-foreground break-all">{error}</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                onClick={onRetry}
-              >
-                Retry
-              </Button>
+              <Button variant="outline" size="sm" className="text-xs" onClick={onRetry}>Retry</Button>
             </>
           )}
         </div>
@@ -415,8 +444,7 @@ function AiDecompileView({
         readOnly: true,
         minimap: { enabled: false },
         fontSize: 13,
-        fontFamily:
-          "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace",
+        fontFamily: "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace",
         lineNumbers: "on",
         scrollBeyondLastLine: false,
         wordWrap: "on",

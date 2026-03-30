@@ -2,7 +2,7 @@
  * Radare2 binary viewer: classes/functions, strings, disassembly, CFG, AI decompile.
  * Supports DEX, native binaries, and other formats radare2 can analyze.
  */
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Loader2,
@@ -12,6 +12,8 @@ import {
   ChevronRight,
   ChevronDown,
   ChevronRight as ChevronExpand,
+  Binary,
+  Pencil,
 } from "lucide-react";
 import Editor from "@monaco-editor/react";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -35,6 +37,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { CFGView, type CFGNode, type CFGEdge } from "@/components/shared/CFGView";
+import { DisassemblyMinimap } from "@/components/shared/DisassemblyMinimap";
+import { RenameDialog } from "@/components/shared/RenameDialog";
 import type { DexClass, DexMethod, DexString, StringXref, R2Function } from "@/lib/r2";
 
 import "../tabs/DisassemblyTab.css";
@@ -50,11 +54,20 @@ export interface R2ViewerProps {
   cfg: (address: string) => Promise<{ nodes: CFGNode[]; edges: CFGEdge[] } | null>;
   xrefs: (vaddr: number) => Promise<StringXref[]>;
   funcXrefs: (address: string) => Promise<StringXref[]>;
+  /** Key for persisting view state across reload */
+  storageKey?: string;
 }
 
-type LeftTab = "classes" | "functions" | "strings";
+type LeftTab = "classes" | "functions" | "strings" | "maps";
 
-type ViewMode = "disassembly" | "graph" | "decompiler" | "ai-decompile";
+type ViewMode = "disassembly" | "graph" | "split" | "decompiler" | "ai-decompile";
+
+interface SectionEntry {
+  name: string;
+  vaddr: number;
+  size: number;
+  perm: string;
+}
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -62,6 +75,20 @@ function escapeHtml(s: string): string {
 
 function htmlToPlain(html: string): string {
   return html.replace(/<[^>]*>/g, "");
+}
+
+function loadState(key: string | undefined) {
+  if (!key) return null;
+  try {
+    const raw = localStorage.getItem(`r2v:${key}`);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function saveState(key: string | undefined, patch: Record<string, any>) {
+  if (!key) return;
+  const prev = loadState(key) ?? {};
+  localStorage.setItem(`r2v:${key}`, JSON.stringify({ ...prev, ...patch }));
 }
 
 export function R2Viewer({
@@ -75,11 +102,14 @@ export function R2Viewer({
   cfg,
   xrefs,
   funcXrefs,
+  storageKey,
 }: R2ViewerProps) {
   const { t } = useTranslation();
   const { theme } = useTheme();
 
-  const [leftTab, setLeftTab] = useState<LeftTab>("functions");
+  const saved = useRef(loadState(storageKey));
+
+  const [leftTab, setLeftTab] = useState<LeftTab>(() => saved.current?.leftTab ?? "functions");
   const [classSearch, setClassSearch] = useState("");
   const [funcSearch, setFuncSearch] = useState("");
   const [strSearch, setStrSearch] = useState("");
@@ -89,15 +119,22 @@ export function R2Viewer({
   const [selectedString, setSelectedString] = useState<DexString | null>(null);
   const [expandedClasses, setExpandedClasses] = useState<Set<string>>(new Set());
 
-  const [viewMode, setViewMode] = useState<ViewMode>("disassembly");
+  const [viewMode, setViewModeState] = useState<ViewMode>(() => saved.current?.viewMode ?? "disassembly");
+  const viewModeRef = useRef(viewMode);
+  const setViewMode = useCallback((m: ViewMode) => { viewModeRef.current = m; setViewModeState(m); }, []);
   const [codeHtml, setCodeHtml] = useState("");
   const [codeLoading, setCodeLoading] = useState(false);
+  const [showBytes, setShowBytes] = useState(false);
+
+  const [renameOpen, setRenameOpen] = useState(false);
 
   const [cfgData, setCfgData] = useState<{ nodes: CFGNode[]; edges: CFGEdge[] } | null>(null);
   const [cfgLoading, setCfgLoading] = useState(false);
 
   const [pdcContent, setPdcContent] = useState("");
   const [pdcLoading, setPdcLoading] = useState(false);
+
+  const [sections, setSections] = useState<SectionEntry[]>([]);
 
   const [aiContent, setAiContent] = useState("");
   const [aiLang, setAiLang] = useState("cpp");
@@ -127,6 +164,26 @@ export function R2Viewer({
     return functions.filter((f) => f.name.toLowerCase().includes(q));
   }, [functions, funcSearch]);
 
+  const sectionsLoaded = useRef(false);
+  const loadSections = useCallback(async () => {
+    if (sectionsLoaded.current) return;
+    sectionsLoaded.current = true;
+    try {
+      const raw = await cmd("iSj");
+      const arr = JSON.parse(raw);
+      setSections(
+        (Array.isArray(arr) ? arr : [])
+          .filter((s: any) => s.size > 0)
+          .map((s: any) => ({
+            name: s.name ?? "",
+            vaddr: s.vaddr ?? 0,
+            size: s.size ?? 0,
+            perm: s.perm ?? "",
+          })),
+      );
+    } catch {}
+  }, [cmd]);
+
   const filteredStrings = useMemo(() => {
     if (!strSearch.trim()) return strings;
     const q = strSearch.toLowerCase();
@@ -138,7 +195,12 @@ export function R2Viewer({
       setCodeLoading(true);
       setCfgData(null);
       try {
-        const html = await disassemble(method.addr, "html");
+        let html: string;
+        if (showBytes) {
+          html = await cmd(`e asm.bytes=true; e asm.nbytes=8; s ${method.addr}; af; pdf`, "html");
+        } else {
+          html = await disassemble(method.addr, "html");
+        }
         setCodeHtml(html);
       } catch {
         setCodeHtml("<pre>; Failed to disassemble</pre>");
@@ -146,7 +208,7 @@ export function R2Viewer({
         setCodeLoading(false);
       }
     },
-    [disassemble],
+    [disassemble, cmd, showBytes],
   );
 
   const loadPdc = useCallback(
@@ -262,18 +324,19 @@ export function R2Viewer({
 
       funcXrefs(method.addr).then(setMethodXrefList);
 
-      if (viewMode === "ai-decompile") {
+      const mode = viewModeRef.current;
+      if (mode === "ai-decompile") {
         loadAi(cls, method);
-      } else if (viewMode === "graph") {
+      } else if (mode === "graph" || mode === "split") {
         loadDisassembly(method);
         loadCfg(method);
-      } else if (viewMode === "decompiler") {
+      } else if (mode === "decompiler") {
         loadPdc(method);
       } else {
         loadDisassembly(method);
       }
     },
-    [viewMode, loadDisassembly, loadCfg, loadPdc, loadAi, funcXrefs],
+    [loadDisassembly, loadCfg, loadPdc, loadAi, funcXrefs],
   );
 
   const selectClass = useCallback((cls: DexClass) => {
@@ -303,16 +366,48 @@ export function R2Viewer({
     [xrefs],
   );
 
+  // Restore selected function on mount (before persistence kicks in)
+  const restored = useRef(false);
+  useEffect(() => {
+    if (restored.current || !functions.length) return;
+    restored.current = true;
+    const s = saved.current;
+    if (s?.fnAddr) {
+      const fn = functions.find((f) => f.addr === s.fnAddr);
+      if (fn) {
+        const pseudo: DexMethod = { addr: fn.addr, index: 0, flags: "", signature: fn.name, name: fn.name };
+        const pseudoCls: DexClass = { addr: fn.addr, name: fn.name, superclass: "", size: fn.size, methods: [pseudo], fields: [] };
+        selectMethod(pseudoCls, pseudo);
+      }
+    }
+    // Load sections if maps tab was persisted
+    if (s?.leftTab === "maps") loadSections();
+  }, [functions, selectMethod, loadSections]);
+
+  // Persist view state (only after initial restore)
+  useEffect(() => {
+    if (!restored.current) return;
+    saveState(storageKey, { leftTab, viewMode, fnAddr: selectedMethod?.addr });
+  }, [storageKey, leftTab, viewMode, selectedMethod?.addr]);
+
+  // Load sections when switching to maps tab
+  useEffect(() => {
+    if (leftTab === "maps") loadSections();
+  }, [leftTab, loadSections]);
+
   const changeViewMode = useCallback(
     (mode: ViewMode) => {
       setViewMode(mode);
       if (!selectedMethod || !selectedClass) return;
       if (mode === "ai-decompile") loadAi(selectedClass, selectedMethod);
       else if (mode === "graph") loadCfg(selectedMethod);
-      else if (mode === "decompiler") loadPdc(selectedMethod);
+      else if (mode === "split") {
+        loadDisassembly(selectedMethod);
+        loadCfg(selectedMethod);
+      } else if (mode === "decompiler") loadPdc(selectedMethod);
       else loadDisassembly(selectedMethod);
     },
-    [selectedMethod, selectedClass, loadDisassembly, loadCfg, loadPdc, loadAi],
+    [selectedMethod, selectedClass, loadDisassembly, loadCfg, loadPdc, loadAi, setViewMode],
   );
 
   const canGoBack = historyIdx.current > 0;
@@ -386,7 +481,8 @@ export function R2Viewer({
         </Badge>
       </div>
 
-      {/* Split view */}
+      {/* Main area: panels + minimap */}
+      <div className="flex flex-1 min-h-0">
       <ResizablePanelGroup orientation="horizontal" autoSaveId="r2-analysis" className="flex-1">
         {/* Left: classes + strings */}
         <ResizablePanel id="r2-left" defaultSize="35%" minSize="20%">
@@ -394,9 +490,10 @@ export function R2Viewer({
           <ResizablePanel id="r2-browse" defaultSize="70%" minSize="30%">
           <Tabs value={leftTab} onValueChange={(v) => setLeftTab(v as LeftTab)} className="h-full flex flex-col">
             <TabsList variant="line" className="shrink-0">
-              <TabsTrigger value="functions">{t("hermes_functions")} ({functions.length})</TabsTrigger>
-              <TabsTrigger value="classes">Classes ({classes.length})</TabsTrigger>
-              <TabsTrigger value="strings">{t("hermes_strings")} ({strings.length})</TabsTrigger>
+              <TabsTrigger value="functions">{t("r2_funcs")}</TabsTrigger>
+              <TabsTrigger value="classes">{t("r2_classes")}</TabsTrigger>
+              <TabsTrigger value="strings">{t("r2_strings")}</TabsTrigger>
+              <TabsTrigger value="maps">{t("r2_maps")}</TabsTrigger>
             </TabsList>
 
             {leftTab === "classes" && (
@@ -450,6 +547,60 @@ export function R2Viewer({
                 <StringList strings={filteredStrings} selectedVaddr={selectedString?.vaddr ?? null} onSelect={selectString} />
               </div>
             )}
+
+            {leftTab === "maps" && (
+              <div className="flex-1 overflow-auto">
+                {sections.length === 0 ? (
+                  <div className="flex items-center justify-center h-20 text-xs text-muted-foreground">{t("r2_no_sections")}</div>
+                ) : (
+                  <>
+                    <div className="p-2">
+                      <div className="flex h-4 rounded overflow-hidden gap-px">
+                        {sections.map((s, i) => {
+                          const total = sections.reduce((a, x) => a + x.size, 0) || 1;
+                          const pct = Math.max((s.size / total) * 100, 0.5);
+                          return (
+                            <div
+                              key={i}
+                              className="relative group"
+                              style={{
+                                width: `${pct}%`,
+                                backgroundColor: s.perm.includes("x") ? "var(--r2-perm-x)" : s.perm.includes("w") ? "var(--r2-perm-w)" : "var(--r2-perm-r)",
+                              }}
+                              title={`${s.name} (${s.size.toLocaleString()}B)`}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <table className="w-full text-[11px]">
+                      <thead className="sticky top-0 bg-card">
+                        <tr className="text-muted-foreground border-b">
+                          <th className="text-left py-1 px-2 font-medium">Name</th>
+                          <th className="text-left py-1 px-2 font-medium">Addr</th>
+                          <th className="text-right py-1 px-2 font-medium">Size</th>
+                          <th className="text-center py-1 px-2 font-medium">Perm</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sections.map((s, i) => (
+                          <tr key={i} className="border-b border-border/30 hover:bg-accent/30">
+                            <td className="py-1 px-2 font-mono">{s.name}</td>
+                            <td className="py-1 px-2 font-mono text-muted-foreground">0x{s.vaddr.toString(16)}</td>
+                            <td className="py-1 px-2 font-mono text-right">{s.size.toLocaleString()}</td>
+                            <td className="py-1 px-2 text-center font-mono">
+                              <span className={s.perm.includes("r") ? "text-green-400" : "text-muted-foreground/30"}>r</span>
+                              <span className={s.perm.includes("w") ? "text-yellow-400" : "text-muted-foreground/30"}>w</span>
+                              <span className={s.perm.includes("x") ? "text-red-400" : "text-muted-foreground/30"}>x</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </>
+                )}
+              </div>
+            )}
           </Tabs>
           </ResizablePanel>
 
@@ -464,8 +615,9 @@ export function R2Viewer({
                     {selectedString.value || <span className="text-muted-foreground italic">(empty)</span>}
                   </pre>
                 </div>
-                <div className="px-3 py-1 text-[10px] text-muted-foreground shrink-0 border-b">
-                  {t("hermes_referenced_by")} ({stringXrefList.length})
+                <div className="flex items-center gap-1.5 px-3 py-1.5 shrink-0 border-b bg-muted/50">
+                  <span className="text-[11px] font-semibold tracking-wide uppercase text-muted-foreground">{t("hermes_referenced_by")}</span>
+                  <span className="text-[10px] text-muted-foreground/70">({stringXrefList.length})</span>
                 </div>
                 {stringXrefList.length === 0 ? (
                   <div className="flex items-center justify-center flex-1 text-xs text-muted-foreground">{t("hermes_no_refs")}</div>
@@ -492,8 +644,9 @@ export function R2Viewer({
               </div>
             ) : methodXrefList.length > 0 ? (
               <div className="h-full flex flex-col">
-                <div className="px-3 py-1 text-[10px] text-muted-foreground shrink-0 border-b">
-                  {t("hermes_called_by")} ({methodXrefList.length})
+                <div className="flex items-center gap-1.5 px-3 py-1.5 shrink-0 border-b bg-muted/50">
+                  <span className="text-[11px] font-semibold tracking-wide uppercase text-muted-foreground">{t("r2_xrefs")}</span>
+                  <span className="text-[10px] text-muted-foreground/70">({methodXrefList.length})</span>
                 </div>
                 <div className="flex-1 overflow-auto">
                   {methodXrefList.map((ref, i) => (
@@ -534,10 +687,28 @@ export function R2Viewer({
                   <TabsList variant="line">
                     <TabsTrigger value="disassembly">{t("hermes_disassembly")}</TabsTrigger>
                     <TabsTrigger value="graph">Graph</TabsTrigger>
+                    <TabsTrigger value="split">{t("r2_split")}</TabsTrigger>
                     <TabsTrigger value="decompiler">{t("hermes_pseudocode")}</TabsTrigger>
                     <TabsTrigger value="ai-decompile">{t("hermes_ai_decompile")}</TabsTrigger>
                   </TabsList>
                 </Tabs>
+                <div className="flex items-center gap-0.5 ml-auto px-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={`h-6 w-6 p-0 ${showBytes ? "text-primary" : ""}`}
+                    onClick={() => {
+                      setShowBytes(!showBytes);
+                      if (selectedMethod) loadDisassembly(selectedMethod);
+                    }}
+                    title={t("r2_toggle_bytes")}
+                  >
+                    <Binary className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setRenameOpen(true)} title={t("r2_rename")}>
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -577,15 +748,41 @@ export function R2Viewer({
                 ) : (
                   <div className="flex items-center justify-center h-full text-sm text-muted-foreground">{t("hermes_click_function")}</div>
                 )
+              ) : viewMode === "split" && selectedMethod ? (
+                <ResizablePanelGroup orientation="horizontal" autoSaveId="r2-split">
+                  <ResizablePanel id="r2-split-asm" defaultSize="50%" minSize="20%">
+                    {codeLoading ? (
+                      <div className="flex items-center justify-center h-full text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />Loading...
+                      </div>
+                    ) : codeHtml ? (
+                      <div className="disassembly-view h-full overflow-auto p-3 font-mono text-xs whitespace-pre" dangerouslySetInnerHTML={{ __html: codeHtml }} />
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-xs text-muted-foreground">{t("r2_no_disasm")}</div>
+                    )}
+                  </ResizablePanel>
+                  <ResizableHandle />
+                  <ResizablePanel id="r2-split-cfg" defaultSize="50%" minSize="20%">
+                    {cfgLoading ? (
+                      <div className="flex items-center justify-center h-full text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />{t("r2_loading_graph")}
+                      </div>
+                    ) : cfgData ? (
+                      <CFGView nodes={cfgData.nodes} edges={cfgData.edges} fnName={selectedMethod?.name} />
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-xs text-muted-foreground">{t("r2_no_graph")}</div>
+                    )}
+                  </ResizablePanel>
+                </ResizablePanelGroup>
               ) : viewMode === "graph" && selectedMethod ? (
                 cfgLoading ? (
                   <div className="flex items-center justify-center h-full text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />Loading graph...
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />{t("r2_loading_graph")}
                   </div>
                 ) : cfgData ? (
-                  <CFGView nodes={cfgData.nodes} edges={cfgData.edges} />
+                  <CFGView nodes={cfgData.nodes} edges={cfgData.edges} fnName={selectedMethod?.name} />
                 ) : (
-                  <div className="flex items-center justify-center h-full text-sm text-muted-foreground">No graph data</div>
+                  <div className="flex items-center justify-center h-full text-sm text-muted-foreground">{t("r2_no_graph")}</div>
                 )
               ) : codeLoading ? (
                 <div className="flex items-center justify-center h-full text-muted-foreground">
@@ -602,6 +799,48 @@ export function R2Viewer({
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
+      <DisassemblyMinimap
+        cmd={async (c) => cmd(c)}
+        isReady
+        currentAddr={selectedMethod?.addr}
+        functions={functions}
+        onSeek={(addr, fnName) => {
+          if (fnName) {
+            const fn = functions.find((f) => f.name === fnName);
+            if (fn) {
+              const pseudo: DexMethod = { addr: fn.addr, index: 0, flags: "", signature: fn.name, name: fn.name };
+              const pseudoCls: DexClass = { addr: fn.addr, name: fn.name, superclass: "", size: fn.size, methods: [pseudo], fields: [] };
+              selectMethod(pseudoCls, pseudo);
+              return;
+            }
+          }
+          // No exact function match — just select by addr
+          const fn = functions.find((f) => f.addr === addr);
+          if (fn) {
+            const pseudo: DexMethod = { addr: fn.addr, index: 0, flags: "", signature: fn.name, name: fn.name };
+            const pseudoCls: DexClass = { addr: fn.addr, name: fn.name, superclass: "", size: fn.size, methods: [pseudo], fields: [] };
+            selectMethod(pseudoCls, pseudo);
+          }
+        }}
+      />
+      </div>
+
+      {selectedMethod && (
+        <>
+          <RenameDialog
+            open={renameOpen}
+            onOpenChange={setRenameOpen}
+            currentName={selectedMethod.name}
+            address={selectedMethod.addr}
+            onRename={async (newName) => {
+              try {
+                await cmd(`afn ${newName} @ ${selectedMethod.addr}`);
+                loadDisassembly(selectedMethod);
+              } catch {}
+            }}
+          />
+        </>
+      )}
     </div>
   );
 }
