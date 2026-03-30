@@ -17,11 +17,8 @@ jobs:
   npm:
     uses: ./.github/workflows/build-npm.yml
 
-  coverage:
-    uses: ./.github/workflows/coverage.yml
-
   release:
-    needs: [cli, npm, coverage]
+    needs: [cli, npm]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
@@ -44,7 +41,8 @@ jobs:
 
       - name: Publish to npm
         if: ${{ !contains(github.ref, 'alpha') && !contains(github.ref, 'beta') }}
-        run: npm publish npm/build/igf-*.tgz --provenance
+        working-directory: npm
+        run: npm publish igf-*.tgz --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -52,11 +50,11 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            cli/build/Release/igf-linux-x64
-            cli/build/Release/igf-windows-x64.exe
-            cli/build/Release/igf-darwin-x64
-            cli/build/Release/igf-darwin-arm64
-            npm/build/igf-*.tgz
+            cli/igf-linux-x64
+            cli/igf-windows-x64.exe
+            cli/igf-darwin-x64
+            cli/igf-darwin-arm64
+            npm/igf-*.tgz
           generate_release_notes: true
           prerelease: ${{ contains(github.ref, 'beta') || contains(github.ref, 'alpha') }}
         env:

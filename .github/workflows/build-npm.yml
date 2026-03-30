@@ -19,11 +19,11 @@ jobs:
 
       - uses: ./.github/actions/setup
 
-      - name: Install dependencies
+      - name: Install and build
         run: |
           npm ci
-          cd agent && npm i && cd ..
-          cd gui && npm i
+          cd agent && npm i && npm run build && cd ..
+          cd gui && npm i && npm run build
 
       - name: Package
         run: npm pack
@@ -32,4 +32,4 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: igf.tgz
-          path: build/igf-*.tgz
+          path: igf-*.tgz
