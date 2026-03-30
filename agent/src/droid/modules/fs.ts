@@ -4,7 +4,7 @@ import type { JavaFile } from "@/droid/bridge/wrapper.js";
 import { perform } from "@/common/hooks/java.js";
 import { getContext } from "@/droid/lib/context.js";
 import { allocByteBuffer } from "@/droid/lib/jbytes.js";
-import * as posix from "@/lib/posix.js";
+import * as file from "@/lib/file.js";
 import type { Roots } from "@/common/fs.js";
 
 export interface MetaData {
@@ -151,7 +151,7 @@ export function cp(src: string, dst: string) {
 }
 
 export function mv(src: string, dst: string) {
-  return posix.rename(src, dst);
+  return file.rename(src, dst);
 }
 
 export function mkdirp(path: string) {
@@ -210,20 +210,28 @@ export function text(path: string) {
 }
 
 export function data(path: string) {
-  return posix.readFile(path);
+  return file.readFile(path);
 }
 
-const PREVIEW_LIMIT = 1024 * 1024;
+const PREVIEW_LIMIT = 4 * 1024 * 1024;
 
 export function preview(path: string) {
-  const size = posix.fileSize(path);
+  const size = file.size(path);
   if (size > PREVIEW_LIMIT)
     throw new Error(`File too large (${(size / 1024 / 1024).toFixed(1)} MB)`);
-  return posix.readFile(path, PREVIEW_LIMIT);
+  return file.readFile(path, PREVIEW_LIMIT);
+}
+
+export function size(path: string) {
+  return file.size(path);
+}
+
+export function range(path: string, offset: number, length: number) {
+  return file.readRange(path, offset, length);
 }
 
 export function access(path: string) {
-  return posix.isWritable(path);
+  return file.isWritable(path);
 }
 
 export function saveText(path: string, content: string) {

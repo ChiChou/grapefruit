@@ -5,7 +5,7 @@ import {
   sendHermesByteCode,
   createCallbackContext,
 } from "@/common/hermes.js";
-import { unlink } from "@/lib/posix.js";
+import { unlink } from "@/lib/file.js";
 import { NSData, NSURL } from "../typings.js";
 import { getTracker } from "@/fruity/lib/weak.js";
 

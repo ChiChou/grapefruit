@@ -8,15 +8,10 @@ const routes = new Hono()
     const path = c.req.query("path");
     if (typeof path !== "string") return c.text("invalid path", 400);
 
-    // need upstream frida-fs to support { start, end } in fs.createReadStream
-    if (c.req.header("Range")) {
-      return c.text("range download not implemented", 501);
-    }
-
     const device = c.get("device");
     const pid = parseInt(c.req.param("pid"), 10);
     const transport = await createTransport(device, pid);
-    const { script, controller } = transport;
+    const { script } = transport;
 
     let size: number;
     try {
@@ -26,7 +21,55 @@ const routes = new Hono()
       return c.text("file not found", 404);
     }
 
+    const rangeHeader = c.req.header("Range");
+    if (rangeHeader) {
+      const match = rangeHeader.match(/bytes=(\d+)-(\d*)/);
+      if (!match) {
+        await transport.close();
+        return c.text("invalid range", 416);
+      }
+
+      const start = parseInt(match[1], 10);
+      const end = match[2] ? parseInt(match[2], 10) : size - 1;
+      if (start >= size || end >= size || start > end) {
+        c.header("Content-Range", `bytes */${size}`);
+        await transport.close();
+        return c.text("range not satisfiable", 416);
+      }
+
+      c.status(206);
+      c.header("Content-Range", `bytes ${start}-${end}/${size}`);
+      c.header("Content-Length", (end - start + 1).toString());
+      c.header("Accept-Ranges", "bytes");
+
+      return stream(c, (streamer) =>
+        new Promise<void>((resolve, reject) => {
+          script.message.connect((message, data) => {
+            if (message.type !== "send") return;
+            const ev = message.payload as { event: string; message?: string };
+            switch (ev.event) {
+              case "info":
+                script.post({ type: "ack" });
+                break;
+              case "data":
+                if (data) streamer.write(new Uint8Array(data));
+                script.post({ type: "ack" });
+                break;
+              case "end":
+                resolve();
+                break;
+              case "error":
+                reject(new Error(ev.message ?? "range read failed"));
+                break;
+            }
+          });
+          script.exports.pullRange(path, start, end).catch(reject);
+        }).finally(() => transport.close()),
+      );
+    }
+
     c.header("Content-Length", size.toString());
+    c.header("Accept-Ranges", "bytes");
     c.header(
       "Content-Disposition",
       `attachment; filename="${path.split("/").pop()}"`,

@@ -6,7 +6,7 @@ import {
   sendHermesByteCode,
   createCallbackContext,
 } from "@/common/hermes.js";
-import { readFile, unlink } from "@/lib/posix.js";
+import { readFile, unlink } from "@/lib/file.js";
 import { getTracker } from "@/droid/lib/weak.js";
 
 const CLASS_NAMES: Record<RNArch, string> = {

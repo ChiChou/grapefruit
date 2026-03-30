@@ -14,6 +14,13 @@ rpc.exports.len = function (path: string) {
   return fs.statSync(path).size;
 };
 
+rpc.exports.pullRange = function (filePath: string, start: number, end: number) {
+  send({ event: "info", size: end - start + 1 });
+  waitForAck();
+  streamFromDisk(filePath, start, end - start + 1);
+  send({ event: "end" });
+};
+
 /**
  * Get the uncompressed size of an entry inside a ZIP (APK) file.
  */

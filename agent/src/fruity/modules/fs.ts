@@ -7,7 +7,7 @@ import type {
 
 import { toJS } from "@/fruity/bridge/object.js";
 import { dump } from "@/fruity/lib/plist.js";
-import * as posix from "@/lib/posix.js";
+import * as file from "@/lib/file.js";
 import { readdirSync, lstatSync } from "fs";
 import type { Roots } from "@/common/fs.js";
 
@@ -88,7 +88,7 @@ export interface DirectoryListing {
 
 export function ls(path: string): DirectoryListing {
   const names = readdirSync(path);
-  const writable = posix.isWritable(path);
+  const writable = file.isWritable(path);
   const list: MetaData[] = [];
 
   for (const name of names) {
@@ -143,7 +143,7 @@ export function cp(src: string, dst: string) {
 }
 
 export function mv(src: string, dst: string) {
-  return posix.rename(src, dst);
+  return file.rename(src, dst);
 }
 
 const NS_FILE_ATTR_KEYS = {
@@ -217,7 +217,7 @@ export function data(path: string) {
   return nsdata.bytes().readByteArray(len);
 }
 
-const PREVIEW_LIMIT = 1024 * 1024;
+const PREVIEW_LIMIT = 4 * 1024 * 1024;
 
 export function preview(path: string) {
   const handle = ObjC.classes.NSFileHandle.fileHandleForReadingAtPath_(path);
@@ -247,8 +247,16 @@ export function mkdirp(p: string) {
   }, p);
 }
 
+export function size(path: string) {
+  return file.size(path);
+}
+
+export function range(path: string, offset: number, length: number) {
+  return file.readRange(path, offset, length);
+}
+
 export function access(path: string): boolean {
-  return posix.isWritable(path);
+  return file.isWritable(path);
 }
 
 export function saveText(path: string, text: string) {

@@ -274,16 +274,18 @@ export function TextEditorTab({
     opts?: { active?: boolean; disabled?: boolean; label?: string },
   ) => (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          className={`h-7 px-1.5 gap-1 text-xs ${opts?.active ? "bg-accent" : ""} ${opts?.label ? "" : "w-7"}`}
-          disabled={opts?.disabled}
-          onClick={action}
-        >
-          {icon}
-          {opts?.label && <span>{opts.label}</span>}
-        </Button>
+      <TooltipTrigger
+        render={
+          <Button
+            variant="ghost"
+            className={`h-7 px-1.5 gap-1 text-xs ${opts?.active ? "bg-accent" : ""} ${opts?.label ? "" : "w-7"}`}
+            disabled={opts?.disabled}
+            onClick={action}
+          />
+        }
+      >
+        {icon}
+        {opts?.label && <span>{opts.label}</span>}
       </TooltipTrigger>
       <TooltipContent side="bottom" className="text-xs">
         {tip}

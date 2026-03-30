@@ -49,65 +49,42 @@ function getApi(): PosixApi {
   return cachedApi;
 }
 
-const O_RDONLY = 0;
-const SEEK_END = 2;
-const SEEK_SET = 0;
-const W_OK = 2;
+export const O_RDONLY = 0;
+export const SEEK_END = 2;
+export const SEEK_SET = 0;
+export const W_OK = 2;
 
-export function fileSize(filePath: string): number {
-  const api = getApi();
-  const pathBuf = Memory.allocUtf8String(filePath);
-  const fd = api.open(pathBuf, O_RDONLY, 0) as number;
-  if (fd < 0) return 0;
-  const size = Number(api.lseek(fd, 0, SEEK_END));
-  api.close(fd);
-  return size;
+export function open(path: string, flags: number, mode: number): number {
+  return getApi().open(Memory.allocUtf8String(path), flags, mode) as number;
 }
 
-export function readFile(filePath: string, limit?: number): ArrayBuffer | null {
-  if (limit !== undefined && limit <= 0) return new ArrayBuffer(0);
-
-  const api = getApi();
-  const pathBuf = Memory.allocUtf8String(filePath);
-  const fd = api.open(pathBuf, O_RDONLY, 0) as number;
-  if (fd < 0) return null;
-
-  const size = Number(api.lseek(fd, 0, SEEK_END));
-  const toRead = limit ? Math.min(size, limit) : size;
-  if (toRead <= 0) {
-    api.close(fd);
-    return new ArrayBuffer(0);
-  }
-
-  api.lseek(fd, 0, SEEK_SET);
-  const buf = Memory.alloc(toRead);
-  let total = 0;
-  while (total < toRead) {
-    const n = api.read(fd, buf.add(total), toRead - total) as number;
-    if (n <= 0) break;
-    total += n;
-  }
-
-  api.close(fd);
-  return buf.readByteArray(total);
+export function read(fd: number, buf: NativePointer, count: number): number {
+  return getApi().read(fd, buf, count) as number;
 }
 
-export function rename(src: string, dst: string): boolean {
-  const api = getApi();
-  const srcBuf = Memory.allocUtf8String(src);
-  const dstBuf = Memory.allocUtf8String(dst);
-  const result = api.rename(srcBuf, dstBuf) as number;
-  if (result !== 0) throw new Error(`rename failed: ${src} -> ${dst}`);
-  return true;
+export function close(fd: number): number {
+  return getApi().close(fd) as number;
 }
 
-export function unlink(path: string): void {
-  const api = getApi();
-  api.unlink(Memory.allocUtf8String(path));
+export function lseek(fd: number, offset: number, whence: number): number {
+  return Number(getApi().lseek(fd, offset, whence));
 }
 
-export function isWritable(path: string): boolean {
-  const api = getApi();
-  const pathBuf = Memory.allocUtf8String(path);
-  return (api.access(pathBuf, W_OK) as number) === 0;
+export function rename(src: string, dst: string): number {
+  return getApi().rename(
+    Memory.allocUtf8String(src),
+    Memory.allocUtf8String(dst),
+  ) as number;
+}
+
+export function unlink(path: string): number {
+  return getApi().unlink(Memory.allocUtf8String(path)) as number;
+}
+
+export function access(path: string, mode: number): number {
+  return getApi().access(Memory.allocUtf8String(path), mode) as number;
+}
+
+export function mkdir(path: string, mode: number): number {
+  return getApi().mkdir(Memory.allocUtf8String(path), mode) as number;
 }
