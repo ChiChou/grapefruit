@@ -209,7 +209,7 @@ export function FilesTab({ params }: IDockviewPanelProps<FilesTabParams>) {
         id: panelId,
         component,
         title: fileName,
-        params: { path: fullPath },
+        params: { path: fullPath, writable: cwdWritable },
       });
     },
     [fullCwd, openSingletonPanel],

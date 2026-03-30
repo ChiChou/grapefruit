@@ -217,11 +217,17 @@ export function data(path: string) {
   return nsdata.bytes().readByteArray(len);
 }
 
+const PREVIEW_LIMIT = 1024 * 1024;
+
 export function preview(path: string) {
   const handle = ObjC.classes.NSFileHandle.fileHandleForReadingAtPath_(path);
   if (!handle) return null;
   try {
-    const nsdata = handle.readDataOfLength_(1024 * 1024);
+    const size = handle.seekToEndOfFile() as number;
+    if (size > PREVIEW_LIMIT)
+      throw new Error(`File too large (${(size / 1024 / 1024).toFixed(1)} MB)`);
+    handle.seekToFileOffset_(0);
+    const nsdata = handle.readDataOfLength_(PREVIEW_LIMIT);
     const len = nsdata.length() as number;
     if (len === 0) return new ArrayBuffer(0);
     return nsdata.bytes().readByteArray(len);

@@ -1,13 +1,32 @@
-import Editor, { loader } from "@monaco-editor/react";
+import Editor, { loader, type OnMount } from "@monaco-editor/react";
 import type { IDockviewPanelProps } from "dockview";
-import { Loader2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import {
+  ClipboardCopy,
+  ClipboardPaste,
+  Download,
+  FoldVertical,
+  Loader2,
+  Redo,
+  Save,
+  Scissors,
+  Search,
+  Undo,
+  UnfoldVertical,
+  WrapText,
+} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { editor } from "monaco-editor";
 
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { Platform, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Select,
   SelectContent,
@@ -15,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { useQuery } from "@tanstack/react-query";
 
 const LANGUAGES = [
@@ -43,6 +63,7 @@ const LANGUAGES = [
   { value: "markdown", label: "Markdown", ext: ["md", "markdown"] },
   { value: "ruby", label: "Ruby", ext: ["rb"] },
   { value: "plaintext", label: "Plain Text", ext: ["txt", "text", "log"] },
+  { value: "xml", label: "XML (plist)", ext: ["plist"] },
 ];
 
 const EXT_TO_LANG = new Map(
@@ -56,6 +77,7 @@ function langFromPath(path: string): string {
 
 export interface TextEditorTabParams {
   path: string;
+  writable?: boolean;
 }
 
 export function TextEditorTab({
@@ -67,8 +89,14 @@ export function TextEditorTab({
   const { openSingletonPanel } = useDock();
   const [content, setContent] = useState<string | null>(null);
   const [isInvalidUtf8, setIsInvalidUtf8] = useState(false);
+  const [wordWrap, setWordWrap] = useState(true);
+  const [dirty, setDirty] = useState(false);
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const savedContentRef = useRef<string>("");
 
   const fullPath = params?.path || "";
+  const writable = params?.writable ?? false;
+  const fileName = fullPath.split("/").pop() ?? "file";
   const [selectedLanguage, setSelectedLanguage] = useState(() =>
     langFromPath(fullPath),
   );
@@ -80,6 +108,82 @@ export function TextEditorTab({
   });
 
   const fs = (platform === Platform.Droid ? droid?.fs : fruity?.fs) ?? null;
+
+  const onMount: OnMount = useCallback(
+    (ed, monaco) => {
+      editorRef.current = ed;
+      if (writable) {
+        ed.addAction({
+          id: "save",
+          label: "Save",
+          keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
+          run: () => save(),
+        });
+        ed.onDidChangeModelContent(() => {
+          setDirty(ed.getValue() !== savedContentRef.current);
+        });
+      }
+    },
+    [writable],
+  );
+
+  const run = useCallback((id: string) => {
+    editorRef.current?.getAction(id)?.run();
+  }, []);
+
+  const save = useCallback(async () => {
+    if (!fs || !writable) return;
+    const text = editorRef.current?.getValue() ?? "";
+    await fs.saveText(fullPath, text);
+    savedContentRef.current = text;
+    setDirty(false);
+  }, [fs, writable, fullPath]);
+
+  const download = useCallback(() => {
+    const text = editorRef.current?.getValue() ?? content ?? "";
+    const blob = new Blob([text], { type: "text/plain" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }, [content, fileName]);
+
+  const cut = useCallback(() => {
+    const ed = editorRef.current;
+    if (!ed) return;
+    const sel = ed.getSelection();
+    if (sel && !sel.isEmpty()) {
+      const text = ed.getModel()?.getValueInRange(sel) ?? "";
+      navigator.clipboard.writeText(text);
+      ed.executeEdits("cut", [{ range: sel, text: "" }]);
+    }
+  }, []);
+
+  const copy = useCallback(() => {
+    const ed = editorRef.current;
+    if (!ed) return;
+    const sel = ed.getSelection();
+    if (sel && !sel.isEmpty()) {
+      const text = ed.getModel()?.getValueInRange(sel) ?? "";
+      navigator.clipboard.writeText(text);
+    }
+  }, []);
+
+  const paste = useCallback(async () => {
+    const ed = editorRef.current;
+    if (!ed) return;
+    const text = await navigator.clipboard.readText();
+    ed.trigger("paste", "type", { text });
+  }, []);
+
+  const toggleWrap = useCallback(() => {
+    setWordWrap((v) => {
+      const next = !v;
+      editorRef.current?.updateOptions({ wordWrap: next ? "on" : "off" });
+      return next;
+    });
+  }, []);
 
   const {
     data: rawData,
@@ -102,6 +206,7 @@ export function TextEditorTab({
       try {
         const text = new TextDecoder("utf-8", { fatal: true }).decode(u8);
         setContent(text);
+        savedContentRef.current = text;
         setIsInvalidUtf8(false);
       } catch {
         setContent(null);
@@ -160,17 +265,83 @@ export function TextEditorTab({
     );
   }
 
+  const ico = "size-3.5";
+
+  const tb = (
+    tip: string,
+    icon: React.ReactNode,
+    action: () => void,
+    opts?: { active?: boolean; disabled?: boolean; label?: string },
+  ) => (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          className={`h-7 px-1.5 gap-1 text-xs ${opts?.active ? "bg-accent" : ""} ${opts?.label ? "" : "w-7"}`}
+          disabled={opts?.disabled}
+          onClick={action}
+        >
+          {icon}
+          {opts?.label && <span>{opts.label}</span>}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="text-xs">
+        {tip}
+      </TooltipContent>
+    </Tooltip>
+  );
+
+  const sep = <Separator orientation="vertical" className="h-4 mx-0.5" />;
+
   return (
     <div className="h-full flex flex-col bg-background">
-      <div className="flex-none px-4 py-2 bg-muted/50 border-b flex justify-between items-center gap-4">
-        <span className="truncate text-sm">{fullPath}</span>
+      <div className="flex-none h-8 px-1.5 bg-muted/50 border-b flex items-center gap-0.5">
+        {tb("Save", <Save className={ico} />, save, { disabled: !writable || !dirty, label: "Save" })}
+        {sep}
+        {tb("Undo", <Undo className={ico} />, () => run("undo"), { disabled: !writable })}
+        {tb("Redo", <Redo className={ico} />, () => run("redo"), { disabled: !writable })}
+        {sep}
+        {tb("Cut", <Scissors className={ico} />, cut, { disabled: !writable })}
+        {tb("Copy", <ClipboardCopy className={ico} />, copy)}
+        {tb("Paste", <ClipboardPaste className={ico} />, paste, { disabled: !writable })}
+        {sep}
+        {tb("Find", <Search className={ico} />, () => run("actions.find"), { label: "Find" })}
+        {sep}
+        {tb("Fold All", <FoldVertical className={ico} />, () => run("editor.foldAll"))}
+        {tb("Unfold All", <UnfoldVertical className={ico} />, () => run("editor.unfoldAll"))}
+        {sep}
+        {tb("Word Wrap", <WrapText className={ico} />, toggleWrap, { active: wordWrap })}
+        <div className="flex-1" />
+        {tb("Download", <Download className={ico} />, download, { label: "Download" })}
+      </div>
+      <div className="flex-1 overflow-hidden">
+        <Editor
+          height="100%"
+          language={selectedLanguage}
+          defaultValue={content}
+          theme={theme === "dark" ? "vs-dark" : "light"}
+          onMount={onMount}
+          options={{
+            readOnly: !writable,
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            wordWrap: wordWrap ? "on" : "off",
+            fontSize: 13,
+            lineNumbers: "on",
+            folding: true,
+            automaticLayout: true,
+          }}
+        />
+      </div>
+      <div className="flex-none h-6 px-2 bg-muted/50 border-t flex items-center justify-between text-[11px] text-muted-foreground">
+        <span className="truncate">{fullPath}</span>
         <Select
           value={selectedLanguage}
           onValueChange={(v) => {
             if (v) setSelectedLanguage(v);
           }}
         >
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="h-5 border-none bg-transparent shadow-none text-[11px] text-muted-foreground px-1.5 gap-1">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -181,24 +352,6 @@ export function TextEditorTab({
             ))}
           </SelectContent>
         </Select>
-      </div>
-      <div className="flex-1 overflow-hidden">
-        <Editor
-          height="100%"
-          language={selectedLanguage}
-          value={content}
-          theme={theme === "dark" ? "vs-dark" : "light"}
-          options={{
-            readOnly: true,
-            minimap: { enabled: false },
-            scrollBeyondLastLine: false,
-            wordWrap: "on",
-            fontSize: 13,
-            lineNumbers: "on",
-            folding: true,
-            automaticLayout: true,
-          }}
-        />
       </div>
     </div>
   );

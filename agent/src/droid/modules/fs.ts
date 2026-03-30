@@ -213,8 +213,13 @@ export function data(path: string) {
   return posix.readFile(path);
 }
 
+const PREVIEW_LIMIT = 1024 * 1024;
+
 export function preview(path: string) {
-  return posix.readFile(path, 1024 * 1024);
+  const size = posix.fileSize(path);
+  if (size > PREVIEW_LIMIT)
+    throw new Error(`File too large (${(size / 1024 / 1024).toFixed(1)} MB)`);
+  return posix.readFile(path, PREVIEW_LIMIT);
 }
 
 export function access(path: string) {

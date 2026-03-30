@@ -54,6 +54,16 @@ const SEEK_END = 2;
 const SEEK_SET = 0;
 const W_OK = 2;
 
+export function fileSize(filePath: string): number {
+  const api = getApi();
+  const pathBuf = Memory.allocUtf8String(filePath);
+  const fd = api.open(pathBuf, O_RDONLY, 0) as number;
+  if (fd < 0) return 0;
+  const size = Number(api.lseek(fd, 0, SEEK_END));
+  api.close(fd);
+  return size;
+}
+
 export function readFile(filePath: string, limit?: number): ArrayBuffer | null {
   if (limit !== undefined && limit <= 0) return new ArrayBuffer(0);
 
