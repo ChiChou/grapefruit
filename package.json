@@ -17,7 +17,8 @@
   "scripts": {
     "setup": "bun scripts/prepare.ts",
     "dev": "bun --watch src/index.ts",
-    "dev:all": "node scripts/dev.ts",
+    "dev:both": "bun scripts/dev.ts both",
+    "dev:all": "bun scripts/dev.ts all",
     "start": "bun src/index.ts",
     "test": "bun --test",
     "test:coverage": "bun test --coverage --coverage-reporter=lcov --coverage-dir=coverage",

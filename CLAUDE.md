@@ -14,6 +14,7 @@ bun run setup      # install all deps, build agent, gui, fetch/build WASM assets
 
 ```sh
 bun run dev        # server with watch
+bun run dev:both   # tmux: server + gui dev
 bun run dev:all    # tmux/wt: agent watch + gui dev + server dev
 ```
 
