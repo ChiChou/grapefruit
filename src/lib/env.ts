@@ -1,5 +1,4 @@
 import fs from "node:fs/promises";
-import { hostname } from "node:os";
 import path from "node:path";
 import { parseArgs } from "node:util";
 
@@ -26,7 +25,7 @@ for (const [argKey, envKey] of Object.entries(mapping)) {
   }
 }
 
-const defaultHost = dev ? hostname() : "localhost";
+const defaultHost = "127.0.0.1";
 const host =
   (typeof argv.host === "string" ? argv.host : process.env.HOST) || defaultHost;
 const port = parseInt(argv.port as string, 10) || 31337;

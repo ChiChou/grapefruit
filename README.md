@@ -37,6 +37,83 @@ npx igf
 Note: even we use `bun` as primary development environment, and the prebuilt single binaries are bun based,
 the package on npm is not compatible with bun, do not use `bunx` to run.
 
+## Usage
+
+```
+igf [options]           Start the server (default)
+igf <command> [args]    Run CLI command
+```
+
+### Server Options
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--host <host>` | Host to bind the server | `127.0.0.1` |
+| `--port <port>` | Port to bind the server | `31337` |
+| `--frida <16\|17>` | Frida version to use | `17` |
+| `--project <path>` | Project directory for data/cache/logs | `.igf` in cwd |
+| `--help, -h` | Show help message | |
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `HOST` | Server bind address | `127.0.0.1` |
+| `PORT` | Server port | `31337` |
+| `FRIDA_VERSION` | Frida major version (`16` or `17`) | `17` |
+| `FRIDA_TIMEOUT` | Frida operation timeout (ms) | `1000` |
+| `PROJECT_DIR` | Project directory for data/cache/logs | `.igf` in cwd |
+| `LLM_PROVIDER` | AI provider (`anthropic`, `openai`, `gemini`, `openrouter`) | |
+| `LLM_API_KEY` | API key for the LLM provider | |
+| `LLM_MODEL` | Model name (e.g. `claude-sonnet-4-20250514`) | |
+| `LLM_BASE_URL` | Custom endpoint (overrides provider default) | |
+
+Command-line flags take precedence over environment variables when both are set.
+
+### CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `igf version` | Show Frida & IGF versions |
+| `igf device <list\|apps\|ps\|info\|kill>` | Device management |
+| `igf log <hooks\|crypto\|syslog\|agent\|clear>` | Log management |
+| `igf history <http\|nsurl\|jni\|flutter\|xpc\|privacy\|hermes>` | Query history data |
+| `igf agent <namespace>` | Agent RPC commands |
+| `igf setup [--global]` | Install Claude Code skills (`/igf`, `/audit`) |
+
+Run `igf <command> --help` for command details.
+
+## Security
+
+Grapefruit binds to `127.0.0.1` by default and has **no built-in authentication**. The web UI and API are accessible to any local process. While cross-origin requests are blocked by default (no CORS headers, Socket.IO rejects cross-origin connections), this alone is not sufficient for a shared or remote environment.
+
+**If you need remote access or multi-user security**, put Grapefruit behind a reverse proxy such as [Caddy](https://caddyserver.com):
+
+```
+# Caddyfile — basic auth
+grapefruit.example.com {
+    basicauth * {
+        analyst $2a$14$... # caddy hash-password
+    }
+    reverse_proxy 127.0.0.1:31337
+}
+```
+
+```
+# Caddyfile — mutual TLS (client certificates)
+grapefruit.example.com {
+    tls {
+        client_auth {
+            mode require_and_verify
+            trust_pool file /path/to/ca.crt
+        }
+    }
+    reverse_proxy 127.0.0.1:31337
+}
+```
+
+This gives you TLS, authentication, and access logging with minimal configuration. **Do not expose Grapefruit directly to the network without authentication.**
+
 ## Features
 
 - **Runtime Method Hooking** - Intercept native and managed functions with structured logging

@@ -4,6 +4,7 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import app from "./app.ts";
 import attach from "./ws.ts";
 import env from "./lib/env.ts";
+import getVersion from "./lib/version.ts";
 import { asset } from "./lib/assets.ts";
 
 {
@@ -35,9 +36,21 @@ const server = serve(
     port: env.port,
     hostname: env.host,
   },
-  (info) => {
+  async (info) => {
+    const {
+      default: { version },
+    } = await import("../package.json", { with: { type: "json" } });
+    const fridaVer = await getVersion(env.frida === 16 ? "frida16" : "frida");
     const host = info.family === "IPv6" ? `[${info.address}]` : info.address;
-    console.info(`Server is running on http://${host}:${info.port}`);
+
+    // prettier-ignore
+    console.info(`
+Grapefruit v${version} (Frida ${fridaVer})
+
+  Web UI  http://${host}:${info.port}
+  API     http://${host}:${info.port}/api${env.dev ? "\n  Mode    development" : ""}
+`);
+
     attach(server);
   },
 );
