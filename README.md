@@ -83,37 +83,6 @@ Command-line flags take precedence over environment variables when both are set.
 
 Run `igf <command> --help` for command details.
 
-## Security
-
-Grapefruit binds to `127.0.0.1` by default and has **no built-in authentication**. The web UI and API are accessible to any local process. While cross-origin requests are blocked by default (no CORS headers, Socket.IO rejects cross-origin connections), this alone is not sufficient for a shared or remote environment.
-
-**If you need remote access or multi-user security**, put Grapefruit behind a reverse proxy such as [Caddy](https://caddyserver.com):
-
-```
-# Caddyfile — basic auth
-grapefruit.example.com {
-    basicauth * {
-        analyst $2a$14$... # caddy hash-password
-    }
-    reverse_proxy 127.0.0.1:31337
-}
-```
-
-```
-# Caddyfile — mutual TLS (client certificates)
-grapefruit.example.com {
-    tls {
-        client_auth {
-            mode require_and_verify
-            trust_pool file /path/to/ca.crt
-        }
-    }
-    reverse_proxy 127.0.0.1:31337
-}
-```
-
-This gives you TLS, authentication, and access logging with minimal configuration. **Do not expose Grapefruit directly to the network without authentication.**
-
 ## Features
 
 - **Runtime Method Hooking** - Intercept native and managed functions with structured logging
@@ -166,6 +135,13 @@ This gives you TLS, authentication, and access logging with minimal configuratio
 - Clipboard and SharedPreferences monitoring
 - Broadcast receiver monitoring
 
+## Documentation
+
+- [Development](docs/dev.md)
+- [Architecture](docs/arch.md)
+- [RPC](docs/rpc.md)
+- [Acknowledgements](docs/oss.md)
+
 ## Scope and Non-Goals
 
 This project does not include built-in bypasses for anti-tampering protections:
@@ -190,12 +166,36 @@ Rather than shipping brittle built-in bypasses, Grapefruit focuses on instrument
 
 2. **Multi-session Architecture** — Frida supports multiple sessions attached to the same process. Spawn a separate session with your RASP bypass scripts first, then launch Grapefruit. When Grapefruit detects that the target app is already running, it attaches to the existing process rather than respawning it, preserving any bypasses already in effect.
 
-## Documentation
+## Security
 
-- [Development](docs/dev.md)
-- [Architecture](docs/arch.md)
-- [RPC](docs/rpc.md)
-- [Acknowledgements](docs/oss.md)
+Grapefruit binds to `127.0.0.1` by default and has **no built-in authentication**. The web UI and API are accessible to any local process. While cross-origin requests are blocked by default (no CORS headers, Socket.IO rejects cross-origin connections), this alone is not sufficient for a shared or remote environment.
+
+**If you need remote access or multi-user security**, put Grapefruit behind a reverse proxy such as [Caddy](https://caddyserver.com):
+
+```
+# Caddyfile — basic auth
+grapefruit.example.com {
+    basicauth * {
+        analyst $2a$14$... # caddy hash-password
+    }
+    reverse_proxy 127.0.0.1:31337
+}
+```
+
+```
+# Caddyfile — mutual TLS (client certificates)
+grapefruit.example.com {
+    tls {
+        client_auth {
+            mode require_and_verify
+            trust_pool file /path/to/ca.crt
+        }
+    }
+    reverse_proxy 127.0.0.1:31337
+}
+```
+
+This gives you TLS, authentication, and access logging with minimal configuration. **Do not expose Grapefruit directly to the network without authentication.**
 
 ## License
 
