@@ -49,6 +49,10 @@ const bunSEA =
     ? dirname?.includes("\\~BUN\\root")
     : dirname?.includes("/$bunfs/root");
 
+const test = process.env.NODE_ENV === "test";
+const noOpen =
+  argv["no-open"] === true || process.env.NO_OPEN === "1" || test;
+
 export default {
   bunSEA,
   frida,
@@ -58,5 +62,6 @@ export default {
   port: envAsNumber(dev ? "BACKEND_PORT" : "PORT", port),
   frontend: envAsNumber("WEB_PORT", frontend),
   timeout: envAsNumber("FRIDA_TIMEOUT", 1000),
+  noOpen,
   workdir,
 };

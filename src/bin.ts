@@ -19,6 +19,7 @@ Server Options:
   --port <port>          Port to bind the server (default: 31337)
   --project <path>       Project directory for data/cache/logs (default: .igf in cwd)
                          Can also be set via PROJECT_DIR environment variable
+  --no-open              Do not open browser on startup
   --help, -h             Show this help message
 
 CLI Commands:

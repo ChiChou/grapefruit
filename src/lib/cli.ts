@@ -7,6 +7,7 @@ export const schema: ParseArgsConfig = {
     host: { type: "string" },
     port: { type: "string" },
     help: { type: "boolean", short: "h" },
+    "no-open": { type: "boolean" },
     project: { type: "string" },
   },
   allowPositionals: true,

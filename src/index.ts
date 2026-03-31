@@ -5,6 +5,7 @@ import app from "./app.ts";
 import attach from "./ws.ts";
 import env from "./lib/env.ts";
 import getVersion from "./lib/version.ts";
+import open from "./lib/open.ts";
 import { asset } from "./lib/assets.ts";
 
 {
@@ -51,6 +52,8 @@ Grapefruit v${version} (Frida ${fridaVer})
   API     http://${host}:${info.port}/api${env.dev ? "\n  Mode    development" : ""}
 `);
 
+    const url = `http://${host}:${info.port}`;
+    if (!env.noOpen) open(url);
     attach(server);
   },
 );
