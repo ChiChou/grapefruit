@@ -41,18 +41,15 @@ the package on npm is not compatible with bun, do not use `bunx` to run.
 
 ```
 igf [options]           Start the server (default)
-igf <command> [args]    Run CLI command
+
+Options:
+  --frida <16 | 17>      Frida version to use (default: 17)
+  --host <host>          Host to bind (default: 127.0.0.1)
+  --port <port>          Port to bind (default: 31337)
+  --project <path>       Project directory for data/cache/logs (default: .igf in cwd)
+  --no-open              Do not open browser on startup
+  --help, -h             Show help message
 ```
-
-### Server Options
-
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--host <host>` | Host to bind the server | `127.0.0.1` |
-| `--port <port>` | Port to bind the server | `31337` |
-| `--frida <16\|17>` | Frida version to use | `17` |
-| `--project <path>` | Project directory for data/cache/logs | `.igf` in cwd |
-| `--help, -h` | Show help message | |
 
 ### Environment Variables
 
@@ -69,19 +66,6 @@ igf <command> [args]    Run CLI command
 | `LLM_BASE_URL` | Custom endpoint (overrides provider default) | |
 
 Command-line flags take precedence over environment variables when both are set.
-
-### CLI Commands
-
-| Command | Description |
-|---------|-------------|
-| `igf version` | Show Frida & IGF versions |
-| `igf device <list\|apps\|ps\|info\|kill>` | Device management |
-| `igf log <hooks\|crypto\|syslog\|agent\|clear>` | Log management |
-| `igf history <http\|nsurl\|jni\|flutter\|xpc\|privacy\|hermes>` | Query history data |
-| `igf agent <namespace>` | Agent RPC commands |
-| `igf setup [--global]` | Install Claude Code skills (`/igf`, `/audit`) |
-
-Run `igf <command> --help` for command details.
 
 ## Features
 
