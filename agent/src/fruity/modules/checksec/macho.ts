@@ -182,8 +182,12 @@ function getSecureMalloc(macho: MachOParsed): false | string {
   // return found.length > 0 ? found.join(", ") : false;
 }
 
+const CPU_SUBTYPE_ARM64E = 2;
+const CPU_SUBTYPE_MASK = 0x00ffffff;
+
 function getPAC(macho: MachOParsed): false | string {
   if (Process.arch !== "arm64") return false;
+  const arm64e = (macho.cpusubtype & CPU_SUBTYPE_MASK) === CPU_SUBTYPE_ARM64E;
   const authSections = new Set(["__auth_stubs", "__auth_got", "__auth_ptr"]);
   const found: string[] = [];
   for (const sect of macho.sections) {
@@ -191,7 +195,10 @@ function getPAC(macho: MachOParsed): false | string {
       found.push(sect.name);
     }
   }
-  return found.length > 0 ? found.join(", ") : false;
+  if (arm64e && found.length > 0) return `arm64e (${found.join(", ")})`;
+  if (arm64e) return "arm64e";
+  if (found.length > 0) return found.join(", ");
+  return false;
 }
 
 export default function checksec(mod: Module): MachOResult {

@@ -50,6 +50,7 @@ const cm = new CModule(`
 
   const uint32_t sizeof_mach_header_64    = sizeof(mach_header_64);
 
+  const uint32_t off_mh64_cpusubtype      = offsetof(mach_header_64, cpusubtype);
   const uint32_t off_mh64_filetype        = offsetof(mach_header_64, filetype);
   const uint32_t off_mh64_ncmds           = offsetof(mach_header_64, ncmds);
   const uint32_t off_mh64_flags           = offsetof(mach_header_64, flags);
@@ -76,6 +77,7 @@ export interface LoadCommand {
 }
 
 export interface MachOParsed {
+  cpusubtype: number;
   fileType: number;
   flags: number;
   loadCommands: LoadCommand[];
@@ -95,6 +97,7 @@ export function parseMachO(mod: Module): MachOParsed {
   if (magic === MH_MAGIC) throw new Error("32-bit Mach-O is not supported");
   if (magic !== MH_MAGIC_64) throw new Error("Not a Mach-O file");
 
+  const cpusubtype = base.add(C("off_mh64_cpusubtype")).readU32();
   const fileType = base.add(C("off_mh64_filetype")).readU32();
   const ncmds = base.add(C("off_mh64_ncmds")).readU32();
   const flags = base.add(C("off_mh64_flags")).readU32();
@@ -114,6 +117,7 @@ export function parseMachO(mod: Module): MachOParsed {
   for (const i of imports) names.add(i.name);
 
   return {
+    cpusubtype,
     fileType,
     flags,
     loadCommands,
