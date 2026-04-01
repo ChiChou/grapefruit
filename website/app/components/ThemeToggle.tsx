@@ -9,6 +9,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     <div className={`inline-flex rounded-lg border border-border overflow-hidden ${className}`}>
       <button
         onClick={() => setTheme("dark")}
+        aria-label="Dark theme"
         className={`px-3 py-1.5 text-xs font-medium transition-colors ${
           theme === "dark"
             ? "bg-surface text-fg"
@@ -21,6 +22,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       </button>
       <button
         onClick={() => setTheme("light")}
+        aria-label="Light theme"
         className={`px-3 py-1.5 text-xs font-medium transition-colors border-l border-border ${
           theme === "light"
             ? "bg-surface text-fg"

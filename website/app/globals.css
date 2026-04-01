@@ -3,7 +3,7 @@
 :root {
   --bg: #09090b;
   --fg: #e4e4e7;
-  --muted: #71717a;
+  --muted: #a1a1aa;
   --accent: #FFA745;
   --accent-dim: #ED5E40;
   --surface: #18181b;
@@ -13,7 +13,7 @@
 html.light {
   --bg: #fafafa;
   --fg: #18181b;
-  --muted: #71717a;
+  --muted: #52525b;
   --accent: #d97706;
   --accent-dim: #dc2626;
   --surface: #f4f4f5;

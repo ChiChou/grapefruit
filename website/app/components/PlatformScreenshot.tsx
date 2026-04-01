@@ -34,6 +34,7 @@ export function PlatformScreenshot() {
           <button
             key={key}
             onClick={() => setPlatform(key)}
+            aria-label={key === "ios" ? "iOS" : "Android"}
             className={`inline-flex items-center px-3 py-1.5 transition-colors ${
               i > 0 ? "border-l border-border" : ""
             } ${
