@@ -32,5 +32,8 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
+  "references": [
+    { "path": "../agent/tsconfig.types.json" }
+  ],
   "include": ["src"]
 }

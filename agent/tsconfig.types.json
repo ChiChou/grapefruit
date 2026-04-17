@@ -1,0 +1,25 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "experimentalDecorators": true,
+    "emitDeclarationOnly": true,
+    "rootDir": "src",
+    "outDir": "types",
+    "tsBuildInfoFile": "types/.tsbuildinfo",
+    "target": "ES2019",
+    "skipLibCheck": true,
+    "types": ["frida-gum", "node"],
+    "noEmit": false,
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": [
+    "src/transport.ts",
+    "src/fruity/tests.ts",
+    "src/droid/tests.ts",
+    "src/fruity/index.ts",
+    "src/droid/index.ts"
+  ]
+}

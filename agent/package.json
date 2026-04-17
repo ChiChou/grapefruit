@@ -18,10 +18,9 @@
     "build": "bun run scripts/build.ts",
     "prepare": "bun run build",
     "lint": "eslint src/**/*.ts",
-    "type:fruity": "tsgo -p tsconfig.type-fruity.json",
-    "type:droid": "tsgo -p tsconfig.type-droid.json",
+    "type:emit": "tsgo -b tsconfig.types.json",
     "type:monaco": "bun scripts/monaco.ts",
-    "type": "bun run type:fruity && bun run type:droid && bun run type:monaco"
+    "type": "bun run type:emit && bun run type:monaco"
   },
   "devDependencies": {
     "@types/frida-gum": "^19.0.2",
