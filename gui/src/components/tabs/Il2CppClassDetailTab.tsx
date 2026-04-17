@@ -27,11 +27,7 @@ export function Il2CppClassDetailTab(
 
   const { data: detail, isLoading } = usePlatformQuery(
     ["il2cpp", "classDetail", assemblyName, fullName],
-    (api) =>
-      (api as any).il2cpp.classDetail(
-        assemblyName,
-        fullName,
-      ) as Promise<Il2CppClassDetail>,
+    (api) => api.il2cpp.classDetail(assemblyName, fullName),
   );
 
   if (isLoading || !detail) {

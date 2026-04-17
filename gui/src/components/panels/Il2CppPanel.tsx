@@ -19,12 +19,6 @@ import { useDock } from "@/context/DockContext";
 import { Platform, useSession } from "@/context/SessionContext";
 import { usePlatformQuery, useQueryClient } from "@/lib/queries";
 
-import type {
-  Il2CppAssemblyInfo,
-  Il2CppRuntimeInfo,
-  Il2CppThreadInfo,
-} from "@agent/common/il2cpp";
-
 const ITEM_HEIGHT = 32;
 
 interface FlatEntry {
@@ -46,7 +40,7 @@ export function Il2CppPanel() {
   const { data: il2cppAvailable, isLoading: checkingAvailable } =
     usePlatformQuery(
       ["il2cpp", "available"],
-      (api) => (api as any).il2cpp.available() as Promise<boolean>,
+      (api) => api.il2cpp.available(),
     );
 
   if (checkingAvailable) {
@@ -108,7 +102,7 @@ function RuntimeTab() {
 
   const { data: info, isLoading } = usePlatformQuery(
     ["il2cpp", "info"],
-    (api) => (api as any).il2cpp.info() as Promise<Il2CppRuntimeInfo>,
+    (api) => api.il2cpp.info(),
   );
 
   if (isLoading) {
@@ -183,7 +177,7 @@ function AssembliesTab() {
 
   const { data: assemblies = [], isLoading } = usePlatformQuery(
     ["il2cpp", "assemblies"],
-    (api) => (api as any).il2cpp.assemblies() as Promise<Il2CppAssemblyInfo[]>,
+    (api) => api.il2cpp.assemblies(),
   );
 
   const toggleAssembly = async (name: string) => {
@@ -199,9 +193,7 @@ function AssembliesTab() {
     if (!classCache[name] && rpcApi) {
       setLoadingAssemblies((prev) => new Set(prev).add(name));
       try {
-        const classes = (await (rpcApi as any).il2cpp.classes(
-          name,
-        )) as string[];
+        const classes = await rpcApi.il2cpp.classes(name);
         setClassCache((prev) => ({ ...prev, [name]: classes }));
       } catch {
         // skip
@@ -355,7 +347,7 @@ function ThreadsTab() {
 
   const { data: threads = [], isLoading } = usePlatformQuery(
     ["il2cpp", "threads"],
-    (api) => (api as any).il2cpp.threads() as Promise<Il2CppThreadInfo[]>,
+    (api) => api.il2cpp.threads(),
   );
 
   if (isLoading) {

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Socket } from "socket.io-client";
 
 import type {
@@ -234,17 +233,17 @@ export interface SessionServerEvents {
   rpc: (
     mod: string,
     method: string,
-    args: any[],
-    ack: (err: string | null, result: any) => void,
+    args: unknown[],
+    ack: (err: string | null, result: unknown) => void,
   ) => void;
   eval: (
     source: string,
     name: string,
-    ack: (err: string | null, result: any) => void,
+    ack: (err: string | null, result: unknown) => void,
   ) => void;
   clearLog: (
     type: "syslog" | "agent",
-    ack: (err: string | null, result: any) => void,
+    ack: (err: string | null, result: unknown) => void,
   ) => void;
 }
 
@@ -259,7 +258,7 @@ export type AsyncDroidRPC = RemoteRPC<DroidRPCRoute>;
  */
 export type CommonRPC = Pick<
   AsyncFruityRPC,
-  "symbol" | "memory" | "native" | "sqlite" | "script" | "syslog" | "rn" | "threads"
+  "il2cpp" | "symbol" | "memory" | "native" | "sqlite" | "script" | "syslog" | "rn" | "threads"
 > & Pick<AsyncDroidRPC, "info">;
 
 type Platform = "fruity" | "droid";
@@ -286,20 +285,14 @@ function createExecutor(
   return function executor(
     namespace: string,
     method: string,
-    args: any[],
-  ): Promise<any> {
+    args: unknown[],
+  ): Promise<unknown> {
     return new Promise((resolve, reject) => {
       const run = () => {
-        socket.emit(
-          "rpc",
-          namespace,
-          method,
-          args,
-          (err: string | null, result: any) => {
-            if (err) reject(new Error(err));
-            else resolve(result);
-          },
-        );
+        socket.emit("rpc", namespace, method, args, (err, result) => {
+          if (err) reject(new Error(err));
+          else resolve(result);
+        });
       };
 
       if (ready) run();
@@ -308,16 +301,16 @@ function createExecutor(
   };
 }
 
-function createProxy<T extends object>(
-  executor: (namespace: string, method: string, args: any[]) => Promise<any>,
-): T {
+type Executor = (namespace: string, method: string, args: unknown[]) => Promise<unknown>;
+
+function createProxy<T extends object>(executor: Executor): T {
   return new Proxy({} as T, {
     get(_target, namespace: string) {
       return new Proxy(
         {},
         {
           get(_nsTarget, method: string) {
-            return (...args: any[]) => executor(namespace, method, args);
+            return (...args: unknown[]) => executor(namespace, method, args);
           },
         },
       );

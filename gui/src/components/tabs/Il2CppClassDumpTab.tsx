@@ -16,8 +16,7 @@ export function Il2CppClassDumpTab(
 
   const { data: source, isLoading } = usePlatformQuery(
     ["il2cpp", "classDump", assemblyName, fullName],
-    (api) =>
-      (api as any).il2cpp.classDump(assemblyName, fullName) as Promise<string>,
+    (api) => api.il2cpp.classDump(assemblyName, fullName),
   );
 
   const handleCopy = useCallback(() => {
