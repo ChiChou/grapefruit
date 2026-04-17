@@ -31,6 +31,19 @@ import { useDock } from "@/context/DockContext";
 import { getRouteFeatures, getPanelFeatures } from "@/lib/features";
 import { useTheme } from "@/components/providers/ThemeProvider";
 
+const R2_COMMANDS = [
+  { id: "binaryOverview", component: "binaryOverview", titleKey: "r2_dashboard", icon: BarChart3 },
+  { id: "memoryMaps", component: "memoryMaps", titleKey: "r2_memory_maps", icon: Map },
+  { id: "binaries", component: "binaries", titleKey: "r2_binaries", icon: Library },
+  { id: "r2Search", component: "r2Search", titleKey: "r2_search", icon: Search },
+  { id: "typeEditor", component: "typeEditor", titleKey: "r2_type_editor", icon: Braces },
+  { id: "xrefGraph", component: "xrefGraph", titleKey: "r2_xref_graph", icon: GitFork },
+  { id: "bookmarks", component: "bookmarks", titleKey: "r2_bookmarks", icon: Bookmark },
+  { id: "r2SplitView", component: "r2Disasm", titleKey: "r2_disasm_split", icon: Cpu },
+  { id: "r2SplitGraph", component: "r2Graph", titleKey: "r2_graph_split", icon: LayoutGrid },
+  { id: "r2SplitHex", component: "r2Hex", titleKey: "r2_hex_split", icon: Binary },
+] as const;
+
 interface CommandPaletteProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -107,18 +120,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
           <CommandSeparator />
           <CommandGroup heading={t("r2_decompiler")}>
-            {[
-              { id: "binaryOverview", component: "binaryOverview", titleKey: "r2_dashboard", icon: BarChart3 },
-              { id: "memoryMaps", component: "memoryMaps", titleKey: "r2_memory_maps", icon: Map },
-              { id: "binaries", component: "binaries", titleKey: "r2_binaries", icon: Library },
-              { id: "r2Search", component: "r2Search", titleKey: "r2_search", icon: Search },
-              { id: "typeEditor", component: "typeEditor", titleKey: "r2_type_editor", icon: Braces },
-              { id: "xrefGraph", component: "xrefGraph", titleKey: "r2_xref_graph", icon: GitFork },
-              { id: "bookmarks", component: "bookmarks", titleKey: "r2_bookmarks", icon: Bookmark },
-              { id: "r2SplitView", component: "r2Disasm", titleKey: "r2_disasm_split", icon: Cpu },
-              { id: "r2SplitGraph", component: "r2Graph", titleKey: "r2_graph_split", icon: LayoutGrid },
-              { id: "r2SplitHex", component: "r2Hex", titleKey: "r2_hex_split", icon: Binary },
-            ].map((item) => {
+            {R2_COMMANDS.map((item) => {
               const Icon = item.icon;
               const label = t(item.titleKey);
               return (

@@ -1,4 +1,4 @@
-import React, { useCallback, useContext } from "react";
+import React, { useContext } from "react";
 import type { DockviewApi, AddPanelOptions } from "dockview";
 
 export interface DockContextType {
@@ -30,41 +30,3 @@ const defaultContext: DockContextType = {
 export const DockContext = React.createContext<DockContextType>(defaultContext);
 
 export const useDock = () => useContext(DockContext);
-
-export function useDockActions(api: DockviewApi | null) {
-  const openSingletonPanel = useCallback(
-    (options: AddPanelOptions) => {
-      if (!api) return;
-
-      const existingPanel = api.getPanel(options.id);
-      if (existingPanel) {
-        // Update params if provided
-        if (options.params) {
-          existingPanel.api.updateParameters(options.params);
-        }
-        existingPanel.api.setActive();
-        return;
-      }
-
-      api.addPanel(options);
-    },
-    [api],
-  );
-
-  const openFilePanel = useCallback(
-    (options: AddPanelOptions) => {
-      if (!api) return;
-
-      const existingPanel = api.getPanel(options.id);
-      if (existingPanel) {
-        existingPanel.api.setActive();
-        return;
-      }
-
-      api.addPanel(options);
-    },
-    [api],
-  );
-
-  return { openSingletonPanel, openFilePanel };
-}

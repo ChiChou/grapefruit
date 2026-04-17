@@ -5,6 +5,7 @@ import { StatusBar } from "./StatusBar";
 import {
   type DockviewApi,
   type DockviewTheme,
+  type AddPanelOptions,
   DockviewReact,
   type DockviewReadyEvent,
 } from "dockview";
@@ -87,7 +88,7 @@ import { R2HexTab } from "../tabs/R2HexTab";
 import { R2DisasmTab } from "../tabs/R2DisasmTab";
 import { NoCloseTabHeader } from "../tabs/NoCloseTabHeader";
 
-import { DockContext, useDockActions } from "@/context/DockContext";
+import { DockContext } from "@/context/DockContext";
 import { R2Provider } from "@/context/R2Context";
 
 const themeApp: DockviewTheme = {
@@ -131,7 +132,33 @@ function WorkspaceContent() {
   const mountedRef = useRef(false);
 
   const [dockApi, setDockApi] = useState<DockviewApi | null>(null);
-  const { openSingletonPanel, openFilePanel } = useDockActions(dockApi);
+
+  const openSingletonPanel = useCallback(
+    (options: AddPanelOptions) => {
+      if (!dockApi) return;
+      const existing = dockApi.getPanel(options.id);
+      if (existing) {
+        if (options.params) existing.api.updateParameters(options.params);
+        existing.api.setActive();
+        return;
+      }
+      dockApi.addPanel(options);
+    },
+    [dockApi],
+  );
+
+  const openFilePanel = useCallback(
+    (options: AddPanelOptions) => {
+      if (!dockApi) return;
+      const existing = dockApi.getPanel(options.id);
+      if (existing) {
+        existing.api.setActive();
+        return;
+      }
+      dockApi.addPanel(options);
+    },
+    [dockApi],
+  );
 
   const getLayoutKey = useCallback(() => {
     if (!device) return null;

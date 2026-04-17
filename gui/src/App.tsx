@@ -32,6 +32,7 @@ import { ThreadsPanel } from "./components/panels/ThreadsPanel";
 import { Il2CppPanel } from "./components/panels/Il2CppPanel";
 
 import { Platform, useSession } from "./context/SessionContext";
+import { ErrorBoundary } from "./components/shared/ErrorBoundary";
 import { AlertTriangle } from "lucide-react";
 
 function GeneralPanelRoute() {
@@ -81,11 +82,11 @@ function App() {
         </Route>
 
         {/* Standalone decompiler tools */}
-        <Route path="/decompiler/hermes" element={<HermesPage />} />
-        <Route path="/decompiler/radare2" element={<R2Page />} />
+        <Route path="/decompiler/hermes" element={<ErrorBoundary><HermesPage /></ErrorBoundary>} />
+        <Route path="/decompiler/radare2" element={<ErrorBoundary><R2Page /></ErrorBoundary>} />
 
         {/* Workspace with platform and mode as route params */}
-        <Route path="/workspace/:platform/:device/:mode/:target" element={<Workspace />}>
+        <Route path="/workspace/:platform/:device/:mode/:target" element={<ErrorBoundary><Workspace /></ErrorBoundary>}>
           {/* Default view based on platform/mode */}
           <Route index element={<WorkspaceIndex />} />
           {/* Platform-aware panels */}
