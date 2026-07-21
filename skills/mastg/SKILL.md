@@ -13,7 +13,7 @@ You are performing an autonomous security audit of a mobile application using ig
 
 ## Prerequisites
 
-The igf server must be running (`bun src/index.ts` or `igf`). A device must be connected with the target app running.
+The igf server must be running (`npm run start` or `igf`). A device must be connected with the target app running.
 
 ## Session Setup
 

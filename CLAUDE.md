@@ -7,15 +7,15 @@ Monorepo with three workspaces:
 ## First-time setup
 
 ```sh
-bun run setup      # install all deps, build agent, gui, fetch/build WASM assets
+npm run setup      # install all deps, build agent, gui, fetch/build WASM assets
 ```
 
 ## Development
 
 ```sh
-bun run dev        # server with watch
-bun run dev:both   # tmux: server + gui dev
-bun run dev:all    # tmux/wt: agent watch + gui dev + server dev
+npm run dev        # server with watch
+npm run dev:both   # tmux: server + gui dev
+npm run dev:all    # tmux/wt: agent watch + gui dev + server dev
 ```
 
 ## Static checks
@@ -25,23 +25,23 @@ All code changes must pass the relevant checks before committing.
 ### agent/ (Frida agent)
 
 ```sh
-cd agent && bun run build    # full build (agents + types)
-cd agent && bun run type     # generate/check agent types
+cd agent && npm run build    # full build (agents + types)
+cd agent && npm run type     # generate/check agent types
 ```
 
 ### gui/ (frontend)
 
 ```sh
-cd gui && bun run lint       # Oxlint
-cd gui && bunx tsgo --noEmit # type-check
-cd gui && bun run build      # full build
+cd gui && npm run lint              # Oxlint
+cd gui && npm exec tsgo -- --noEmit # type-check
+cd gui && npm run build             # full build
 ```
 
 ### root (server)
 
 ```sh
-bunx tsgo --noEmit  # type-check
-bun test            # run tests
+npm exec tsgo -- --noEmit # type-check
+npm test                   # run tests
 ```
 
 

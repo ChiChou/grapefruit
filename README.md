@@ -33,8 +33,7 @@ npx igf
 ```
 
 **Prebuilt binaries** for macOS, Linux, and Windows are available on [GitHub Releases](https://github.com/chichou/grapefruit/releases).
-
-Note: Bun is the primary development environment and the prebuilt single binaries are Bun-based, but the npm package is built for Node.js. Do not use `bunx` to run it.
+Both source development and prebuilt executables use Node.js; see the [development guide](docs/dev.md) for the npm workflow.
 
 ## Usage
 
