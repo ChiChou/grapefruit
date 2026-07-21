@@ -5,6 +5,7 @@
   "private": true,
   "main": "agent/index.ts",
   "type": "module",
+  "packageManager": "npm@11.6.1",
   "engines": {
     "node": ">=22.18.0"
   },

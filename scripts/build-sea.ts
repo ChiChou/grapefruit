@@ -96,10 +96,11 @@ async function main() {
   );
   run([process.execPath, "--experimental-sea-config", configPath], root);
 
+  const platform = process.platform === "win32" ? "windows" : process.platform;
   const ext = process.platform === "win32" ? ".exe" : "";
   const output = path.join(
     releaseDir,
-    `igf-${process.platform}-${process.arch}${ext}`,
+    `igf-${platform}-${process.arch}${ext}`,
   );
   await copyFile(process.execPath, output);
 

@@ -11,7 +11,7 @@ on:
       - "src/**"
       - "agent/**"
       - "package.json"
-      - "bun.lock"
+      - "package-lock.json"
       - ".github/workflows/coverage.yml"
   pull_request:
     branches:
@@ -20,7 +20,7 @@ on:
       - "src/**"
       - "agent/**"
       - "package.json"
-      - "bun.lock"
+      - "package-lock.json"
 
 jobs:
   coverage:
@@ -30,18 +30,19 @@ jobs:
         with:
           submodules: true
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
         with:
-          bun-version: latest
+          node-version: "24"
+          cache: npm
 
       - name: Install dependencies
         run: |
-          bun install
-          bun install --cwd agent
+          npm ci
+          npm ci --prefix agent
 
       - name: Run tests with coverage
-        run: bun run test:coverage
+        run: npm run test:coverage
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v6

@@ -38,6 +38,7 @@
   "author": "",
   "license": "MIT",
   "type": "module",
+  "packageManager": "npm@11.6.1",
   "engines": {
     "node": ">=22.18.0"
   },

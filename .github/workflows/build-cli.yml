@@ -13,15 +13,16 @@ on:
       - "gui/**"
       - "scripts/**"
       - "externals/**"
-      - "wasi/**"
       - "package.json"
-      - "bun.lock"
+      - "package-lock.json"
       - "tsconfig.json"
       - "tsdown.config.ts"
+      - "tsdown.sea.config.ts"
+      - ".github/actions/setup/**"
       - ".github/workflows/build-cli.yml"
 
 jobs:
-  build:
+  assets:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -30,23 +31,80 @@ jobs:
 
       - uses: ./.github/actions/setup
 
-      - name: Install dependencies
+      - name: Install and build assets
         run: |
-          bun install
-          bun run setup
+          npm ci
+          npm ci --prefix agent
+          npm ci --prefix gui
 
-      - name: Build binaries
-        run: bun run build:all
-
-      - name: Smoke test
-        run: ./build/Release/igf-linux-x64 --help
-
-      - name: Upload Binaries
+      - name: Upload application assets
         uses: actions/upload-artifact@v6
         with:
-          name: cli-binaries
+          name: application-assets
           path: |
-            build/Release/igf-linux-x64
-            build/Release/igf-windows-x64.exe
-            build/Release/igf-darwin-x64
-            build/Release/igf-darwin-arm64
+            agent/dist
+            agent/types
+            gui/dist
+            radare2.wasm
+
+  build:
+    needs: assets
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: linux-x64
+          - os: windows-latest
+            name: windows-x64
+          - os: macos-15-intel
+            name: darwin-x64
+          - os: macos-15
+            name: darwin-arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: true
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download application assets
+        uses: actions/download-artifact@v6
+        with:
+          name: application-assets
+          path: .
+
+      - name: Build executable
+        run: npm run build:cli
+
+      - name: Smoke test
+        shell: bash
+        run: ./build/Release/igf-${{ matrix.name }}${{ runner.os == 'Windows' && '.exe' || '' }} --help
+
+      - name: Upload executable
+        uses: actions/upload-artifact@v6
+        with:
+          name: cli-${{ matrix.name }}
+          path: build/Release/igf-${{ matrix.name }}${{ runner.os == 'Windows' && '.exe' || '' }}
+
+  archive:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v6
+        with:
+          pattern: cli-*
+          path: cli
+          merge-multiple: true
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: cli-binaries
+          path: cli/
