@@ -87,28 +87,19 @@ class R2Wasi {
   }
 
   async start(): Promise<void> {
-    this.#tmpDir = await mkdtemp(join(process.cwd(), ".r2-"));
+    this.#tmpDir = await mkdtemp(join(tmpdir(), "igf-r2-"));
 
     const wasi = new WASI({
       version: "preview1" as any,
       args: ["radare2"],
       env: {},
-      // Bun's WASI ignores the preopens target and maps to CWD,
-      // so we point /work at CWD and place temp files under it
-      preopens: { "/work": process.cwd() },
+      preopens: { "/work": this.#tmpDir },
     });
 
     const module = await WebAssembly.compile(this.#config.wasmBytes.buffer as ArrayBuffer);
+    const importObject = wasi.getImportObject() as WebAssembly.Imports;
 
-    // Bun's WASI uses getImports(module) instead of Node's getImportObject()
-    let importObject: WebAssembly.Imports;
-    if (typeof (wasi as any).getImportObject === "function") {
-      importObject = (wasi as any).getImportObject();
-    } else {
-      importObject = (wasi as any).getImports(module);
-    }
-
-    // Stub missing WASI functions (e.g. sock_accept not in Bun)
+    // The radare2 module imports this socket API, but live analysis does not use it.
     const wasiNs = importObject.wasi_snapshot_preview1 as Record<string, unknown>;
     if (wasiNs && !wasiNs.sock_accept) {
       wasiNs.sock_accept = () => -1;
@@ -353,10 +344,8 @@ class R2Wasi {
   async loadFile(data: Uint8Array, filename?: string): Promise<void> {
     const name = filename ?? "input.bin";
     await writeFile(join(this.#tmpDir!, name), data);
-    // Bun's WASI maps /work → CWD, so use the relative path from CWD
-    const relPath = join(this.#tmpDir!, name).replace(process.cwd() + "/", "");
     this.#rawCmd("o--");
-    this.#rawCmd(`o /work/${relPath}`);
+    this.#rawCmd(`o /work/${name}`);
     this.#rawCmd("e scr.color=0");
   }
 

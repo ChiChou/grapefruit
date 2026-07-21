@@ -1,6 +1,7 @@
 import { type AddressInfo } from "node:net";
 import { createServer } from "node:http";
-import { describe, it, expect } from "bun:test";
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 
 import frida from "frida";
 import ioc from "socket.io-client";
@@ -44,15 +45,15 @@ describe("socket.io tests", () => {
 
         socket.on("connect", () => {
           connected = true;
-          expect(socket.connected).toBe(true);
+          assert.equal(socket.connected, true);
           mgr.addRemoteDevice("127.0.0.1");
         });
 
         // Wait for events
         await new Promise((resolve) => setTimeout(resolve, 500));
 
-        expect(connected).toBe(true);
-        expect(receivedChange).toBe(true);
+        assert.equal(connected, true);
+        assert.equal(receivedChange, true);
       } finally {
         socket.disconnect();
         await closeTestServer(server, io);
@@ -82,7 +83,7 @@ describe("socket.io tests", () => {
 
         await new Promise((resolve) => setTimeout(resolve, 500));
 
-        expect(receivedInvalid).toBe(true);
+        assert.equal(receivedInvalid, true);
       } finally {
         socket.disconnect();
         await closeTestServer(server, io);
@@ -136,7 +137,7 @@ describe("socket.io tests", () => {
         // Wait for events
         await new Promise((resolve) => setTimeout(resolve, 8000));
 
-        expect(receivedReady).toBe(true);
+        assert.equal(receivedReady, true);
       } finally {
         socket.disconnect();
         await closeTestServer(server, io);
