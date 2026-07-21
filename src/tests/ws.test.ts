@@ -15,12 +15,8 @@ function createTestServer() {
   return { server, io };
 }
 
-async function closeTestServer(
-  server: ReturnType<typeof createServer>,
-  io: Server,
-) {
-  io.close();
-  await new Promise<void>((resolve) => server.close(() => resolve()));
+async function closeTestServer(io: Server) {
+  await new Promise<void>((resolve) => io.close(() => resolve()));
 }
 
 describe("socket.io tests", () => {
@@ -56,7 +52,7 @@ describe("socket.io tests", () => {
         assert.equal(receivedChange, true);
       } finally {
         socket.disconnect();
-        await closeTestServer(server, io);
+        await closeTestServer(io);
       }
     },
     { timeout: 5000 },
@@ -86,7 +82,7 @@ describe("socket.io tests", () => {
         assert.equal(receivedInvalid, true);
       } finally {
         socket.disconnect();
-        await closeTestServer(server, io);
+        await closeTestServer(io);
       }
     },
     { timeout: 5000 },
@@ -140,7 +136,7 @@ describe("socket.io tests", () => {
         assert.equal(receivedReady, true);
       } finally {
         socket.disconnect();
-        await closeTestServer(server, io);
+        await closeTestServer(io);
       }
     },
     { timeout: 15000 },
