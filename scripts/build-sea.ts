@@ -37,7 +37,7 @@ async function main() {
   await mkdir(releaseDir, { recursive: true });
 
   run([process.execPath, path.join(root, "scripts", "fetch-r2-wasm.ts")], root);
-  run([npm, "exec", "--", "tsdown", "--config", "tsdown.sea.config.ts"], root);
+  run(npm("exec", "--", "tsdown", "--config", "tsdown.sea.config.ts"), root);
 
   const roots = ["gui/dist", "agent/dist", "drizzle", "skills"];
   const appFiles = (
@@ -121,7 +121,7 @@ async function main() {
   if (process.platform === "darwin") {
     args.push("--macho-segment-name", "NODE_SEA");
   }
-  run([npm, ...args], root);
+  run(npm(...args), root);
 
   if (process.platform === "darwin") {
     run([need("codesign"), "--sign", "-", output]);

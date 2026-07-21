@@ -19,25 +19,25 @@ type Pane = {
 };
 
 const serverPanes: Pane[] = [
-  { name: "server", cwd: root, cmd: [npm, "run", "dev"] },
-  { name: "gui", cwd: gui, cmd: [npm, "run", "dev"] },
+  { name: "server", cwd: root, cmd: npm("run", "dev") },
+  { name: "gui", cwd: gui, cmd: npm("run", "dev") },
 ];
 
 const agentPanes: Pane[] = [
   {
     name: "fruity",
     cwd: agent,
-    cmd: [npm, "run", "build:fruity", "--", "--watch"],
+    cmd: npm("run", "build:fruity", "--", "--watch"),
   },
   {
     name: "droid",
     cwd: agent,
-    cmd: [npm, "run", "build:droid", "--", "--watch"],
+    cmd: npm("run", "build:droid", "--", "--watch"),
   },
   {
     name: "transport",
     cwd: agent,
-    cmd: [npm, "run", "build:transport", "--", "--watch"],
+    cmd: npm("run", "build:transport", "--", "--watch"),
   },
 ];
 

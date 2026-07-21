@@ -2,7 +2,14 @@ import { accessSync, constants } from "node:fs";
 import { delimiter, extname, join } from "node:path";
 import { spawnSync } from "node:child_process";
 
-export const npm = process.platform === "win32" ? "npm.cmd" : "npm";
+export function npm(...args: string[]) {
+  const cli = process.env.npm_execpath;
+  if (cli) return [process.execPath, cli, ...args];
+  if (process.platform === "win32") {
+    return [process.env.ComSpec ?? "cmd.exe", "/d", "/s", "/c", "npm", ...args];
+  }
+  return ["npm", ...args];
+}
 
 export function tool(name: string) {
   const path = process.env.PATH?.split(delimiter) ?? [];

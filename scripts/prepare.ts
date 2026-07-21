@@ -35,11 +35,11 @@ function prebuild(pkg: string) {
 run(["git", "submodule", "update", "--init", "--recursive"]);
 
 // all workspace dependencies
-run([npm, "install"]);
+run(npm("install"));
 prebuild("frida");
 prebuild("frida16");
-run([npm, "install"], join(root, "agent"));
-run([npm, "install"], join(root, "gui"));
+run(npm("install"), join(root, "agent"));
+run(npm("install"), join(root, "gui"));
 
 // radare2 WASM runtime
 run([process.execPath, "scripts/fetch-r2-wasm.ts"]);
@@ -48,8 +48,8 @@ run([process.execPath, "scripts/fetch-r2-wasm.ts"]);
 const wasmDist = "externals/radare/r2hermes.wasm/dist";
 const hbc = join(root, "externals", "radare", "r2hermes.wasm");
 try {
-  run([npm, "run", "setup"], hbc);
-  run([npm, "run", "build"], hbc);
+  run(npm("run", "setup"), hbc);
+  run(npm("run", "build"), hbc);
   await mkdir(join(root, "gui", "public"), { recursive: true });
   await copyFile(
     join(root, wasmDist, "hbc.wasm"),
