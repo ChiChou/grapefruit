@@ -1,4 +1,4 @@
-import { SessionDetachReason, type SpawnOptions, type Device } from "frida";
+import type { SpawnOptions, Device } from "frida";
 
 import frida from "./lib/xvii.ts";
 import env from "./lib/env.ts";
@@ -73,13 +73,13 @@ function setupSocketHandlers(
   session.detached.connect((reason, crash) => {
     console.error("session detached:", reason, crash);
     switch (reason) {
-      case SessionDetachReason.ApplicationRequested:
+      case frida.SessionDetachReason.ApplicationRequested:
         break;
-      case SessionDetachReason.DeviceLost:
+      case frida.SessionDetachReason.DeviceLost:
         console.error("device lost");
         break;
-      case SessionDetachReason.ProcessTerminated:
-      case SessionDetachReason.ProcessReplaced:
+      case frida.SessionDetachReason.ProcessTerminated:
+      case frida.SessionDetachReason.ProcessReplaced:
         console.error("process was terminated or replaced");
     }
     socket.emit("detached", reason as string);

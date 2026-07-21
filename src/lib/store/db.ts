@@ -1,4 +1,4 @@
-import fs from "node:fs";
+import { mkdirSync } from "node:fs";
 import path from "node:path";
 
 import Database from "better-sqlite3";
@@ -10,9 +10,9 @@ import env from "../env.ts";
 import { asset } from "../assets.ts";
 
 const dbDir = path.join(env.workdir, "data");
-await fs.promises.mkdir(dbDir, { recursive: true });
+mkdirSync(dbDir, { recursive: true });
 const dbPath = path.join(dbDir, "data.db");
-const migrationsFolder = await asset("drizzle");
+const migrationsFolder = asset("drizzle");
 
 export const db: BaseSQLiteDatabase<"sync", any, typeof schema> = drizzle(
   new Database(dbPath),

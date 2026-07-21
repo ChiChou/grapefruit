@@ -1,7 +1,7 @@
 /**
  * Download the radare2 WASI API build (pinned version).
  *
- * Usage: bun scripts/fetch-r2-wasm.ts
+ * Usage: node scripts/fetch-r2-wasm.ts
  *
  * The WASM binary is placed at the project root as radare2.wasm.
  * CI caches this file by the version key below.
@@ -9,8 +9,9 @@
 
 import { existsSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { readFile, unlink, rename, rm } from "node:fs/promises";
+import { readFile, unlink, rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { need, run } from "./lib.ts";
 
 const isWin = process.platform === "win32";
 
@@ -20,14 +21,6 @@ const R2_SHA256 =
 
 const WASM_URL = `https://github.com/radareorg/radare2/releases/download/${R2_VERSION}/radare2-${R2_VERSION}-wasi-api.zip`;
 const OUTPUT = "radare2.wasm";
-
-function tool(name: string) {
-  const resolved =
-    Bun.which(process.platform === "win32" ? `${name}.exe` : name) ??
-    Bun.which(name);
-  if (resolved) return resolved;
-  throw new Error(`Unable to find ${name} on PATH`);
-}
 
 async function main() {
   if (existsSync(OUTPUT)) {
@@ -48,16 +41,21 @@ async function main() {
   const res = await fetch(WASM_URL);
   if (!res.ok)
     throw new Error(`[r2-wasm] download failed: ${res.status} ${res.statusText}`);
-  await Bun.write(zipPath, res);
+  await writeFile(zipPath, Buffer.from(await res.arrayBuffer()));
 
   const innerDir = `radare2-${R2_VERSION}-wasi-api`;
   const zipEntry = `${innerDir}/radare2.wasm`; // zip entry path always uses forward slashes
   const tmpDir = "radare2-wasi-tmp";
 
   if (isWin) {
-    await Bun.$`${tool("powershell")} -NoProfile -Command Expand-Archive -Force ${zipPath} -DestinationPath ${tmpDir}`;
+    run([
+      need("powershell"),
+      "-NoProfile",
+      "-Command",
+      `Expand-Archive -Force '${zipPath}' '${tmpDir}'`,
+    ]);
   } else {
-    await Bun.$`${tool("unzip")} -o ${zipPath} ${zipEntry} -d ${tmpDir}`;
+    run([need("unzip"), "-o", zipPath, zipEntry, "-d", tmpDir]);
   }
 
   await rename(join(tmpDir, innerDir, "radare2.wasm"), OUTPUT);

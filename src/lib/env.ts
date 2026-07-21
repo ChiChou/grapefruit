@@ -43,18 +43,11 @@ const frida =
 if (frida !== 16 && frida !== 17)
   throw new Error(`Invalid FRIDA_VERSION ${frida}, must be 16 or 17`);
 
-const { dirname } = import.meta;
-const bunSEA =
-  process.platform === "win32"
-    ? dirname?.includes("\\~BUN\\root")
-    : dirname?.includes("/$bunfs/root");
-
 const test = process.env.NODE_ENV === "test";
 const noOpen =
   argv["no-open"] === true || process.env.NO_OPEN === "1" || test || dev;
 
 export default {
-  bunSEA,
   frida,
   dev,
   production,

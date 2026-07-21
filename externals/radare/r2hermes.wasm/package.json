@@ -12,9 +12,9 @@
     "./dist/hbc.wasm": "./dist/hbc.wasm"
   },
   "scripts": {
-    "setup": "bun setup-wasi-sdk.ts",
-    "build": "bun build.ts",
-    "clean": "bun build.ts --clean"
+    "setup": "node setup-wasi-sdk.ts",
+    "build": "node build.ts",
+    "clean": "node build.ts --clean"
   },
   "files": [
     "hbc.mjs",

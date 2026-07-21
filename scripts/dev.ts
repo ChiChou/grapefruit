@@ -1,11 +1,14 @@
+import { spawn } from "node:child_process";
+import { once } from "node:events";
 import { join } from "node:path";
-import { $ } from "bun";
+
+import { npm, tool } from "./lib.ts";
 
 const root = join(import.meta.dirname, "..");
 const agent = join(root, "agent");
 const gui = join(root, "gui");
 
-const mode = process.argv[2]; // "all" or "both"
+const mode = process.argv[2];
 process.env.NODE_ENV = "development";
 const env = { ...process.env };
 
@@ -16,58 +19,73 @@ type Pane = {
 };
 
 const serverPanes: Pane[] = [
-  { name: "server", cwd: root, cmd: [process.execPath, "run", "dev"] },
-  { name: "gui", cwd: gui, cmd: [process.execPath, "run", "dev"] },
+  { name: "server", cwd: root, cmd: [npm, "run", "dev"] },
+  { name: "gui", cwd: gui, cmd: [npm, "run", "dev"] },
 ];
 
 const agentPanes: Pane[] = [
   {
     name: "fruity",
     cwd: agent,
-    cmd: [process.execPath, "run", "build:fruity", "--", "--watch"],
+    cmd: [npm, "run", "build:fruity", "--", "--watch"],
   },
   {
     name: "droid",
     cwd: agent,
-    cmd: [process.execPath, "run", "build:droid", "--", "--watch"],
+    cmd: [npm, "run", "build:droid", "--", "--watch"],
   },
   {
     name: "transport",
     cwd: agent,
-    cmd: [process.execPath, "run", "build:transport", "--", "--watch"],
+    cmd: [npm, "run", "build:transport", "--", "--watch"],
   },
 ];
 
 const panes = mode === "both" ? serverPanes : [...agentPanes, ...serverPanes];
 
-async function both() {
-  await $`tmux \
-    new-session  -c ${root}  bun run dev \; \
-    split-window -h -c ${gui} bun run dev \; \
-    select-pane -t 0`;
+function launch(command: string, args: string[], cwd = root) {
+  const proc = spawn(command, args, { cwd, env, stdio: "inherit" });
+  proc.on("error", (error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+  return proc;
 }
 
-async function all() {
-  await $`tmux \
-    new-session  -c ${agent} bun run build:fruity -- --watch \; \
-    split-window -h -c ${agent} bun run build:droid -- --watch \; \
-    split-window -h -c ${agent} bun run build:transport -- --watch \; \
-    select-layout even-horizontal \; \
-    new-window   -c ${root}  bun run dev \; \
-    split-window -h -c ${gui} bun run dev \; \
-    select-pane -t 0`;
+function tmux(panes: Pane[]) {
+  const command = tool("tmux");
+  if (!command) return false;
+
+  const args = [
+    "new-session",
+    "-c",
+    panes[0].cwd,
+    panes[0].cmd.join(" "),
+  ];
+  for (let i = 1; i < panes.length; i++) {
+    const pane = panes[i];
+    if (mode === "all" && pane.name === "server") {
+      args.push(";", "select-layout", "even-horizontal", ";", "new-window");
+    } else {
+      args.push(";", "split-window", "-h");
+    }
+    args.push("-c", pane.cwd, pane.cmd.join(" "));
+  }
+  args.push(";", "select-layout", "even-horizontal", ";", "select-pane", "-t", "0");
+  launch(command, args);
+  return true;
 }
 
-function wt(panes: Pane[]) {
-  const wt = Bun.which("wt.exe") ?? Bun.which("wt");
-  if (!wt) return false;
+function terminal(panes: Pane[]) {
+  const command = tool("wt.exe") ?? tool("wt");
+  if (!command) return false;
 
   const [first, ...rest] = panes;
-  const argv = ["-d", first.cwd, ...first.cmd];
+  const args = ["-d", first.cwd, ...first.cmd];
   for (const { cwd, cmd } of rest) {
-    argv.push(";", "new-tab", "-d", cwd, ...cmd);
+    args.push(";", "new-tab", "-d", cwd, ...cmd);
   }
-  Bun.spawn([wt, ...argv], { env }).unref();
+  spawn(command, args, { env, detached: true, stdio: "ignore" }).unref();
   return true;
 }
 
@@ -75,16 +93,7 @@ async function local(panes: Pane[]) {
   console.log("No terminal multiplexer found; running dev processes here.");
   const procs = panes.map((pane) => {
     console.log(`[${pane.name}] ${pane.cmd.join(" ")}`);
-    return {
-      pane,
-      proc: Bun.spawn(pane.cmd, {
-        cwd: pane.cwd,
-        env,
-        stdin: "ignore",
-        stdout: "inherit",
-        stderr: "inherit",
-      }),
-    };
+    return { pane, proc: launch(pane.cmd[0], pane.cmd.slice(1), pane.cwd) };
   });
 
   const stop = () => {
@@ -99,7 +108,10 @@ async function local(panes: Pane[]) {
   }
 
   const first = await Promise.race(
-    procs.map(async ({ pane, proc }) => ({ pane, code: await proc.exited })),
+    procs.map(async ({ pane, proc }) => {
+      const [code] = (await once(proc, "exit")) as [number | null];
+      return { pane, code: code ?? 1 };
+    }),
   );
 
   stop();
@@ -108,11 +120,7 @@ async function local(panes: Pane[]) {
 }
 
 if (process.platform === "win32") {
-  if (!wt(panes)) await local(panes);
-} else if (mode === "both") {
-  if (Bun.which("tmux")) await both();
-  else await local(panes);
-} else {
-  if (Bun.which("tmux")) await all();
-  else await local(panes);
+  if (!terminal(panes)) await local(panes);
+} else if (!tmux(panes)) {
+  await local(panes);
 }

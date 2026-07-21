@@ -2,13 +2,14 @@
  * Cross-platform build script for r2hermes WASM (uses wasi-sdk).
  *
  * Usage:
- *   bun run build              # build hbc.wasm
- *   bun run build -- --clean   # remove dist/
+ *   npm run build              # build hbc.wasm
+ *   npm run clean              # remove dist/
  *
  * Requires wasi-sdk. Run setup-wasi-sdk.ts to install, or set WASI_SDK_PATH.
  */
 
-import { access, mkdir, readFile, rm, writeFile } from "fs/promises";
+import { access, mkdir, readFile, rm, stat, writeFile } from "fs/promises";
+import { spawnSync } from "node:child_process";
 import { homedir } from "os";
 import { resolve, join } from "path";
 
@@ -45,7 +46,7 @@ const WASI_SDK = await findWasiSdk();
 if (!WASI_SDK || !(await exists(join(WASI_SDK, "bin")))) {
   console.error(
     "wasi-sdk not found. Set WASI_SDK_PATH or run:\n" +
-      "  bun run setup\n" +
+      "  npm run setup\n" +
       "  https://github.com/WebAssembly/wasi-sdk/releases",
   );
   process.exit(1);
@@ -132,7 +133,9 @@ const flags = [
 ];
 
 console.log(`compiling with wasi-sdk → ${OUTPUT}`);
-await Bun.$`${CC} ${SRC} ${WRAPPER} ${flags}`;
+const result = spawnSync(CC, [...SRC, WRAPPER, ...flags], { stdio: "inherit" });
+if (result.error) throw result.error;
+if (result.status) process.exit(result.status);
 
-const { size } = Bun.file(OUTPUT);
+const { size } = await stat(OUTPUT);
 console.log(`done: ${OUTPUT} (${(size / 1024).toFixed(0)} KB)`);
