@@ -43,14 +43,13 @@ After installation, use `/igf` in Claude Code to interact with the IGF server, o
 
 Grapefruit runs as a local server with three components:
 
-- **Server** — Node.js/Bun process that manages Frida sessions and serves the web UI
+- **Server** — Node.js process that manages Frida sessions and serves the web UI
 - **Agent** — Frida agent injected into the target app for runtime instrumentation
 - **GUI** — React frontend with dockable panels, code editor, and terminal views
 
 ## Requirements
 
-- Node.js 22.18+ for npm/npx, or a prebuilt binary with no runtime dependency
-- Bun for source development
+- Node.js 22.18+ and npm for source development or npm/npx installation, or a prebuilt binary with no runtime dependency
 - A target device with Frida support (see below)
 - Frida server running on the target device
 - Optional: LLM API key for AI decompilation — see [LLM Configuration](/docs/llm)

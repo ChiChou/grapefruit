@@ -14,11 +14,9 @@ npm install -g igf
 igf
 ```
 
-不要使用 `bunx igf`；npm 包面向 Node.js 运行。
-
 ## 预编译二进制
 
-提供 macOS、Linux 和 Windows 的单文件可执行程序。无需运行时依赖——二进制文件打包了一切（由 Bun 单文件可执行构建）。
+提供 macOS、Linux 和 Windows 的单文件可执行程序。它们使用 Node.js 单文件应用构建，无需运行时依赖。
 
 从 [GitHub Releases](https://github.com/chichou/grapefruit/releases) 下载最新版本：
 

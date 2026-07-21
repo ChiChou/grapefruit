@@ -1,15 +1,21 @@
 // build .d.ts for monaco editor
 
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+async function text(url: string) {
+  if (url.startsWith("file:")) return readFile(fileURLToPath(url), "utf8");
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Failed to fetch from ${url}`);
+  return response.text();
+}
 
 async function wrap(urls: Record<string, string>) {
   const entries = await Promise.all(
-    Object.entries(urls).map(async ([key, url]) => {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`Failed to fetch from ${url}`);
-      return [key + ".d.ts", await response.text()] as const;
-    }),
+    Object.entries(urls).map(
+      async ([key, url]) => [key + ".d.ts", await text(url)] as const,
+    ),
   );
 
   return Object.fromEntries(entries);

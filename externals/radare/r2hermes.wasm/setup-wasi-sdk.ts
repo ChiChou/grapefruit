@@ -3,10 +3,11 @@
  * Installs to ~/.wasi-sdk by default, or WASI_SDK_PATH if set.
  *
  * Usage:
- *   bun externals/radare/r2hermes.wasm/setup-wasi-sdk.ts
+ *   node externals/radare/r2hermes.wasm/setup-wasi-sdk.ts
  */
 
 import { access, mkdir, unlink, writeFile } from "fs/promises";
+import { spawnSync } from "node:child_process";
 import { homedir, tmpdir } from "os";
 import { join, resolve } from "path";
 
@@ -40,14 +41,6 @@ const url = `${BASE}/${archive}`;
 const dest = resolve(process.env.WASI_SDK_PATH ?? join(homedir(), ".wasi-sdk"));
 const clang = process.platform === "win32" ? "clang.exe" : "clang";
 
-function tool(name: string) {
-  const resolved =
-    Bun.which(process.platform === "win32" ? `${name}.exe` : name) ??
-    Bun.which(name);
-  if (resolved) return resolved;
-  throw new Error(`Unable to find ${name} on PATH`);
-}
-
 if (
   await access(join(dest, "bin", clang)).then(
     () => true,
@@ -67,7 +60,13 @@ const tmp = join(tmpdir(), archive);
 await writeFile(tmp, Buffer.from(await res.arrayBuffer()));
 
 await mkdir(dest, { recursive: true });
-await Bun.$`${tool("tar")} xzf ${tmp} -C ${dest} --strip-components=1`;
+const result = spawnSync(
+  process.platform === "win32" ? "tar.exe" : "tar",
+  ["xzf", tmp, "-C", dest, "--strip-components=1"],
+  { stdio: "inherit" },
+);
+if (result.error) throw result.error;
+if (result.status) process.exit(result.status);
 await unlink(tmp);
 
 console.log(`installed wasi-sdk ${VERSION} to ${dest}`);

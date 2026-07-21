@@ -1,13 +1,14 @@
 name: Setup Build Environment
-description: Bun, r2hermes WASM, and radare2 WASI
+description: Node.js, r2hermes WASM, and radare2 WASI
 
 runs:
   using: composite
   steps:
-    - name: Setup Bun
-      uses: oven-sh/setup-bun@v2
+    - name: Setup Node.js
+      uses: actions/setup-node@v6
       with:
-        bun-version: latest
+        node-version: "24"
+        cache: npm
 
     - name: Cache r2hermes WASM
       id: cache-wasm
@@ -27,7 +28,7 @@ runs:
     - name: Build r2hermes WASM
       if: steps.cache-wasm.outputs.cache-hit != 'true'
       shell: bash
-      run: bun externals/radare/r2hermes.wasm/build.ts
+      run: node externals/radare/r2hermes.wasm/build.ts
 
     - name: Copy hbc.wasm to gui public
       shell: bash
@@ -43,4 +44,4 @@ runs:
     - name: Fetch radare2 WASI
       if: steps.cache-r2-wasi.outputs.cache-hit != 'true'
       shell: bash
-      run: bun scripts/fetch-r2-wasm.ts
+      run: node scripts/fetch-r2-wasm.ts

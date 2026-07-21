@@ -26,7 +26,7 @@ async function load() {
   loading = (async () => {
     const wasmUrl = new URL("./dist/hbc.wasm", import.meta.url);
     let wasmBytes;
-    if (typeof globalThis.Bun !== "undefined" || typeof process !== "undefined") {
+    if (typeof process !== "undefined") {
       const { readFile } = await import("fs/promises");
       const { fileURLToPath } = await import("url");
       wasmBytes = await readFile(fileURLToPath(wasmUrl));

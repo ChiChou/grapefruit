@@ -39,6 +39,7 @@ bower_components
 
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
+build/sea
 
 # Dependency directories
 node_modules/
@@ -143,7 +144,7 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
 
-# Downloaded r2 WASM assets (fetched during `bun run prepare`)
+# Downloaded r2 WASM assets (fetched during `npm run setup`)
 gui/public/
 
 # radare2 WASI build (~42MB, fetched separately)

@@ -5,6 +5,7 @@
   "private": true,
   "main": "agent/index.ts",
   "type": "module",
+  "packageManager": "npm@11.6.1",
   "engines": {
     "node": ">=22.18.0"
   },
@@ -12,24 +13,28 @@
     "build:fruity": "frida-compile src/fruity/index.ts -o dist/fruity.js",
     "build:droid": "frida-compile src/droid/index.ts -o dist/droid.js",
     "build:transport": "frida-compile src/transport.ts -o dist/transport.js",
-    "watch:fruity": "bun run build:fruity -- --watch",
-    "watch:droid": "bun run build:droid -- --watch",
-    "watch:transport": "bun run build:transport -- --watch",
-    "build": "bun run scripts/build.ts",
-    "prepare": "bun run build",
+    "watch:fruity": "npm run build:fruity -- --watch",
+    "watch:droid": "npm run build:droid -- --watch",
+    "watch:transport": "npm run build:transport -- --watch",
+    "build": "node scripts/build.ts",
+    "postinstall": "patch-package",
+    "prepare": "npm run build",
     "lint": "eslint src/**/*.ts",
     "type:emit": "tsgo -b tsconfig.types.json",
-    "type:monaco": "bun scripts/monaco.ts",
-    "type": "bun run type:emit && bun run type:monaco"
+    "type:monaco": "node scripts/monaco.ts",
+    "type": "npm run type:emit && npm run type:monaco"
   },
   "devDependencies": {
     "@types/frida-gum": "^19.0.2",
-    "@types/node": "^18.19.130",
+    "@types/node": "^24.12.0",
     "@typescript-eslint/eslint-plugin": "^8.57.0",
     "@typescript-eslint/parser": "^8.57.0",
     "@typescript/native-preview": "7.0.0-dev.20251108.1",
     "eslint": "^9.39.4",
-    "frida-compile": "^19.0.5"
+    "@types/tar-stream": "^3.1.4",
+    "frida-compile": "^19.0.5",
+    "patch-package": "^8.0.1",
+    "tar-stream": "^3.1.7"
   },
   "dependencies": {
     "frida-il2cpp-bridge": "^0.13.0",
@@ -37,12 +42,5 @@
     "frida-objc-bridge": "^8.0.5",
     "frida-remote-stream": "^6.0.3",
     "frida-swift-bridge": "^3.0.2"
-  },
-  "trustedDependencies": [
-    "frida"
-  ],
-  "patchedDependencies": {
-    "frida-compile@19.0.4": "patches/frida-compile@19.0.4.patch",
-    "frida-compile@19.0.5": "patches/frida-compile@19.0.5.patch"
   }
 }

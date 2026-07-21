@@ -23,11 +23,8 @@ import { asset } from "./lib/assets.ts";
     app.use("/*", serveStatic({ root, path: "index.html" }));
   }
 
-  // bug: when compiled by bun single-file executable, the runtime will set
-  // NODE_ENV to "development". Does it make any sense?
-
-  if (env.bunSEA || !env.dev) {
-    serveWeb(await asset("gui", "dist"));
+  if (!env.dev) {
+    serveWeb(asset("gui", "dist"));
   }
 }
 

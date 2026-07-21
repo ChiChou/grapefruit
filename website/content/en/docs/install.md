@@ -14,11 +14,9 @@ Then run:
 igf
 ```
 
-Do not use `bunx igf`; the npm package is built for Node.js.
-
 ## Prebuilt Binary
 
-Single executable binaries are available for macOS, Linux, and Windows. No runtime dependencies needed — the binary bundles everything (built with Bun single-file executable).
+Single executable binaries are available for macOS, Linux, and Windows. They use Node.js single executable applications and have no runtime dependencies.
 
 Download the latest release from [GitHub Releases](https://github.com/chichou/grapefruit/releases):
 

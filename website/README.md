@@ -5,18 +5,18 @@ This workspace contains the public Grapefruit documentation site. It is a Next.j
 ## Development
 
 ```sh
-bun install
-bun run dev
+npm install
+npm run dev
 ```
 
 Open the local URL printed by Next.js.
 
 ## Scripts
 
-- `bun run dev` — start the docs site in development mode
-- `bun run build` — build the static site
-- `bun run start` — serve the built site
-- `bun run lint` — run Oxlint
+- `npm run dev` — start the docs site in development mode
+- `npm run build` — build the static site
+- `npm run start` — serve the built site
+- `npm run lint` — run Oxlint
 
 ## Content
 

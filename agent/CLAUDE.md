@@ -4,7 +4,7 @@ This folder is the frida agent source code.
 
 Build the agent first, then load the compiled Frida script:
 
-`bun run build:droid`
+`npm run build:droid`
 
 `frida -U -F -l dist/droid.js -e 'rpc.exports.invoke("info", "processInfo", [])' -q`
 
@@ -14,5 +14,5 @@ If the RPC returns a Promise, use
 
 ## Build
 
-`bun run build` can build all agents, types at once. But sometimes you just need
-to build a particular agent, for example `bun run build:droid` or `bun run build:fruity`
+`npm run build` can build all agents and types at once. But sometimes you just need
+to build a particular agent, for example `npm run build:droid` or `npm run build:fruity`.

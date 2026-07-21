@@ -12,18 +12,13 @@ jobs:
         with:
           submodules: true
 
-      - uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          cache: "npm"
-
       - uses: ./.github/actions/setup
 
       - name: Install and build
         run: |
           npm ci
-          cd agent && npm i && npm run build && cd ..
-          cd gui && npm i && npm run build
+          npm ci --prefix agent
+          npm ci --prefix gui
 
       - name: Package
         run: npm pack

@@ -1,6 +1,7 @@
 import { type AddressInfo } from "node:net";
 import { createServer } from "node:http";
-import { describe, it, expect } from "bun:test";
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 
 import frida from "frida";
 import ioc from "socket.io-client";
@@ -14,12 +15,8 @@ function createTestServer() {
   return { server, io };
 }
 
-async function closeTestServer(
-  server: ReturnType<typeof createServer>,
-  io: Server,
-) {
-  io.close();
-  await new Promise<void>((resolve) => server.close(() => resolve()));
+async function closeTestServer(io: Server) {
+  await new Promise<void>((resolve) => io.close(() => resolve()));
 }
 
 describe("socket.io tests", () => {
@@ -44,18 +41,18 @@ describe("socket.io tests", () => {
 
         socket.on("connect", () => {
           connected = true;
-          expect(socket.connected).toBe(true);
+          assert.equal(socket.connected, true);
           mgr.addRemoteDevice("127.0.0.1");
         });
 
         // Wait for events
         await new Promise((resolve) => setTimeout(resolve, 500));
 
-        expect(connected).toBe(true);
-        expect(receivedChange).toBe(true);
+        assert.equal(connected, true);
+        assert.equal(receivedChange, true);
       } finally {
         socket.disconnect();
-        await closeTestServer(server, io);
+        await closeTestServer(io);
       }
     },
     { timeout: 5000 },
@@ -82,10 +79,10 @@ describe("socket.io tests", () => {
 
         await new Promise((resolve) => setTimeout(resolve, 500));
 
-        expect(receivedInvalid).toBe(true);
+        assert.equal(receivedInvalid, true);
       } finally {
         socket.disconnect();
-        await closeTestServer(server, io);
+        await closeTestServer(io);
       }
     },
     { timeout: 5000 },
@@ -136,10 +133,10 @@ describe("socket.io tests", () => {
         // Wait for events
         await new Promise((resolve) => setTimeout(resolve, 8000));
 
-        expect(receivedReady).toBe(true);
+        assert.equal(receivedReady, true);
       } finally {
         socket.disconnect();
-        await closeTestServer(server, io);
+        await closeTestServer(io);
       }
     },
     { timeout: 15000 },

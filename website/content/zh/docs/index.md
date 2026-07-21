@@ -43,14 +43,13 @@ igf setup --global  # 安装到 ~/.claude/skills/（所有项目可用）
 
 Grapefruit 以本地服务器方式运行，由三个组件构成：
 
-- **Server** — Node.js/Bun 进程，管理 Frida 会话并提供 Web UI
+- **Server** — Node.js 进程，管理 Frida 会话并提供 Web UI
 - **Agent** — Frida Agent，注入目标应用实现运行时插桩
 - **GUI** — React 前端，带可停靠面板、代码编辑器和终端视图
 
 ## 环境要求
 
-- npm/npx 需要 Node.js 22.18+
-- 从源码开发需要 Bun
+- 源码开发或通过 npm/npx 安装需要 Node.js 22.18+ 和 npm；预编译二进制无需运行时依赖
 - 支持 Frida 的目标设备（见下方）
 - 目标设备上运行有 Frida server
 - 可选：LLM API Key 用于 AI 反编译——见 [LLM 配置](/cn/docs/llm)
