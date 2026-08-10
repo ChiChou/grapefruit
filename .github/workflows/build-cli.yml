@@ -57,8 +57,6 @@ jobs:
             name: linux-x64
           - os: windows-latest
             name: windows-x64
-          - os: macos-15-intel
-            name: darwin-x64
           - os: macos-15
             name: darwin-arm64
     runs-on: ${{ matrix.os }}
@@ -69,7 +67,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: "24"
+          node-version: "26"
           cache: npm
 
       - name: Install dependencies

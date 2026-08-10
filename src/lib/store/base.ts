@@ -20,12 +20,22 @@ export interface ExtraFilter {
 }
 
 export class BaseLogStore<TTable extends LogTable> {
+  protected table: TTable;
+  protected deviceId: string;
+  protected identifier: string;
+  protected extraFilters: ExtraFilter[];
+
   constructor(
-    protected table: TTable,
-    protected deviceId: string,
-    protected identifier: string,
-    protected extraFilters: ExtraFilter[] = [],
-  ) {}
+    table: TTable,
+    deviceId: string,
+    identifier: string,
+    extraFilters: ExtraFilter[] = [],
+  ) {
+    this.table = table;
+    this.deviceId = deviceId;
+    this.identifier = identifier;
+    this.extraFilters = extraFilters;
+  }
 
   query(
     options: {

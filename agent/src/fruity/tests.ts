@@ -39,6 +39,7 @@ import * as webview from "./modules/webview.js";
 import * as jsc from "./modules/jsc.js";
 import * as rn from "./modules/rn.js";
 import * as assetcatalog from "./modules/assetcatalog.js";
+import getSecurityApi from "./native/security.js";
 
 async function testInfo() {
   console.log("\n--- info ---");
@@ -544,7 +545,7 @@ async function testKeychain() {
       const first = items[0];
       assertKeys(
         first as unknown as Record<string, unknown>,
-        ["clazz"],
+        ["clazz", "persistentRef"],
         "keychain item",
       );
       console.log(
@@ -553,7 +554,46 @@ async function testKeychain() {
     }
   });
 
-  skip("keychain.remove", "side-effect: removes keychain item");
+  await test("keychain.remove deletes one disposable item", async () => {
+    const security = Process.getModuleByName("Security");
+    const sec = (name: string) =>
+      security.getExportByName(`kSec${name}`).readPointer();
+    const service = `dev.igf.keychain-test.${Process.id}.${Date.now()}`;
+    const account = "disposable";
+    const data = ObjC.classes.NSString!.stringWithString_(
+      "igf disposable keychain value",
+    ).dataUsingEncoding_(4);
+    const add = ObjC.classes.NSMutableDictionary!.dictionary();
+    add.setObject_forKey_(sec("ClassGenericPassword"), sec("Class"));
+    add.setObject_forKey_(service, sec("AttrService"));
+    add.setObject_forKey_(account, sec("AttrAccount"));
+    add.setObject_forKey_(data, sec("ValueData"));
+
+    const cleanup = ObjC.classes.NSMutableDictionary!.dictionary();
+    cleanup.setObject_forKey_(sec("ClassGenericPassword"), sec("Class"));
+    cleanup.setObject_forKey_(service, sec("AttrService"));
+    cleanup.setObject_forKey_(account, sec("AttrAccount"));
+
+    const api = getSecurityApi();
+    const status = api.SecItemAdd(add, NULL);
+    assert(status === 0, `SecItemAdd returned ${status}`);
+
+    try {
+      const item = keychain
+        .list()
+        .find((entry) => entry.service === service && entry.account === account);
+      if (!item) throw new Error("disposable item should be listed");
+      if (!item.persistentRef)
+        throw new Error("disposable item should have a persistent reference");
+      keychain.remove(item.persistentRef);
+      const found = keychain
+        .list()
+        .some((entry) => entry.service === service && entry.account === account);
+      assert(!found, "disposable item should be removed");
+    } finally {
+      api.SecItemDelete(cleanup);
+    }
+  });
 }
 
 async function testUserDefaults() {
@@ -757,10 +797,10 @@ async function testJsc() {
     assertType(contexts, "object", "list");
     const handles = Object.keys(contexts);
     console.log(`    ${handles.length} JSContext instances`);
-    if (handles.length > 0) {
-      const first = handles[0];
-      assertType(contexts[first], "string", "context description");
-      console.log(`    first: handle=${first}`);
+    if (contexts.length > 0) {
+      const first = contexts[0];
+      assertType(first.description, "string", "context description");
+      console.log(`    first: handle=${first.handle}`);
     }
   });
 

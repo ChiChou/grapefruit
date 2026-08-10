@@ -4,17 +4,27 @@ import type { StreamingApi } from "hono/utils/stream";
 import type { Device, ScriptExports, ScriptMessageHandler } from "./xvii.ts";
 import { agent } from "./assets.ts";
 
+type TransportScript = {
+  exports: ScriptExports;
+  unload: () => Promise<void>;
+  message: { connect: (handler: ScriptMessageHandler) => void };
+  post: (message: object, data?: Buffer | null) => void;
+};
+
 export class Transport {
+  public readonly script: TransportScript;
+  public readonly session: { detach: () => Promise<void> };
+  public readonly controller: RemoteStreamController;
+
   constructor(
-    public readonly script: {
-      exports: ScriptExports;
-      unload: () => Promise<void>;
-      message: { connect: (handler: ScriptMessageHandler) => void };
-      post: (message: object, data?: Buffer | null) => void;
-    },
-    public readonly session: { detach: () => Promise<void> },
-    public readonly controller: RemoteStreamController,
-  ) {}
+    script: TransportScript,
+    session: { detach: () => Promise<void> },
+    controller: RemoteStreamController,
+  ) {
+    this.script = script;
+    this.session = session;
+    this.controller = controller;
+  }
 
   async close(): Promise<void> {
     await this.script.unload();

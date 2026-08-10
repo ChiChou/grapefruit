@@ -32,13 +32,11 @@ async function main() {
     process.env.FRIDA_VERSION ??
     "17";
   const bindings = {
-    sqlite: await materialize("native/sqlite.node", manifest.native.sqlite),
     frida16: await materialize("native/frida16.node", manifest.native.frida16),
     frida17: await materialize("native/frida17.node", manifest.native.frida17),
   };
 
   process.env.IGF_ASSETS_DIR = root;
-  process.env.IGF_SQLITE_BINDING = bindings.sqlite;
   process.env.IGF_FRIDA_BINDING =
     version === "16" ? bindings.frida16 : bindings.frida17;
 

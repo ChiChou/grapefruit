@@ -1,21 +1,19 @@
 import { mkdirSync } from "node:fs";
 import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
 
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import { migrate } from "drizzle-orm/better-sqlite3/migrator";
-import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import * as schema from "../schema.ts";
 import env from "../env.ts";
 import { asset } from "../assets.ts";
+import { drizzle, migrate } from "./sqlite.ts";
 
 const dbDir = path.join(env.workdir, "data");
 mkdirSync(dbDir, { recursive: true });
 const dbPath = path.join(dbDir, "data.db");
 const migrationsFolder = asset("drizzle");
 
-export const db: BaseSQLiteDatabase<"sync", any, typeof schema> = drizzle(
-  new Database(dbPath),
+export const db = drizzle(
+  new DatabaseSync(dbPath),
   { schema },
 );
 

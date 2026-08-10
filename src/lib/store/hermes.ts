@@ -5,10 +5,13 @@ import { db } from "./db.ts";
 export type HermesRecord = typeof hermes.$inferSelect;
 
 export class HermesStore {
-  constructor(
-    private deviceId: string,
-    private identifier: string,
-  ) {}
+  private deviceId: string;
+  private identifier: string;
+
+  constructor(deviceId: string, identifier: string) {
+    this.deviceId = deviceId;
+    this.identifier = identifier;
+  }
 
   append(
     message: { url: string; hash: string; size: number },

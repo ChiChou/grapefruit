@@ -11,6 +11,7 @@ import { NSURLStore } from "../lib/store/nsurl.ts";
 import { FlutterStore } from "../lib/store/flutter.ts";
 import { JNIStore } from "../lib/store/jni.ts";
 import { XPCStore } from "../lib/store/xpc.ts";
+import { HermesStore } from "../lib/store/hermes.ts";
 import { createPinStore } from "../lib/store/pins.ts";
 
 const device = "test-device";
@@ -852,5 +853,29 @@ describe("Pins API", () => {
     const r2 = await app.request(`/api/pins/${device}/${identifier}`);
     const body = await r2.json();
     assert.strictEqual(body, null);
+  });
+});
+
+describe("Hermes Store", () => {
+  const store = new HermesStore(device, identifier);
+
+  afterEach(() => store.rm());
+
+  it("should preserve bytecode blobs", () => {
+    const data = Buffer.from([0, 1, 2, 127, 128, 255]);
+    store.append(
+      {
+        url: "file:///disposable.hbc",
+        hash: `node-sqlite-${process.pid}-${Date.now()}`,
+        size: data.length,
+      },
+      data,
+    );
+
+    const [item] = store.query();
+    assert(item, "Hermes record should be returned");
+    const blob = store.blob(item.id);
+    assert(blob, "Hermes blob should be returned");
+    assert.deepStrictEqual(blob.data, data);
   });
 });

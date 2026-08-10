@@ -105,17 +105,16 @@ export function FruityKeychainTab() {
 
   const removeMutation = useFruityMutation<
     void,
-    { service: string; account: string }
-  >((api, { service, account }) => api.keychain.remove(service, account), {
+    { persistentRef: string }
+  >((api, { persistentRef }) => api.keychain.remove(persistentRef), {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["keychain"] });
     },
   });
 
   const handleDelete = async (item: KeyChainItem) => {
-    const service = item.service || "";
-    const account = item.account || "";
-    await removeMutation.mutateAsync({ service, account });
+    if (!item.persistentRef) return;
+    await removeMutation.mutateAsync({ persistentRef: item.persistentRef });
   };
 
   const downloadRaw = (item: KeyChainItem) => {
@@ -441,6 +440,7 @@ export function FruityKeychainTab() {
                       size="icon"
                       className="h-7 w-7 text-destructive hover:text-destructive"
                       title={t("remove")}
+                      disabled={!item.persistentRef}
                     />
                   }
                 >

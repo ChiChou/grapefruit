@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { chmod, copyFile, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { need, npm, run } from "./lib.ts";
@@ -7,7 +7,7 @@ import { need, npm, run } from "./lib.ts";
 const root = path.join(import.meta.dirname, "..");
 const seaDir = path.join(root, "build", "sea");
 const releaseDir = path.join(root, "build", "Release");
-const fuse = "NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2";
+const ciTargets = new Set(["linux-x64", "win32-x64", "darwin-arm64"]);
 
 async function files(dir: string): Promise<string[]> {
   const entries = await readdir(dir, { withFileTypes: true });
@@ -31,6 +31,23 @@ async function main() {
   if (process.argv.length > 2) {
     throw new Error("The Node.js SEA build targets the current platform only");
   }
+  const major = Number(process.versions.node.split(".")[0]);
+  if (major !== 26) {
+    throw new Error(
+      `Unsupported Node.js ${process.versions.node}; SEA builds require Node.js 26.x`,
+    );
+  }
+  if (process.config.variables.single_executable_application !== true) {
+    throw new Error(
+      "Unsupported Node.js build: SEA is disabled; use an official standalone Node.js 26.x binary",
+    );
+  }
+  const target = `${process.platform}-${process.arch}`;
+  if (process.env.CI && !ciTargets.has(target)) {
+    throw new Error(
+      `Unsupported CI SEA target ${target}; supported targets: ${[...ciTargets].join(", ")}`,
+    );
+  }
 
   await rm(seaDir, { recursive: true, force: true });
   await mkdir(seaDir, { recursive: true });
@@ -46,9 +63,10 @@ async function main() {
     .flat()
     .concat(path.join(root, "radare2.wasm"));
 
-  const relative = appFiles.map((file) => path.relative(root, file).split(path.sep).join("/"));
+  const relative = appFiles.map((file) =>
+    path.relative(root, file).split(path.sep).join("/"),
+  );
   const native = {
-    sqlite: await binding("better-sqlite3", "better_sqlite3.node"),
     frida16: await binding("frida16", "frida_binding.node"),
     frida17: await binding("frida", "frida_binding.node"),
   };
@@ -62,7 +80,6 @@ async function main() {
     id: hash.digest("hex").slice(0, 16),
     files: relative,
     native: {
-      sqlite: "native/better_sqlite3.node",
       frida16: "native/frida16.node",
       frida17: "native/frida17.node",
     },
@@ -75,26 +92,9 @@ async function main() {
   );
   Object.assign(assets, {
     "manifest.json": manifestPath,
-    "native/sqlite.node": native.sqlite,
     "native/frida16.node": native.frida16,
     "native/frida17.node": native.frida17,
   });
-
-  const blob = path.join(seaDir, "sea-prep.blob");
-  const configPath = path.join(seaDir, "sea-config.json");
-  await writeFile(
-    configPath,
-    JSON.stringify({
-      main: path.join(seaDir, "sea.cjs"),
-      output: blob,
-      disableExperimentalSEAWarning: true,
-      useSnapshot: false,
-      useCodeCache: false,
-      execArgv: ["--disable-warning=ExperimentalWarning"],
-      assets,
-    }),
-  );
-  run([process.execPath, "--experimental-sea-config", configPath], root);
 
   const platform = process.platform === "win32" ? "windows" : process.platform;
   const ext = process.platform === "win32" ? ".exe" : "";
@@ -102,26 +102,23 @@ async function main() {
     releaseDir,
     `igf-${platform}-${process.arch}${ext}`,
   );
-  await copyFile(process.execPath, output);
+  await rm(output, { force: true });
 
-  if (process.platform === "darwin") {
-    run([need("codesign"), "--remove-signature", output]);
-  }
-
-  const args = [
-    "exec",
-    "--",
-    "postject",
-    output,
-    "NODE_SEA_BLOB",
-    blob,
-    "--sentinel-fuse",
-    fuse,
-  ];
-  if (process.platform === "darwin") {
-    args.push("--macho-segment-name", "NODE_SEA");
-  }
-  run(npm(...args), root);
+  const configPath = path.join(seaDir, "sea-config.json");
+  await writeFile(
+    configPath,
+    JSON.stringify({
+      main: path.join(seaDir, "sea.cjs"),
+      mainFormat: "commonjs",
+      output,
+      disableExperimentalSEAWarning: true,
+      useSnapshot: false,
+      useCodeCache: false,
+      execArgv: ["--disable-warning=ExperimentalWarning"],
+      assets,
+    }),
+  );
+  run([process.execPath, "--build-sea", configPath], root);
 
   if (process.platform === "darwin") {
     run([need("codesign"), "--sign", "-", output]);

@@ -226,7 +226,7 @@ igf agent android webview [list|debug|eval|navigate] [session opts]
 
 ```
 igf agent ios keychain [session opts]
-igf agent ios keychain-remove <account> [session opts]
+igf agent ios keychain-remove <persistent-ref> [session opts]
 igf agent ios cookies [session opts]
 igf agent ios cookies-clear [session opts]
 igf agent ios userdefaults [session opts]

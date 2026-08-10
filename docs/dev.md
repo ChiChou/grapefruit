@@ -93,20 +93,21 @@ Build a [Node.js single executable application](https://nodejs.org/api/single-ex
 npm run build:cli
 ```
 
+This requires an SEA-enabled Node.js 26 build, such as an official standalone Node.js binary.
+
 Outputs to `build/Release/`:
 
 - `igf-linux-x64`
 - `igf-windows-x64.exe`
-- `igf-darwin-x64`
 - `igf-darwin-arm64`
 
-Release CI runs this command on native Linux, Windows, Intel macOS, and Apple Silicon macOS runners. The local build process:
+Release CI runs this command with Node.js 26 on native Linux, Windows, and Apple Silicon macOS runners. The local build process:
 
 1. Fetches the radare2 WASM asset
 2. Bundles the server and JavaScript dependencies into a single CommonJS entry with `tsdown`
 3. Embeds the GUI, agent, Drizzle migrations, skills, radare2 WASM, and native addons as SEA assets
-4. Generates a preparation blob with `node --experimental-sea-config`
-5. Injects the blob into a copy of the current Node.js executable with `postject` and signs it on macOS
+4. Builds the executable directly with `node --build-sea`
+5. Signs the result on macOS
 
 ### npm Package
 

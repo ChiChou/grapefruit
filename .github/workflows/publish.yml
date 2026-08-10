@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/setup-node@v6
         with:
-          node-version: "24"
+          node-version: "26"
           registry-url: "https://registry.npmjs.org"
 
       - name: Download CLI binaries
@@ -52,7 +52,6 @@ jobs:
           files: |
             cli/igf-linux-x64
             cli/igf-windows-x64.exe
-            cli/igf-darwin-x64
             cli/igf-darwin-arm64
             npm/igf-*.tgz
           generate_release_notes: true

@@ -121,10 +121,13 @@ function merge(req: CapturedRequest, event: HttpEvent): void {
 }
 
 export class HttpStore {
-  constructor(
-    private deviceId: string,
-    private identifier: string,
-  ) {}
+  private deviceId: string;
+  private identifier: string;
+
+  constructor(deviceId: string, identifier: string) {
+    this.deviceId = deviceId;
+    this.identifier = identifier;
+  }
 
   get attachmentsDir(): string {
     return nodePath.join(env.workdir, "cache", this.deviceId, this.identifier);

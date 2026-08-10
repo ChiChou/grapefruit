@@ -165,10 +165,13 @@ function merge(req: CapturedRequest, event: NSURLEvent): void {
 }
 
 export class NSURLStore {
-  constructor(
-    private deviceId: string,
-    private identifier: string,
-  ) {}
+  private deviceId: string;
+  private identifier: string;
+
+  constructor(deviceId: string, identifier: string) {
+    this.deviceId = deviceId;
+    this.identifier = identifier;
+  }
 
   get attachmentsDir(): string {
     return nodePath.join(env.workdir, "cache", this.deviceId, this.identifier);
