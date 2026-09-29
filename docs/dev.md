@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Node.js >= 22.18.0 with npm
-- [wasi-sdk](https://github.com/WebAssembly/wasi-sdk) (optional, for building `r2hermes.wasm`)
+- A Unix shell, `make`, `patch`, and `zip` for building the radare2 WASM runtime from source
 - A device running [frida-server](https://frida.re/docs/installation/) connected via USB or network
 - iOS or Android target device/emulator
 
@@ -18,7 +18,7 @@ cd grapefruit
 npm run setup
 ```
 
-Each workspace has its own `package.json`. The root `setup` script installs dependencies for the root, `agent/`, and `gui/`, fetches the radare2 WASM asset, and builds `r2hermes.wasm` when wasi-sdk is available.
+Each workspace has its own `package.json`. The root `setup` script installs dependencies for the root, `agent/`, and `gui/`, builds the pinned radare2 WASM runtime with the r2hermes and r2flutter XPS plugins, and builds the standalone `r2hermes.wasm` module when wasi-sdk is available. The radare2 build downloads and caches its pinned wasi-sdk when necessary.
 
 If the `r2hermes.wasm` step is skipped because wasi-sdk is missing, the Hermes bytecode decompiler will be unavailable until you run:
 
@@ -42,6 +42,8 @@ npm run build
 | `npm test`                   | Run tests with the Node.js test runner        |
 | `npm run test:coverage`      | Run tests with LCOV coverage output           |
 | `npm run test:coverage:text` | Run tests with text coverage summary          |
+| `npm run build:r2-wasm`      | Build pinned radare2 WASM with r2hermes and r2flutter |
+| `npm run check:r2-wasm`      | Smoke-test the embedded radare2 plugins      |
 | `npm run build:cli`          | Build a single executable for the current platform |
 | `npm run build:npm`          | Build npm distribution package                |
 
@@ -103,7 +105,7 @@ Outputs to `build/Release/`:
 
 Release CI runs this command with Node.js 26 on native Linux, Windows, and Apple Silicon macOS runners. The local build process:
 
-1. Fetches the radare2 WASM asset
+1. Builds or reuses the pinned radare2 WASM asset with bundled XPS plugins
 2. Bundles the server and JavaScript dependencies into a single CommonJS entry with `tsdown`
 3. Embeds the GUI, agent, Drizzle migrations, skills, radare2 WASM, and native addons as SEA assets
 4. Builds the executable directly with `node --build-sea`

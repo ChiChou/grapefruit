@@ -73,13 +73,13 @@ Command-line flags take precedence over environment variables when both are set.
 - **SQLite Database Inspection** - Browse tables, run queries, and view results
 - **Syslog Streaming** - Real-time system and agent log monitoring
 - **Process Crash Reporting** - Exception handler with register dump and backtrace
-- **Flutter Support** - Monitor platform method channel communication on both platforms
+- **Flutter Support** - Monitor platform method channels and explore Dart AOT snapshots, functions, classes, strings, references, and recovered components
 - **React Native Support** - Bridge inspector and JavaScript injection REPL
 - **Memory Scanner** - Search and inspect process memory
 - **Privacy Monitor** - Track sensitive API access (camera, microphone, location, sensors, etc.)
 - **Thread Inspector** - View and manage process threads
 - **Module/Symbol Browser** - Inspect loaded modules and exported symbols
-- **Analysis & Decompilation** - DEX, Hermes bytecode, and native code. AI assistance available for hook script generation
+- **Analysis & Decompilation** - DEX, Flutter AOT, Hermes bytecode, and native code. AI assistance available for hook script generation
 
 ### iOS
 

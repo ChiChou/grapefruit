@@ -25,9 +25,11 @@ Firebase and Firestore hooking implementation is derived from this blog post.
 ## General
 
 * **[radare2](https://github.com/radareorg/radare2)** (LGPLv3 License)
-The WASM build of radare2 powers the disassembly, control-flow graph, and binary analysis features (`src/lib/r2.ts`).
+The WASM build of radare2 powers the disassembly, control-flow graph, and binary analysis features (`gui/src/lib/r2/`).
 * **[r2hermes](https://github.com/radareorg/r2hermes)** (BSD-3-Clause License)
-Hermes bytecode disassembly and decompilation (`src/routes/hermes.ts`) uses r2hermes compiled to WASM.
+Hermes bytecode disassembly and decompilation uses r2hermes both as a standalone WASM module and as a plugin in the shared radare2 runtime.
+* **[r2flutter](https://github.com/radareorg/r2flutter)** (MIT License)
+Flutter and Dart AOT snapshot exploration uses r2flutter as a plugin in the shared radare2 WASM runtime.
 * **[frida-tools](https://github.com/frida/frida-tools)** (wxWindows Library Licence v3.1)
 The Java, Objective-C, and Swift bridge scripts bundled in the agent build are extracted from frida-tools.
 

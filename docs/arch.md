@@ -154,7 +154,7 @@ Bridge scripts (Java, ObjC, Swift) are downloaded from PyPI packages and stored 
 
 The `scripts/build-sea.ts` script implements the [Node.js single executable application](https://nodejs.org/api/single-executable-applications.html) flow:
 
-1. Fetches the radare2 WASM asset
+1. Builds or reuses the pinned radare2 WASM asset with bundled XPS plugins
 2. Bundles the server and its JavaScript dependencies into one CommonJS entry
 3. Embeds the GUI, agent, Drizzle migrations, skills, radare2 WASM, and native addons as SEA assets
 4. Builds the executable directly with Node.js 26
