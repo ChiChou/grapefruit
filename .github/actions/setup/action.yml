@@ -51,4 +51,4 @@ runs:
 
     - name: Check radare2 WASI plugins
       shell: bash
-      run: npm run check:r2-wasm
+      run: npm run check:r2-wasm -- radare2.wasm externals/radare/r2flutter/test/bins/android/first/libapp.so
