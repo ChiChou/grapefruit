@@ -65,8 +65,12 @@ export function init(opts?: { arch?: string; bits?: number; os?: string }): Prom
   return rpc({ type: "init", ...opts });
 }
 
-export function loadFile(name: string, data: ArrayBuffer): Promise<void> {
-  return rpc({ type: "loadFile", name, data }, [data]);
+export function loadFile(
+  name: string,
+  data: ArrayBuffer,
+  opts?: { analyze?: boolean },
+): Promise<void> {
+  return rpc({ type: "loadFile", name, data, analyze: opts?.analyze }, [data]);
 }
 
 export function cmd(command: string): Promise<string> {

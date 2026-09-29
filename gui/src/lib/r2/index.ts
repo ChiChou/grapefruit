@@ -9,3 +9,4 @@ export type {
   R2Function,
 } from "./hooks";
 export * as filestore from "./filestore";
+export * as flutter from "../flutter-aot";

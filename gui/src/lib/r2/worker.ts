@@ -97,7 +97,13 @@ async function loadWasm(): Promise<ArrayBuffer> {
 
 type Request =
   | { id: number; type: "init"; arch?: string; bits?: number; os?: string }
-  | { id: number; type: "loadFile"; name: string; data: ArrayBuffer }
+  | {
+      id: number;
+      type: "loadFile";
+      name: string;
+      data: ArrayBuffer;
+      analyze?: boolean;
+    }
   | { id: number; type: "cmd"; command: string }
   | { id: number; type: "writeMemory"; address: string; data: ArrayBuffer }
   | { id: number; type: "close" };
@@ -164,13 +170,14 @@ self.onmessage = async (e: MessageEvent<Request>) => {
 
         // Write file to in-memory VFS
         const fileData = new Uint8Array(msg.data);
-        workDir.dir.contents.set(msg.name, new File(fileData));
+        const name = msg.name.replace(/[^a-zA-Z0-9._-]/g, "_") || "input";
+        workDir.dir.contents.set(name, new File(fileData));
 
         // Open in R2
         rawCmd("o--");
-        rawCmd(`o /work/${msg.name}`);
+        rawCmd(`o /work/${name}`);
         rawCmd("e scr.color=0");
-        rawCmd("aaa");
+        if (msg.analyze !== false) rawCmd("aaa");
 
         self.postMessage({ id: msg.id, ok: true });
         break;

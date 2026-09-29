@@ -72,6 +72,17 @@ try {
     throw new Error(`r2hermes command unavailable: ${JSON.stringify(hermes)}`);
   }
   console.log(`[r2-wasm] plugins ready: ${flutter.trim()}, r2hermes`);
+
+  const fixture = process.argv[3];
+  if (fixture) {
+    dir.dir.contents.set("fixture", new File(new Uint8Array(await readFile(fixture))));
+    cmd("o /work/fixture");
+    for (const action of ["H", "f", "c", "z", "x", "S"]) {
+      const value = cmd(`r2flutter -q -j${action}`);
+      JSON.parse(value);
+      console.log(`[r2-wasm] r2flutter -j${action}: ${value.slice(0, 200)}`);
+    }
+  }
 } finally {
   ex.r_core_free(core);
 }
