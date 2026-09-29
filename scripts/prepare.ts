@@ -41,8 +41,8 @@ prebuild("frida16");
 run(npm("install"), join(root, "agent"));
 run(npm("install"), join(root, "gui"));
 
-// radare2 WASM runtime
-run([process.execPath, "scripts/fetch-r2-wasm.ts"]);
+// radare2 WASM runtime with the bundled XPS plugins
+run([process.execPath, "scripts/build-r2-wasm.ts"]);
 
 // r2hermes WASM (hbc decompiler)
 const wasmDist = "externals/radare/r2hermes.wasm/dist";

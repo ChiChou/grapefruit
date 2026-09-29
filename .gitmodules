@@ -1,3 +1,6 @@
 [submodule "externals/radare/r2hermes"]
 	path = externals/radare/r2hermes
 	url = https://github.com/radareorg/r2hermes.git
+[submodule "externals/radare/r2flutter"]
+	path = externals/radare/r2flutter
+	url = https://github.com/radareorg/r2flutter.git

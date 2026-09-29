@@ -11,7 +11,7 @@ import {
 } from "@bjorn3/browser_wasi_shim";
 import * as cache from "./store";
 
-const R2_VERSION = "6.1.2";
+const R2_VERSION = "6.1.2.fe5b097.r1-r2hermes.5faf591-r2flutter.6793505";
 
 interface R2Exports {
   memory: WebAssembly.Memory;

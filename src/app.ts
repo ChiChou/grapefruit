@@ -54,7 +54,7 @@ api.route("/", r2Routes);
 
 app.route("/api", api);
 
-// Serve radare2.wasm with aggressive caching (version-pinned, SHA256-verified)
+// Serve the version-pinned radare2 WASM build with bundled XPS plugins.
 app.get("/radare2.wasm", async (c) => {
   const wasmPath = await asset("radare2.wasm");
   const data = await readFile(wasmPath);
@@ -62,7 +62,7 @@ app.get("/radare2.wasm", async (c) => {
     "Content-Type": "application/wasm",
     "Cache-Control": "public, max-age=31536000, immutable",
     "Content-Length": String(data.byteLength),
-    "X-R2-Version": "6.1.2",
+    "X-R2-Version": "6.1.2.fe5b097.r1-r2hermes.5faf591-r2flutter.6793505",
   });
 });
 

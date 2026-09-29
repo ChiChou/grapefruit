@@ -23,6 +23,8 @@
     "test": "node --disable-warning=ExperimentalWarning --test --test-force-exit src/tests/*.test.ts",
     "test:coverage": "c8 --reporter=lcov --reporter=text npm test",
     "test:coverage:text": "c8 --reporter=text npm test",
+    "build:r2-wasm": "node scripts/build-r2-wasm.ts",
+    "check:r2-wasm": "node gui/scripts/check-r2-wasm.ts",
     "prepack": "npm run build:npm",
     "build:npm": "tsdown",
     "build:cli": "node scripts/build-sea.ts"

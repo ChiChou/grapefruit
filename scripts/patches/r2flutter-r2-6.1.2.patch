@@ -1,0 +1,135 @@
+diff --git a/include/r2flutter/dart_app.h b/include/r2flutter/dart_app.h
+--- a/include/r2flutter/dart_app.h
++++ b/include/r2flutter/dart_app.h
+@@ -5,10 +5,22 @@
+ #include <r_core.h>
+ #include <r_list.h>
+ #include <r_vec.h>
++#include <r_util/r_json.h>
+ 
+ #include <stddef.h>
+ #include "dart_r2.h"
+ 
++#if R2_VERSION_NUMBER < 60200
++#ifndef R2FLUTTER_SECTIONS_COMPAT
++#define R2FLUTTER_SECTIONS_COMPAT
++static inline RVecRBinSection *r2flutter_sections(RBin *bin) {
++	RBinObject *obj = r_bin_cur_object (bin);
++	return obj? &obj->sections_vec: NULL;
++}
++#define r_bin_get_sections_vec r2flutter_sections
++#endif
++#endif
++
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
+diff --git a/src/lib/dart_pool_parse_priv.h b/src/lib/dart_pool_parse_priv.h
+--- a/src/lib/dart_pool_parse_priv.h
++++ b/src/lib/dart_pool_parse_priv.h
+@@ -9,6 +9,17 @@
+ #include "../../include/r2flutter/dart_r2.h"
+ #include "../../include/r2flutter/dart_version.h"
+ 
++#if R2_VERSION_NUMBER < 60200
++#ifndef R2FLUTTER_SECTIONS_COMPAT
++#define R2FLUTTER_SECTIONS_COMPAT
++static inline RVecRBinSection *r2flutter_sections(RBin *bin) {
++	RBinObject *obj = r_bin_cur_object (bin);
++	return obj? &obj->sections_vec: NULL;
++}
++#define r_bin_get_sections_vec r2flutter_sections
++#endif
++#endif
++
+ #define DART_SYNTHETIC_PP_BASE 0x100000000ULL
+ 
+ typedef struct {
+diff --git a/src/lib/dart_obf.c b/src/lib/dart_obf.c
+--- a/src/lib/dart_obf.c
++++ b/src/lib/dart_obf.c
+@@ -1,5 +1,7 @@
+ /* r2flutter - MIT - Copyright 2026 - pancake */
+ 
++#include <r_util/r_json.h>
++
+ #include <r_core.h>
+ #include "../../include/r2flutter/dart_obf.h"
+ 
+diff --git a/src/lib/dart_pool_classes.c b/src/lib/dart_pool_classes.c
+--- a/src/lib/dart_pool_classes.c
++++ b/src/lib/dart_pool_classes.c
+@@ -2471,7 +2471,12 @@ static bool bin_class_has_method(RBinClass *klass, const char *method_name) {
+ 		return false;
+ 	}
+ 	RBinSymbol *sym;
++#if R2_VERSION_NUMBER < 60200
++	RListIter *it;
++	r_list_foreach (klass->methods, it, sym) {
++#else
+ 	R_VEC_FOREACH (&klass->methods, sym) {
++#endif
+ 		if (!sym || !sym->name) {
+ 			continue;
+ 		}
+@@ -2488,7 +2493,12 @@ static bool bin_class_has_field(RBinClass *klass, const char *field_name) {
+ 		return false;
+ 	}
+ 	RBinField *field;
++#if R2_VERSION_NUMBER < 60200
++	RListIter *it;
++	r_list_foreach (klass->fields, it, field) {
++#else
+ 	R_VEC_FOREACH (&klass->fields, field) {
++#endif
+ 		if (!field || !field->name) {
+ 			continue;
+ 		}
+@@ -2516,7 +2526,12 @@ static void core_apply_bin_field(RBinClass *klass, const DartFieldInfo *fi, int
+ 		(fi->flags & DART_FIELD_FINAL)? " final": "",
+ 		(fi->flags & DART_FIELD_CONST)? " const": "",
+ 		(fi->flags & DART_FIELD_LATE)? " late": "");
+-	RBinField *field = RVecRBinField_emplace_back (&klass->fields);
++	RBinField *field;
++#if R2_VERSION_NUMBER < 60200
++	field = R_NEW0 (RBinField);
++#else
++	field = RVecRBinField_emplace_back (&klass->fields);
++#endif
+ 	if (field) {
+ 		memset (field, 0, sizeof (*field));
+ 		field->name = r_bin_name_new (field_name);
+@@ -2536,6 +2551,9 @@ static void core_apply_bin_field(RBinClass *klass, const DartFieldInfo *fi, int
+ 		field->kind = R_BIN_FIELD_KIND_FIELD;
+ #endif
+ 		field->type = r_bin_name_new (R_STR_ISNOTEMPTY (fi->type_name)? fi->type_name: "dynamic");
++#if R2_VERSION_NUMBER < 60200
++		r_list_append (klass->fields, field);
++#endif
+ 		(*count)++;
+ 	}
+ 	free (comment);
+@@ -2552,7 +2570,12 @@ static void core_apply_bin_method(RBinClass *klass, const DartMethodInfo *mi, in
+ 		free (method_name);
+ 		return;
+ 	}
+-	RBinSymbol *sym = RVecRBinSymbol_emplace_back (&klass->methods);
++	RBinSymbol *sym;
++#if R2_VERSION_NUMBER < 60200
++	sym = R_NEW0 (RBinSymbol);
++#else
++	sym = RVecRBinSymbol_emplace_back (&klass->methods);
++#endif
+ 	if (sym) {
+ 		memset (sym, 0, sizeof (*sym));
+ 		sym->name = r_bin_name_new (method_name);
+@@ -2566,6 +2589,9 @@ static void core_apply_bin_method(RBinClass *klass, const DartMethodInfo *mi, in
+ #else
+ 		sym->size = 0;
+ #endif
++#if R2_VERSION_NUMBER < 60200
++		r_list_append (klass->methods, sym);
++#endif
+ 		(*count)++;
+ 	}
+ 	free (method_name);
