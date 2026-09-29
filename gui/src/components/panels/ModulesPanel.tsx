@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Search, EllipsisVertical, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { SiFlutter } from "@icons-pack/react-simple-icons";
 
 import { useDock } from "@/context/DockContext";
 import { Input } from "@/components/ui/input";
@@ -121,6 +122,7 @@ function ModuleRow({
   }) => void;
 }) {
   const { t } = useTranslation();
+  const isFlutter = mod.name === "libapp.so" || (mod.name === "App" && mod.path.includes("App.framework"));
 
   const openModuleView = (component: string, suffix: string) => {
     openFilePanel({
@@ -174,6 +176,21 @@ function ModuleRow({
               <span className="h-4 w-4" />
               {t("sections")}
             </DropdownMenuItem>
+            {isFlutter && device && pid != null && (
+              <DropdownMenuItem onClick={() => {
+                const params = new URLSearchParams({
+                  source: "module",
+                  device,
+                  pid: String(pid),
+                  path: mod.path,
+                  name: mod.name,
+                });
+                window.open(`/decompiler/flutter?${params}`, "_blank");
+              }}>
+                <SiFlutter className="h-4 w-4" />
+                {t("flutter_explore")}
+              </DropdownMenuItem>
+            )}
             {!isDroid && (
               <DropdownMenuItem onClick={() => openModuleView("moduleClasses", t("classes"))}>
                 <span className="h-4 w-4" />

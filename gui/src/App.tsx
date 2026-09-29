@@ -12,6 +12,7 @@ import { Workspace } from "./components/layout/Workspace";
 import { WorkspaceIndex } from "./components/layout/WorkspaceIndex";
 import { HermesPage } from "./components/pages/HermesPage";
 import { R2Page } from "./components/pages/R2Page";
+import { FlutterAotPage } from "./components/pages/FlutterAotPage";
 
 import { FruityGeneralPanel } from "./components/panels/FruityGeneralPanel";
 import { FruityDevicePanel } from "./components/panels/FruityDevicePanel";
@@ -83,6 +84,7 @@ function App() {
 
         {/* Standalone decompiler tools */}
         <Route path="/decompiler/hermes" element={<ErrorBoundary><HermesPage /></ErrorBoundary>} />
+        <Route path="/decompiler/flutter" element={<ErrorBoundary><FlutterAotPage /></ErrorBoundary>} />
         <Route path="/decompiler/radare2" element={<ErrorBoundary><R2Page /></ErrorBoundary>} />
 
         {/* Workspace with platform and mode as route params */}

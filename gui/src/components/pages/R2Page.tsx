@@ -2,7 +2,7 @@ import { useMemo, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { Binary } from "lucide-react";
-import { SiReact } from "@icons-pack/react-simple-icons";
+import { SiFlutter, SiReact } from "@icons-pack/react-simple-icons";
 
 import { DecompilerShell, type FileStore } from "@/components/shared/DecompilerShell";
 import { R2TabPanel } from "@/components/shared/R2TabPanel";
@@ -44,6 +44,9 @@ export function R2Page() {
     <>
       <Link to="/decompiler/hermes" className="p-2 flex items-center justify-center hover:bg-sidebar-accent transition-colors">
         <SiReact className="h-5 w-5" />
+      </Link>
+      <Link to="/decompiler/flutter" className="p-2 flex items-center justify-center hover:bg-sidebar-accent transition-colors">
+        <SiFlutter className="h-5 w-5" />
       </Link>
       <div className="p-2 flex items-center justify-center bg-sidebar-accent border-l-2 border-primary">
         <Binary className="h-5 w-5" />

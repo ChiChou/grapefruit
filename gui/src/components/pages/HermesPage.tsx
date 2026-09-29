@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
-import { SiReact } from "@icons-pack/react-simple-icons";
+import { SiFlutter, SiReact } from "@icons-pack/react-simple-icons";
 import { Binary } from "lucide-react";
 import { Link } from "react-router";
 
@@ -87,6 +87,9 @@ export function HermesPage() {
       <div className="p-2 flex items-center justify-center bg-sidebar-accent border-l-2 border-primary">
         <SiReact className="h-5 w-5" />
       </div>
+      <Link to="/decompiler/flutter" className="p-2 flex items-center justify-center hover:bg-sidebar-accent transition-colors">
+        <SiFlutter className="h-5 w-5" />
+      </Link>
       <Link to="/decompiler/radare2" className="p-2 flex items-center justify-center hover:bg-sidebar-accent transition-colors">
         <Binary className="h-5 w-5" />
       </Link>

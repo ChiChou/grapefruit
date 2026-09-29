@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Link, Outlet } from "react-router";
 import { Binary } from "lucide-react";
-import { SiReact } from "@icons-pack/react-simple-icons";
+import { SiFlutter, SiReact } from "@icons-pack/react-simple-icons";
 
 import logo from "../../assets/logo.svg";
 import { Devices } from "./Devices";
@@ -44,6 +44,13 @@ export function WelcomePage() {
             >
               <SiReact className="h-4 w-4 shrink-0" />
               {t("decompiler_hermes")}
+            </Link>
+            <Link
+              to="/decompiler/flutter"
+              className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
+            >
+              <SiFlutter className="h-4 w-4 shrink-0" />
+              {t("decompiler_flutter")}
             </Link>
             <Link
               to="/decompiler/radare2"
