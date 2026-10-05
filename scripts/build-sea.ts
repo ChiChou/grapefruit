@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { chmod, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { access, chmod, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { need, npm, run } from "./lib.ts";
@@ -53,7 +53,9 @@ async function main() {
   await mkdir(seaDir, { recursive: true });
   await mkdir(releaseDir, { recursive: true });
 
-  run([process.execPath, path.join(root, "scripts", "fetch-r2-wasm.ts")], root);
+  await access(path.join(root, "radare2.wasm")).catch(() => {
+    throw new Error("radare2.wasm is missing; run npm run build:r2-wasm first");
+  });
   run(npm("exec", "--", "tsdown", "--config", "tsdown.sea.config.ts"), root);
 
   const roots = ["gui/dist", "agent/dist", "drizzle", "skills"];

@@ -326,18 +326,20 @@ export function migrate<TSchema extends Record<string, unknown>>(
   db: NodeSQLiteDb<TSchema>,
   config: MigrationConfig,
 ): void {
-  const internal = db as unknown as {
-    dialect: SQLiteSyncDialect;
-    session: SQLiteSession<
-      "sync",
-      unknown,
-      Record<string, unknown>,
-      TablesRelationalConfig
-    >;
-  };
-  internal.dialect.migrate(
-    readMigrationFiles(config),
-    internal.session,
-    config,
-  );
+  const migrations = readMigrationFiles(config);
+  const table = sql.identifier(config.migrationsTable ?? "__drizzle_migrations");
+  db.transaction((tx) => {
+    tx.run(sql`CREATE TABLE IF NOT EXISTS ${table} (
+      id SERIAL PRIMARY KEY, hash text NOT NULL, created_at numeric
+    )`);
+    const last = tx.get<{ created_at: number }>(
+      sql`SELECT created_at FROM ${table} ORDER BY created_at DESC LIMIT 1`,
+    );
+    for (const migration of migrations) {
+      if (last && Number(last.created_at) >= migration.folderMillis) continue;
+      for (const statement of migration.sql) tx.run(sql.raw(statement));
+      tx.run(sql`INSERT INTO ${table} (hash, created_at)
+        VALUES (${migration.hash}, ${migration.folderMillis})`);
+    }
+  }, { behavior: "immediate" });
 }

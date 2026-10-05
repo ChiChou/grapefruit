@@ -35,21 +35,21 @@ static HBC *get_handle(int h) {
 	return handles[h];
 }
 
-/* StringBuffer helpers */
-#define SB_INIT(sb) _hbc_string_buffer_init(&(sb), 1024)
-#define SB_APPEND(sb, s) _hbc_string_buffer_append(&(sb), (s))
-#define SB_APPEND_CHAR(sb, c) _hbc_string_buffer_append_char(&(sb), (c))
-#define SB_APPEND_INT(sb, v) _hbc_string_buffer_append_int(&(sb), (v))
-#define SB_FREE(sb) _hbc_string_buffer_free(&(sb))
+/* RStrBuf helpers */
+#define SB_INIT(sb) r_strbuf_init(&(sb))
+#define SB_APPEND(sb, s) r_strbuf_append(&(sb), (s))
+#define SB_APPEND_CHAR(sb, c) r_strbuf_appendf(&(sb), "%c", (c))
+#define SB_APPEND_INT(sb, v) r_strbuf_appendf(&(sb), "%d", (v))
+#define SB_FREE(sb) r_strbuf_fini(&(sb))
 
-static char *sb_finish(StringBuffer *sb) {
-	char *result = strdup(sb->data);
+static char *sb_finish(RStrBuf *sb) {
+	char *result = strdup(r_strbuf_get(sb));
 	SB_FREE(*sb);
 	return result;
 }
 
 /* Escape a string for JSON output */
-static void json_escape(StringBuffer *sb, const char *s) {
+static void json_escape(RStrBuf *sb, const char *s) {
 	SB_APPEND_CHAR(*sb, '"');
 	if (!s) {
 		SB_APPEND_CHAR(*sb, '"');
@@ -130,7 +130,7 @@ char *hbc_wasm_functions(int handle) {
 	if (!hbc) return strdup("[]");
 
 	u32 count = hbc_function_count(hbc);
-	StringBuffer sb;
+	RStrBuf sb;
 	SB_INIT(sb);
 	SB_APPEND_CHAR(sb, '[');
 
@@ -163,7 +163,7 @@ char *hbc_wasm_strings(int handle) {
 	if (!hbc) return strdup("[]");
 
 	u32 count = hbc_string_count(hbc);
-	StringBuffer sb;
+	RStrBuf sb;
 	SB_INIT(sb);
 	SB_APPEND_CHAR(sb, '[');
 
@@ -311,7 +311,7 @@ char *hbc_wasm_disassemble(int handle, int function_id) {
 		return strdup("; disassembly failed");
 	}
 
-	char *output = strdup(dis.output.data ? dis.output.data : "");
+	char *output = strdup(r_strbuf_get(&dis.output));
 	_hbc_disassembler_cleanup(&dis);
 	return output;
 }
@@ -337,7 +337,7 @@ char *hbc_wasm_disassemble_all(int handle) {
 		return strdup("; disassembly failed");
 	}
 
-	char *output = strdup(dis.output.data ? dis.output.data : "");
+	char *output = strdup(r_strbuf_get(&dis.output));
 	_hbc_disassembler_cleanup(&dis);
 	return output;
 }
@@ -371,8 +371,8 @@ char *hbc_wasm_xrefs(int handle) {
 		return strdup("{\"strings\":{},\"functions\":{}}");
 	}
 
-	const u8 *file_data = reader->file_buffer.data;
-	u32 file_size = (u32)reader->file_buffer.size;
+	ut64 file_size = 0;
+	const u8 *file_data = r_buf_data(reader->file_buffer, &file_size);
 
 	for (u32 fi = 0; fi < func_count; fi++) {
 		FunctionHeader *fh = &reader->function_headers[fi];
@@ -453,7 +453,7 @@ char *hbc_wasm_xrefs(int handle) {
 	}
 
 	/* Build JSON output */
-	StringBuffer sb;
+	RStrBuf sb;
 	SB_INIT(sb);
 	SB_APPEND(sb, "{\"strings\":{");
 

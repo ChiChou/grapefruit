@@ -6,6 +6,7 @@
  *   npm run clean              # remove dist/
  *
  * Requires wasi-sdk. Run setup-wasi-sdk.ts to install, or set WASI_SDK_PATH.
+ * Build radare2's WASI libraries first with npm run build:r2-wasm at the repo root.
  */
 
 import { access, mkdir, readFile, rm, stat, writeFile } from "fs/promises";
@@ -16,6 +17,7 @@ import { resolve, join } from "path";
 const ROOT = import.meta.dirname;
 const R2HERMES = resolve(ROOT, "../r2hermes");
 const DIST = join(ROOT, "dist");
+const RADARE = resolve(ROOT, "../../../.r2-wasm/radare2");
 
 if (process.argv.includes("--clean")) {
   await rm(DIST, { recursive: true, force: true });
@@ -29,9 +31,22 @@ const exists = (p: string) =>
     () => false,
   );
 
+const libs = [
+  join(RADARE, "libr/util/libr_util.a"),
+  join(RADARE, "subprojects/sdb/src/libsdb.a"),
+];
+for (const lib of libs) {
+  if (!(await exists(lib))) {
+    throw new Error(`Missing ${lib}; run npm run build:r2-wasm at the repo root first`);
+  }
+}
+
 async function findWasiSdk() {
   if (process.env.WASI_SDK_PATH) return process.env.WASI_SDK_PATH;
+  const machine = process.arch === "x64" ? "x86_64" : process.arch;
+  const os = process.platform === "darwin" ? "macos" : "linux";
   for (const p of [
+    resolve(ROOT, `../../../wasi/wasi-sdk-29.0-${machine}-${os}`),
     "/opt/wasi-sdk",
     "/opt/homebrew/opt/wasi-sdk/share/wasi-sdk",
     join(homedir(), ".wasi-sdk"),
@@ -82,8 +97,6 @@ if (current !== versionContent) {
 }
 
 const SRC = [
-  "src/lib/utils/string_buffer.c",
-  "src/lib/utils/buffer_reader.c",
   "src/lib/parsers/hbc_file_parser.c",
   "src/lib/parsers/hbc_bytecode_parser.c",
   "src/lib/opcodes/isa.c",
@@ -94,6 +107,7 @@ const SRC = [
   "src/lib/decompilation/token.c",
   "src/lib/decompilation/literals.c",
   "src/lib/hbc.c",
+  "src/lib/literals_api.c",
 ].map((f) => join(R2HERMES, f));
 
 const WRAPPER = join(ROOT, "hbc_wasm.c");
@@ -109,6 +123,12 @@ const flags = [
   "-D_POSIX_C_SOURCE=200809L",
   `-I${join(R2HERMES, "include")}`,
   `-I${join(R2HERMES, "src/lib")}`,
+  `-I${join(RADARE, "libr/include")}`,
+  `-I${join(RADARE, "subprojects/sdb/include")}`,
+  "-DHAVE_PTHREAD=0",
+  "-D_WASI_EMULATED_SIGNAL",
+  "-D_WASI_EMULATED_MMAN",
+  "-DR2_NO_LONG_DOUBLE=1",
   "-nostartfiles",
   "-Wl,--no-entry",
   "-Wl,--export=malloc",
@@ -133,7 +153,10 @@ const flags = [
 ];
 
 console.log(`compiling with wasi-sdk → ${OUTPUT}`);
-const result = spawnSync(CC, [...SRC, WRAPPER, ...flags], { stdio: "inherit" });
+const result = spawnSync(CC, [
+  ...SRC, WRAPPER, ...flags, ...libs,
+  "-lwasi-emulated-signal", "-lwasi-emulated-mman",
+], { stdio: "inherit" });
 if (result.error) throw result.error;
 if (result.status) process.exit(result.status);
 

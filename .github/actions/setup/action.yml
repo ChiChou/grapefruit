@@ -10,30 +10,6 @@ runs:
         node-version: "26"
         cache: npm
 
-    - name: Cache r2hermes WASM
-      id: cache-wasm
-      uses: actions/cache@v5
-      with:
-        path: externals/radare/r2hermes.wasm/dist
-        key: r2hermes-wasm-${{ hashFiles('externals/radare/r2hermes/**', 'externals/radare/r2hermes.wasm/build.ts', 'externals/radare/r2hermes.wasm/hbc_wasm.c') }}
-
-    - name: Setup wasi-sdk
-      if: steps.cache-wasm.outputs.cache-hit != 'true'
-      shell: bash
-      run: |
-        WASI_VERSION=32
-        curl -fsSL "https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${WASI_VERSION}/wasi-sdk-${WASI_VERSION}.0-x86_64-linux.tar.gz" | tar xz -C /opt
-        echo "WASI_SDK_PATH=/opt/wasi-sdk-${WASI_VERSION}.0-x86_64-linux" >> $GITHUB_ENV
-
-    - name: Build r2hermes WASM
-      if: steps.cache-wasm.outputs.cache-hit != 'true'
-      shell: bash
-      run: node externals/radare/r2hermes.wasm/build.ts
-
-    - name: Copy hbc.wasm to gui public
-      shell: bash
-      run: mkdir -p gui/public && cp externals/radare/r2hermes.wasm/dist/hbc.wasm gui/public/hbc.wasm
-
     - name: Cache radare2 WASI
       id: cache-r2-wasi
       uses: actions/cache@v5
@@ -42,7 +18,11 @@ runs:
           radare2.wasm
           .r2-wasm-id
           wasi
-        key: r2-wasi-${{ hashFiles('scripts/build-r2-wasm.ts', 'scripts/patches/r2flutter-r2-6.1.2.patch', 'externals/radare/r2hermes', 'externals/radare/r2flutter') }}
+          .r2-wasm/radare2/libr/include
+          .r2-wasm/radare2/libr/util/libr_util.a
+          .r2-wasm/radare2/subprojects/sdb/include
+          .r2-wasm/radare2/subprojects/sdb/src/libsdb.a
+        key: r2-wasi-v2-${{ hashFiles('scripts/build-r2-wasm.ts', 'scripts/patches/r2flutter-r2-6.1.2.patch', 'externals/radare/r2hermes', 'externals/radare/r2flutter') }}
 
     - name: Build radare2 WASI
       if: steps.cache-r2-wasi.outputs.cache-hit != 'true'
@@ -52,3 +32,19 @@ runs:
     - name: Check radare2 WASI plugins
       shell: bash
       run: npm run check:r2-wasm -- radare2.wasm externals/radare/r2flutter/test/bins/android/first/libapp.so
+
+    - name: Cache r2hermes WASM
+      id: cache-wasm
+      uses: actions/cache@v5
+      with:
+        path: externals/radare/r2hermes.wasm/dist
+        key: r2hermes-wasm-${{ hashFiles('scripts/build-r2-wasm.ts', 'externals/radare/r2hermes/**', 'externals/radare/r2hermes.wasm/build.ts', 'externals/radare/r2hermes.wasm/hbc_wasm.c') }}
+
+    - name: Build r2hermes WASM
+      if: steps.cache-wasm.outputs.cache-hit != 'true'
+      shell: bash
+      run: node externals/radare/r2hermes.wasm/build.ts
+
+    - name: Copy hbc.wasm to gui public
+      shell: bash
+      run: mkdir -p gui/public && cp externals/radare/r2hermes.wasm/dist/hbc.wasm gui/public/hbc.wasm

@@ -12,9 +12,8 @@ mkdirSync(dbDir, { recursive: true });
 const dbPath = path.join(dbDir, "data.db");
 const migrationsFolder = asset("drizzle");
 
-export const db = drizzle(
-  new DatabaseSync(dbPath),
-  { schema },
-);
+const client = new DatabaseSync(dbPath);
+client.exec("PRAGMA busy_timeout = 5000");
+export const db = drizzle(client, { schema });
 
 migrate(db, { migrationsFolder });
