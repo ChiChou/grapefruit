@@ -47,7 +47,7 @@
   "dependencies": {
     "@hono/node-server": "^1.19.11",
     "drizzle-orm": "^0.45.1",
-    "frida": "17.9.10",
+    "frida": "17.22.2",
     "frida-remote-stream": "^6.0.3",
     "frida16": "npm:frida@^16.7.19",
     "hono": "^4.12.8",

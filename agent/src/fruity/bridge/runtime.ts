@@ -145,10 +145,8 @@ export interface Ivar {
 
 export function copySuperClasses(clazz: ObjC.Object): string[] {
   const proto = [];
-  {
-    let cur = clazz;
-    while ((cur = cur.$superClass)) proto.unshift(cur.$className);
-  }
+  for (let cur = clazz.$superClass; cur; cur = cur.$superClass)
+    proto.unshift(cur.$className);
   return proto;
 }
 

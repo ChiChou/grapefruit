@@ -20,6 +20,12 @@ npm run setup
 
 Each workspace has its own `package.json`. The root `setup` script installs dependencies for the root, `agent/`, and `gui/`, builds the pinned radare2 WASM runtime with the r2hermes and r2flutter XPS plugins, and builds the standalone `r2hermes.wasm` module when wasi-sdk is available. The radare2 build downloads and caches its pinned wasi-sdk when necessary.
 
+The server uses Frida 17.22.2. The agent build pins `frida-compile` 19.0.5 and
+its build-time Frida dependency to 17.9.10: the compiler bundled with Frida
+17.22.2 fails to resolve this project's `@/` path aliases. Keep the existing
+compiler patch until a newer compiler passes all three agent builds. This
+build-time pin does not affect the server's device discovery or sessions.
+
 If the `r2hermes.wasm` step is skipped because wasi-sdk is missing, the Hermes bytecode decompiler will be unavailable until you run:
 
 ```bash

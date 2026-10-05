@@ -32,8 +32,8 @@ export default defineConfig({
   assetsInclude: "**/*.wasm",
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
-      "@agent": path.resolve(__dirname, "..", "agent", "types"),
+      "@": path.resolve(import.meta.dirname, "./src"),
+      "@agent": path.resolve(import.meta.dirname, "..", "agent", "types"),
     },
   },
 });
