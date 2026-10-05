@@ -6,6 +6,23 @@ when they become idle.
 
 There is no MCP layer. AI agents should use the CLI directly.
 
+## Scope
+
+The CLI provides Grapefruit's platform-specific inspection and managed captures.
+Use Frida's Python API or CLI directly for arbitrary scripts, memory operations,
+thread enumeration, module/symbol enumeration, and basic process metadata.
+
+These RPCs are no longer exposed through the CLI or its daemon:
+
+- `script.*`, `memory.*`, `threads.*`
+- `symbol.*`, except `symbol.strings` (platform-specific binary string extraction)
+- `info.processInfo`
+- `webview.evaluate`, `jsc.run`, `rn.inject`
+
+Removed calls fail before acquiring a session. Attach a separate Frida session
+for custom scripts; Grapefruit continues to own its captures and pin snapshots.
+The Web UI's RPC interface is separate and retains its existing inspectors.
+
 ## Basic Flow
 
 `igf rpc` attaches to an existing daemon session when possible and creates one

@@ -53,7 +53,7 @@ Server Options:
   --help, -h             Show this help message
 
 CLI Commands:
-  rpc                    Attach/create a daemon session and call agent RPC
+  rpc                    Run platform inspection or managed capture RPC
   session                Manage daemon-owned instrumentation sessions
   setup                  Install Claude Code skills (/igf, /mastg)
 

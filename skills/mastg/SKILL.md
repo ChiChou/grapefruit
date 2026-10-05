@@ -54,7 +54,6 @@ Platform: [A] = Android, [I] = iOS, [*] = both.
 **Collect app info and filesystem roots:**
 Run the platform-specific app metadata command plus the shared process/filesystem commands:
 ```sh
-igf agent app process-info $SESSION
 igf agent app info $SESSION      # Android
 igf agent app plist $SESSION     # iOS
 igf agent fs roots $SESSION
@@ -113,7 +112,7 @@ igf agent fs roots $SESSION
 - [A] MASTG-TEST-0212: Hardcoded cryptographic keys in code
 - [I] MASTG-TEST-0213: Hardcoded cryptographic keys in code
 - [I] MASTG-TEST-0214: Hardcoded cryptographic keys in files
-- Scan: `igf agent symbol strings <main_module> $SESSION`
+- Scan: `igf rpc $SESSION symbol.strings <main_module>`
 - Look for: base64 key-length strings, hex patterns, `-----BEGIN.*KEY-----`
 
 **2.3 Insufficient Key Sizes** [*] (MASWE-0009)
@@ -240,7 +239,7 @@ igf agent checksec main $SESSION
 **5.2 Dependencies** [*] (MASWE-0076)
 - [A] MASTG-TEST-0272: Dependencies with known vulnerabilities
 - [I] MASTG-TEST-0273: Dependencies with known vulnerabilities
-- `igf agent symbol modules $SESSION` — identify third-party libraries
+- Use Frida directly to enumerate loaded modules and identify third-party libraries.
 
 **5.3 Debugging Symbols** [*] (MASWE-0093)
 - [A] MASTG-TEST-0288: Debugging symbols in native binaries
@@ -276,7 +275,7 @@ igf agent checksec main $SESSION
 
 **6.6 Obfuscation Indicators** [*]
 - `igf agent class list $SESSION` — short/randomized names = ProGuard/R8
-- `igf agent symbol modules $SESSION` — stripped symbols = obfuscation
+- Use Frida directly to inspect native symbols for obfuscation indicators.
 
 ### 7. MASVS-PRIVACY — User Privacy
 
@@ -306,8 +305,8 @@ Categorize: microphone, camera, photos, sensors, bluetooth, wifi, location, heal
 ### 8. Hardcoded Secrets (cross-cutting)
 
 ```sh
-igf agent symbol modules $SESSION           # find main module
-igf agent symbol strings <main_module> $SESSION
+# Identify the main module with Frida directly.
+igf rpc $SESSION symbol.strings <main_module>
 ```
 
 Search for:

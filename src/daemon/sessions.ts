@@ -20,6 +20,7 @@ import { HermesStore } from "../lib/store/hermes.ts";
 import { PrivacyStore } from "../lib/store/privacy.ts";
 import { setup as relay } from "../relay.ts";
 import type { SessionInfo, Target } from "./protocol.ts";
+import { check } from "./rpc.ts";
 import type { SessionSocket, SessionStores } from "../types.ts";
 
 const manager = frida.getDeviceManager();
@@ -131,6 +132,7 @@ export class Sessions {
     method: string,
     args: unknown[],
   ): Promise<unknown> {
+    check(ns, method);
     const s = await this.acquire(params);
     try {
       const result = await s.script.exports.invoke(ns, method, args);

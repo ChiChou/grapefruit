@@ -1,6 +1,7 @@
 import { parseArgs } from "node:util";
 
 import { call, callKnown } from "./daemon/client.ts";
+import { check } from "./daemon/rpc.ts";
 import type { SessionInfo, Target } from "./daemon/protocol.ts";
 
 const opts = {
@@ -105,6 +106,7 @@ async function rpc(args: string[], values: Values) {
   if (!spec) fail("Error: rpc requires namespace.method");
 
   const { ns, method } = splitRpc(spec);
+  check(ns, method);
   const result = await call(
     {
       method: "rpc",
@@ -196,6 +198,10 @@ Daemon:
   --project <path>       data directory passed to auto-started daemon
   --replace              replace an active iOS app session when needed
   --json                 force JSON output
+
+RPC scope:
+  Platform inspection and managed captures. Use Frida directly for code
+  execution, memory, threads, module/symbol enumeration, and process metadata.
 `);
 }
 
