@@ -122,35 +122,35 @@ export function BottomPanelView() {
     <Tabs
       value={activeTab}
       onValueChange={setActiveTab}
-      className="h-full flex flex-col"
+      className="workspace-panel h-full gap-0 flex flex-col"
     >
-      <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0">
+      <TabsList className="native-chrome h-8! w-full shrink-0 justify-start gap-0 rounded-none border-b bg-sidebar p-0 px-2">
         <TabsTrigger
           value="logs"
-          className="rounded-none border-b-2 border-transparent data-active:border-primary flex items-center gap-2"
+          className="h-full flex-none rounded-none border-0 border-b-2 border-transparent px-3 text-xs font-normal shadow-none data-active:border-primary data-active:bg-transparent dark:data-active:bg-transparent dark:data-active:border-primary flex items-center gap-1.5"
         >
-          <FileText className="h-4 w-4" />
+          <FileText className="h-3.5 w-3.5" />
           {t("logs")}
         </TabsTrigger>
         <TabsTrigger
           value="hooks"
-          className="rounded-none border-b-2 border-transparent data-active:border-primary flex items-center gap-2"
+          className="h-full flex-none rounded-none border-0 border-b-2 border-transparent px-3 text-xs font-normal shadow-none data-active:border-primary data-active:bg-transparent dark:data-active:bg-transparent dark:data-active:border-primary flex items-center gap-1.5"
         >
-          <Anchor className="h-4 w-4" />
+          <Anchor className="h-3.5 w-3.5" />
           {t("hook_logs")}
         </TabsTrigger>
         <TabsTrigger
           value="agent-logs"
-          className="rounded-none border-b-2 border-transparent data-active:border-primary flex items-center gap-2"
+          className="h-full flex-none rounded-none border-0 border-b-2 border-transparent px-3 text-xs font-normal shadow-none data-active:border-primary data-active:bg-transparent dark:data-active:bg-transparent dark:data-active:border-primary flex items-center gap-1.5"
         >
-          <Activity className="h-4 w-4" />
+          <Activity className="h-3.5 w-3.5" />
           {t("agent_logs")}
         </TabsTrigger>
         <TabsTrigger
           value="repl"
-          className="rounded-none border-b-2 border-transparent data-active:border-primary flex items-center gap-2"
+          className="h-full flex-none rounded-none border-0 border-b-2 border-transparent px-3 text-xs font-normal shadow-none data-active:border-primary data-active:bg-transparent dark:data-active:bg-transparent dark:data-active:border-primary flex items-center gap-1.5"
         >
-          <Terminal className="h-4 w-4" />
+          <Terminal className="h-3.5 w-3.5" />
           {t("code_scratch_pad")}
         </TabsTrigger>
       </TabsList>

@@ -1,5 +1,8 @@
 {
   "toggle_dark_mode": "切换夜间模式",
+  "toggle_sidebar": "切换侧边栏",
+  "toggle_panel": "切换底部面板",
+  "language": "语言",
   "logo_alt": "标志",
   "devices": "设备",
   "error": "错误",

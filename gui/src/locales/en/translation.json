@@ -1,5 +1,8 @@
 {
   "toggle_dark_mode": "Toggle dark mode",
+  "toggle_sidebar": "Toggle sidebar",
+  "toggle_panel": "Toggle panel",
+  "language": "Language",
   "logo_alt": "Logo",
   "devices": "Devices",
   "error": "Error",

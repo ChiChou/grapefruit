@@ -23,7 +23,7 @@ export function LanguageSelector() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={<Button variant="outline" size="icon" className="gap-2" />}
+        render={<Button variant="outline" size="icon" className="gap-2" aria-label={t("language")} />}
       >
         <Languages />
       </DropdownMenuTrigger>

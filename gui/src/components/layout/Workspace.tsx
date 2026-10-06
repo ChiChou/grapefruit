@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { t } from "i18next";
 import { StatusBar } from "./StatusBar";
+import { WorkspaceActions, WorkspaceActionsContext } from "./WorkspaceActions";
 
 import {
   type DockviewApi,
@@ -17,7 +18,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 
-import { LeftPanelView } from "./LeftPanelView";
+import { ActivityBar, LeftPanelView } from "./LeftPanelView";
 import { BottomPanelView } from "./BottomPanelView";
 import { CommandPalette } from "./CommandPalette";
 import { useSession } from "@/context/SessionContext";
@@ -104,10 +105,10 @@ function WorkspaceContent() {
     document.title = "Grapefruit" + (target ? ` - ${target}` : "");
   }, [bundle, pid]);
 
-  const [bottomPanelVisible, setBottomPanelVisible] = useState(() => {
+  const [bottomPanelVisible, setBottomPanelVisible] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem("workspace-bottom-panel-visible");
-      return saved !== null ? JSON.parse(saved) : true;
+      return saved !== null ? JSON.parse(saved) === true : true;
     } catch {
       return true;
     }
@@ -130,6 +131,37 @@ function WorkspaceContent() {
 
   const bottomPanelRef = useRef<PanelImperativeHandle>(null);
   const mountedRef = useRef(false);
+
+  const [sidebarVisible, setSidebarVisible] = useState(() => {
+    try {
+      return localStorage.getItem("workspace-sidebar-visible") !== "false";
+    } catch {
+      return true;
+    }
+  });
+  const sidebarRef = useRef<PanelImperativeHandle>(null);
+  const sidebarMounted = useRef(false);
+  const sidebarSize = useRef<number | null>(null);
+  if (sidebarSize.current === null) {
+    try {
+      const saved = Number(localStorage.getItem("workspace-sidebar-size"));
+      sidebarSize.current = saved > 0 && saved <= 40 ? saved : 18;
+    } catch {
+      sidebarSize.current = 18;
+    }
+  }
+
+  useEffect(() => {
+    localStorage.setItem("workspace-sidebar-visible", JSON.stringify(sidebarVisible));
+    const panel = sidebarRef.current;
+    if (!panel) return;
+    if (sidebarVisible) {
+      const size = sidebarSize.current ?? 18;
+      panel.expand();
+      panel.resize(`${size}%`);
+    } else panel.collapse();
+    sidebarMounted.current = true;
+  }, [sidebarVisible]);
 
   const [dockApi, setDockApi] = useState<DockviewApi | null>(null);
 
@@ -182,10 +214,13 @@ function WorkspaceContent() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!e.defaultPrevented && !e.isComposing && !e.repeat && !e.altKey && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setCommandPaletteOpen((prev) => !prev);
-      }
+      if (e.defaultPrevented || e.isComposing || e.repeat || e.altKey || e.shiftKey || !(e.metaKey || e.ctrlKey)) return;
+      const key = e.key.toLowerCase();
+      if (!["k", "b", "j"].includes(key)) return;
+      e.preventDefault();
+      if (key === "k") setCommandPaletteOpen((prev) => !prev);
+      if (key === "b") setSidebarVisible((prev) => !prev);
+      if (key === "j") setBottomPanelVisible((prev) => !prev);
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -320,61 +355,80 @@ function WorkspaceContent() {
   return (
     <R2Provider storageKey={r2StorageKey}>
     <DockContext.Provider value={dockContextValue}>
+      <WorkspaceActionsContext.Provider value={{
+        sidebarVisible,
+        bottomPanelVisible,
+        onToggleSidebar: () => setSidebarVisible((prev) => !prev),
+        onTogglePanel: () => setBottomPanelVisible((prev) => !prev),
+        onOpenCommandPalette: () => setCommandPaletteOpen(true),
+        onResetLayout: resetLayout,
+      }}>
       <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
-        <ResizablePanelGroup
-          orientation="horizontal"
-          className="h-full"
-          autoSaveId="workspace-left-split"
-        >
-          <ResizablePanel
-            id="left"
-            defaultSize="20%"
-            minSize="15%"
-            className="flex flex-col"
+        <div className="flex min-h-0 flex-1">
+          <ActivityBar onNavigate={() => setSidebarVisible(true)} />
+          <ResizablePanelGroup
+            orientation="horizontal"
+            className="min-w-0 flex-1"
           >
-            <LeftPanelView />
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel id="main">
-            <ResizablePanelGroup
-              orientation="vertical"
-              className="h-full"
-              autoSaveId="workspace-bottom-split"
+            <ResizablePanel
+              id="left"
+              panelRef={sidebarRef}
+              defaultSize={`${sidebarVisible ? sidebarSize.current : 0}%`}
+              minSize="180px"
+              maxSize="40%"
+              collapsible
+              collapsedSize={0}
+              onResize={(size) => {
+                if (!sidebarMounted.current) return;
+                if (size.asPercentage > 0) {
+                  sidebarSize.current = size.asPercentage;
+                  localStorage.setItem("workspace-sidebar-size", String(size.asPercentage));
+                }
+                setSidebarVisible(size.asPercentage > 0);
+              }}
+              className="flex flex-col"
             >
-              <ResizablePanel id="dock">
-                <DockviewReact
-                  theme={themeApp}
-                  onReady={onReady}
-                  components={components}
-                  tabComponents={tabComponents}
-                />
-              </ResizablePanel>
-              <ResizableHandle />
-              <ResizablePanel
-                id="bottom"
-                panelRef={bottomPanelRef}
-                defaultSize="30%"
-                minSize="10%"
-                collapsible
-                collapsedSize={0}
-                onResize={(size) => {
-                  if (!mountedRef.current) return;
-                  setBottomPanelVisible(size.asPercentage > 0);
-                }}
+              <LeftPanelView />
+            </ResizablePanel>
+            <ResizableHandle />
+            <ResizablePanel id="main">
+              <ResizablePanelGroup
+                orientation="vertical"
+                className="h-full"
+                autoSaveId="workspace-bottom-split"
               >
-                <BottomPanelView />
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          </ResizablePanel>
-        </ResizablePanelGroup>
-        <StatusBar
-          bottomPanelVisible={bottomPanelVisible}
-          setBottomPanelVisible={setBottomPanelVisible}
-          onOpenCommandPalette={() => setCommandPaletteOpen(true)}
-          onResetLayout={resetLayout}
-        />
+                <ResizablePanel id="dock">
+                  <DockviewReact
+                    theme={themeApp}
+                    onReady={onReady}
+                    components={components}
+                    tabComponents={tabComponents}
+                    rightHeaderActionsComponent={WorkspaceActions}
+                  />
+                </ResizablePanel>
+                <ResizableHandle />
+                <ResizablePanel
+                  id="bottom"
+                  panelRef={bottomPanelRef}
+                  defaultSize="30%"
+                  minSize="10%"
+                  collapsible
+                  collapsedSize={0}
+                  onResize={(size) => {
+                    if (!mountedRef.current) return;
+                    setBottomPanelVisible(size.asPercentage > 0);
+                  }}
+                >
+                  <BottomPanelView />
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </div>
+        <StatusBar />
       </div>
       <CommandPalette open={commandPaletteOpen} onOpenChange={setCommandPaletteOpen} />
+      </WorkspaceActionsContext.Provider>
     </DockContext.Provider>
     </R2Provider>
   );

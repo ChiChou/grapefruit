@@ -2,16 +2,12 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { useMutation } from "@tanstack/react-query";
 import {
-  PanelBottomClose,
-  PanelBottomOpen,
   RefreshCw,
   XCircle,
   Unplug,
   Circle,
   Loader2,
   CircleAlert,
-  Command,
-  RotateCcw,
 } from "lucide-react";
 
 import {
@@ -23,27 +19,10 @@ import {
 
 import { Status, useSession } from "@/context/SessionContext";
 
-interface StatusBarProps {
-  bottomPanelVisible: boolean;
-  setBottomPanelVisible: (visible: boolean) => void;
-  onOpenCommandPalette: () => void;
-  onResetLayout: () => void;
-}
-
-export function StatusBar({
-  bottomPanelVisible,
-  setBottomPanelVisible,
-  onOpenCommandPalette,
-  onResetLayout,
-}: StatusBarProps) {
+export function StatusBar() {
   const { t } = useTranslation();
-  const { status, device, pid } = useSession();
+  const { status, device, pid, platform } = useSession();
   const navigate = useNavigate();
-  const shortcut =
-    typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform)
-      ? "K"
-      : "Ctrl K";
-
   const getStatusClass = () => {
     switch (status) {
       case Status.Ready:
@@ -97,7 +76,7 @@ export function StatusBar({
 
   return (
     <footer
-      className="native-chrome flex h-6 items-center justify-between border-t border-border bg-background px-2 text-[11px] text-muted-foreground"
+      className="native-chrome flex h-6 shrink-0 items-center justify-between border-t border-border bg-sidebar px-2 text-[11px] text-muted-foreground"
     >
       <div className="flex items-center gap-1">
         <DropdownMenu>
@@ -143,37 +122,9 @@ export function StatusBar({
           </button>
         )}
       </div>
-      <div className="flex items-center gap-1">
-        <button
-          type="button"
-          onClick={onOpenCommandPalette}
-          className="flex h-5 items-center gap-1 rounded px-1.5 outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
-          title={t("command_palette")}
-        >
-          <Command className="w-3 h-3" />
-          {shortcut}
-        </button>
-        <button
-          type="button"
-          onClick={onResetLayout}
-          className="flex h-5 items-center gap-1 rounded px-1.5 outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
-          title={t("reset_workspace")}
-        >
-          <RotateCcw className="w-3 h-3" />
-          {t("reset_workspace")}
-        </button>
-        <button
-          type="button"
-          onClick={() => setBottomPanelVisible(!bottomPanelVisible)}
-          className="flex h-5 w-5 items-center justify-center rounded outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
-          title={bottomPanelVisible ? t("hide_panel") : t("show_panel")}
-        >
-          {bottomPanelVisible ? (
-            <PanelBottomClose className="w-4 h-4" />
-          ) : (
-            <PanelBottomOpen className="w-4 h-4" />
-          )}
-        </button>
+      <div className="flex items-center gap-3 px-1">
+        {platform && <span>{platform === "fruity" ? "iOS" : "Android"}</span>}
+        {pid && <span className="tabular-nums">PID {pid}</span>}
       </div>
     </footer>
   );
