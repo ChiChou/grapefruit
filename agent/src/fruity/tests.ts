@@ -10,6 +10,7 @@
  */
 
 import ObjC from "frida-objc-bridge";
+import { performOnMainThread } from "@/fruity/lib/dispatch.js";
 
 import {
   test,
@@ -731,7 +732,7 @@ async function testUI() {
     if (tree) {
       assertKeys(
         tree as unknown as Record<string, unknown>,
-        ["clazz", "children", "frame"],
+        ["id", "clazz", "children", "frame", "bounds", "localFrame", "hidden", "alpha", "visible", "clip"],
         "UIDumpNode",
       );
       assertType(tree.clazz, "string", "clazz");
@@ -739,6 +740,81 @@ async function testUI() {
       console.log(`    root: ${tree.clazz} children=${tree.children!.length}`);
     }
   });
+
+  await test("ui.update rejects a stale snapshot without changing the element", async () => {
+    const first = await ui.dump();
+    if (!first) return;
+    await ui.dump();
+    let rejected = false;
+    try { await ui.update(first.id, {}); }
+    catch (error) { rejected = String(error).includes("stale"); }
+    assert(rejected, "old snapshot IDs must be rejected");
+  });
+
+  await test("ui.update rejects unknown references", async () => {
+    const tree = await ui.dump();
+    if (!tree) return;
+    let rejected = false;
+    try { await ui.update(tree.id + ":unknown", {}); }
+    catch (error) { rejected = String(error).includes("deallocated"); }
+    assert(rejected, "untracked IDs must never become raw native pointers");
+  });
+
+  for (const clazz of ["UILabel", "UIButton"]) {
+    await test(`ui.update edits and clears ${clazz} text`, async () => {
+      let view: ObjC.Object | null = null;
+      const seed = `__IGF_TEXT_${clazz}__`;
+      try {
+        await performOnMainThread(() => {
+          view = ObjC.classes[clazz].alloc().initWithFrame_([[0, 0], [10, 10]]);
+          view!.setHidden_(true);
+          if (clazz === "UIButton") view!.setTitle_forState_(seed, 0);
+          else view!.setText_(seed);
+          ObjC.classes.UIWindow.keyWindow().addSubview_(view);
+        });
+        const tree = await ui.dump();
+        const match = (node: ui.UIDumpNode): ui.UIDumpNode | undefined => {
+          if (node.text === seed) return node;
+          for (const child of node.children ?? []) {
+            const result = match(child);
+            if (result) return result;
+          }
+        };
+        let node = tree ? match(tree) : undefined;
+        assert(node !== undefined, "text-bearing elements should expose their text");
+        if (!node) return;
+        for (const text of ["Updated 🌍\nSecond line", ""]) {
+          await ui.update(node.id, { text });
+          const value = await performOnMainThread(() => {
+            const result = clazz === "UIButton" ? view!.currentTitle() : view!.text();
+            return result?.toString() ?? "";
+          });
+          assert(value === text, "text edits must preserve Unicode, newlines and empty strings");
+          const fresh = await ui.dump({ selected: node.id });
+          assert(fresh?.selected !== undefined, "refresh must preserve selection of the same live element");
+          assert(fresh?.selected !== node.id, "refresh must issue a new snapshot ID");
+          const byId = (entry: ui.UIDumpNode): ui.UIDumpNode | undefined => {
+            if (entry.id === fresh!.selected) return entry;
+            for (const child of entry.children ?? []) {
+              const result = byId(child);
+              if (result) return result;
+            }
+          };
+          node = fresh ? byId(fresh) : undefined;
+          assert(node?.text === text, "the retained selection must contain the updated text");
+          if (!node) return;
+        }
+        await performOnMainThread(() => view!.removeFromSuperview());
+        const detached = await ui.dump({ selected: node.id });
+        assert(detached?.selected === undefined, "detached elements must not be rebound to another node");
+      } finally {
+        await performOnMainThread(() => {
+          view?.removeFromSuperview();
+          view?.release();
+        });
+      }
+    });
+  }
 
   skip("ui.highlight", "side-effect: modifies UI overlay");
   skip("ui.dismissHighlight", "side-effect: modifies UI overlay");
