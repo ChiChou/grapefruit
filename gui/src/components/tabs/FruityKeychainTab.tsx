@@ -1,3 +1,4 @@
+import { activate, fold } from "@/lib/keyboard";
 import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -489,7 +490,11 @@ export function FruityKeychainTab() {
     typeof expanded === "object" && Object.keys(expanded).length > 0;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" onKeyDown={e => {
+      const open = fold(e);
+      if (open === true) expandAll();
+      if (open === false) collapseAll();
+    }}>
       <div className="flex items-center gap-2 p-2 border-b">
         <Button
           variant="outline"
@@ -505,9 +510,9 @@ export function FruityKeychainTab() {
             variant="outline"
             size="sm"
             className="rounded-r-none border-r-0"
-            onClick={expandAll}
+            aria-keyshortcuts="Control+Alt+ArrowRight Meta+Alt+ArrowRight" onClick={expandAll}
             disabled={isLoading || filteredItems.length === 0}
-            title={t("expand_all")}
+            aria-label={t("expand_all")} title={`${t("expand_all")} (Ctrl/⌘+Alt+→)`}
           >
             <ChevronsUpDown className="w-4 h-4" />
           </Button>
@@ -515,9 +520,9 @@ export function FruityKeychainTab() {
             variant="outline"
             size="sm"
             className="rounded-l-none"
-            onClick={collapseAll}
+            aria-keyshortcuts="Control+Alt+ArrowLeft Meta+Alt+ArrowLeft" onClick={collapseAll}
             disabled={isLoading || !hasExpanded}
-            title={t("collapse_all")}
+            aria-label={t("collapse_all")} title={`${t("collapse_all")} (Ctrl/⌘+Alt+←)`}
           >
             <ChevronsDownUp className="w-4 h-4" />
           </Button>
@@ -583,7 +588,8 @@ export function FruityKeychainTab() {
                 <>
                   <tr
                     key={row.id}
-                    className="border-b hover:bg-muted/50 cursor-pointer"
+                    className="border-b hover:bg-muted/50 cursor-pointer focus-visible:outline-2 focus-visible:outline-ring"
+                    tabIndex={0} aria-expanded={row.getIsExpanded()} onKeyDown={activate}
                     onClick={() => row.toggleExpanded()}
                   >
                     {row.getVisibleCells().map((cell) => (

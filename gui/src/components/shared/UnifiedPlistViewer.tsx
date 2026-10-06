@@ -27,7 +27,7 @@ export function PlistView({
   const { t } = useTranslation();
   const { theme } = useTheme();
   const [copied, setCopied] = useState<boolean>(false);
-  const [expandAll, setExpandAll] = useState(false);
+  const [expandAll, setExpandAll] = useState({ open: false, version: 0 });
   const [viewMode, setViewMode] = useState<"tree" | "text">("text");
 
   const handleDownload = () => {
@@ -48,8 +48,8 @@ export function PlistView({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleExpandAll = () => setExpandAll(true);
-  const handleCollapseAll = () => setExpandAll(false);
+  const handleExpandAll = () => setExpandAll(old => ({ open: true, version: old.version + 1 }));
+  const handleCollapseAll = () => setExpandAll(old => ({ open: false, version: old.version + 1 }));
 
   return (
     <div className="h-full flex flex-col">
@@ -70,11 +70,11 @@ export function PlistView({
         <div className="flex items-center gap-2">
           {viewMode === "tree" && (
             <>
-              <Button variant="outline" size="sm" onClick={handleExpandAll}>
+              <Button variant="outline" size="sm" aria-keyshortcuts="Control+Alt+ArrowRight Meta+Alt+ArrowRight" title={`${t("expand_all")} (Ctrl/⌘+Alt+→)`} onClick={handleExpandAll}>
                 <ChevronDown className="h-4 w-4 mr-2" />
                 {t("expand_all")}
               </Button>
-              <Button variant="outline" size="sm" onClick={handleCollapseAll}>
+              <Button variant="outline" size="sm" aria-keyshortcuts="Control+Alt+ArrowLeft Meta+Alt+ArrowLeft" title={`${t("collapse_all")} (Ctrl/⌘+Alt+←)`} onClick={handleCollapseAll}>
                 <ChevronUp className="h-4 w-4 mr-2" />
                 {t("collapse_all")}
               </Button>
@@ -112,7 +112,7 @@ export function PlistView({
         >
           <TabsContent value="tree" className="flex-1 overflow-auto p-4 m-0">
             {value ? (
-              <PlistTreeView data={value} expanded={expandAll} />
+              <PlistTreeView data={value} expanded={expandAll.open} revision={expandAll.version} />
             ) : (
               <div className="flex items-center justify-center h-full text-muted-foreground">
                 {t("no_content")}

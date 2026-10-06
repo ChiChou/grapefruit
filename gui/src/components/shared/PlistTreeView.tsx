@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Tree, useBranch } from "./Tree";
 import { ChevronRight, ChevronDown } from "lucide-react";
 
 export type PlistValue =
@@ -55,23 +56,18 @@ function PlistNode({
   depth = 0,
   forceExpanded,
   forceCollapsed,
+  revision,
 }: {
   node: PlistTreeNode;
   depth?: number;
   forceExpanded?: boolean;
   forceCollapsed?: boolean;
+  revision: number;
 }) {
-  const [expanded, setExpanded] = useState(
+  const [expanded, setExpanded] = useBranch(
     forceCollapsed ? false : (forceExpanded ?? node.expanded),
+    `${forceExpanded}:${forceCollapsed}:${revision}`,
   );
-
-  useEffect(() => {
-    if (forceCollapsed) {
-      setExpanded(false);
-    } else if (forceExpanded !== undefined) {
-      setExpanded(forceExpanded);
-    }
-  }, [forceExpanded, forceCollapsed]);
 
   const hasChildren = node.children && node.children.length > 0;
 
@@ -89,13 +85,15 @@ function PlistNode({
   return (
     <div>
       <div
-        className="flex items-center hover:bg-accent py-0.5 font-mono"
+        role="treeitem" tabIndex={-1} aria-level={depth + 1} aria-expanded={hasChildren ? expanded : undefined}
+        onClick={() => { if (hasChildren) setExpanded(!expanded); }}
+        className="flex items-center hover:bg-accent py-0.5 font-mono focus-visible:outline-2 focus-visible:outline-ring"
         style={{ paddingLeft: `${depth * 20 + 8}px` }}
       >
         {hasChildren ? (
           <button
-            type="button"
-            onClick={() => setExpanded(!expanded)}
+            type="button" data-tree-toggle aria-hidden="true" tabIndex={-1} aria-expanded={expanded}
+            onClick={e => { e.stopPropagation(); setExpanded(!expanded); }}
             className="p-0.5 mr-1"
           >
             {expanded ? (
@@ -137,6 +135,7 @@ function PlistNode({
               depth={depth + 1}
               forceExpanded={forceExpanded}
               forceCollapsed={forceCollapsed}
+              revision={revision}
             />
           ))}
           <div
@@ -159,16 +158,19 @@ interface PlistTreeProps {
     | PlistValue[]
     | { [key: string]: PlistValue };
   expanded: boolean;
+  revision?: number;
 }
 
-export default function PlistTreeView({ data, expanded }: PlistTreeProps) {
+export default function PlistTreeView({ data, expanded, revision = 0 }: PlistTreeProps) {
+  const { t } = useTranslation();
   const tree = buildTree(data);
 
-  return tree.children ? (
+  return <Tree label={t("tree")}>{tree.children ? (
     tree.children.map((child, i) => (
       <PlistNode
         key={i}
         node={child}
+        revision={revision}
         forceCollapsed={!expanded}
         forceExpanded={expanded}
       />
@@ -176,8 +178,9 @@ export default function PlistTreeView({ data, expanded }: PlistTreeProps) {
   ) : (
     <PlistNode
       node={tree}
+      revision={revision}
       forceCollapsed={!expanded}
       forceExpanded={expanded}
     />
-  );
+  )}</Tree>;
 }

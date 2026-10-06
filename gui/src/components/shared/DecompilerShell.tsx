@@ -1,3 +1,4 @@
+import { activate } from "@/lib/keyboard";
 /**
  * Shared shell for decompiler pages: sidebar, tab bar, drop zone, status bar.
  * Used by both HermesPage and R2Page.
@@ -241,12 +242,13 @@ export function DecompilerShell({
                 {tabs.map((tab, idx) => (
                   <div
                     key={tab.id}
+                    role="button" tabIndex={0} onKeyDown={activate}
                     draggable
                     onDragStart={() => onTabDragStart(idx)}
                     onDragOver={(e) => onTabDragOver(e, idx)}
                     onDrop={() => onTabDrop(idx)}
                     onDragEnd={onTabDragEnd}
-                    className={`group flex items-center gap-1.5 px-3 h-[34px] text-xs cursor-pointer shrink-0 select-none transition-colors ${
+                    className={`group focus-visible:outline-2 focus-visible:outline-ring flex items-center gap-1.5 px-3 h-[34px] text-xs cursor-pointer shrink-0 select-none transition-colors ${
                       tab.id === activeId
                         ? "bg-background text-foreground rounded-t border-t border-x border-border"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/80 mb-px"
@@ -256,7 +258,8 @@ export function DecompilerShell({
                     <GripVertical className="h-3 w-3 opacity-0 group-hover:opacity-40 shrink-0 cursor-grab" />
                     <span className="truncate max-w-32">{tab.name}</span>
                     <button
-                      className="ml-0.5 p-0.5 rounded hover:bg-accent opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                      aria-label={`${t("dismiss")} ${tab.name}`}
+                      className="ml-0.5 p-0.5 rounded hover:bg-accent opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity shrink-0"
                       onClick={(e) => { e.stopPropagation(); closeTab(tab.id); }}
                     >
                       <X className="h-2.5 w-2.5" />
@@ -347,8 +350,8 @@ export function DecompilerShell({
               children(activeId)
             ) : (
               <div className="flex items-center justify-center h-full">
-                <div
-                  className="flex flex-col items-center gap-4 max-w-sm text-center border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 rounded-lg px-12 py-10 cursor-pointer transition-colors"
+                <div role="button" tabIndex={0} onKeyDown={activate}
+                  className="focus-visible:outline-2 focus-visible:outline-ring flex flex-col items-center gap-4 max-w-sm text-center border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 rounded-lg px-12 py-10 cursor-pointer transition-colors"
                   onClick={() => inputRef.current?.click()}
                 >
                   <Upload className="h-10 w-10 text-muted-foreground/40" />

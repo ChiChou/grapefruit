@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Tree, useBranch } from "./Tree";
 import { ChevronRight, ChevronDown } from "lucide-react";
 
 import type { XPCNode } from "@/lib/rpc";
@@ -71,7 +72,7 @@ function XPCTreeNode({
   label?: string;
   depth: number;
 }) {
-  const [expanded, setExpanded] = useState(depth < 3);
+  const [expanded, setExpanded] = useBranch(depth < 3);
   const paddingLeft = depth * 16 + 4;
 
   // short description for xpc collection types
@@ -84,12 +85,15 @@ function XPCTreeNode({
     return (
       <div>
         <div
-          className="flex items-center hover:bg-accent/50 py-px font-mono"
+          role="treeitem" tabIndex={-1} aria-level={depth + 1}
+          className="flex items-center hover:bg-accent/50 py-px font-mono focus-visible:outline-2 focus-visible:outline-ring"
+          aria-expanded={expanded} onClick={() => setExpanded(!expanded)}
           style={{ paddingLeft }}
         >
           <button
+            data-tree-toggle aria-hidden="true" tabIndex={-1} aria-expanded={expanded}
             type="button"
-            onClick={() => setExpanded(!expanded)}
+            onClick={e => { e.stopPropagation(); setExpanded(!expanded); }}
             className="p-0.5 mr-1 shrink-0"
           >
             {expanded ? (
@@ -132,12 +136,15 @@ function XPCTreeNode({
     return (
       <div>
         <div
-          className="flex items-center hover:bg-accent/50 py-px font-mono"
+          role="treeitem" tabIndex={-1} aria-level={depth + 1}
+          className="flex items-center hover:bg-accent/50 py-px font-mono focus-visible:outline-2 focus-visible:outline-ring"
+          aria-expanded={expanded} onClick={() => setExpanded(!expanded)}
           style={{ paddingLeft }}
         >
           <button
+            data-tree-toggle aria-hidden="true" tabIndex={-1} aria-expanded={expanded}
             type="button"
-            onClick={() => setExpanded(!expanded)}
+            onClick={e => { e.stopPropagation(); setExpanded(!expanded); }}
             className="p-0.5 mr-1 shrink-0"
           >
             {expanded ? (
@@ -179,7 +186,8 @@ function XPCTreeNode({
   // Leaf node
   return (
     <div
-      className="flex items-center hover:bg-accent/50 py-px font-mono"
+      role="treeitem" tabIndex={-1} aria-level={depth + 1}
+      className="flex items-center hover:bg-accent/50 py-px font-mono focus-visible:outline-2 focus-visible:outline-ring"
       style={{ paddingLeft }}
     >
       <span className="w-5 shrink-0" />
@@ -195,9 +203,10 @@ function XPCTreeNode({
 }
 
 export default function XPCTreeView({ node }: { node: XPCNode }) {
+  const { t } = useTranslation();
   return (
-    <div className="text-[11px] leading-relaxed select-text">
+    <Tree label={t("tree")}><div className="text-[11px] leading-relaxed select-text">
       <XPCTreeNode node={node} depth={0} />
-    </div>
+    </div></Tree>
   );
 }

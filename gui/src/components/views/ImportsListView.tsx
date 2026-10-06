@@ -1,3 +1,4 @@
+import { activate, fold } from "@/lib/keyboard";
 import { useMemo, useState, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
@@ -288,7 +289,11 @@ export function ImportsListView({ path }: ImportsListViewProps) {
   );
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" onKeyDown={e => {
+      const open = fold(e);
+      if (open === true) expandAll();
+      if (open === false) collapseAll();
+    }}>
       <NativeHookDialog
         open={hookDialogOpen}
         onOpenChange={setHookDialogOpen}
@@ -309,7 +314,7 @@ export function ImportsListView({ path }: ImportsListViewProps) {
         <button
           type="button"
           className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-muted border border-border rounded-md hover:bg-accent cursor-pointer transition"
-          onClick={expandAll}
+          title={`${t("expand_all")} (Ctrl/⌘+Alt+→)`} aria-keyshortcuts="Control+Alt+ArrowRight Meta+Alt+ArrowRight" onClick={expandAll}
         >
           <span>⤢</span>
           {t("expand_all")}
@@ -317,7 +322,7 @@ export function ImportsListView({ path }: ImportsListViewProps) {
         <button
           type="button"
           className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-muted border border-border rounded-md hover:bg-accent cursor-pointer transition"
-          onClick={collapseAll}
+          title={`${t("collapse_all")} (Ctrl/⌘+Alt+←)`} aria-keyshortcuts="Control+Alt+ArrowLeft Meta+Alt+ArrowLeft" onClick={collapseAll}
         >
           <span>⤡</span>
           {t("collapse_all")}
@@ -362,7 +367,8 @@ export function ImportsListView({ path }: ImportsListViewProps) {
                 return (
                   <tr
                     key={`group-${group.module}`}
-                    className="cursor-pointer bg-muted/30 hover:bg-muted/50 border-b"
+                    className="cursor-pointer bg-muted/30 hover:bg-muted/50 border-b focus-visible:outline-2 focus-visible:outline-ring"
+                    tabIndex={0} aria-expanded={isExpanded} onKeyDown={activate}
                     onClick={() => toggleModule(group.module)}
                   >
                     <td className="p-2" style={{ width: columnWidths.icon }}>

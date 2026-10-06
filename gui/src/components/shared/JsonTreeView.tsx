@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Tree, useBranch } from "./Tree";
 import { ChevronRight, ChevronDown } from "lucide-react";
 
 function JsonLeaf({ value }: { value: unknown }) {
@@ -43,7 +44,7 @@ function JsonNode({
   depth: number;
   defaultExpanded: number;
 }) {
-  const [expanded, setExpanded] = useState(depth < defaultExpanded);
+  const [expanded, setExpanded] = useBranch(depth < defaultExpanded);
   const paddingLeft = depth * 16 + 4;
 
   if (Array.isArray(value)) {
@@ -51,12 +52,15 @@ function JsonNode({
     return (
       <div>
         <div
-          className="flex items-center hover:bg-accent/50 py-px font-mono"
+          role="treeitem" tabIndex={-1} aria-level={depth + 1}
+          className="flex items-center hover:bg-accent/50 py-px font-mono focus-visible:outline-2 focus-visible:outline-ring"
+          aria-expanded={expanded} onClick={() => setExpanded(!expanded)}
           style={{ paddingLeft }}
         >
           <button
+            data-tree-toggle aria-hidden="true" tabIndex={-1} aria-expanded={expanded}
             type="button"
-            onClick={() => setExpanded(!expanded)}
+            onClick={e => { e.stopPropagation(); setExpanded(!expanded); }}
             className="p-0.5 mr-1 shrink-0"
           >
             {expanded ? (
@@ -109,12 +113,15 @@ function JsonNode({
     return (
       <div>
         <div
-          className="flex items-center hover:bg-accent/50 py-px font-mono"
+          role="treeitem" tabIndex={-1} aria-level={depth + 1}
+          className="flex items-center hover:bg-accent/50 py-px font-mono focus-visible:outline-2 focus-visible:outline-ring"
+          aria-expanded={expanded} onClick={() => setExpanded(!expanded)}
           style={{ paddingLeft }}
         >
           <button
+            data-tree-toggle aria-hidden="true" tabIndex={-1} aria-expanded={expanded}
             type="button"
-            onClick={() => setExpanded(!expanded)}
+            onClick={e => { e.stopPropagation(); setExpanded(!expanded); }}
             className="p-0.5 mr-1 shrink-0"
           >
             {expanded ? (
@@ -165,7 +172,8 @@ function JsonNode({
   // Leaf node
   return (
     <div
-      className="flex items-center hover:bg-accent/50 py-px font-mono"
+      role="treeitem" tabIndex={-1} aria-level={depth + 1}
+      className="flex items-center hover:bg-accent/50 py-px font-mono focus-visible:outline-2 focus-visible:outline-ring"
       style={{ paddingLeft }}
     >
       <span className="w-5 shrink-0" />
@@ -187,9 +195,10 @@ export default function JsonTreeView({
   value: unknown;
   defaultExpanded?: number;
 }) {
+  const { t } = useTranslation();
   return (
-    <div className="text-[11px] leading-relaxed select-text">
+    <Tree label={t("tree")}><div className="text-[11px] leading-relaxed select-text">
       <JsonNode value={value} depth={0} defaultExpanded={defaultExpanded} />
-    </div>
+    </div></Tree>
   );
 }

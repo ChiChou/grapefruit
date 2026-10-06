@@ -1,3 +1,4 @@
+import { activate } from "@/lib/keyboard";
 /**
  * Radare2 binary viewer: classes/functions, strings, disassembly, CFG, AI decompile.
  * Supports DEX, native binaries, and other formats radare2 can analyze.
@@ -624,7 +625,7 @@ export function R2Viewer({
                 ) : (
                   <div className="flex-1 overflow-auto">
                     {stringXrefList.map((ref, i) => (
-                      <div key={i} className="px-3 py-1 text-xs font-mono border-b border-border/40 hover:bg-accent/50 cursor-pointer" onClick={() => {
+                      <button type="button" key={i} className="block w-full text-left px-3 py-1 text-xs font-mono border-b border-border/40 hover:bg-accent/50 cursor-pointer focus-visible:outline-2 focus-visible:outline-ring" onClick={() => {
                         // Try to navigate to the function that references this string
                         if (ref.fcnName) {
                           const fn = functions.find((f) => f.name === ref.fcnName);
@@ -637,7 +638,7 @@ export function R2Viewer({
                       }}>
                         <span className="text-muted-foreground">{ref.addr}</span>
                         {ref.fcnName && <span className="ml-2">{ref.fcnName}</span>}
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -650,7 +651,7 @@ export function R2Viewer({
                 </div>
                 <div className="flex-1 overflow-auto">
                   {methodXrefList.map((ref, i) => (
-                    <div key={i} className="px-3 py-1 text-xs font-mono border-b border-border/40 hover:bg-accent/50 cursor-pointer" onClick={() => {
+                    <button type="button" key={i} className="block w-full text-left px-3 py-1 text-xs font-mono border-b border-border/40 hover:bg-accent/50 cursor-pointer focus-visible:outline-2 focus-visible:outline-ring" onClick={() => {
                       if (ref.fcnName) {
                         const fn = functions.find((f) => f.name === ref.fcnName);
                         if (fn) {
@@ -662,7 +663,7 @@ export function R2Viewer({
                     }}>
                       <span className="text-muted-foreground">{ref.addr}</span>
                       {ref.fcnName && <span className="ml-2">{ref.fcnName}</span>}
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -918,7 +919,8 @@ function ClassTree({ classes, expanded, onToggle, selectedClass, selectedMethod,
             return (
               <div
                 key={`c-${item.cls.name}`}
-                className={`absolute top-0 left-0 w-full h-7 px-3 flex items-center gap-1 cursor-pointer border-b border-border/50 transition-colors ${isSel ? "bg-primary/10 dark:bg-primary/20" : "hover:bg-accent/50"}`}
+                role="button" tabIndex={0} onKeyDown={activate}
+                className={`absolute top-0 left-0 w-full h-7 px-3 flex items-center gap-1 cursor-pointer border-b border-border/50 transition-colors focus-visible:outline-2 focus-visible:outline-ring ${isSel ? "bg-primary/10 dark:bg-primary/20" : "hover:bg-accent/50"}`}
                 style={{ transform: `translateY(${vRow.start}px)` }}
                 onClick={() => { onToggle(item.cls.name); onSelectClass(item.cls); }}
               >
@@ -932,7 +934,8 @@ function ClassTree({ classes, expanded, onToggle, selectedClass, selectedMethod,
           return (
             <div
               key={`m-${item.method.addr}`}
-              className={`absolute top-0 left-0 w-full h-7 pl-8 pr-3 flex items-center cursor-pointer border-b border-border/50 transition-colors ${isSel ? "bg-primary/10 dark:bg-primary/20" : "hover:bg-accent/50"}`}
+                role="button" tabIndex={0} onKeyDown={activate}
+              className={`absolute top-0 left-0 w-full h-7 pl-8 pr-3 flex items-center cursor-pointer border-b border-border/50 transition-colors focus-visible:outline-2 focus-visible:outline-ring ${isSel ? "bg-primary/10 dark:bg-primary/20" : "hover:bg-accent/50"}`}
               style={{ transform: `translateY(${vRow.start}px)` }}
               onClick={() => onSelectMethod(item.cls, item.method)}
             >
@@ -968,7 +971,8 @@ function StringList({ strings, selectedVaddr, onSelect }: {
           return (
             <div
               key={str.vaddr}
-              className={`absolute top-0 left-0 w-full h-7 px-3 flex items-center cursor-pointer border-b border-border/50 transition-colors ${isSel ? "bg-primary/10 dark:bg-primary/20" : "hover:bg-accent/50"}`}
+                role="button" tabIndex={0} onKeyDown={activate}
+              className={`absolute top-0 left-0 w-full h-7 px-3 flex items-center cursor-pointer border-b border-border/50 transition-colors focus-visible:outline-2 focus-visible:outline-ring ${isSel ? "bg-primary/10 dark:bg-primary/20" : "hover:bg-accent/50"}`}
               style={{ transform: `translateY(${vRow.start}px)` }}
               onClick={() => onSelect(str)}
             >
@@ -1003,7 +1007,8 @@ function FuncList({ functions, selectedAddr, onSelect }: {
           return (
             <div
               key={fn.addr}
-              className={`absolute top-0 left-0 w-full h-9 px-3 py-1 flex flex-col justify-center cursor-pointer border-b border-border/50 transition-colors ${isSel ? "bg-primary/10 dark:bg-primary/20" : "hover:bg-accent/50"}`}
+                role="button" tabIndex={0} onKeyDown={activate}
+              className={`absolute top-0 left-0 w-full h-9 px-3 py-1 flex flex-col justify-center cursor-pointer border-b border-border/50 transition-colors focus-visible:outline-2 focus-visible:outline-ring ${isSel ? "bg-primary/10 dark:bg-primary/20" : "hover:bg-accent/50"}`}
               style={{ transform: `translateY(${vRow.start}px)` }}
               onClick={() => onSelect(fn)}
             >

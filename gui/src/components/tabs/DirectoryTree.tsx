@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronRight, ChevronDown, Folder, FolderOpen } from "lucide-react";
+import { Tree } from "@/components/shared/Tree";
 import { Spinner } from "@/components/ui/spinner";
 import type {
   TreeNode,
@@ -272,11 +273,13 @@ export function DirectoryTree({
     return (
       <div key={node.meta.name}>
         <button
+          role="treeitem" tabIndex={-1} aria-level={depth + 1} aria-selected={isActive} aria-expanded={node.children?.length === 0 ? undefined : node.isExpanded}
           type="button"
-          className={`flex items-center w-full py-1 px-2 text-left ${
+          className={`flex items-center w-full py-1 px-2 text-left focus-visible:outline-2 focus-visible:outline-ring ${
             isActive ? "bg-amber-100 dark:bg-amber-900" : "hover:bg-accent"
           }`}
           style={{ paddingLeft: `${depth * 16 + 8}px` }}
+          data-tree-toggle
           onClick={() => handleNodeClick(currentPath)}
         >
           <span className="w-4 h-4 mr-1 shrink-0 flex items-center justify-center">
@@ -308,7 +311,7 @@ export function DirectoryTree({
 
   return (
     <div className="overflow-auto h-full">
-      {nodes.map((node) => renderNode(node, [], 0))}
+      <Tree label={root} shortcuts={false}>{nodes.map((node) => renderNode(node, [], 0))}</Tree>
     </div>
   );
 }
