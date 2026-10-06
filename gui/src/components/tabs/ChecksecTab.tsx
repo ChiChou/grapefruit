@@ -17,11 +17,11 @@ import { Platform, useSession } from "@/context/SessionContext";
 import { useFruityQuery, useDroidQuery } from "@/lib/queries";
 
 import type { ELFResult, ELFCFI } from "@agent/droid/modules/checksec/elf";
-import type { MachOResult } from "@agent/fruity/modules/checksec/macho";
+import type { MachOModuleResult } from "@agent/fruity/modules/checksec";
 import type { SecurityConfig } from "@agent/fruity/modules/checksec/secconfig";
 
 type ELFRow = ELFResult & { name: string; path: string };
-type MachORow = MachOResult & { name: string; path: string };
+type MachORow = MachOModuleResult;
 
 interface Entitlements {
   [key: string]: string | boolean | number | string[];
@@ -303,6 +303,7 @@ function ELFTable({ rows, filter }: { rows: ELFRow[]; filter: string }) {
 // -- Mach-O Table --
 
 function MachOTable({ rows, filter }: { rows: MachORow[]; filter: string }) {
+  const { t } = useTranslation();
   const filtered = useMemo(() => {
     const q = filter.toLowerCase();
     if (!q) return rows;
@@ -337,7 +338,14 @@ function MachOTable({ rows, filter }: { rows: MachORow[]; filter: string }) {
                 className="font-mono text-xs max-w-64 truncate"
                 title={row.path}
               >
-                {row.name}
+                <span className="inline-flex items-center gap-2">
+                  <span className="truncate">{row.name}</span>
+                  {row.isMain && (
+                    <Badge variant="secondary" className="shrink-0">
+                      {t("main")}
+                    </Badge>
+                  )}
+                </span>
               </TableCell>
               <TableCell>
                 <BoolBadge value={row.pie} />

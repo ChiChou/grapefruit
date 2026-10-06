@@ -174,6 +174,19 @@ async function testChecksec() {
     assertArray(all, "all");
     assertNonEmpty(all, "all");
     assertType(all[0].pie, "boolean", "first.pie");
+    const main = all.filter((mod) => mod.isMain);
+    assert(
+      main.length === 1,
+      "should include exactly one main module regardless of its path",
+    );
+    assert(
+      main[0].path === Process.mainModule.path,
+      "should include the process executable",
+    );
+    assert(
+      all.every((mod) => mod.isMain || mod.path.startsWith("/private/var/")),
+      "should still exclude system libraries",
+    );
     console.log(`    ${all.length} modules checked`);
   });
 
