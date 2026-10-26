@@ -20,6 +20,9 @@ jobs:
           npm ci --prefix agent
           npm ci --prefix gui
 
+      - name: Check radare2 WASI plugins
+        run: npm run check:r2-wasm -- radare2.wasm externals/radare/r2flutter/test/bins/android/first/libapp.so
+
       - name: Package
         run: npm pack
 

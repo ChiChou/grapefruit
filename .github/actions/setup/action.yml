@@ -29,10 +29,6 @@ runs:
       shell: bash
       run: node scripts/build-r2-wasm.ts
 
-    - name: Check radare2 WASI plugins
-      shell: bash
-      run: npm run check:r2-wasm -- radare2.wasm externals/radare/r2flutter/test/bins/android/first/libapp.so
-
     - name: Cache r2hermes WASM
       id: cache-wasm
       uses: actions/cache@v5
