@@ -1,9 +1,9 @@
 import { useR2Session } from "@/lib/use-r2-session";
-import * as strip from "@/lib/strip";
-import { useTheme } from "@/components/providers/ThemeProvider";
+import * as decompiler from "@/lib/decompiler";
+import { Decompiler } from "@/components/shared/Decompiler";
 
 import "./DisassemblyTab.css";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { IDockviewPanelProps } from "dockview";
 import {
@@ -17,28 +17,24 @@ import { CFGView, type CFGNode, type CFGEdge } from "@/components/shared/CFGView
 import { Button } from "@/components/ui/button";
 import { DisassemblyMinimap } from "@/components/shared/DisassemblyMinimap";
 import { RenameDialog } from "@/components/shared/RenameDialog";
-import Editor from "@monaco-editor/react";
 
 export interface DisassemblyTabParams {
   address: string;
   name?: string;
 }
 
-type ViewMode = "disassembly" | "graph" | "decompiler" | "ai-decompile";
+type ViewMode = "disassembly" | "graph" | "decompiler";
 
 interface AnalysisResult {
   disassemblyHtml: string;
-  plainDisasm: string;
   graphNodes: CFGNode[];
   graphEdges: CFGEdge[];
-  decompilerOutput: string;
 }
 
 export function DisassemblyTab({
   params,
 }: IDockviewPanelProps<DisassemblyTabParams>) {
   const { t } = useTranslation();
-  const { theme } = useTheme();
   const address = params?.address || "";
   const [viewMode, setViewMode] = useState<ViewMode>("disassembly");
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -47,12 +43,6 @@ export function DisassemblyTab({
   const [error, setError] = useState<string | null>(null);
   const [showBytes, setShowBytes] = useState(false);
   const { cmd, disassemble, graph, isReady, error: sessionError } = useR2Session();
-
-  const [aiContent, setAiContent] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiError, setAiError] = useState<string | null>(null);
-  const aiCache = useRef<Map<string, string>>(new Map());
-  const aiAbort = useRef<AbortController | null>(null);
 
   const [renameOpen, setRenameOpen] = useState(false);
 
@@ -82,21 +72,10 @@ export function DisassemblyTab({
         const html = await fetchDisassembly(showBytes);
         if (ignore) return;
 
-        let plain = "";
-        try {
-          plain = (await disassemble(address)) ?? "";
-          if (!plain.trim()) {
-            plain = await cmd(`s ${address}; pd 50`);
-          }
-        } catch {}
-        if (ignore) return;
-
         setResult({
           disassemblyHtml: (html ?? "").trimEnd(),
-          plainDisasm: plain.trimEnd(),
           graphNodes: [],
           graphEdges: [],
-          decompilerOutput: "",
         });
         setIsLoading(false);
       } catch (e) {
@@ -108,7 +87,7 @@ export function DisassemblyTab({
 
     analyze();
     return () => { ignore = true; };
-  }, [address, isReady, showBytes, fetchDisassembly, cmd, disassemble]);
+  }, [address, isReady, showBytes, fetchDisassembly]);
 
   const toggleBytes = useCallback(async () => {
     const next = !showBytes;
@@ -156,73 +135,16 @@ export function DisassemblyTab({
     }
   }, [address, isReady, graph, result?.graphNodes]);
 
-  const loadDecompiler = useCallback(async () => {
-    if (!isReady || result?.decompilerOutput) return;
-    setLoadingView("decompiler");
-    try {
-      const output = await cmd(`e scr.color=0; s ${address}; af; pdc`);
-      setResult((prev) => prev ? { ...prev, decompilerOutput: output.trimEnd() } : prev);
-    } catch {
-      setResult((prev) =>
-        prev ? { ...prev, decompilerOutput: "// Decompiler not available for this function" } : prev,
-      );
-    } finally {
-      setLoadingView(null);
-    }
-  }, [address, isReady, cmd, result?.decompilerOutput]);
-
-  const loadAiDecompile = useCallback(async () => {
-    if (!result?.plainDisasm) return;
-    const cached = aiCache.current.get(address);
-    if (cached) { setAiContent(cached); setAiError(null); return; }
-
-    aiAbort.current?.abort();
-    const ac = new AbortController();
-    aiAbort.current = ac;
-    setAiLoading(true);
-    setAiError(null);
-    setAiContent("");
-
-    try {
-      const name = params?.name || address;
-      const prompt = [
-        "Decompile the following disassembly into equivalent C/C++ source code.",
-        "Output ONLY raw source code. No markdown, no code fences, no explanations.",
-        "",
-        `Function: ${name}`,
-        `Address: ${address}`,
-        "",
-        "Disassembly:",
-        strip.r2(result.plainDisasm),
-      ].join("\n");
-
-      const res = await fetch("/api/llm/stream", { method: "POST", body: prompt, signal: ac.signal });
-      if (!res.ok) throw new Error(await res.text());
-
-      const reader = res.body!.getReader();
-      const decoder = new TextDecoder();
-      let accumulated = "";
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        accumulated += decoder.decode(value, { stream: true });
-        setAiContent(accumulated);
-      }
-      aiCache.current.set(address, accumulated);
-    } catch (e) {
-      if (ac.signal.aborted) return;
-      setAiError(e instanceof Error ? e.message : "AI decompilation failed");
-    } finally {
-      setAiLoading(false);
-    }
-  }, [address, result?.plainDisasm, params?.name]);
+  const load = useCallback(async (signal: AbortSignal) => {
+    const input = await decompiler.snapshot(cmd, address);
+    signal.throwIfAborted();
+    return decompiler.decompile(input, signal);
+  }, [cmd, address]);
 
   const handleTabChange = (value: string) => {
     const mode = value as ViewMode;
     setViewMode(mode);
     if (mode === "graph") loadGraph();
-    if (mode === "decompiler") loadDecompiler();
-    if (mode === "ai-decompile") loadAiDecompile();
   };
 
   const handleRename = useCallback(async (newName: string) => {
@@ -233,7 +155,6 @@ export function DisassemblyTab({
       setResult((prev) => prev ? { ...prev, disassemblyHtml: html.trimEnd() } : prev);
     } catch {}
   }, [cmd, address, fetchDisassembly, showBytes]);
-
 
   if (sessionError) {
     return (
@@ -284,7 +205,6 @@ export function DisassemblyTab({
             <TabsTrigger value="disassembly">Linear</TabsTrigger>
             <TabsTrigger value="graph">Graph</TabsTrigger>
             <TabsTrigger value="decompiler">Decompiler</TabsTrigger>
-            <TabsTrigger value="ai-decompile">AI Decompile</TabsTrigger>
           </TabsList>
           <div className="flex items-center gap-0.5 ml-auto px-2">
             <Button
@@ -331,37 +251,7 @@ export function DisassemblyTab({
         </TabsContent>
 
         <TabsContent value="decompiler" className="flex-1 overflow-hidden">
-          {loadingView === "decompiler" ? (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />Loading decompiler...
-            </div>
-          ) : (
-            <Editor
-              height="100%"
-              language="c"
-              theme={theme === "dark" ? "vs-dark" : "light"}
-              value={result.decompilerOutput}
-              options={{
-                readOnly: true,
-                minimap: { enabled: false },
-                fontSize: 13,
-                fontFamily: "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace",
-                lineNumbers: "on",
-                scrollBeyondLastLine: false,
-                wordWrap: "on",
-              }}
-            />
-          )}
-        </TabsContent>
-
-        <TabsContent value="ai-decompile" className="flex-1 overflow-hidden">
-          <AiDecompileView
-            content={aiContent}
-            isLoading={aiLoading}
-            error={aiError}
-            theme={theme}
-            onRetry={loadAiDecompile}
-          />
+          {viewMode === "decompiler" && <Decompiler load={load} live />}
         </TabsContent>
       </Tabs>
       <DisassemblyMinimap cmd={async (c) => cmd(c)} isReady={isReady} currentAddr={address} />
@@ -374,81 +264,5 @@ export function DisassemblyTab({
         onRename={handleRename}
       />
     </div>
-  );
-}
-
-function AiDecompileView({
-  content,
-  isLoading,
-  error,
-  theme,
-  onRetry,
-}: {
-  content: string;
-  isLoading: boolean;
-  error: string | null;
-  theme: string;
-  onRetry: () => void;
-}) {
-  if (isLoading && !content) {
-    return (
-      <div className="flex items-center justify-center h-full text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin mr-2" />Decompiling with AI...
-      </div>
-    );
-  }
-
-  if (error) {
-    const isNotConfigured = error.includes("LLM not configured") || error.includes("LLM_PROVIDER");
-    return (
-      <div className="flex items-center justify-center h-full px-6">
-        <div className="flex flex-col items-center gap-3 max-w-md text-center">
-          <AlertCircle className="h-8 w-8 text-destructive" />
-          {isNotConfigured ? (
-            <>
-              <p className="text-sm font-medium">LLM not configured</p>
-              <p className="text-xs text-muted-foreground">
-                AI decompilation requires an LLM provider. Set these environment variables before starting the server:
-              </p>
-              <pre className="text-[11px] text-left bg-muted rounded-md px-3 py-2 w-full font-mono">
-                {`LLM_PROVIDER=anthropic   # or openai, gemini, openrouter\nLLM_API_KEY=sk-...\nLLM_MODEL=claude-sonnet-4-20250514`}
-              </pre>
-            </>
-          ) : (
-            <>
-              <p className="text-sm font-medium">AI decompilation failed</p>
-              <p className="text-xs text-muted-foreground break-all">{error}</p>
-              <Button variant="outline" size="sm" className="text-xs" onClick={onRetry}>Retry</Button>
-            </>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  if (!content) {
-    return (
-      <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-        Switch to this tab to decompile with AI
-      </div>
-    );
-  }
-
-  return (
-    <Editor
-      height="100%"
-      language="c"
-      theme={theme === "dark" ? "vs-dark" : "light"}
-      value={content}
-      options={{
-        readOnly: true,
-        minimap: { enabled: false },
-        fontSize: 13,
-        fontFamily: "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace",
-        lineNumbers: "on",
-        scrollBeyondLastLine: false,
-        wordWrap: "on",
-      }}
-    />
   );
 }
