@@ -3,6 +3,7 @@ import { access, chmod, mkdir, readFile, readdir, rm, writeFile } from "node:fs/
 import path from "node:path";
 
 import { need, npm, run } from "./lib.ts";
+import { check as checkSignatures } from "./signatures.ts";
 
 const root = path.join(import.meta.dirname, "..");
 const seaDir = path.join(root, "build", "sea");
@@ -59,7 +60,8 @@ async function main() {
   run([process.execPath, path.join(root, "gui", "scripts", "check-assets.ts"), path.join(root, "gui", "dist")], root);
   run(npm("exec", "--", "tsdown", "--config", "tsdown.sea.config.ts"), root);
 
-  const roots = ["gui/dist", "agent/dist", "drizzle", "skills"];
+  await checkSignatures();
+  const roots = ["gui/dist", "agent/dist", "drizzle", "skills", "signatures"];
   const appFiles = (
     await Promise.all(roots.map((dir) => files(path.join(root, dir))))
   )

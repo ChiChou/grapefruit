@@ -13,6 +13,7 @@ on:
       - "gui/**"
       - "scripts/**"
       - "externals/**"
+      - "signatures.lock.json"
       - "package.json"
       - "package-lock.json"
       - "tsconfig.json"
@@ -49,6 +50,9 @@ jobs:
           npm run build:kuna
           npm run build:ddc
 
+      - name: Fetch pinned signature database
+        run: npm run fetch:signatures
+
       - name: Install and build assets
         run: |
           npm ci
@@ -70,6 +74,7 @@ jobs:
             agent/types
             gui/dist
             radare2.wasm
+            signatures/signatures.db
 
   build:
     needs: assets

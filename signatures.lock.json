@@ -1,0 +1,7 @@
+{
+  "repository": "ChiChou/igf-signatures",
+  "version": "v0.1.0",
+  "asset": "signatures.db.gz",
+  "sha256": "55fd338990fef66d4d7e18bbe6beaca06aa99fcc0aa99b5802b5ceab89f88b7d",
+  "gzipSha256": "4b360f83f1ba766974c136bbc6b15b40641044adb72d089453dc8d02e394cb3c"
+}

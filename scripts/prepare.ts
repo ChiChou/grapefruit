@@ -41,6 +41,7 @@ prebuild("frida16");
 run(npm("install"), join(root, "agent"));
 run(npm("install", "--ignore-scripts"), join(root, "gui"));
 
+run([process.execPath, "scripts/signatures.ts"]);
 run([process.execPath, "scripts/build-kuna.ts"]);
 run([process.execPath, "scripts/build-ddc.ts"]);
 

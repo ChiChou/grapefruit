@@ -10,6 +10,8 @@ on:
     paths:
       - "src/**"
       - "agent/**"
+      - "signatures.lock.json"
+      - "scripts/signatures.ts"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/coverage.yml"
@@ -19,6 +21,8 @@ on:
     paths:
       - "src/**"
       - "agent/**"
+      - "signatures.lock.json"
+      - "scripts/signatures.ts"
       - "package.json"
       - "package-lock.json"
 
@@ -40,6 +44,9 @@ jobs:
         run: |
           npm ci
           npm ci --prefix agent
+
+      - name: Fetch pinned signature database
+        run: npm run fetch:signatures
 
       - name: Run tests with coverage
         run: npm run test:coverage
