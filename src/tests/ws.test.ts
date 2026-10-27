@@ -31,25 +31,19 @@ describe("socket.io tests", () => {
       const socket = ioc(`http://localhost:${port}/devices`);
 
       try {
-        let receivedChange = false;
-        let connected = false;
-
-        socket.on("change", () => {
-          receivedChange = true;
-          socket.disconnect();
+        await new Promise<void>((resolve, reject) => {
+          const finish = (error?: Error) => {
+            clearTimeout(timer);
+            if (error) reject(error);
+            else resolve();
+          };
+          const timer = setTimeout(() => finish(new Error("Timed out waiting for device change")), 3000);
+          socket.once("connect_error", finish);
+          socket.once("change", () => finish());
+          socket.once("connect", () => {
+            mgr.addRemoteDevice("127.0.0.1").catch(finish);
+          });
         });
-
-        socket.on("connect", () => {
-          connected = true;
-          assert.equal(socket.connected, true);
-          mgr.addRemoteDevice("127.0.0.1");
-        });
-
-        // Wait for events
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        assert.equal(connected, true);
-        assert.equal(receivedChange, true);
       } finally {
         socket.disconnect();
         await closeTestServer(io);
