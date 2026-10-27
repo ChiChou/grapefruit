@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import {
   Loader2,
   Search,
-  AlertCircle,
   ChevronLeft,
   ChevronRight,
   Copy,
@@ -13,7 +12,7 @@ import {
 } from "lucide-react";
 import Editor from "@monaco-editor/react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { parse, resolve, buildLlmContext, buildCfg } from "@/lib/hermes-asm";
+import { parse, buildCfg } from "@/lib/hermes-asm";
 import { HermesDisasm } from "./HermesDisasm";
 import { CFGView, type CFGNode, type CFGEdge } from "./CFGView";
 
@@ -50,7 +49,7 @@ export interface HermesViewerProps {
   decompile: (funcId?: number | null, opts?: { offsets?: boolean }) => Promise<string | null>;
 }
 
-type ViewMode = "disassembly" | "graph" | "pseudocode" | "ai-decompile";
+type ViewMode = "disassembly" | "graph" | "pseudocode";
 type LeftTab = "functions" | "strings";
 
 function formatHex(n: number): string {
@@ -91,7 +90,8 @@ export function HermesViewer({
   const [selectedFuncId, setSelectedFuncId] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(
     () =>
-      (localStorage.getItem("hermes-view-mode") as ViewMode) || "disassembly",
+      (["disassembly", "graph", "pseudocode"].includes(localStorage.getItem("hermes-view-mode") ?? "")
+        ? localStorage.getItem("hermes-view-mode") as ViewMode : "disassembly"),
   );
 
   const [codeContent, setCodeContent] = useState("");
@@ -105,12 +105,6 @@ export function HermesViewer({
   const [strSearch, setStrSearch] = useState("");
   const [strKindFilter, setStrKindFilter] = useState("all");
   const [selectedString, setSelectedString] = useState<HBCString | null>(null);
-
-  const [aiContent, setAiContent] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiError, setAiError] = useState<string | null>(null);
-  const aiCache = useRef<Map<number | null, string>>(new Map());
-  const aiAbort = useRef<AbortController | null>(null);
 
   // Navigation history: stores { funcId, label }
   const historyRef = useRef<{ funcId: number; name: string }[]>([]);
@@ -198,102 +192,31 @@ export function HermesViewer({
     if (tab === "functions") setSelectedString(null);
   }, []);
 
-  const loadAiDecompile = useCallback(
-    async (funcId: number | null) => {
-      const cached = aiCache.current.get(funcId);
-      if (cached) {
-        setAiContent(cached);
-        setAiError(null);
-        return;
-      }
-
-      aiAbort.current?.abort();
-      const ac = new AbortController();
-      aiAbort.current = ac;
-
-      setAiLoading(true);
-      setAiError(null);
-      setAiContent("");
-
-      try {
-        const disasm = (await disassemble(funcId)) ?? "";
-
-        const func =
-          funcId !== null ? data.functions.find((f) => f.id === funcId) : null;
-        const funcName =
-          func?.name ??
-          (funcId !== null ? `function #${funcId}` : "global code");
-        const paramCount = func?.paramCount;
-
-        const lines = parse(disasm);
-        resolve(lines, data.strings, data.functions);
-        const prompt = buildLlmContext(
-          lines,
-          funcName,
-          paramCount,
-          data.strings,
-          data.functions,
-        );
-        console.log("[hermes] LLM prompt (%d chars):\n%s", prompt.length, prompt);
-
-        const llmRes = await fetch("/api/llm/stream", {
-          method: "POST",
-          body: prompt,
-          signal: ac.signal,
-        });
-        if (!llmRes.ok) throw new Error(await llmRes.text());
-
-        const reader = llmRes.body!.getReader();
-        const decoder = new TextDecoder();
-        let accumulated = "";
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          accumulated += decoder.decode(value, { stream: true });
-          setAiContent(accumulated);
-        }
-
-        aiCache.current.set(funcId, accumulated);
-      } catch (e) {
-        if (ac.signal.aborted) return;
-        setAiError(e instanceof Error ? e.message : "AI decompilation failed");
-      } finally {
-        setAiLoading(false);
-      }
-    },
-    [disassemble, data.functions, data.strings],
-  );
-
   const changeViewMode = useCallback(
     (mode: ViewMode) => {
       setViewMode(mode);
       localStorage.setItem("hermes-view-mode", mode);
-      if (mode === "ai-decompile") {
-        loadAiDecompile(selectedFuncId);
-      } else if (mode === "graph") {
+      if (mode === "graph") {
         if (selectedFuncId !== null) loadGraph(selectedFuncId);
       } else {
         fetchCode(selectedFuncId, mode);
       }
     },
-    [selectedFuncId, fetchCode, loadGraph, loadAiDecompile],
+    [selectedFuncId, fetchCode, loadGraph],
   );
 
   const navigateTo = useCallback(
     (funcId: number) => {
       setSelectedFuncId(funcId);
       setSelectedString(null);
-      if (viewMode === "ai-decompile") {
-        loadAiDecompile(funcId);
-      } else if (viewMode === "graph") {
+      if (viewMode === "graph") {
         fetchCode(funcId, "disassembly");
         loadGraph(funcId);
       } else {
         fetchCode(funcId, viewMode);
       }
     },
-    [viewMode, fetchCode, loadGraph, loadAiDecompile],
+    [viewMode, fetchCode, loadGraph],
   );
 
   const handleFuncClick = useCallback(
@@ -648,7 +571,6 @@ export function HermesViewer({
                   <TabsTrigger value="disassembly">{t("hermes_disassembly")}</TabsTrigger>
                   <TabsTrigger value="graph">Graph</TabsTrigger>
                   <TabsTrigger value="pseudocode">{t("hermes_pseudocode")}</TabsTrigger>
-                  <TabsTrigger value="ai-decompile">{t("hermes_ai_decompile")}</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
@@ -690,15 +612,7 @@ export function HermesViewer({
 
             {/* Code view */}
             <div className="flex-1 overflow-hidden">
-              {viewMode === "ai-decompile" ? (
-                <AiDecompileView
-                  content={aiContent}
-                  isLoading={aiLoading}
-                  error={aiError}
-                  theme={theme}
-                  onRetry={() => loadAiDecompile(selectedFuncId)}
-                />
-              ) : codeLoading ? (
+              {codeLoading ? (
                 <div className="flex items-center justify-center h-full text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   Loading...
@@ -781,94 +695,6 @@ function XrefList({
         </button>
       ))}
     </div>
-  );
-}
-
-function AiDecompileView({
-  content,
-  isLoading,
-  error,
-  theme,
-  onRetry,
-}: {
-  content: string;
-  isLoading: boolean;
-  error: string | null;
-  theme: string;
-  onRetry: () => void;
-}) {
-  const { t } = useTranslation();
-
-  if (isLoading && !content) {
-    return (
-      <div className="flex items-center justify-center h-full text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-        {t("hermes_ai_loading")}
-      </div>
-    );
-  }
-
-  if (error) {
-    const isNotConfigured =
-      error.includes("LLM not configured") || error.includes("LLM_PROVIDER");
-    return (
-      <div className="flex items-center justify-center h-full px-6">
-        <div className="flex flex-col items-center gap-3 max-w-md text-center">
-          <AlertCircle className="h-8 w-8 text-destructive" />
-          {isNotConfigured ? (
-            <>
-              <p className="text-sm font-medium">{t("hermes_llm_not_configured")}</p>
-              <p className="text-xs text-muted-foreground">
-                {t("hermes_llm_not_configured_desc")}
-              </p>
-              <pre className="text-[11px] text-left bg-muted rounded-md px-3 py-2 w-full font-mono">
-                {`LLM_PROVIDER=anthropic   # or openai, gemini, openrouter\nLLM_API_KEY=sk-...\nLLM_MODEL=claude-sonnet-4-20250514`}
-              </pre>
-            </>
-          ) : (
-            <>
-              <p className="text-sm font-medium">{t("hermes_ai_failed")}</p>
-              <p className="text-xs text-muted-foreground break-all">{error}</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                onClick={onRetry}
-              >
-                {t("retry")}
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  if (!content) {
-    return (
-      <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-        {t("hermes_ai_select")}
-      </div>
-    );
-  }
-
-  return (
-    <Editor
-      height="100%"
-      language="javascript"
-      theme={theme === "dark" ? "vs-dark" : "light"}
-      value={content}
-      options={{
-        readOnly: true,
-        minimap: { enabled: false },
-        fontSize: 12,
-        fontFamily:
-          "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace",
-        lineNumbers: "on",
-        scrollBeyondLastLine: false,
-        wordWrap: "on",
-      }}
-    />
   );
 }
 
