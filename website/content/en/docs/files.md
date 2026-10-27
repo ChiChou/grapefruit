@@ -52,7 +52,7 @@ Browse compiled asset catalogs as a grid of images, icons, and other assets.
 
 ### DEX Viewer
 
-Opens `classes.dex` files with the full DEX analysis view — class browser, method disassembly, string search, cross-references, and AI decompilation. See [Analysis & Decompilation](/docs/analysis) for details.
+Opens `classes.dex` files with the full DEX analysis view — class browser, method disassembly, string search, cross-references, and offline decompilation. See [Analysis & Decompilation](/docs/analysis) for details.
 
 ## APK Browser (Android)
 

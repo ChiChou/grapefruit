@@ -4,20 +4,19 @@
 
 ![Split View with CFG](/radare2.webp)
 
-Grapefruit includes a fully browser-based decompiler powered by radare2 compiled to WebAssembly. Drop any binary file — ELF, Mach-O, DEX, or Hermes bytecode — and start reversing immediately. No device connection, no server-side processing, no setup.
+Grapefruit includes a fully browser-based decompiler with radare2 for disassembly, Kuna for native source, DDC for Java, and r2hermes for Hermes bytecode, compiled to WebAssembly. Drop any binary file — ELF, Mach-O, DEX, or Hermes bytecode — and start reversing immediately. No device connection, no server-side processing, no setup.
 
-The split view shows disassembly alongside a control flow graph. Switch between linear, graph, decompiler, and AI decompile modes. Browse functions, classes, strings, and cross-references in an integrated workspace.
+The split view shows disassembly alongside a control flow graph. Switch between linear, graph, and offline decompiler modes. Browse functions, classes, strings, and cross-references in an integrated workspace.
 
 ## Live Disassembly
 
 ![Native Disassembly](/disasm.webp)
 
-For live processes, memory is read on demand from the target device. Tap a function address in the module or class browser to open it in a disassembly tab with four views:
+For live processes, memory is read on demand from the target device. Tap a function address in the module or class browser to open it in a disassembly tab with three views:
 
 - **Linear** — Full function disassembly with syntax highlighting
 - **Graph** — Control flow graph with basic blocks and jump/fail edges
-- **Decompiler** — radare2's built-in pseudo-C decompiler output
-- **AI Decompile** — Sends the disassembly to an LLM for high-quality C/C++ reconstruction with streaming output
+- **Decompiler** — Kuna decompilation of the live function snapshot
 
 The **Graph** view renders control flow with basic blocks and edges, color-coded by branch direction (green for true, red for false, gray for unconditional).
 
@@ -31,7 +30,7 @@ Open any `.dex` file from the APK browser or file system. Grapefruit fetches the
 - **Method disassembly** — Click a method to view its Dalvik bytecode. radare2 handles all instruction decoding natively.
 - **String search** — Browse all strings in the DEX file. Click a string to find cross-references (which methods use it).
 - **Cross-references** — Click an xref to jump directly to the referencing method's disassembly.
-- **AI Decompile** — Decompile Dalvik bytecode to Java using an LLM.
+- **Decompile** — DDC reconstructs Java for the selected method's class locally in a browser worker.
 
 ## Hermes Bytecode Analysis
 
@@ -41,16 +40,10 @@ React Native apps using the Hermes engine compile JavaScript to proprietary byte
 
 - **Disassembly** — Raw Hermes bytecode listing with function headers showing name, parameter count, and size
 - **Pseudocode** — Rule-based decompilation from r2hermes that reconstructs JavaScript-like syntax from bytecodes
-- **AI Decompile** — Sends both pseudocode and disassembly to an LLM to reconstruct idiomatic JavaScript with proper variable names, React/RN patterns, and simplified control flow
 
-## AI Decompilation
 
-All three analysis modes (native, DEX, Hermes) support AI-powered decompilation. Configure the LLM provider with environment variables:
+## Offline engines
 
-```
-LLM_PROVIDER=anthropic   # or openai, gemini, openrouter
-LLM_API_KEY=sk-...
-LLM_MODEL=claude-sonnet-4-20250514
-```
+Kuna supports x86, x64, ARM, Thumb, ARM64, and ARM64e. Other architectures retain radare2 disassembly and graph views. DDC handles individual DEX files; Hermes keeps its dedicated r2hermes pseudocode view. No decompilation request uses an LLM or API key.
 
-Before submission, disassembly is stripped of decorative formatting to reduce token usage and latency. Function names and parameter counts from the symbol table are included for better context.
+Live decompilation uses a bounded function memory snapshot (up to 1 MiB), so external data, literal pools, and callee type information may be unavailable. File-backed analysis gives Kuna the complete binary. Switching away or selecting another function cancels the previous worker; each request has a 60-second limit.

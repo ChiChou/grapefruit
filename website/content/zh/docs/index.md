@@ -32,12 +32,12 @@ igf setup --global  # 安装到 ~/.claude/skills/（所有项目可用）
 ## 功能索引
 
 - [安装](/cn/docs/install) — npm、预编译二进制、平台特定配置
-- [分析与反编译](/cn/docs/analysis) — 原生反汇编、DEX 类浏览、Hermes 反编译器、AI 反编译、控制流图
+- [分析与反编译](/cn/docs/analysis) — 原生反汇编、DEX 类浏览、Hermes 反编译器、离线反编译、控制流图
 - [动态插桩](/cn/docs/instrumentation) — 函数 Hook、类/方法浏览、模块列表、线程检查
 - [文件浏览器与预览](/cn/docs/files) — 文件系统导航、十六进制查看、SQLite 编辑器、plist 查看器、图片/音频/字体预览
 - [数据审查](/cn/docs/data) — keychain/keystore、网络监控、加密拦截、隐私审计
 - [平台功能](/cn/docs/platforms) — iOS（entitlements、Info.plist、XPC、JSContext、WKWebView）和 Android（APK 浏览、内容提供器、JNI 追踪、资源、WebView）
-- [LLM 配置](/cn/docs/llm) — 配置 Anthropic、OpenAI、Gemini 或 OpenRouter 实现 AI 反编译
+- [LLM 配置](/cn/docs/llm) — 配置 Anthropic、OpenAI、Gemini 或 OpenRouter 实现 离线反编译
 
 ## 架构
 
@@ -52,7 +52,7 @@ Grapefruit 以本地服务器方式运行，由三个组件构成：
 - 源码开发或通过 npm/npx 安装需要 Node.js 22.18+ 和 npm；预编译二进制无需运行时依赖
 - 支持 Frida 的目标设备（见下方）
 - 目标设备上运行有 Frida server
-- 可选：LLM API Key 用于 AI 反编译——见 [LLM 配置](/cn/docs/llm)
+- 可选：LLM API Key 用于 离线反编译——见 [LLM 配置](/cn/docs/llm)
 
 ### 支持的运行环境
 

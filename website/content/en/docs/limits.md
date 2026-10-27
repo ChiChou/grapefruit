@@ -38,12 +38,9 @@ The built-in disassembler and decompiler are convenience features for quick tria
 
 For serious analysis, pull the binary from the device (using the file browser or APK browser) and open it in a dedicated tool. The in-app views are best used for quick lookups — checking what a function does before hooking it, or navigating from a string xref to surrounding code.
 
-## AI Decompilation Quality
+## Offline Decompilation
 
-- **LLM-dependent** — Output quality varies significantly by model. Larger models generally produce better results.
-- **Not verified** — The decompiled code is a best-effort reconstruction. It may contain errors, miss edge cases, or hallucinate logic that doesn't exist in the original.
-- **Large functions** — Functions exceeding the model's context window will be truncated, producing incomplete output.
-- **Token cost** — Each decompilation request sends the full function disassembly. Large functions with many basic blocks consume significant tokens.
+Reconstructed source can contain unresolved types and unstructured control flow. Live snapshots may omit external data. Kuna supports only x86, x64, ARM, Thumb, ARM64, and ARM64e in this build.
 
 ## Platform Requirements
 

@@ -86,4 +86,4 @@ FRIDA_VERSION=16 igf
 
 > **Note:** Frida 16 support is not as well tested. You may encounter compatibility issues with newer OS versions or missing features that are only available in Frida 17. We recommend upgrading to Frida 17 when possible.
 
-For AI-powered decompilation, see [LLM Configuration](/docs/llm).
+For native hook signature suggestions, see [LLM Configuration](/docs/llm).

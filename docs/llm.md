@@ -1,6 +1,6 @@
 # LLM Configuration
 
-igf integrates with LLM providers for features like the GUI assistant and the `/mastg` skill. Configuration is via environment variables.
+The native hook dialog currently uses an LLM to suggest argument and return types. Configuration is via environment variables. Decompilation is offline: Kuna handles native code, DDC handles DEX, and r2hermes handles Hermes bytecode. The `/igf` and `/mastg` skills use their host agent and do not depend on this configuration.
 
 ## Quick Start
 
@@ -71,7 +71,7 @@ The request/response format is determined automatically:
 
 ## API Endpoints
 
-The server exposes `POST /api/llm` which accepts a plain text body and returns the LLM response as plain text. This is used by the GUI for inline analysis features.
+The server exposes `POST /api/llm` which accepts a plain text body and returns the LLM response as plain text. This is used by the native hook dialog for signature suggestions.
 
 ```bash
 curl -X POST http://localhost:31337/api/llm \

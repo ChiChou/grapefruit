@@ -52,7 +52,7 @@
 
 ### DEX 查看器
 
-打开 `classes.dex` 文件，提供完整 DEX 分析视图——类浏览器、方法反汇编、字符串搜索、交叉引用和 AI 反编译。详见[分析与反编译](/cn/docs/analysis)。
+打开 `classes.dex` 文件，提供完整 DEX 分析视图——类浏览器、方法反汇编、字符串搜索、交叉引用和 离线反编译。详见[分析与反编译](/cn/docs/analysis)。
 
 ## APK 浏览器（Android）
 

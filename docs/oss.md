@@ -26,6 +26,10 @@ Firebase and Firestore hooking implementation is derived from this blog post.
 
 * **[radare2](https://github.com/radareorg/radare2)** (LGPLv3 License)
 The WASM build of radare2 powers the disassembly, control-flow graph, and binary analysis features (`gui/src/lib/r2/`).
+* **[Kuna](https://github.com/noelo-Lab/kuna)** (Apache-2.0 License)
+Native decompilation runs in a browser WASI worker, with processor specifications restricted to x86, x64, ARM, Thumb, ARM64, and ARM64e.
+* **[DDC](https://github.com/ejfkdev/ddc)** (MIT License)
+DEX class decompilation to Java runs in a browser WASI worker.
 * **[r2hermes](https://github.com/radareorg/r2hermes)** (BSD-3-Clause License)
 Hermes bytecode disassembly and decompilation uses r2hermes both as a standalone WASM module and as a plugin in the shared radare2 runtime.
 * **[r2flutter](https://github.com/radareorg/r2flutter)** (MIT License)
