@@ -12,7 +12,7 @@ import apkRoutes from "./routes/apk.ts";
 import deviceRoutes from "./routes/devices.ts";
 import transferRoutes from "./routes/transfer.ts";
 import dataRoutes from "./routes/data.ts";
-import llmRoutes from "./routes/llm.ts";
+import signatureRoutes from "./routes/signatures.ts";
 import r2Routes from "./routes/r2.ts";
 
 const app = new Hono();
@@ -49,10 +49,11 @@ api.route("/", apkRoutes);
 api.route("/", deviceRoutes);
 api.route("/", transferRoutes);
 api.route("/", dataRoutes);
-api.route("/", llmRoutes);
+api.route("/", signatureRoutes);
 api.route("/", r2Routes);
 
 app.route("/api", api);
+app.all("/api/*", (c) => c.notFound());
 
 // Serve the version-pinned radare2 WASM build with bundled XPS plugins.
 app.get("/radare2.wasm", async (c) => {

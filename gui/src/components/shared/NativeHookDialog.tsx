@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, X, Loader2, Sparkles } from "lucide-react";
+import { Plus, X, Loader2 } from "lucide-react";
 
 import {
   Dialog,
@@ -11,6 +11,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useSession, Platform } from "@/context/SessionContext";
+import * as signatures from "@/lib/signatures";
 import {
   Select,
   SelectContent,
@@ -19,18 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const NATIVE_TYPES = [
-  "void *",
-  "int",
-  "uint",
-  "long",
-  "float",
-  "double",
-  "bool",
-  "char *",
-  "id",
-  "void",
-] as const;
+const NATIVE_TYPES = signatures.types;
 
 const ARG_TYPES = NATIVE_TYPES.filter((t) => t !== "void");
 
@@ -53,93 +44,63 @@ export function NativeHookDialog({
   const [args, setArgs] = useState<string[]>([]);
   const [returns, setReturns] = useState("void");
   const [loading, setLoading] = useState(false);
-  const [llmError, setLlmError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [template, setTemplate] = useState<signatures.Template | null>(null);
+  const [rawArgs, setRawArgs] = useState<string[]>([]);
+  const dirty = useRef(false);
+  const { platform, fruity, droid } = useSession();
+  const api = platform === Platform.Droid ? droid : fruity;
 
-  const queryLLM = useCallback(async () => {
-    setLoading(true);
-    setLlmError(null);
-
-    const prompt = `Give me the argument types of function ${functionName}, return in format like
-{"args":["void *", "int"], "returns": "void *"}
-
-Do not include qualifiers. My program can only handle few native types:
-"void *", "int", "uint", "long", "float", "double", "bool", "char *", "id", "void"
-
-please normalize type to those. if a type is an Objective-C class or instance, use "id".
-
-only the json part, without any descriptions. if this function is not in your knowledge, return
-
-{"error": "unknown function"}
-
-do not make up or guess`;
-
-    const res = await fetch("/api/llm", {
-      method: "POST",
-      body: prompt,
-    }).catch(() => null);
-
-    if (!res) {
-      setLlmError(t("llm_query_failed", "Failed to query LLM"));
-      setLoading(false);
-      return;
-    }
-
-    if (!res.ok) {
-      setLlmError(
-        res.status === 500
-          ? t("llm_not_configured", "LLM not configured")
-          : t("llm_request_failed", "LLM request failed"),
-      );
-      setLoading(false);
-      return;
-    }
-
-    const text = await res.text();
-
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      setLlmError(t("llm_invalid_response", "Invalid response from LLM"));
-      setLoading(false);
-      return;
-    }
-
-    let data: Record<string, unknown>;
-    try {
-      data = JSON.parse(jsonMatch[0]);
-    } catch {
-      setLlmError(t("llm_invalid_response", "Invalid response from LLM"));
-      setLoading(false);
-      return;
-    }
-
-    if (Array.isArray(data.args)) {
-      setArgs(data.args as string[]);
-    }
-    if (data.returns) {
-      setReturns(data.returns as string);
-    }
-    setLoading(false);
-  }, [functionName, t]);
-
-  // Auto-query LLM when dialog opens
   useEffect(() => {
-    if (open) {
-      setArgs([]);
-      setReturns("void");
-      setLlmError(null);
-      queryLLM();
+    if (!open) return;
+    const abort = new AbortController();
+    dirty.current = false;
+    setArgs([]);
+    setRawArgs([]);
+    setReturns("void");
+    setTemplate(null);
+    setError(null);
+    setLoading(true);
+    async function load() {
+      try {
+        const info = await Promise.race([
+          api?.info.processInfo().catch(() => undefined) ?? Promise.resolve(undefined),
+          new Promise<undefined>((resolve) => setTimeout(resolve, 1500)),
+        ]);
+        abort.signal.throwIfAborted();
+        if (!platform) return;
+        const match = await signatures.lookup(platform === Platform.Droid ? "android" : "darwin", functionName, modulePath, info?.arch, abort.signal);
+        if (abort.signal.aborted) return;
+        setTemplate(match);
+        if (match && !dirty.current) {
+          setArgs(match.args.map(signatures.display));
+          setRawArgs(match.args.map((arg) => arg.c));
+          setReturns(signatures.display(match.returns));
+        }
+      } catch (error) {
+        if (!abort.signal.aborted) setError(error instanceof Error ? error.message : String(error));
+      } finally {
+        if (!abort.signal.aborted) setLoading(false);
+      }
     }
-  }, [open, queryLLM]);
+    void load();
+    return () => abort.abort();
+  }, [open, platform, api, functionName, modulePath]);
 
   const addParam = () => {
-    setArgs((prev) => [...prev, "void *"]);
+    dirty.current = true;
+    setArgs((prev) => [...prev, "pointer"]);
+    setRawArgs((prev) => [...prev, ""]);
   };
 
   const removeParam = (index: number) => {
+    dirty.current = true;
     setArgs((prev) => prev.filter((_, i) => i !== index));
+    setRawArgs((prev) => prev.filter((_, i) => i !== index));
   };
 
   const updateParam = (index: number, value: string) => {
+    dirty.current = true;
     setArgs((prev) => prev.map((v, i) => (i === index ? value : v)));
   };
 
@@ -166,27 +127,19 @@ do not make up or guess`;
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* LLM status */}
-          {loading && (
+          {loading ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Querying AI for function signature...
+              Looking up offline template…
             </div>
-          )}
-          {llmError && (
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">{llmError}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={queryLLM}
-                disabled={loading}
-                className="gap-1"
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                Retry
-              </Button>
-            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              {error ?? (template
+                ? `Template from ${template.source}${template.nameOnly ? " (matched by symbol name)" : ""}. Review and edit the types below.`
+                : "No known signature. Enter the types below.")}
+              {template?.variadic && " Variadic function: add any additional arguments you want to log."}
+              {template && (template.returns.approximate || template.args.some((arg) => arg.approximate)) && " Some types are approximate."}
+            </p>
           )}
 
           {/* Return type */}
@@ -194,7 +147,7 @@ do not make up or guess`;
             <span className="text-sm font-medium w-20 shrink-0">Returns</span>
             <Select
               value={returns}
-              onValueChange={(v) => v !== null && setReturns(v)}
+              onValueChange={(v) => { if (v !== null) { dirty.current = true; setReturns(v); } }}
             >
               <SelectTrigger className="font-mono text-xs">
                 <SelectValue />
@@ -202,12 +155,14 @@ do not make up or guess`;
               <SelectContent>
                 {NATIVE_TYPES.map((t) => (
                   <SelectItem key={t} value={t}>
-                    {t}
+                    {t === "char *" ? "pointer → UTF-8 string" : t === "id" ? "pointer → ObjC object" : t}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
+
+          {template && <p className="text-xs font-mono text-muted-foreground">C return: {template.returns.c}</p>}
 
           {/* Arguments */}
           <div className="space-y-2">
@@ -237,17 +192,18 @@ do not make up or guess`;
                   value={arg}
                   onValueChange={(v) => v !== null && updateParam(i, v)}
                 >
-                  <SelectTrigger className="font-mono text-xs">
+                  <SelectTrigger className="font-mono text-xs" title={rawArgs[i] || undefined}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {ARG_TYPES.map((t) => (
                       <SelectItem key={t} value={t}>
-                        {t}
+                        {t === "char *" ? "pointer → UTF-8 string" : t === "id" ? "pointer → ObjC object" : t}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {rawArgs[i] && <span className="max-w-40 truncate text-xs font-mono text-muted-foreground" title={rawArgs[i]}>{rawArgs[i]}</span>}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -265,7 +221,7 @@ do not make up or guess`;
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Dismiss
           </Button>
-          <Button onClick={handleConfirm} disabled={loading}>
+          <Button onClick={handleConfirm}>
             Confirm
           </Button>
         </DialogFooter>

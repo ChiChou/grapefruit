@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import nodePath from "node:path";
 
 import app from "../app.ts";
+import { Hono } from "hono";
 import env from "../lib/env.ts";
 import { HookStore } from "../lib/store/hooks.ts";
 import { CryptoStore } from "../lib/store/crypto.ts";
@@ -29,6 +30,14 @@ function getStores() {
 }
 
 describe("API tests", () => {
+  it("keeps removed LLM endpoints absent with an SPA fallback", async () => {
+    const production = new Hono().route("/", app).all("*", (c) => c.text("frontend"));
+    for (const path of ["/api/llm", "/api/llm/stream"]) {
+      const response = await production.request(path, { method: "POST", body: "test" });
+      assert.strictEqual(response.status, 404);
+    }
+  });
+
   it("should start http server", async () => {
     const r0 = await app.request("/api/version");
     const version = await r0.json();
