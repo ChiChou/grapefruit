@@ -13,26 +13,46 @@ const signatures = new Map<string | null, Map<string, NativeHookSignature>>();
 
 function formatArg(arg: NativePointer, type: string): string {
   switch (type) {
+    case "char":
+    case "int8":
+      return ((arg.toInt32() << 24) >> 24).toString();
+    case "uchar":
+    case "uint8":
+      return (arg.toUInt32() & 0xff).toString();
+    case "int16":
+      return ((arg.toInt32() << 16) >> 16).toString();
+    case "uint16":
+      return (arg.toUInt32() & 0xffff).toString();
     case "int":
+    case "int32":
       return arg.toInt32().toString();
     case "uint":
+    case "uint32":
       return arg.toUInt32().toString();
     case "long":
-      return int64(arg.toString()).toString();
+    case "ssize_t":
+      return Process.pointerSize === 4 ? arg.toInt32().toString() : int64(arg.toString()).toString();
+    case "ulong":
+    case "size_t":
+      return Process.pointerSize === 4 ? arg.toUInt32().toString() : uint64(arg.toString()).toString();
+    case "int64":
+      return Process.pointerSize === 8 ? int64(arg.toString()).toString() : `${arg} (raw word)`;
+    case "uint64":
+      return Process.pointerSize === 8 ? uint64(arg.toString()).toString() : `${arg} (raw word)`;
     case "float":
     case "double":
-      return arg.toInt32().toString();
+      return `${arg} (raw word; floating-point registers require a custom hook)`;
     case "bool":
       return arg.toInt32() !== 0 ? "true" : "false";
     case "char *": {
       if (arg.isNull()) return "NULL";
-      return JSON.stringify(arg.readUtf8String());
+      try { return JSON.stringify(arg.readUtf8String()); }
+      catch { return `${arg} (unreadable string)`; }
     }
-    case "void *":
-      return arg.toString();
     case "id": {
       if (arg.isNull()) return "nil";
-      if (ObjC.available) return new ObjC.Object(arg).toString();
+      try { if (ObjC.available) return new ObjC.Object(arg).toString(); }
+      catch { /* Fall back to the pointer when the template does not match. */ }
       return arg.toString();
     }
     default:
