@@ -1,0 +1,10 @@
+[package]
+name = "igf-ddc"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[dependencies]
+ddc-dex.workspace = true
+ddc-dec.workspace = true
