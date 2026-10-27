@@ -26,6 +26,7 @@
     "build:r2-wasm": "node scripts/build-r2-wasm.ts",
     "build:kuna": "node scripts/build-kuna.ts",
     "build:ddc": "node scripts/build-ddc.ts",
+    "check:decompilers": "node gui/scripts/check-decompilers.ts",
     "check:r2-wasm": "node gui/scripts/check-r2-wasm.ts",
     "prepack": "npm run build:npm",
     "build:npm": "tsdown",
