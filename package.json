@@ -29,7 +29,7 @@
     "check:decompilers": "node gui/scripts/check-decompilers.ts",
     "check:r2-wasm": "node gui/scripts/check-r2-wasm.ts",
     "prepack": "npm run build:npm",
-    "build:npm": "tsdown",
+    "build:npm": "node gui/scripts/check-assets.ts gui/dist && tsdown",
     "build:cli": "node scripts/build-sea.ts"
   },
   "keywords": [

@@ -3,6 +3,7 @@
 ## Prerequisites
 
 - Node.js >= 22.18.0 with npm
+- Rust stable (1.90 or later), managed by rustup, with `rustup target add wasm32-wasip1 --toolchain stable`
 - A Unix shell, `make`, `patch`, and `zip` for building the radare2 WASM runtime from source
 - A device running [frida-server](https://frida.re/docs/installation/) connected via USB or network
 - iOS or Android target device/emulator
@@ -18,7 +19,17 @@ cd grapefruit
 npm run setup
 ```
 
-Each workspace has its own `package.json`. The root `setup` script installs dependencies for the root, `agent/`, and `gui/`, builds the pinned radare2 WASM runtime with the r2hermes and r2flutter XPS plugins, and builds the standalone `r2hermes.wasm` module when wasi-sdk is available. The radare2 build downloads and caches its pinned wasi-sdk when necessary.
+Each workspace has its own `package.json`. The root `setup` script installs dependencies for the root, `agent/`, and `gui/`, builds the pinned radare2 WASM runtime with the r2hermes and r2flutter XPS plugins, and builds the standalone `r2hermes.wasm` module when wasi-sdk is available. The radare2 build downloads and caches its pinned wasi-sdk when necessary. Setup also builds the pinned Kuna and DDC WASI adapters before building the GUI.
+
+To rebuild the offline decompilers separately:
+
+```sh
+npm run build:kuna
+npm run build:ddc
+npm run check:decompilers
+```
+
+Their generated assets live in `gui/public/kuna` and `gui/public/ddc`; Vite copies them into `gui/dist`, including npm and SEA distributions.
 
 The server uses Frida 17.22.2. The agent build pins `frida-compile` 19.0.5 and
 its build-time Frida dependency to 17.9.10: the compiler bundled with Frida

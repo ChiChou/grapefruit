@@ -31,6 +31,24 @@ jobs:
 
       - uses: ./.github/actions/setup
 
+      - name: Install Rust WASI target
+        run: rustup target add wasm32-wasip1 --toolchain stable
+
+      - name: Cache offline decompilers
+        id: decompilers
+        uses: actions/cache@v5
+        with:
+          path: |
+            gui/public/kuna
+            gui/public/ddc
+          key: decompilers-${{ hashFiles('scripts/build-kuna.ts', 'scripts/build-ddc.ts', 'externals/kuna/**', 'externals/ddc/**') }}
+
+      - name: Build offline decompilers
+        if: steps.decompilers.outputs.cache-hit != 'true'
+        run: |
+          npm run build:kuna
+          npm run build:ddc
+
       - name: Install and build assets
         run: |
           npm ci
@@ -39,6 +57,9 @@ jobs:
 
       - name: Check radare2 WASI plugins
         run: npm run check:r2-wasm -- radare2.wasm externals/radare/r2flutter/test/bins/android/first/libapp.so
+
+      - name: Check offline decompilers
+        run: npm run check:decompilers
 
       - name: Upload application assets
         uses: actions/upload-artifact@v6

@@ -56,6 +56,7 @@ async function main() {
   await access(path.join(root, "radare2.wasm")).catch(() => {
     throw new Error("radare2.wasm is missing; run npm run build:r2-wasm first");
   });
+  run([process.execPath, path.join(root, "gui", "scripts", "check-assets.ts"), path.join(root, "gui", "dist")], root);
   run(npm("exec", "--", "tsdown", "--config", "tsdown.sea.config.ts"), root);
 
   const roots = ["gui/dist", "agent/dist", "drizzle", "skills"];

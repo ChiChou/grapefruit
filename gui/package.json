@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsgo -b && vite build",
+    "build": "node scripts/check-assets.ts && tsgo -b && vite build",
     "lint": "oxlint -c oxlintrc.json",
     "preview": "vite preview",
     "prepare": "npm run build"

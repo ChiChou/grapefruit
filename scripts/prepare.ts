@@ -39,7 +39,10 @@ run(npm("install"));
 prebuild("frida");
 prebuild("frida16");
 run(npm("install"), join(root, "agent"));
-run(npm("install"), join(root, "gui"));
+run(npm("install", "--ignore-scripts"), join(root, "gui"));
+
+run([process.execPath, "scripts/build-kuna.ts"]);
+run([process.execPath, "scripts/build-ddc.ts"]);
 
 // radare2 WASM runtime with the bundled XPS plugins
 run([process.execPath, "scripts/build-r2-wasm.ts"]);
@@ -62,3 +65,5 @@ try {
     "  cd externals/radare/r2hermes.wasm && npm run setup && npm run build\n",
   );
 }
+
+run(npm("run", "build"), join(root, "gui"));
