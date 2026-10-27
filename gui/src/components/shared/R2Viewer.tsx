@@ -1,6 +1,6 @@
 import { activate } from "@/lib/keyboard";
 /**
- * Radare2 binary viewer: classes/functions, strings, disassembly, CFG, AI decompile.
+ * Radare2 binary viewer: classes/functions, strings, disassembly, CFG, offline decompilation.
  * Supports DEX, native binaries, and other formats radare2 can analyze.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -8,7 +8,6 @@ import { useTranslation } from "react-i18next";
 import {
   Loader2,
   Search,
-  AlertCircle,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
@@ -16,10 +15,9 @@ import {
   Binary,
   Pencil,
 } from "lucide-react";
-import Editor from "@monaco-editor/react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import * as strip from "@/lib/strip";
-import { Parser } from "@/lib/codefence";
+import * as decompiler from "@/lib/decompiler";
+import { Decompiler } from "./Decompiler";
 
 import {
   ResizablePanelGroup,
@@ -36,7 +34,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { useTheme } from "@/components/providers/ThemeProvider";
 import { CFGView, type CFGNode, type CFGEdge } from "@/components/shared/CFGView";
 import { DisassemblyMinimap } from "@/components/shared/DisassemblyMinimap";
 import { RenameDialog } from "@/components/shared/RenameDialog";
@@ -47,6 +44,8 @@ import "../tabs/DisassemblyTab.css";
 export interface R2ViewerProps {
   binType: string;
   arch: string;
+  bits: number;
+  data: ArrayBuffer;
   classes: DexClass[];
   functions: R2Function[];
   strings: DexString[];
@@ -61,7 +60,7 @@ export interface R2ViewerProps {
 
 type LeftTab = "classes" | "functions" | "strings" | "maps";
 
-type ViewMode = "disassembly" | "graph" | "split" | "decompiler" | "ai-decompile";
+type ViewMode = "disassembly" | "graph" | "split" | "decompiler";
 
 interface SectionEntry {
   name: string;
@@ -72,10 +71,6 @@ interface SectionEntry {
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-function htmlToPlain(html: string): string {
-  return html.replace(/<[^>]*>/g, "");
 }
 
 function loadState(key: string | undefined) {
@@ -95,6 +90,8 @@ function saveState(key: string | undefined, patch: Record<string, any>) {
 export function R2Viewer({
   binType,
   arch,
+  bits,
+  data,
   classes,
   functions,
   strings,
@@ -106,8 +103,8 @@ export function R2Viewer({
   storageKey,
 }: R2ViewerProps) {
   const { t } = useTranslation();
-  const { theme } = useTheme();
 
+  const isDex = arch === "dalvik" || /dex/i.test(binType);
   const saved = useRef(loadState(storageKey));
 
   const [leftTab, setLeftTab] = useState<LeftTab>(() => saved.current?.leftTab ?? "functions");
@@ -120,7 +117,7 @@ export function R2Viewer({
   const [selectedString, setSelectedString] = useState<DexString | null>(null);
   const [expandedClasses, setExpandedClasses] = useState<Set<string>>(new Set());
 
-  const [viewMode, setViewModeState] = useState<ViewMode>(() => saved.current?.viewMode ?? "disassembly");
+  const [viewMode, setViewModeState] = useState<ViewMode>(() => ["disassembly", "graph", "split", ...(isDex || decompiler.target(arch, bits) ? ["decompiler"] : [])].includes(saved.current?.viewMode) ? saved.current.viewMode : "disassembly");
   const viewModeRef = useRef(viewMode);
   const setViewMode = useCallback((m: ViewMode) => { viewModeRef.current = m; setViewModeState(m); }, []);
   const [codeHtml, setCodeHtml] = useState("");
@@ -132,17 +129,7 @@ export function R2Viewer({
   const [cfgData, setCfgData] = useState<{ nodes: CFGNode[]; edges: CFGEdge[] } | null>(null);
   const [cfgLoading, setCfgLoading] = useState(false);
 
-  const [pdcContent, setPdcContent] = useState("");
-  const [pdcLoading, setPdcLoading] = useState(false);
-
   const [sections, setSections] = useState<SectionEntry[]>([]);
-
-  const [aiContent, setAiContent] = useState("");
-  const [aiLang, setAiLang] = useState("cpp");
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiError, setAiError] = useState<string | null>(null);
-  const aiCache = useRef<Map<string, string>>(new Map());
-  const aiAbort = useRef<AbortController | null>(null);
 
   const [stringXrefList, setStringXrefList] = useState<StringXref[]>([]);
   const [methodXrefList, setMethodXrefList] = useState<StringXref[]>([]);
@@ -212,21 +199,6 @@ export function R2Viewer({
     [disassemble, cmd, showBytes],
   );
 
-  const loadPdc = useCallback(
-    async (method: DexMethod) => {
-      setPdcLoading(true);
-      try {
-        const output = await cmd(`e scr.color=0; s ${method.addr}; af; pdc`);
-        setPdcContent(output);
-      } catch {
-        setPdcContent("// Decompiler failed");
-      } finally {
-        setPdcLoading(false);
-      }
-    },
-    [cmd],
-  );
-
   const loadCfg = useCallback(
     async (method: DexMethod) => {
       setCfgLoading(true);
@@ -240,74 +212,6 @@ export function R2Viewer({
       }
     },
     [cfg],
-  );
-
-  const loadAi = useCallback(
-    async (cls: DexClass, method: DexMethod) => {
-      const cacheKey = `${cls.name}.${method.name}@${method.addr}`;
-      const cached = aiCache.current.get(cacheKey);
-      if (cached) {
-        try {
-          const { lang: l, code } = JSON.parse(cached);
-          setAiLang(l || "cpp");
-          setAiContent(code);
-        } catch {
-          setAiContent(cached);
-        }
-        setAiError(null);
-        return;
-      }
-
-      aiAbort.current?.abort();
-      const ac = new AbortController();
-      aiAbort.current = ac;
-
-      setAiLoading(true);
-      setAiError(null);
-      setAiContent("");
-
-      try {
-        const raw = await disassemble(method.addr, "html");
-        const plain = strip.r2(htmlToPlain(raw));
-
-        const prompt = [
-          "Decompile the following disassembly into clean, idiomatic source code.",
-          "Infer the language from context (binary type, arch, symbol names).",
-          "Reply with a single fenced code block: ```lang\\n...code...\\n```",
-          "No comments, no explanations, no boilerplate — only the reconstructed function body.",
-          "",
-          `Binary: ${binType || "unknown"}, ${arch || "unknown"}`,
-          `Function: ${cls.name}.${method.name}`,
-          "",
-          plain,
-        ].join("\n");
-
-        const res = await fetch("/api/llm/stream", {
-          method: "POST",
-          body: prompt,
-          signal: ac.signal,
-        });
-        if (!res.ok) throw new Error(await res.text());
-
-        const reader = res.body!.getReader();
-        const decoder = new TextDecoder();
-        const parser = new Parser();
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          parser.push(decoder.decode(value, { stream: true }));
-          if (parser.started && parser.lang) setAiLang(parser.lang);
-          setAiContent(parser.code);
-        }
-        aiCache.current.set(cacheKey, JSON.stringify({ lang: parser.lang, code: parser.code }));
-      } catch (e) {
-        if (ac.signal.aborted) return;
-        setAiError(e instanceof Error ? e.message : "AI decompilation failed");
-      } finally {
-        setAiLoading(false);
-      }
-    },
-    [disassemble, binType, arch],
   );
 
   const selectMethod = useCallback(
@@ -326,18 +230,14 @@ export function R2Viewer({
       funcXrefs(method.addr).then(setMethodXrefList);
 
       const mode = viewModeRef.current;
-      if (mode === "ai-decompile") {
-        loadAi(cls, method);
-      } else if (mode === "graph" || mode === "split") {
+      if (mode === "graph" || mode === "split") {
         loadDisassembly(method);
         loadCfg(method);
-      } else if (mode === "decompiler") {
-        loadPdc(method);
       } else {
         loadDisassembly(method);
       }
     },
-    [loadDisassembly, loadCfg, loadPdc, loadAi, funcXrefs],
+    [loadDisassembly, loadCfg, funcXrefs],
   );
 
   const selectClass = useCallback((cls: DexClass) => {
@@ -400,16 +300,20 @@ export function R2Viewer({
     (mode: ViewMode) => {
       setViewMode(mode);
       if (!selectedMethod || !selectedClass) return;
-      if (mode === "ai-decompile") loadAi(selectedClass, selectedMethod);
-      else if (mode === "graph") loadCfg(selectedMethod);
+      if (mode === "graph") loadCfg(selectedMethod);
       else if (mode === "split") {
         loadDisassembly(selectedMethod);
         loadCfg(selectedMethod);
-      } else if (mode === "decompiler") loadPdc(selectedMethod);
-      else loadDisassembly(selectedMethod);
+      } else if (mode !== "decompiler") loadDisassembly(selectedMethod);
     },
-    [selectedMethod, selectedClass, loadDisassembly, loadCfg, loadPdc, loadAi, setViewMode],
+    [selectedMethod, selectedClass, loadDisassembly, loadCfg, setViewMode],
   );
+
+  const cpu = decompiler.target(arch, bits);
+  const load = useCallback(async (signal: AbortSignal) => {
+    if ((!cpu && !isDex) || !selectedMethod) throw new Error("Unsupported architecture");
+    return decompiler.decompile({ data, target: isDex ? "dex" : cpu!, address: selectedMethod.addr }, signal);
+  }, [cpu, isDex, data, selectedMethod]);
 
   const canGoBack = historyIdx.current > 0;
   const canGoForward = historyIdx.current < historyRef.current.length - 1;
@@ -689,8 +593,7 @@ export function R2Viewer({
                     <TabsTrigger value="disassembly">{t("hermes_disassembly")}</TabsTrigger>
                     <TabsTrigger value="graph">Graph</TabsTrigger>
                     <TabsTrigger value="split">{t("r2_split")}</TabsTrigger>
-                    <TabsTrigger value="decompiler">{t("hermes_pseudocode")}</TabsTrigger>
-                    <TabsTrigger value="ai-decompile">{t("hermes_ai_decompile")}</TabsTrigger>
+                    {(cpu || isDex) && <TabsTrigger value="decompiler">Decompile</TabsTrigger>}
                   </TabsList>
                 </Tabs>
                 <div className="flex items-center gap-0.5 ml-auto px-2">
@@ -734,21 +637,8 @@ export function R2Viewer({
                     ))}
                   </div>
                 </div>
-              ) : viewMode === "ai-decompile" && selectedMethod ? (
-                <AiView content={aiContent} isLoading={aiLoading} error={aiError} theme={theme} lang={aiLang} onRetry={() => selectedClass && loadAi(selectedClass, selectedMethod)} />
               ) : viewMode === "decompiler" && selectedMethod ? (
-                pdcLoading ? (
-                  <div className="flex items-center justify-center h-full text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />Loading...
-                  </div>
-                ) : pdcContent ? (
-                  <Editor
-                    height="100%" language="c" theme={theme === "dark" ? "vs-dark" : "light"} value={pdcContent}
-                    options={{ readOnly: true, minimap: { enabled: false }, fontSize: 12, lineNumbers: "off", scrollBeyondLastLine: false, wordWrap: "off" }}
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-sm text-muted-foreground">{t("hermes_click_function")}</div>
-                )
+                <Decompiler load={load} engine={isDex ? "DDC" : "Kuna"} />
               ) : viewMode === "split" && selectedMethod ? (
                 <ResizablePanelGroup orientation="horizontal" autoSaveId="r2-split">
                   <ResizablePanel id="r2-split-asm" defaultSize="50%" minSize="20%">
@@ -843,36 +733,6 @@ export function R2Viewer({
         </>
       )}
     </div>
-  );
-}
-
-function AiView({ content, isLoading, error, theme, lang, onRetry }: {
-  content: string; isLoading: boolean; error: string | null; theme: string; lang: string; onRetry: () => void;
-}) {
-  const { t } = useTranslation();
-
-  if (isLoading && !content) {
-    return <div className="flex items-center justify-center h-full text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin mr-2" />{t("hermes_ai_loading")}</div>;
-  }
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-full px-6">
-        <div className="flex flex-col items-center gap-3 max-w-md text-center">
-          <AlertCircle className="h-8 w-8 text-destructive" />
-          <p className="text-sm font-medium">{t("hermes_ai_failed")}</p>
-          <p className="text-xs text-muted-foreground break-all">{error}</p>
-          <Button variant="outline" size="sm" className="text-xs" onClick={onRetry}>{t("retry")}</Button>
-        </div>
-      </div>
-    );
-  }
-  if (!content) {
-    return <div className="flex items-center justify-center h-full text-sm text-muted-foreground">{t("hermes_ai_select")}</div>;
-  }
-  return (
-    <Editor height="100%" language={lang} theme={theme === "dark" ? "vs-dark" : "light"} value={content}
-      options={{ readOnly: true, minimap: { enabled: false }, fontSize: 12, lineNumbers: "on", scrollBeyondLastLine: false, wordWrap: "on" }}
-    />
   );
 }
 

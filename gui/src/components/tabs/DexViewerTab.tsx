@@ -57,7 +57,7 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
   }, [device, pid, params?.path, params?.apk, params?.entry]);
 
   const {
-    binType, arch, classes, functions, strings,
+    binType, arch, bits, classes, functions, strings,
     isLoading, error, isReady,
     cmd, disassemble, cfg, xrefs, funcXrefs,
   } = useR2File({ data: fileData, name: fileName });
@@ -94,6 +94,8 @@ export function DexViewerTab({ params }: IDockviewPanelProps<DexViewerParams>) {
     <R2Viewer
       binType={binType}
       arch={arch}
+      bits={bits}
+      data={fileData!}
       classes={classes}
       functions={functions}
       strings={strings}

@@ -122,6 +122,7 @@ export function useR2File(opts: {
 }) {
   const [binType, setBinType] = useState("");
   const [arch, setArch] = useState("");
+  const [bits, setBits] = useState(0);
   const [classes, setClasses] = useState<DexClass[]>([]);
   const [functions, setFunctions] = useState<R2Function[]>([]);
   const [strings, setStrings] = useState<DexString[]>([]);
@@ -158,6 +159,7 @@ export function useR2File(opts: {
           const info = JSON.parse(infoJson);
           setBinType(info?.bin?.type ?? info?.core?.type ?? "");
           setArch(info?.bin?.arch ?? "");
+          setBits(info?.bin?.bits ?? 0);
         } catch { /* ignore */ }
 
         setClasses(parseIc(icText));
@@ -292,7 +294,7 @@ export function useR2File(opts: {
     [cmd],
   );
 
-  return { binType, arch, classes, functions, strings, isLoading, error, isReady, cmd, disassemble, cfg, xrefs, funcXrefs };
+  return { binType, arch, bits, classes, functions, strings, isLoading, error, isReady, cmd, disassemble, cfg, xrefs, funcXrefs };
 }
 
 /**
