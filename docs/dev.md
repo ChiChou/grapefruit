@@ -19,7 +19,7 @@ cd grapefruit
 npm run setup
 ```
 
-Each workspace has its own `package.json`. The root `setup` script installs dependencies for the root, `agent/`, and `gui/`, builds the pinned radare2 WASM runtime with the r2hermes and r2flutter XPS plugins, and builds the standalone `r2hermes.wasm` module when wasi-sdk is available. The radare2 build downloads and caches its pinned wasi-sdk when necessary. Setup also builds the pinned Kuna and DDC WASI adapters before building the GUI.
+Each workspace has its own `package.json`. The root `setup` script installs dependencies for the root, `agent/`, and `gui/`, builds the pinned radare2 WASM runtime with the r2hermes and r2flutter XPS plugins, and builds the standalone `r2hermes.wasm` module when wasi-sdk is available. The radare2 build downloads and caches its pinned wasi-sdk when necessary. Setup also builds the pinned Kuna and DDC WASI adapters and downloads the checksum-pinned native signature SQLite database before building the GUI.
 
 To rebuild the offline decompilers separately:
 
@@ -137,6 +137,8 @@ npm pack
 ```
 
 Bundles with `tsdown` and exposes the `igf` binary from `dist/bin.mjs`.
+
+Native hook templates come from the separate [igf-signatures](https://github.com/ChiChou/igf-signatures) repository. `npm run fetch:signatures` installs the release pinned in `signatures.lock.json`; `npm run check:signatures` verifies it. Database generation is not part of this repository. See [signatures](./signatures.md).
 
 ## Testing
 

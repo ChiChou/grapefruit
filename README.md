@@ -58,10 +58,6 @@ Options:
 | `FRIDA_VERSION` | Frida major version (`16` or `17`) | `17` |
 | `FRIDA_TIMEOUT` | Frida operation timeout (ms) | `1000` |
 | `PROJECT_DIR` | Project directory for data/cache/logs | `.igf` in cwd |
-| `LLM_PROVIDER` | AI provider (`anthropic`, `openai`, `gemini`, `openrouter`) | |
-| `LLM_API_KEY` | API key for the LLM provider | |
-| `LLM_MODEL` | Model name (e.g. `claude-sonnet-4-20250514`) | |
-| `LLM_BASE_URL` | Custom endpoint (overrides provider default) | |
 
 Command-line flags take precedence over environment variables when both are set.
 

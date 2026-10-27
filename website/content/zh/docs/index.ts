@@ -16,4 +16,4 @@ export { default as data } from "./data.md";
 
 export { default as platforms } from "./platforms.md";
 
-export { default as llm } from "./llm.md";
+export { default as signatures } from "./signatures.md";

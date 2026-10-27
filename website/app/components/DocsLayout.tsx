@@ -55,8 +55,8 @@ export function DocsLayout({
       label: isZh ? "平台特性" : "Platform Features",
     },
     {
-      href: `${prefix}/docs/llm`,
-      label: isZh ? "LLM 配置" : "LLM Configuration",
+      href: `${prefix}/docs/signatures`,
+      label: isZh ? "离线 Hook 模板" : "Offline Hook Templates",
     },
   ];
 

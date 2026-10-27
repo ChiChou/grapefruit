@@ -86,4 +86,4 @@ FRIDA_VERSION=16 igf
 
 > **注意：** Frida 16 的支持测试覆盖较少，可能在新版操作系统上遇到兼容性问题，且缺少仅在 Frida 17 中提供的新功能。建议尽早升级到 Frida 17。
 
-如需 原生 Hook 类型建议，参见 [LLM 配置](/cn/docs/llm)。
+原生 Hook 类型模板已离线内置，参见[离线 Hook 模板](/cn/docs/signatures)。

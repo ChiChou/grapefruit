@@ -37,7 +37,7 @@ After installation, use `/igf` in Claude Code to interact with the IGF server, o
 - [File Browser & Previews](/docs/files) — filesystem navigation, hex view, SQLite editor, plist viewer, image/audio/font preview
 - [Data Inspection](/docs/data) — keychain/keystore, network monitoring, crypto interception, privacy auditing
 - [Platform Features](/docs/platforms) — iOS (entitlements, Info.plist, XPC, JSContext, WKWebView) and Android (APK browser, content providers, JNI trace, resources, WebView)
-- [LLM Configuration](/docs/llm) — configure native hook signature suggestions
+- [Offline Hook Templates](/docs/signatures) — editable native signatures from Android and Xcode SDKs
 
 ## Architecture
 
@@ -52,7 +52,6 @@ Grapefruit runs as a local server with three components:
 - Node.js 22.18+ and npm for source development or npm/npx installation, or a prebuilt binary with no runtime dependency
 - A target device with Frida support (see below)
 - Frida server running on the target device
-- Optional: LLM API key for native hook signature suggestions — see [LLM Configuration](/docs/llm)
 
 ### Supported Environments
 

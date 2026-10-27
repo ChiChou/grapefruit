@@ -217,14 +217,13 @@ All endpoints are prefixed with `/api`.
 
 Query parameters for history endpoints: `limit`, `offset`, `since`, `category` (hooks/privacy), `method` (JNI), `protocol` (XPC), and `severity` (privacy).
 
-### LLM
+### Native signature templates
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/llm` | Send text to configured LLM, returns text response |
-| `POST` | `/llm/stream` | Send text to configured LLM, streams text response |
+| `GET` | `/signatures` | Look up an offline native hook template by platform, name, optional module and architecture |
 
-See [LLM Setup](./llm.md) for configuration.
+See [Offline templates](./signatures.md) for query parameters and database updates.
 
 ## End-to-End Data Flow
 
