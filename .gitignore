@@ -154,3 +154,4 @@ radare2.wasm
 .r2-*
 r2web
 wasi
+.kuna/
