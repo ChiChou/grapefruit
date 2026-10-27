@@ -19,7 +19,9 @@ import { asset } from "./lib/assets.ts";
 
 {
   function serveWeb(root: string) {
-    app.use("/assets/*", serveStatic({ root }));
+    for (const path of ["/assets/*", "/kuna/*", "/ddc/*", "/hbc.wasm"]) {
+      app.use(path, serveStatic({ root }));
+    }
     app.use("/*", serveStatic({ root, path: "index.html" }));
   }
 
