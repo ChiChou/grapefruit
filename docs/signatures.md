@@ -10,14 +10,14 @@ Variadic templates provide fixed arguments only. Approximate aggregate conversio
 
 ## Installation and updates
 
-`npm run setup` downloads the pinned release. To fetch it independently:
+`npm run setup`, `npm run dev` (including `dev:both` and `dev:all`), and the npm/CLI build commands fetch the pinned release when the local copy is missing or outdated. Build actions also fetch it before packaging. To fetch it independently:
 
 ```sh
 npm run fetch:signatures
 npm run check:signatures
 ```
 
-`signatures.lock.json` pins the repository, release, compressed artifact checksum and SQLite checksum. The download is verified before installation into `signatures/signatures.db`. npm and SEA packages include that file; runtime lookup is entirely local and read-only. To update the database, change the lock to a published release using its `manifest.json`, fetch it, then run the checks and tests.
+`signatures.lock.json` pins the repository, release, compressed artifact checksum and SQLite checksum. The download is verified before installation into `signatures/signatures.db`. npm and SEA packages include that file; installing the published npm package requires no separate database download. Runtime lookup is entirely local and read-only. To update the database, change the lock to a published release using its `manifest.json`, fetch it, then run the checks and tests.
 
 For an air-gapped setup, copy the pinned release artifact and run:
 

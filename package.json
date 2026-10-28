@@ -17,6 +17,7 @@
   ],
   "scripts": {
     "setup": "node scripts/prepare.ts",
+    "predev": "npm run fetch:signatures",
     "dev": "node --disable-warning=ExperimentalWarning --watch src/index.ts",
     "dev:both": "node scripts/dev.ts both",
     "dev:all": "node scripts/dev.ts all",
@@ -30,7 +31,8 @@
     "check:decompilers": "node gui/scripts/check-decompilers.ts",
     "check:r2-wasm": "node gui/scripts/check-r2-wasm.ts",
     "prepack": "npm run build:npm",
-    "build:npm": "npm run check:signatures && node gui/scripts/check-assets.ts gui/dist && tsdown",
+    "build:npm": "npm run fetch:signatures && node gui/scripts/check-assets.ts gui/dist && tsdown",
+    "prebuild:cli": "npm run fetch:signatures",
     "build:cli": "node scripts/build-sea.ts",
     "fetch:signatures": "node scripts/signatures.ts",
     "check:signatures": "node scripts/signatures.ts --check"
