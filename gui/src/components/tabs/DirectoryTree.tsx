@@ -14,6 +14,7 @@ interface DirectoryTreeProps {
   root: RootType;
   rootPath: string;
   apiReady: boolean;
+  showHidden: boolean;
   loadDirectory: LoadDirectoryFn;
   onDirectorySelect: DirectorySelectFn;
   currentPath?: string | null;
@@ -97,6 +98,7 @@ export function DirectoryTree({
   root,
   rootPath,
   apiReady,
+  showHidden,
   loadDirectory,
   onDirectorySelect,
   currentPath,
@@ -300,9 +302,9 @@ export function DirectoryTree({
         </button>
         {node.isExpanded && node.children && (
           <div>
-            {node.children.map((child) =>
-              renderNode(child, currentPath, depth + 1),
-            )}
+            {node.children
+              .filter((child) => showHidden || !child.meta.name.startsWith("."))
+              .map((child) => renderNode(child, currentPath, depth + 1))}
           </div>
         )}
       </div>

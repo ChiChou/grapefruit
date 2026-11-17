@@ -90,6 +90,7 @@
   "show_inherited": "显示继承",
   "bundle": "应用包",
   "empty_directory": "空目录",
+  "show_hidden_files": "显示隐藏文件",
   "modified": "修改时间",
   "copy": "复制",
   "open_with": "打开方式",

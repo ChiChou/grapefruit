@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Mode, Platform, Status, useSession } from "@/context/SessionContext";
 import { useDock } from "@/context/DockContext";
 import { useFruityMutation, useDroidMutation } from "@/lib/queries";
@@ -94,6 +95,9 @@ export function FilesTab({ params }: IDockviewPanelProps<FilesTabParams>) {
       return savedState.activeTab;
     return defaultTab;
   });
+  const [showHidden, setShowHidden] = useState(
+    () => savedState?.showHidden === true,
+  );
   const [initialSavedCwd] = useState<string | null>(
     () => savedState?.fullCwd || null,
   );
@@ -443,13 +447,19 @@ export function FilesTab({ params }: IDockviewPanelProps<FilesTabParams>) {
   useEffect(() => {
     if (!storageKey || !fullCwd) return;
     try {
-      localStorage.setItem(storageKey, JSON.stringify({ activeTab, fullCwd }));
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify({ activeTab, fullCwd, showHidden }),
+      );
     } catch {
       localStorage.removeItem(storageKey);
     }
-  }, [storageKey, activeTab, fullCwd]);
+  }, [storageKey, activeTab, fullCwd, showHidden]);
 
   const isReadOnly = !cwdWritable;
+  const visibleItems = showHidden
+    ? items
+    : items.filter((item) => !item.name.startsWith("."));
 
   return (
     <>
@@ -487,6 +497,7 @@ export function FilesTab({ params }: IDockviewPanelProps<FilesTabParams>) {
                     root="!"
                     rootPath={roots.bundle}
                     apiReady={apiReady}
+                    showHidden={showHidden}
                     loadDirectory={loadDirectory}
                     onDirectorySelect={handleDirectorySelect}
                     currentPath={activeTab === "bundle" ? fullCwd : null}
@@ -500,6 +511,7 @@ export function FilesTab({ params }: IDockviewPanelProps<FilesTabParams>) {
                   root="~"
                   rootPath={roots.home}
                   apiReady={apiReady}
+                  showHidden={showHidden}
                   loadDirectory={loadDirectory}
                   onDirectorySelect={handleDirectorySelect}
                   currentPath={activeTab === "home" ? fullCwd : null}
@@ -511,7 +523,7 @@ export function FilesTab({ params }: IDockviewPanelProps<FilesTabParams>) {
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize="85%">
           <div
-            className="h-full relative"
+            className="h-full relative flex flex-col"
             onDragOver={(e) => {
               e.preventDefault();
               if (cwdWritable) setIsDragOver(true);
@@ -526,22 +538,31 @@ export function FilesTab({ params }: IDockviewPanelProps<FilesTabParams>) {
                 </span>
               </div>
             )}
-            <FileTable
-              items={items}
-              isLoading={isLoading}
-              cwd={fullCwd!}
-              onDownload={handleDownload}
-              onPreview={handlePreview}
-              onNavigate={handleNavigate}
-              onRename={handleRename}
-              onDelete={handleDelete}
-              onBatchDelete={handleBatchDelete}
-              onUpload={!isReadOnly ? handleUpload : undefined}
-              onRefresh={
-                fullCwd ? () => handleDirectorySelect(fullCwd) : undefined
-              }
-              isReadOnly={isReadOnly}
-            />
+            <label className="flex items-center gap-2 px-3 py-2 border-b text-xs cursor-pointer shrink-0">
+              <Checkbox
+                checked={showHidden}
+                onCheckedChange={(checked) => setShowHidden(checked === true)}
+              />
+              {t("show_hidden_files")}
+            </label>
+            <div className="flex-1 min-h-0">
+              <FileTable
+                items={visibleItems}
+                isLoading={isLoading}
+                cwd={fullCwd!}
+                onDownload={handleDownload}
+                onPreview={handlePreview}
+                onNavigate={handleNavigate}
+                onRename={handleRename}
+                onDelete={handleDelete}
+                onBatchDelete={handleBatchDelete}
+                onUpload={!isReadOnly ? handleUpload : undefined}
+                onRefresh={
+                  fullCwd ? () => handleDirectorySelect(fullCwd) : undefined
+                }
+                isReadOnly={isReadOnly}
+              />
+            </div>
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
