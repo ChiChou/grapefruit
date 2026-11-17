@@ -1,13 +1,9 @@
 import { spawnSync } from "node:child_process";
-import { createWriteStream } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { Readable } from "node:stream";
-import { pipeline } from "node:stream/promises";
 import { styleText } from "node:util";
-import { createGunzip } from "node:zlib";
 
-import tar from "tar-stream";
+import { unzipSync } from "fflate";
 
 const npm = process.platform === "win32" ? "npm.cmd" : "npm";
 
@@ -26,45 +22,33 @@ async function buildBridges() {
   await fs.mkdir(dir, { recursive: true });
 
   // frida-compile does not produce bridge scripts that can run as IIFEs.
-  // Download the matching prebuilt scripts from the frida-tools package instead.
+  // Download the prebuilt scripts from the frida-tools wheel. The source archive
+  // contains the bridge TypeScript sources but not the compiled JavaScript.
   const pypi = await fetch("https://pypi.org/pypi/frida-tools/json");
   if (!pypi.ok)
     throw new Error(`Failed to fetch frida-tools metadata: ${pypi.statusText}`);
 
-  const data = (await pypi.json()) as { urls: { url: string }[] };
-  const url = data.urls.at(0)?.url;
-  if (!url) throw new Error("could not locate latest frida-tools package");
+  const data = (await pypi.json()) as {
+    urls: { url: string; packagetype: string }[];
+  };
+  const url = data.urls.find((file) => file.packagetype === "bdist_wheel")?.url;
+  if (!url) throw new Error("could not locate frida-tools wheel");
 
   const response = await fetch(url);
   if (!response.ok)
     throw new Error(`Failed to download frida-tools: ${response.statusText}`);
-  if (!response.body) throw new Error("frida-tools download had no response body");
-
-  const extract = tar.extract();
-  extract.on("entry", (header, stream, next) => {
-    const name = path.basename(header.name);
-    if (!names.has(name)) {
-      stream.resume();
-      stream.once("end", next);
-      return;
-    }
-
-    const out = path.join(dir, name);
-    pipeline(stream, createWriteStream(out)).then(
-      () => {
-        found.add(name);
-        console.log(`downloaded bridge ${out}`);
-        next();
-      },
-      (error) => extract.destroy(error),
-    );
+  const files = unzipSync(new Uint8Array(await response.arrayBuffer()), {
+    filter: (file) =>
+      file.name.startsWith("frida_tools/bridges/") &&
+      names.has(path.basename(file.name)),
   });
-
-  await pipeline(
-    Readable.fromWeb(response.body as import("node:stream/web").ReadableStream),
-    createGunzip(),
-    extract,
-  );
+  for (const [entry, data] of Object.entries(files)) {
+    const name = path.basename(entry);
+    const out = path.join(dir, name);
+    await fs.writeFile(out, data);
+    found.add(name);
+    console.log(`downloaded bridge ${out}`);
+  }
 
   const missing = [...names].filter((name) => !found.has(name));
   if (missing.length) {
