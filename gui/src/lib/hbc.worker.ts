@@ -27,6 +27,7 @@ async function load(): Promise<WebAssembly.Instance> {
   loading = (async () => {
     postStatus("downloading");
     const res = await fetch(wasmUrl);
+    if (!res.ok) throw new Error(`fetch ${wasmUrl}: HTTP ${res.status}`);
     const total = Number(res.headers.get("content-length") || 0);
     let received = 0;
     const chunks: Uint8Array[] = [];
@@ -76,7 +77,11 @@ async function load(): Promise<WebAssembly.Instance> {
     inst = i;
     postStatus("ready");
     return i;
-  })();
+  })().catch((error) => {
+    loading = null;
+    postStatus("failed");
+    throw error;
+  });
   return loading;
 }
 

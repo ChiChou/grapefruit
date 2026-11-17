@@ -12,7 +12,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/chichou/grapefruit.git
+git clone --recurse-submodules https://github.com/chichou/grapefruit.git
 cd grapefruit
 
 # Install all dependencies, initialize submodules, fetch/build WASM assets
