@@ -92,7 +92,7 @@ export function ls(path: string): DirectoryListing {
   const list: MetaData[] = [];
 
   for (const name of names) {
-    if (name.startsWith(".")) continue;
+    if (name === "." || name === "..") continue;
 
     const fullPath = path + "/" + name;
     let size: number | null = null;
